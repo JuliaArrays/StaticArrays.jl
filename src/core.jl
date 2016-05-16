@@ -86,14 +86,23 @@ end
 end
 
 # Type-promotion versions
+@generated function Base.call{Sizes,T,N}(::Type{SArray{Sizes,T,N}}, d::Tuple)
+    M = prod(Sizes)
+    :($(SArray{Sizes,T,N,NTuple{M,T}})(d))
+end
+@generated function Base.call{Sizes,T}(::Type{SArray{Sizes,T}}, d::Tuple)
+    N = length(Sizes)
+    M = prod(Sizes)
+    :($(SArray{Sizes,T,N,NTuple{M,T}})(d))
+end
 @generated function Base.call{Sizes}(::Type{SArray{Sizes}}, d::Tuple)
-    T = promote_eltype(d)
+    T = promote_tuple_eltype(d)
     N = length(Sizes)
     M = prod(Sizes)
     :($(SArray{Sizes,T,N,NTuple{M,T}})(d))
 end
 @generated function Base.call(::Type{SArray}, d::Tuple)
-    T = promote_eltype(d)
+    T = promote_tuple_eltype(d)
     M = length(d.parameters)
     N = 1
     Sizes = (M,)
@@ -130,21 +139,30 @@ end
 end
 
 # Type-promotion versions
+@generated function Base.call{Sizes,T,N}(::Type{MArray{Sizes,T,N}}, d::Tuple)
+    M = prod(Sizes)
+    :($(MArray{Sizes,T,N,NTuple{M,T}})(d))
+end
+@generated function Base.call{Sizes,T}(::Type{MArray{Sizes,T}}, d::Tuple)
+    N = length(Sizes)
+    M = prod(Sizes)
+    :($(MArray{Sizes,T,N,NTuple{M,T}})(d))
+end
 @generated function Base.call{Sizes}(::Type{MArray{Sizes}}, d::Tuple)
-    T = promote_eltype(d)
+    T = promote_tuple_eltype(d)
     N = length(Sizes)
     M = prod(Sizes)
     :($(MArray{Sizes,T,N,NTuple{M,T}})(d))
 end
 @generated function Base.call(::Type{MArray}, d::Tuple)
-    T = promote_eltype(d)
+    T = promote_tuple_eltype(d)
     M = length(d.parameters)
     N = 1
     Sizes = (M,)
     :($(MArray{Sizes,T,N,NTuple{M,T}})(d))
 end
 
-# Same for uninitialized arrays (only useful with MArray?)
+# Same for uninitialized arrays (only useful with MArray)
 @generated function Base.call{Sizes,T,N}(::Type{MArray{Sizes,T,N}})
     M = prod(Sizes)
     :($(MArray{Sizes,T,N,NTuple{M,T}})())
@@ -180,3 +198,11 @@ Base.convert{Sizes,T,N,D}(::Type{SArray{Sizes}}, a::MArray{Sizes,T,N,D}) = SArra
 Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
 Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{SArray{Sizes,T1,N,D1}}, a::MArray{Sizes,T2,N,D2}) = SArray{Sizes,T1,N,D1}(a.data)
+
+# TODO
+# * conversions from AbstractArray
+# * conversion to Array
+# * conversion to Array{T}
+# * conversion to Array{T,N}
+# * conversion to Vector
+# * conversion to Matrix

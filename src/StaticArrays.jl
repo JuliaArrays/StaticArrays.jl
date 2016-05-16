@@ -1,8 +1,10 @@
 module StaticArrays
 
-export StaticArray
-export SArray
-export MArray
+export StaticArray, StaticVector, StaticMatrix
+export SArray, SVector, SMatrix
+export MArray, MVector, MMatrix
+
+export similar_type
 
 include("util.jl")
 include("core.jl")
