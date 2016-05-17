@@ -38,13 +38,15 @@ Base.linearindexing{T<:StaticArray}(::Type{T}) = Base.LinearFast()
 
 
 # Can index linearly with a scalar, a tuple, or colon
+Base.getindex(a::StaticArray) = a.data[1]
 Base.getindex(a::StaticArray, i::Int) = a.data[i]
 @generated function Base.getindex{N}(a::StaticArray, i::NTuple{N,Int})
     newtype = similar_type(a, Val{(N,)})
     exprs = ntuple(n -> :(a[i[$n]]), N)
     return :($newtype($(Expr(:tuple, exprs...))))
 end
-Base.getindex(a::StaticArray, ::Colon) = a
+Base.getindex(a::SArray, ::Colon) = a
+Base.getindex{Sizes,T,N,D}(a::MArray{Sizes,T,N,D}, ::Colon) = MArray{Sizes,T,N,D}(a.data) # make a copy...
 
 # Multidimensional index generalizes the above
 # Scalar
@@ -59,19 +61,213 @@ Base.getindex(a::StaticArray, ::Colon) = a
         end
     end
 end
-# Other cases...
-@generated function Base.getindex{Sizes,T,N}(a::StaticArray{Sizes,T,N}, i...)
-    if length(i) == 0
-        return :(a.data[])
-    elseif length(i) == 1
-        return :(a.data[i])
-    else
-        return quote
-            return a.data[sub2ind(Sizes,i...)]
+
+@generated function Base.getindex{Sizes,T,N}(a::SArray{Sizes,T,N}, i...)
+    # Striding lengths
+    strides = [1, cumprod(collect(Sizes)[1:end-1])...]
+
+    # Get the parameters of the new matrix
+    apl_slicing = VERSION >= v"0.5-"
+    NewN = 0
+    NewSizes = Vector{Int}()
+    OldSizes = Vector{Int}() # Same as NewSizes but includes singleton 1's
+    at_end = true
+    is_singleton = trues(N)
+    for j = length(i):-1:1
+        if i[j] == Int
+            unshift!(OldSizes,1)
+            if !apl_slicing
+                if !at_end
+                    NewN += 1
+                    unshift!(NewSizes,1)
+                    is_singleton[j] = false
+                end
+            end
+        elseif i[j] <: TupleN{Int}
+            NewN += 1
+            unshift!(NewSizes,length(i[j].parameters))
+            unshift!(OldSizes,length(i[j].parameters))
+            is_singleton[j] = false
+            at_end = false
+        elseif i[j] == Colon
+            NewN += 1
+            unshift!(NewSizes,Sizes[j])
+            unshift!(OldSizes,Sizes[j])
+            is_singleton[j] = false
+            at_end = false
+        else
+            str = "Cannot index dimension $j of $a with a $(i[j])"
+            return :(error($str))
         end
     end
+    NewSizes = (NewSizes...)
+    NewM = prod(NewSizes)
+
+    # Bail early if possible
+    if NewN == 0
+        return :(a.data[sub2ind(Sizes,i...)])
+    end
+
+    NewType = MArray{NewSizes,T,NewN,NTuple{NewM,T}}
+
+    # Now we build an expression for each new element
+    exprs = Vector{Expr}()
+    inds_old = ones(Int,N)
+    for j = 1:NewM
+        sum_exprs = ntuple(p -> :($(strides[p]) * (i[$p][$(inds_old[p])] - 1)), N)
+        push!(exprs, :(a.data[$(Expr(:call, :+, 1, sum_exprs...))]))
+
+        if j < NewM
+            inds_old[1] += 1
+        end
+        for k = 1:N
+            if inds_old[k] > OldSizes[k]
+                inds_old[k] = 1
+                inds_old[k+1] += 1
+            else
+                break
+            end
+        end
+    end
+
+    return :(SArray{$NewSizes,$T,$NewN,NTuple{$NewM,$T}}($(Expr(:tuple, exprs...))))
 end
 
+@generated function Base.getindex{Sizes,T,N}(a::MArray{Sizes,T,N}, i...)
+    # Striding lengths
+    strides = [1, cumprod(collect(Sizes)[1:end-1])...]
+
+    # Get the parameters of the new matrix
+    apl_slicing = VERSION >= v"0.5-"
+    NewN = 0
+    NewSizes = Vector{Int}()
+    OldSizes = Vector{Int}() # Same as NewSizes but includes singleton 1's
+    at_end = true
+    is_singleton = trues(N)
+    for j = length(i):-1:1
+        if i[j] == Int
+            unshift!(OldSizes,1)
+            if !apl_slicing
+                if !at_end
+                    NewN += 1
+                    unshift!(NewSizes,1)
+                    is_singleton[j] = false
+                end
+            end
+        elseif i[j] <: TupleN{Int}
+            NewN += 1
+            unshift!(NewSizes,length(i[j].parameters))
+            unshift!(OldSizes,length(i[j].parameters))
+            is_singleton[j] = false
+            at_end = false
+        elseif i[j] == Colon
+            NewN += 1
+            unshift!(NewSizes,Sizes[j])
+            unshift!(OldSizes,Sizes[j])
+            is_singleton[j] = false
+            at_end = false
+        else
+            str = "Cannot index dimension $j of $a with a $(i[j])"
+            return :(error($str))
+        end
+    end
+    NewSizes = (NewSizes...)
+    NewM = prod(NewSizes)
+
+    # Bail early if possible
+    if NewN == 0
+        return :(a.data[sub2ind(Sizes,i...)])
+    end
+
+    NewType = MArray{NewSizes,T,NewN,NTuple{NewM,T}}
+
+    # Now we build an expression for each new element
+    exprs = Vector{Expr}()
+    inds_old = ones(Int,N)
+    for j = 1:NewM
+        sum_exprs = ntuple(p -> :($(strides[p]) * (i[$p][$(inds_old[p])] - 1)), N)
+        push!(exprs, :(a.data[$(Expr(:call, :+, 1, sum_exprs...))]))
+
+        if j < NewM
+            inds_old[1] += 1
+        end
+        for k = 1:N
+            if inds_old[k] > OldSizes[k]
+                inds_old[k] = 1
+                inds_old[k+1] += 1
+            else
+                break
+            end
+        end
+    end
+
+    return :(MArray{$NewSizes,$T,$NewN,NTuple{$NewM,$T}}($(Expr(:tuple, exprs...))))
+end
+
+#=
+# Other cases...
+@generated function Base.getindex{Sizes,T,N}(a::MArray{Sizes,T,N}, i...)
+    ind_l_exprs = Vector{Exprs}()
+    ind_r_exprs = Vector{Exprs}()
+    k0 = 1
+    apl_slicing = VERSION < v"0.5-"
+    NewN = 0
+    NewSizes = Vector{Int}()
+    i_sizes = Vector{Int}()
+    at_end = true
+    for j = length(i):-1:1
+        sj = Symbol("i_$j")
+        if i.parameters[j] == Int
+            unshift!(ind_exprs, :($k0 * (i[$j]-1)))
+            unshift!(i_sizes, 1)
+
+            if !apl_slicing
+                if !at_end
+                    NewN += 1
+                    unshift!(NewSizes,1)
+
+                end
+            end
+        elseif i[j] <: TupleN{Int}
+            unshift!(ind_exprs, :($k0 * (i[j][$sj]-1)))
+            unshift!(i_sizes, length(i[j].parameters))
+
+            NewN += 1
+            unshift!(NewSizes,length(i[j].parameters))
+            at_end = false
+        elseif i[j] == Colon
+            unshift!(ind_exprs, :($k0 * ($sj-1)))
+            unshift!(i_sizes, Size[j])
+
+            NewN += 1
+            unshift!(NewSizes,Size[j])
+            at_end = false
+        else
+            str = "Cannot index dimension $j of $a with a $(i[j])"
+            return :(error($str))
+        end
+        k0 = k0 * Sizes[j]
+    end
+    NewM = prod(NewSizes)
+
+    return quote
+        out = MArray{$NewSizes,T,NTuple{$NewM,T}}()
+
+        $(NewM > 0 ? :(for i_1 = 1:$(i_sizes[1])) : nothing)
+        $(Size > 1 ? :(for i_1 = 1:$(i_sizes[2])) : nothing)
+        $(Size > 2 ? :(for i_1 = 1:$(i_sizes[3])) : nothing)
+
+        out[i_1, i_2] = a[$(Expr(:+,ind_exprs...))]
+
+        $(Size > 0 ? :(end) : nothing)
+        $(Size > 1 ? :(end) : nothing)
+        $(Size > 2 ? :(end) : nothing)
+
+        return out
+    end
+end =#
+
+# setindex! (linear)
 function Base.setindex!{Sizes,T}(a::MArray{Sizes,T}, v, i::Int)
     if i < 0 || i > prod(Sizes)
         throw(BoundsError(a,i))
@@ -183,3 +379,16 @@ similar_type{Sizes,T,N,D}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,N,T,D}}}
 end
 similar_type{Sizes,T,N,D,NewT}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT}) = MArray{Sizes,NewT}
 similar_type{Sizes,T,N,D,NewT,NewSizes}(::Union{MArray{Sizes,N,T,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT}, ::Type{Val{NewSizes}}) = MArray{NewSizes,NewT}
+
+# reshape()
+Base.reshape(::StaticArray, ::TupleN{Int}) = error("Need reshape size as a type-paramter. Use reshape(staticarray,Val{(s₁,...)}).")
+@generated function Base.reshape{Sizes,T,N,D,NewSizes}(a::SArray{Sizes,T,N,D},::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    :($(SArray{NewSizes,T,NewN,D})(a.data))
+end
+@generated function Base.reshape{Sizes,T,N,D,NewSizes}(a::MArray{Sizes,T,N,D},::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    :($(MArray{NewSizes,T,NewN,D})(a.data))
+end
+
+# TODO: permutedims() (and transpose/ctranspose in linalg)

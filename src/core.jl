@@ -40,7 +40,7 @@ end
 
 # Make sure that SArray's and MArray's type parameters are correctly formed
 @generated function check_parameters{Sizes,T,N,D}(::Type{Val{Sizes}},::Type{T},::Type{Val{N}},::Type{D})
-    if !isa(N,Int) && N >= 0
+    if !isa(N,Int) || N < 0
         str = "Expected non-negative dimensionality, got N = $N"
     end
     if !isa(Sizes,NTuple{N,Int})
