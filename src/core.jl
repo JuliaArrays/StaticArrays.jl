@@ -8,7 +8,7 @@ abstract StaticArray{Sizes,T,N} <: AbstractArray{T, N}
 immutable SArray{Sizes,T,N,D} <: StaticArray{Sizes,T,N}
     data::D
 
-    function SArray(d)
+    function SArray(d::Tuple)
         check_parameters(Val{Sizes}, T, Val{N}, D)
         new(convert_ntuple(T, d))
     end
@@ -27,7 +27,7 @@ end
 type MArray{Sizes,T,N,D} <: StaticArray{Sizes,T,N}
     data::D
 
-    function MArray(d)
+    function MArray(d::Tuple)
         check_parameters(Val{Sizes}, T, Val{N}, D)
         new(convert_ntuple(T, d))
     end
@@ -199,10 +199,83 @@ Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D})
 Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{SArray{Sizes,T1,N,D1}}, a::MArray{Sizes,T2,N,D2}) = SArray{Sizes,T1,N,D1}(a.data)
 
-# TODO
-# * conversions from AbstractArray
-# * conversion to Array
-# * conversion to Array{T}
-# * conversion to Array{T,N}
-# * conversion to Vector
-# * conversion to Matrix
+
+
+# Conversions to SArray from AbstractArray
+Base.convert(::Type{SArray}, a::AbstractArray) = error("Must specify size parameter for SArray")
+@generated function Base.convert{Sizes,T,N}(::Type{SArray{Sizes}}, a::AbstractArray{T,N})
+    M = prod(Sizes)
+    NewType = SArray{Sizes,T,N,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+@generated function Base.convert{Sizes,T1,N,T2}(::Type{SArray{Sizes,T1}}, a::AbstractArray{T2,N})
+    M = prod(Sizes)
+    NewType = SArray{Sizes,T1,N,NTuple{M,T1}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+@generated function Base.convert{Sizes,T1,N,T2}(::Type{SArray{Sizes,T1,N}}, a::AbstractArray{T2,N})
+    M = prod(Sizes)
+    NewType = SArray{Sizes,T1,N,M}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+function Base.convert{Sizes,T1,N,D,T2}(::Type{SArray{Sizes,T1,N,D}}, a::AbstractArray{T2,N})
+    size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+    SArray{Sizes,T1,N,D}((a...))
+end
+
+# Conversions to MArray from AbstractArray
+Base.convert(::Type{MArray}, a::AbstractArray) = error("Must specify size parameter for MArray")
+@generated function Base.convert{Sizes,T,N}(::Type{MArray{Sizes}}, a::AbstractArray{T,N})
+    M = prod(Sizes)
+    NewType = MArray{Sizes,T,N,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+@generated function Base.convert{Sizes,T1,N,T2}(::Type{MArray{Sizes,T1}}, a::AbstractArray{T2,N})
+    M = prod(Sizes)
+    NewType = MArray{Sizes,T1,N,NTuple{M,T1}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+@generated function Base.convert{Sizes,T1,N,T2}(::Type{MArray{Sizes,T1,N}}, a::AbstractArray{T2,N})
+    M = prod(Sizes)
+    NewType = MArray{Sizes,T1,N,NTuple{M,T1}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+function Base.convert{Sizes,T1,N,D,T2}(::Type{MArray{Sizes,T1,N,D}}, a::AbstractArray{T2,N})
+    size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+    MArray{Sizes,T1,N,D}((a...))
+end
+
+# Conversions to Array from StaticArray
+function Base.convert{Sizes,T,N}(::Type{Array},a::StaticArray{Sizes,T,N})
+    out = Array{T,N}(Sizes...)
+    out[:] = a[:]
+    return out
+end
+function Base.convert{Sizes,T1,T2,N}(::Type{Array{T1}},a::StaticArray{Sizes,T2,N})
+    out = Array{T1,N}(Sizes...)
+    out[:] = a[:]
+    return out
+end
+function Base.convert{Sizes,T1,T2,N}(::Type{Array{T1,N}},a::StaticArray{Sizes,T2,N})
+    out = Array{T1,N}(Sizes...)
+    out[:] = a[:]
+    return out
+end

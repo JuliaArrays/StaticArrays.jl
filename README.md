@@ -20,7 +20,7 @@ sized, and `Sizes` is a tuple of `Int`s):
 Similarly, we will have linear algebra on `SVector`s, `SMatrix`s, `MVector`s
 and `MMatrix`s, which are simple 1- and 2- dimensional type-aliases.
 
-### Quick start
+### Quick exposé
 
 The `SArray` and `MArray` types are defined as
 
@@ -35,8 +35,9 @@ end
 ```
 
 Constructors take a flat tuple (even for higher-dimensional arrays) and should
-"just work" and perform similar promotion to `Array`. On the other hand,
-conversion from other array types is not yet provided. Inner constructors perform
+"just work" and perform similar promotion to `Array`. Also, conversion to `Array` and
+from `AbstractArray` types are implemented (though, at minimum, the size of the `StaticArray`
+must be provided as a type-parameter). Inner constructors perform
 compile-time checking of type-parameters, to make sure `Sizes`, `T`, `N`, and `D`
 are consistent.
 

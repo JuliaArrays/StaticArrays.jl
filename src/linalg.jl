@@ -15,6 +15,26 @@ typealias StaticMatrix{Size,T,D} Union{SMatrix{Size,T,D},MMatrix{Size,T,D}}
 @inline Base.call{Sizes}(::Type{SMatrix{Sizes}}, d::Tuple) = SMatrix{Sizes}(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{Sizes,N,T}(::Type{SMatrix{Sizes}}, d::NTuple{N,T}) = :($(SMatrix{Sizes,T,d})(d))
 
+# Conversions to SVector from AbstractVector
+@generated function Base.convert{Sizes,T}(::Type{SVector{Sizes}}, a::AbstractVector{T})
+    M = prod(Sizes)
+    NewType = SArray{Sizes,T,1,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+
+# Conversions to SMatrix from AbstractMatrix
+@generated function Base.convert{Sizes,T}(::Type{SMatrix{Sizes}}, a::AbstractMatrix{T})
+    M = prod(Sizes)
+    NewType = SArray{Sizes,T,2,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+
 # Constructors not covered by MArray
 @inline Base.call(::Type{MVector}, d::Tuple) = MVector(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{N,T}(::Type{MVector}, d::NTuple{N,T}) = :($(MVector{(N,),T,d})(d))
@@ -24,6 +44,39 @@ typealias StaticMatrix{Size,T,D} Union{SMatrix{Size,T,D},MMatrix{Size,T,D}}
 @inline Base.call{Sizes}(::Type{MMatrix{Sizes}}, d::Tuple) = MMatrix{Sizes}(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{Sizes,N,T}(::Type{MMatrix{Sizes}}, d::NTuple{N,T}) = :($(MMatrix{Sizes,T,d})(d))
 
+# Conversions to MVector from AbstractVector
+@generated function Base.convert{Sizes,T}(::Type{MVector{Sizes}}, a::AbstractVector{T})
+    M = prod(Sizes)
+    NewType = MArray{Sizes,T,1,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+
+# Conversions to MMatrix from AbstractMatrix
+@generated function Base.convert{Sizes,T}(::Type{MMatrix{Sizes}}, a::AbstractMatrix{T})
+    M = prod(Sizes)
+    NewType = MArray{Sizes,T,2,NTuple{M,T}}
+    quote
+        size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
+        $(NewType)((a...))
+    end
+end
+
+# Conversions to Vector from StaticVector
+function Base.convert{Sizes,T}(::Type{Vector},a::StaticVector{Sizes,T})
+    out = Vector{T}(Sizes...)
+    out[:] = a[:]
+    return out
+end
+
+# Conversions to Matrix from StaticMatrix
+function Base.convert{Sizes,T}(::Type{Matrix},a::StaticMatrix{Sizes,T})
+    out = Matrix{T}(Sizes...)
+    out[:] = a[:]
+    return out
+end
 
 # Level-0 ops: Reductions *should* already work
 
