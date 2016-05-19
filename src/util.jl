@@ -9,7 +9,7 @@ convert_ntuple{N,T}(::Type{T},d::NTuple{N,T}) = d
     return Expr(:tuple, exprs...)
 end
 
-# Base gives up on tuples... (TODO can we improve Base?)
+# Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
 @generated function promote_tuple_eltype{T <: Tuple}(::Union{T,Type{T}})
     t = Union{}
     for i = 1:length(T.parameters)

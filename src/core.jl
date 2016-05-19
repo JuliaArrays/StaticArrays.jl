@@ -42,6 +42,7 @@ end
 @generated function check_parameters{Sizes,T,N,D}(::Type{Val{Sizes}},::Type{T},::Type{Val{N}},::Type{D})
     if !isa(N,Int) || N < 0
         str = "Expected non-negative dimensionality, got N = $N"
+        return :(error($str))
     end
     if !isa(Sizes,NTuple{N,Int})
         str = "Expected a $N-tuple of sizes, got size = $Sizes"
@@ -56,7 +57,7 @@ end
     end
 
     numel = prod(Sizes)
-    if D <: NTuple{numel,T} || (N == 0 && D == T)
+    if D <: NTuple{numel,T}
         return nothing
     else
         str = "Data storage incorrect - was expecting NTuple{$numel, $T}, but got $D"
@@ -178,25 +179,25 @@ end
 #######################
 
 # Converting element types
-Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::SArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::SArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::SArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::SArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{SArray{Sizes,T1,N,D1}}, a::SArray{Sizes,T2,N,D2}) = SArray{Sizes,T1,N,D1}(a.data)
 
-Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N,D}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{MArray{Sizes,T1,N,D1}}, a::MArray{Sizes,T2,N,D2}) = MArray{Sizes,T1,N,D1}(a.data)
 
 # Conversion between MArray's and SArrays
 Base.convert{Sizes,T,N,D}(::Type{MArray}, a::SArray{Sizes,T,N,D}) = MArray{Sizes,T,N,D}(a.data)
 Base.convert{Sizes,T,N,D}(::Type{MArray{Sizes}}, a::SArray{Sizes,T,N,D}) = MArray{Sizes,T,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1}}, a::SArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1,N}}, a::SArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N,D}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1}}, a::SArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{MArray{Sizes,T1,N}}, a::SArray{Sizes,T2,N,D}) = MArray{Sizes,T1,N}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{MArray{Sizes,T1,N,D1}}, a::SArray{Sizes,T2,N,D2}) = MArray{Sizes,T1,N,D1}(a.data)
 
 Base.convert{Sizes,T,N,D}(::Type{SArray}, a::MArray{Sizes,T,N,D}) = SArray{Sizes,T,N,D}(a.data)
 Base.convert{Sizes,T,N,D}(::Type{SArray{Sizes}}, a::MArray{Sizes,T,N,D}) = SArray{Sizes,T,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
-Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N,D}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N}(a.data)
+Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D}) = SArray{Sizes,T1,N}(a.data)
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{SArray{Sizes,T1,N,D1}}, a::MArray{Sizes,T2,N,D2}) = SArray{Sizes,T1,N,D1}(a.data)
 
 
@@ -221,7 +222,7 @@ end
 end
 @generated function Base.convert{Sizes,T1,N,T2}(::Type{SArray{Sizes,T1,N}}, a::AbstractArray{T2,N})
     M = prod(Sizes)
-    NewType = SArray{Sizes,T1,N,M}
+    NewType = SArray{Sizes,T1,N,NTuple{M,T1}}
     quote
         size(a) == Sizes || error("Input array must have size $Sizes, got $(size(a))")
         $(NewType)((a...))

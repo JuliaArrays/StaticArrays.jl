@@ -1,5 +1,25 @@
 using StaticArrays
-using Base.Test
+if VERSION >= v"0.5-"
+    using Base.Test
+else
+    using BaseTestNext
+    const Test = BaseTestNext
+end
 
-# write your own tests here
-@test 1 == 1
+# @inferred throws an error, which doesn't interract particularly well
+# with BaseTestNext
+macro test_inferred(ex)
+    quote
+        @test try
+            @inferred($ex)
+            true
+        catch
+            false
+        end
+    end
+end
+
+@testset "StaticArrays" begin
+    include("core.jl")
+    include("linalg.jl")
+end

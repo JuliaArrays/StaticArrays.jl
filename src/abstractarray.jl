@@ -1,4 +1,4 @@
-# Methods necessary to fulfil the AbstractArray interface
+# Methods necessary to fulfil the AbstractArray interface (plus some extensions, like size() on types)
 
 Base.size{Sizes}(::StaticArray{Sizes}) = Sizes
 Base.size{Sizes,T,N,D}(::Type{SArray{Sizes,T,N,D}}) = Sizes

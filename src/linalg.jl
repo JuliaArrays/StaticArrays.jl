@@ -7,13 +7,22 @@ typealias MMatrix{Sizes,T,D} MArray{Sizes,T,2,D}
 typealias StaticMatrix{Size,T,D} Union{SMatrix{Size,T,D},MMatrix{Size,T,D}}
 
 # Constructors not covered by SArray
-@inline Base.call(::Type{SVector}, d::Tuple) = SVector(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{N,T}(::Type{SVector}, d::NTuple{N,T}) = :($(SVector{(N,),T,d})(d))
-@inline Base.call{Size}(::Type{SVector{Size}}, d::Tuple) = SVector{Size}(convert_ntuple(promote_tuple_eltype(d), d))
+@generated function Base.call{N}(::Type{SVector}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(SVector{(N,),T})(convert_ntuple($T, d)))
+end
 @generated Base.call{Size,N,T}(::Type{SVector{Size}}, d::NTuple{N,T}) = :($(SVector{Size,T,d})(d))
+@generated function Base.call{Size,N}(::Type{SVector{Size}}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(SVector{Size,T})(convert_ntuple($T, d)))
+end
 
-@inline Base.call{Sizes}(::Type{SMatrix{Sizes}}, d::Tuple) = SMatrix{Sizes}(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{Sizes,N,T}(::Type{SMatrix{Sizes}}, d::NTuple{N,T}) = :($(SMatrix{Sizes,T,d})(d))
+@generated function Base.call{Sizes,N}(::Type{SMatrix{Sizes}}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(SMatrix{Sizes,T})(convert_ntuple($T, d)))
+end
 
 # Conversions to SVector from AbstractVector
 @generated function Base.convert{Sizes,T}(::Type{SVector{Sizes}}, a::AbstractVector{T})
@@ -36,14 +45,22 @@ end
 end
 
 # Constructors not covered by MArray
-@inline Base.call(::Type{MVector}, d::Tuple) = MVector(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{N,T}(::Type{MVector}, d::NTuple{N,T}) = :($(MVector{(N,),T,d})(d))
-@inline Base.call{Size}(::Type{MVector{Size}}, d::Tuple) = MVector{Size}(convert_ntuple(promote_tuple_eltype(d), d))
+@generated function Base.call{N}(::Type{MVector}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(MVector{(N,),T})(convert_ntuple($T, d)))
+end
 @generated Base.call{Size,N,T}(::Type{MVector{Size}}, d::NTuple{N,T}) = :($(MVector{Size,T,d})(d))
+@generated function Base.call{Size,N}(::Type{MVector{Size}}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(MVector{Size,T})(convert_ntuple($T, d)))
+end
 
-@inline Base.call{Sizes}(::Type{MMatrix{Sizes}}, d::Tuple) = MMatrix{Sizes}(convert_ntuple(promote_tuple_eltype(d), d))
 @generated Base.call{Sizes,N,T}(::Type{MMatrix{Sizes}}, d::NTuple{N,T}) = :($(MMatrix{Sizes,T,d})(d))
-
+@generated function Base.call{Sizes,N}(::Type{MMatrix{Sizes}}, d::NTuple{N})
+    T = promote_tuple_eltype(d)
+    return :($(MMatrix{Sizes,T})(convert_ntuple($T, d)))
+end
 # Conversions to MVector from AbstractVector
 @generated function Base.convert{Sizes,T}(::Type{MVector{Sizes}}, a::AbstractVector{T})
     M = prod(Sizes)

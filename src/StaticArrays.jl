@@ -22,6 +22,8 @@ include("linalg.jl")
 # * Similarly for other functions - reshape, etc - which could work by returning
 #   an Array, but currently results in an error (now, reshape takes a Val{}).
 #
+# * Should similar(::SArray, ...) return a mutable MArray? Or throw an error? (see also above)
+#
 # * Implement both getindex/unsafe_getindex (setindex! and unsafe_setindex! already done)
 #
 # * map, map!, broadcast, broadcast!
@@ -36,6 +38,6 @@ include("linalg.jl")
 #
 # * Investigate and potentially improve speed of getindex/setindex!
 #
-#
+# * @fsa-like macros for easily making matrices. @SArray and @MArray? (or lower case?)
 
 end # module

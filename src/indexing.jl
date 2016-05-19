@@ -5,8 +5,9 @@
 # Indexing with no components
 Base.getindex(a::StaticArray) = a.data[1]
 
-# Can index linearly with a scalar, a tuple, or colon
-Base.getindex(a::StaticArray, i::Int) = a.data[i]
+# Can index linearly with a scalar, a tuple, or colon (overspecified to ovoid ambiguity problems in julia 0.5)
+Base.getindex{Sizes,T,N,D}(a::SArray{Sizes,T,N,D}, i::Int) = a.data[i]
+Base.getindex{Sizes,T,N,D}(a::MArray{Sizes,T,N,D}, i::Int) = a.data[i]
 @generated function Base.getindex{N}(a::StaticArray, i::NTuple{N,Int})
     newtype = similar_type(a, Val{(N,)})
     exprs = ntuple(n -> :(a[i[$n]]), N)
@@ -276,11 +277,11 @@ end
 # setindex! multi-dimensional general case
 function Base.setindex!{Sizes,T}(a::MArray{Sizes,T}, v, i...)
     # check that all i > 0
-    for ii in i
-        if isa(ii, Colon)
+    for ii in 1:length(i)
+        if isa(i[ii], Colon)
             continue
-        elseif any(j -> j<1, ii)
-            error("Indices must be positive integers: got $i")
+        elseif any(j -> j<1 || j>Sizes[ii], i[ii])
+            error("Indices must be positive integers and in-range: got $i for $Sizes-dimensional array")
         end
     end
 

@@ -41,21 +41,19 @@ must be provided as a type-parameter). Inner constructors perform
 compile-time checking of type-parameters, to make sure `Sizes`, `T`, `N`, and `D`
 are consistent.
 
-Currently, arbitrary linear and multi-dimensional scalar indexing are functioning, but
-more work is required, especially on the immutable `map` function and operators.
+Currently, indexing is fully-functional, but
+more work is required, especially on the immutable `map`/`broadcast` functions and operators.
 Since `similar` and `setindex!` already work with `MArray`, most functions like
 `+` work naturally with `MArray`.
 
-Ultimately, in Julia 0.5, this should be easy to implement for `SArray` where
-`.+`, etc, map to `broadcast`. Linear algebra and other complex operations are
-yet to be implemented.
+Ultimately, implementation in Julia 0.5 should be easier for `SArray` where
+`.+`, etc, map to `broadcast` and functions are properly typed. Linear algebra
+and other complex operations are yet to be implemented.
 
 ### See also
 
 This package takes inspiration from:
 
-[Julep: More support for working with immutables #11902](https://github.com/JuliaLang/julia/issues/11902)
-
-[FixedSizeArrays.jl](https://github.com/SimonDanisch/FixedSizeArrays.jl)
-
-[ImmutableArrays.jl](https://github.com/JuliaGeometry/ImmutableArrays.jl)
+* [Julep: More support for working with immutables #11902](https://github.com/JuliaLang/julia/issues/11902)
+* [FixedSizeArrays.jl](https://github.com/SimonDanisch/FixedSizeArrays.jl)
+* [ImmutableArrays.jl](https://github.com/JuliaGeometry/ImmutableArrays.jl)
