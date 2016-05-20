@@ -8,13 +8,18 @@ Base.getindex(a::StaticArray) = a.data[1]
 # Can index linearly with a scalar, a tuple, or colon (overspecified to ovoid ambiguity problems in julia 0.5)
 Base.getindex{Sizes,T,N,D}(a::SArray{Sizes,T,N,D}, i::Int) = a.data[i]
 Base.getindex{Sizes,T,N,D}(a::MArray{Sizes,T,N,D}, i::Int) = a.data[i]
-@generated function Base.getindex{N}(a::StaticArray, i::NTuple{N,Int})
+@generated function Base.getindex{N}(a::SArray, i::NTuple{N,Int})
     newtype = similar_type(a, Val{(N,)})
     exprs = ntuple(n -> :(a[i[$n]]), N)
     return :($newtype($(Expr(:tuple, exprs...))))
 end
-Base.getindex(a::SArray, ::Colon) = a
-Base.getindex{Sizes,T,N,D}(a::MArray{Sizes,T,N,D}, ::Colon) = MArray{Sizes,T,N,D}(a.data) # make a copy...
+@generated function Base.getindex{N}(a::MArray, i::NTuple{N,Int})
+    newtype = similar_type(a, Val{(N,)})
+    exprs = ntuple(n -> :(a[i[$n]]), N)
+    return :($newtype($(Expr(:tuple, exprs...))))
+end
+Base.getindex(a::SArray, ::Colon) = SVector(a.data)
+Base.getindex(a::MArray, ::Colon) = MVector(a.data) # Makes a copy?
 
 # Multidimensional index generalizes the above
 @generated function Base.getindex{Sizes,T,N}(a::SArray{Sizes,T,N}, i...)
@@ -196,6 +201,8 @@ function Base.setindex!{Sizes,T}(a::MArray{Sizes,T}, v, i)
 end
 
 function Base.unsafe_setindex!{Sizes,T}(a::MArray{Sizes,T}, v, i)
+    N = length(i)
+
     # Check if v is OK in size
     if length(v) != N
         throw(DimensionMismatch("tried to assign $(prod(size(v))) elements to $N destinations"))
@@ -290,7 +297,7 @@ end
 
 function Base.unsafe_setindex!{Sizes,T}(a::MArray{Sizes,T}, v, i...)
     # First check v and i have correct sizes (ignoring singleton dimensions, mimicking Base.Array)
-    i_sizes = ntuple(j -> i[j] == Colon ? Sizes1[j] : length(i[j]), length(i) )
+    i_sizes = ntuple(j -> i[j] == Colon() ? Sizes[j] : length(i[j]), length(i) )
 
     # "Flatten" out any singleton dimensions on input v and indices i
     Sizes2 = size(v)

@@ -40,4 +40,5 @@ include("linalg.jl")
 #
 # * @fsa-like macros for easily making matrices. @SArray and @MArray? (or lower case?)
 
+
 end # module

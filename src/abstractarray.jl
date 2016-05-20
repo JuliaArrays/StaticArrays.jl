@@ -45,7 +45,18 @@ Base.similar{Sizes,T}(a::MArray{Sizes,T}, I::TupleN{Int}) = I == Sizes ? MArray{
 Base.similar{Sizes,T}(a::MArray{Sizes}, ::Type{T}) = MArray{Sizes,T}()
 Base.similar{Sizes,T}(a::MArray{Sizes}, ::Type{T}, I::Int...) = I == Sizes ? MArray{Sizes,T}() : error("similar(m_array, ::Type{T}, I...) cannot change size of MArray. Old size was $(size(a)) while new size was $I. Use similar(m_array, Val{Sizes}) instead.")
 Base.similar{Sizes,T}(a::MArray{Sizes}, ::Type{T}, I::TupleN{Int}) = I == Sizes ? MArray{Sizes,T}() : error("similar(m_array, ::Type{T}, I::Tuple) cannot change size of MArray. Old size was $(size(a)) while new size was $I. Use similar(m_array, Val{Sizes}) instead.")
+@generated function Base.similar{Sizes,T,NewSizes}(a::MArray{Sizes,T}, ::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    NewM = prod(NewSizes)
 
+    return :($(MArray{NewSizes,T,NewN,NTuple{NewM,T}})())
+end
+@generated function Base.similar{Sizes,T,NewT,NewSizes}(a::MArray{Sizes,T}, ::Type{NewT}, ::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    NewM = prod(NewSizes)
+
+    return :($(MArray{NewSizes,NewT,NewN,NTuple{NewM,NewT}})())
+end
 
 
 """
@@ -55,7 +66,7 @@ Create a static array type with the same (or optionally modified) element type a
 """
 similar_type(A::StaticArray) = error("Similar type not defined for $(typeof(A))")
 similar_type{SA<:StaticArray}(::Type{SA}) = error("Similar type not defined for $(typeof(A))")
-similar_type{Sizes,T,N,D}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,N,T,D}}}) = SArray{Sizes,N,T,D}
+similar_type{Sizes,T,N,D}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,T,N,D}}}) = SArray{Sizes,T,N,D}
 @generated function similar_type{Sizes,T,N,D,NewSizes}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,T,N,D}}}, ::Type{Val{NewSizes}})
     if isa(NewSizes, TupleN{Int})
         NewN = length(NewSizes)
@@ -67,10 +78,19 @@ similar_type{Sizes,T,N,D}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,N,T,D}}}
         return :(error($str))
     end
 end
-similar_type{Sizes,T,N,D,NewT}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,T,N,D}}}, ::Type{NewT}) = SArray{Sizes,NewT}
-similar_type{Sizes,T,N,D,NewT,NewSizes}(::Union{SArray{Sizes,N,T,D},Type{SArray{Sizes,T,N,D}}}, ::Type{NewT}, ::Type{Val{NewSizes}}) = SArray{NewSizes,NewT}
+@generated function similar_type{Sizes,T,N,D,NewT}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,T,N,D}}}, ::Type{NewT})
+    M = prod(Sizes)
 
-similar_type{Sizes,T,N,D}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,N,T,D}}}) = MArray{Sizes,N,T,D}
+    return :(SArray{Sizes,NewT,$N,NTuple{$M,$NewT}})
+end
+@generated function similar_type{Sizes,T,N,D,NewT,NewSizes}(::Union{SArray{Sizes,T,N,D},Type{SArray{Sizes,T,N,D}}}, ::Type{NewT}, ::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    NewM = prod(NewSizes)
+
+    return :($(SArray{NewSizes,NewT,NewN,NTuple{NewM,NewT}}))
+end
+
+similar_type{Sizes,T,N,D}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}) = MArray{Sizes,T,N,D}
 @generated function similar_type{Sizes,T,N,D,NewSizes}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}, ::Type{Val{NewSizes}})
     if isa(NewSizes, TupleN{Int})
         NewN = length(NewSizes)
@@ -82,8 +102,17 @@ similar_type{Sizes,T,N,D}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,N,T,D}}}
         return :(error($str))
     end
 end
-similar_type{Sizes,T,N,D,NewT}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT}) = MArray{Sizes,NewT}
-similar_type{Sizes,T,N,D,NewT,NewSizes}(::Union{MArray{Sizes,N,T,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT}, ::Type{Val{NewSizes}}) = MArray{NewSizes,NewT}
+@generated function similar_type{Sizes,T,N,D,NewT}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT})
+    M = prod(Sizes)
+
+    return :(MArray{Sizes,NewT,$N,NTuple{$M,$NewT}})
+end
+@generated function similar_type{Sizes,T,N,D,NewT,NewSizes}(::Union{MArray{Sizes,T,N,D},Type{MArray{Sizes,T,N,D}}}, ::Type{NewT}, ::Type{Val{NewSizes}})
+    NewN = length(NewSizes)
+    NewM = prod(NewSizes)
+
+    return :($(MArray{NewSizes,NewT,NewN,NTuple{NewM,NewT}}))
+end
 
 # reshape()
 Base.reshape(::StaticArray, ::TupleN{Int}) = error("Need reshape size as a type-paramter. Use reshape(staticarray,Val{(s₁,...)}).")

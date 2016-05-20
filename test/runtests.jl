@@ -21,5 +21,7 @@ end
 
 @testset "StaticArrays" begin
     include("core.jl")
+    include("abstractarray.jl")
+    include("indexing.jl")
     include("linalg.jl")
 end

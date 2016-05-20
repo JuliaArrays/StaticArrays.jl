@@ -201,7 +201,6 @@ Base.convert{Sizes,T1,T2,N,D}(::Type{SArray{Sizes,T1,N}}, a::MArray{Sizes,T2,N,D
 Base.convert{Sizes,T1,T2,N,D1,D2}(::Type{SArray{Sizes,T1,N,D1}}, a::MArray{Sizes,T2,N,D2}) = SArray{Sizes,T1,N,D1}(a.data)
 
 
-
 # Conversions to SArray from AbstractArray
 Base.convert(::Type{SArray}, a::AbstractArray) = error("Must specify size parameter for SArray")
 @generated function Base.convert{Sizes,T,N}(::Type{SArray{Sizes}}, a::AbstractArray{T,N})
@@ -279,4 +278,18 @@ function Base.convert{Sizes,T1,T2,N}(::Type{Array{T1,N}},a::StaticArray{Sizes,T2
     out = Array{T1,N}(Sizes...)
     out[:] = a[:]
     return out
+end
+
+
+#########################################
+## show() on type forces NTuple output ##
+#########################################
+function Base.show{Sizes,T,N,M}(io::IO, ::Type{SArray{Sizes,T,N,NTuple{M,T}}})
+    # avoids more verbose SArray{Sizes,T,N,Tuple{T,T,T,T,T,T,T,T,...}}
+    print(io, "SArray{$Sizes,$T,$N,NTuple{$M,$T}}")
+end
+
+function Base.show{Sizes,T,N,M}(io::IO, ::Type{MArray{Sizes,T,N,NTuple{M,T}}})
+    # avoids more verbose MArray{Sizes,T,N,Tuple{T,T,T,T,T,T,T,T,...}}
+    print(io, "MArray{$Sizes,$T,$N,NTuple{$M,$T}}")
 end
