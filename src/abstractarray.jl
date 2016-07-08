@@ -1,3 +1,43 @@
+@pure length{T<:StaticArray}(a::Union{T,Type{T}}) = prod(size(a))
+
+@pure function size{T<:StaticArray}(a::Union{T,Type{T}}, d::Integer)
+    s = size(a)
+    return (d <= length(s) ? s[d] : 1)
+end
+
+# This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
+function Base.isassigned(a::StaticArray, i::Int...)
+    ii = sub2ind(size(a), i...)
+    1 <= ii <= length(a) ? true : false
+end
+
+Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
+
+# Some fallbacks
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}) = SA
+
+@pure similar_type{SV<:StaticVector, T}(::Union{SV,Type{SV}}, ::Type{T}) = SVector{length(SV),T}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Integer) = SVector{size, eltype(SA)}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Integer}) = SVector{sizes[1], eltype(SA)}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Integer) = SVector{size, T}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Integer}) = SVector{sizes[1], T}
+
+@pure similar_type{SM<:StaticMatrix, T}(::Union{SM,Type{SM}}, ::Type{T}) = SMatrix{size(SM,1),size(SM,2),T}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Integer,Integer}) = SMatrix{sizes[1], sizes[2], eltype(SA)}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Integer,Integer}) = SMatrix{sizes[1], sizes[2], T}
+
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}) = SArray{size(SA),T}
+@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Vararg{Integer,N}) = SArray{sizes, eltype(SA)}
+@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Vararg{Integer,N}) = SArray{sizes, T}
+
+@inline similar{SV <: StaticVector}(::SV) = MVector{length(SV),eltype(SV)}()
+@inline similar{SV <: StaticVector, T}(::SV, ::Type{T}) = MVector{length(SV),T}()
+@inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Integer}) = MVector{sizes[1], eltype{SV}}()
+@inline similar{SA <: StaticArray}(::SA, size::Integer) = MVector{size, eltype{SV}}()
+@inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, sizes::Tuple{Integer}) = MVector{sizes[1],T}()
+@inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, size::Integer) = MVector{size,T}()
+
+#=
 # Methods necessary to fulfil the AbstractArray interface (plus some extensions, like size() on types)
 
 Base.size{Sizes}(::StaticArray{Sizes}) = Sizes
@@ -136,3 +176,4 @@ end
 end
 
 # TODO: permutedims() (and transpose/ctranspose in linalg)
+=#

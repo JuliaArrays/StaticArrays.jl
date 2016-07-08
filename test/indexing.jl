@@ -1,37 +1,48 @@
 @testset "Indexing" begin
-    @testset "Linear getindex()" begin
-        mat = reshape([4,5,6,7], (2,2))
-        sm = SMatrix{(2,2)}(mat)
-        mm = MMatrix{(2,2)}(mat)
+    @testset "Linear getindex() on SVector" begin
+        vec = [4,5,6,7]
+        sm = SVector{4}(vec)
 
         # Scalar
-        @test sm[1] == mat[1]
-        @test mm[1] == mat[1]
-        @test sm[2] == mat[2]
-        @test mm[2] == mat[2]
-        @test sm[3] == mat[3]
-        @test mm[3] == mat[3]
-        @test sm[4] == mat[4]
-        @test mm[4] == mat[4]
-        @test_inferred getindex(sm, 1)
+        @test sm[1] == vec[1]
+        @test sm[2] == vec[2]
+        @test sm[3] == vec[3]
+        @test sm[4] == vec[4]
         @test_inferred getindex(sm, 1)
 
         # Tuple
         @test sm[(4,3,2,1)] === SVector((7,6,5,4))
         @test_inferred getindex(sm, (4,3,2,1))
-        @test mm[(4,3,2,1)] == MVector((7,6,5,4))
-        @test_inferred getindex(mm, (4,3,2,1))
-        @test isa(mm[(4,3,2,1)], MVector)
 
         # Colon
-        @test sm[:] === SVector{(4,)}(mat[:])
+        @test sm[:] === sm
         @test_inferred getindex(sm, :)
-        @test mm[:] == MVector{(4,)}(mat[:])
-        @test isa(mm[:], MVector)
-        @test_inferred getindex(mm, :)
 
     end
 
+    #=
+    @testset "Linear getindex() on SMatrix" begin
+        mat = reshape([4,5,6,7], (2,2))
+        sm = SMatrix{2,2}(mat)
+
+        # Scalar
+        @test sm[1] == mat[1]
+        @test sm[2] == mat[2]
+        @test sm[3] == mat[3]
+        @test sm[4] == mat[4]
+        @test_inferred getindex(sm, 1)
+
+        # Tuple
+        @test sm[(4,3,2,1)] === SVector((7,6,5,4))
+        @test_inferred getindex(sm, (4,3,2,1))
+
+        # Colon
+        @test sm[:] === SVector{4}(mat[:])
+        @test_inferred getindex(sm, :)
+
+    end
+    =#
+#=
     @testset "Multi-dimensional getindex()" begin
         a = reshape([1,2,3,4,5,6,7,8],(2,2,2))
         sa = SArray{(2,2,2)}(a)
@@ -129,5 +140,5 @@
         ma[:,(2,1),1] = a[:,[2,1],1]
         ma[:,[2,1],2] = a[:,[2,1],2]
         @test ma == a
-    end
+    end=#
 end

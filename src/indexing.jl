@@ -1,3 +1,232 @@
+######################
+## Linear Indexing  ##
+######################
+
+# What to do about @boundscheck and @inbounds? It's worse sometimes than @inline, for tuples...
+@generated function getindex{SA<:StaticArray, S}(a::SA, inds::NTuple{S,Integer})
+    newtype = similar_type(SA, (S,))
+    exprs = [:(a[inds[$i]]) for i = 1:S]
+
+    return quote
+        $(Expr(:meta, :inline))
+        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function getindex{S}(a::AbstractArray, inds::NTuple{S,Integer})
+    newtype = SVector{S,eltype(a)}
+    exprs = [:(a[inds[$i]]) for i = 1:S]
+
+    return quote
+        $(Expr(:meta, :inline))
+        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function getindex{SA<:StaticArray}(a::SA, ::Colon)
+    if SA <: StaticVector && a == similar_type(SA)
+        return quote
+            $(Expr(:meta, :inline))
+            a
+        end
+    else
+        l = length(SA)
+        inds = 1:l
+        return quote
+            $(Expr(:meta, :inline))
+            $(Expr(:call, :getindex, :a, Expr(:tuple, inds...)))
+        end
+    end
+end
+
+# MAYBE: fixed-size indexing with bools? They would have to be Val's...
+
+# Size-indeterminate linear indexing seems to be provided by AbstractArray,
+# returning a `Vector`.
+
+# Same for setindex!
+@generated function setindex!{SA<:StaticArray, S}(a::SA, vals, inds::NTuple{S,Integer})
+    exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
+    if vals <: StaticArray
+        if length(vals) != S # We should be able to annotate that the RHS of the above exprs is @inbounds, but not the LHS...
+            error("Dimension mismatch")
+        end
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    else
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            @boundscheck if length(vals) != $S
+                error("Dimension mismatch")
+            end
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    end
+end
+
+# this one for consistency
+@generated function setindex!{SA<:StaticArray, S}(a::SA, vals, inds::NTuple{S,Integer})
+    exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
+    if vals <: StaticArray
+        if length(vals) != S
+            error("Dimension mismatch")
+        end
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    else
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            @boundscheck if length(vals) != $S
+                error("Dimension mismatch")
+            end
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    end
+end
+
+@generated function setindex!{SA<:StaticArray}(a::SA, vals, ::Colon)
+    exprs = [:(a[$i] = vals[$i]) for i = 1:length(SA)]
+    if vals <: StaticArray
+        if length(vals) != S
+            error("Dimension mismatch")
+        end
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    else
+        return quote
+            $(Expr(:meta, :inline, :propagate_inbounds))
+            @boundscheck if length(vals) != $S
+                error("Dimension mismatch")
+            end
+            $(Expr(:block, exprs...))
+            return :vals
+        end
+    end
+end
+
+###############################
+## Two-dimensional Indexing  ##
+###############################
+# Special 2D case to begin with (and possibly good for avoiding splatting penalties?)
+# Furthermore, avoids stupidity regarding two-dimensional indexing on 3+ dimensional arrays!
+@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, i1::Integer, i2::Integer)
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if (i1 < 1 || i1 > $(size(SM,1)) || i2 < 1 || i2 > $(size(SM,2)))
+            throw(BoundsError(m, (i1,i2)))
+        end
+
+        @inbounds return m[i1 + $(size(SM,1))*(i2-1)]
+    end
+end
+
+# TODO put bounds checks here, as they should have less overhead here
+@generated function getindex{SM<:StaticMatrix, S1, S2}(m::Union{SM, Ref{SM}}, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
+    newtype = similar_type(SM, (S1,S2))
+    exprs = [:(m[inds1[$i1], inds2[$i2]]) for i1 = 1:S1, i2 = 1:S2]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+# TODO put bounds checks here, as they should have less overhead here
+@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, ::Colon, inds2::Union{Integer, Tuple{Vararg{Integer}}})
+    inds1 = ntuple(identity, size(SM,1))
+    quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        m[$inds1, inds2]
+    end
+end
+
+# TODO put bounds checks here, as they should have less overhead here
+@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, inds1::Union{Integer, Tuple{Vararg{Integer}}}, ::Colon)
+    inds2 = ntuple(identity, size(SM,2))
+    quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        m[inds1, $inds2]
+    end
+end
+
+@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, ::Colon, ::Colon)
+    inds1 = ntuple(identity, size(SM,1))
+    inds2 = ntuple(identity, size(SM,2))
+    quote
+        $(Expr(:meta, :inline))
+        @inbounds return m[$inds1, $inds2]
+    end
+end
+
+# Convert to StaticArrays using tuples
+# TODO think about bounds checks here.
+@generated function getindex{S,T}(m::AbstractArray{T}, inds1::NTuple{S, Integer}, i2::Integer)
+    exprs = [:(m[inds1[$j], i2]) for j = 1:S]
+    return Expr(:call, SVector{S,T}, Expr(:tuple, exprs...))
+end
+
+@generated function getindex{S,T}(m::AbstractArray{T}, i1::Integer, inds2::NTuple{S, Integer})
+    exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
+    return Expr(:call, SVector{S,T}, Expr(:tuple, exprs...))
+end
+
+@generated function getindex{S1,S2,T}(m::AbstractArray{T}, inds1::NTuple{S1, Integer}, inds2::NTuple{S2, Integer})
+    exprs = [:(m[inds1[$j1], inds2[$j2]]) for j1 = 1:S1, j2 = 1:S2]
+    return Expr(:call, SMatrix{S1,S2,T}, Expr(:tuple, exprs...))
+end
+
+# TODO expand out tuples to vectors in size-indeterminate cases
+
+#################################
+## Multi-dimensional Indexing  ##
+#################################
+
+# TODO TODO TODO
+
+#########################
+## Indexing on Ref{}'s ##
+#########################
+function getindex{SA <: StaticArray}(v::Ref{SA}, index::Integer)
+    @boundscheck if index > length(SA) || index < 1
+        throw(BoundsError(v,index))
+    end
+
+    # Get a pointer to the vector
+    p = Base.unsafe_convert(Ptr{T}, v)
+
+    # Store the value
+    Base.unsafe_load(p, index)
+end
+
+
+function setindex!{S,T}(v::Ref{SVector{S,T}}, val, index::Integer)
+    @boundscheck if index > length(SA) || index < 1
+        throw(BoundsError(v,index))
+    end
+
+    # Get a pointer to the vector
+    p = Base.unsafe_convert(Ptr{T}, v)
+
+    # Store the value
+    if eltype(v) == typeof(val)
+        Base.unsafe_store!(p, value, index)
+    else
+        Base.unsafe_store!(p, convert(T, value), index)
+    end
+end
+
+#=
 ##############
 ## Indexing ##
 ##############
@@ -379,3 +608,4 @@ end
         end
     end
 end
+=#
