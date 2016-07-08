@@ -1,4 +1,5 @@
 @testset "AbstractArray interface" begin
+#=
     @testset "size and length" begin
         vec = [1,2,3,4]
         sv = SVector{(4,)}(vec)
@@ -127,4 +128,6 @@
         @test_throws Exception reshape(sv, (2,2)) == sm
 
     end
+
+    =#
 end

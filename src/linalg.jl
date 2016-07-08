@@ -1,4 +1,98 @@
-typealias SVector{Size,T,D} SArray{Size,T,1,D}
+import Base: +, -, *, /
+
+# TODO: more operators, like AbstractArray
+
+# Unary ops
+@inline -(a::StaticArray) = map(-, a)
+
+# Binary ops
+# Between arrays
+@inline +(a::StaticArray, b::StaticArray) = map(+, a, b)
+@inline +(a::AbstractArray, b::StaticArray) = map(+, a, b)
+@inline +(a::StaticArray, b::AbstractArray) = map(+, a, b)
+
+@inline -(a::StaticArray, b::StaticArray) = map(-, a, b)
+@inline -(a::AbstractArray, b::StaticArray) = map(-, a, b)
+@inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
+
+# Scalar-array
+@inline +(a::Number, b::StaticArray) = broadcast(+, a, b)
+@inline +(a::StaticArray, b::Number) = broadcast(+, a, b)
+
+@inline -(a::Number, b::StaticArray) = broadcast(-, a, b)
+@inline -(a::StaticArray, b::Number) = broadcast(-, a, b)
+
+@inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
+@inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
+
+@inline /(a::StaticArray, b::Number) = broadcast(/, a, b)
+
+
+# Transpose, conjugate, etc
+@inline conj(a::StaticArray) = map(conj, a)
+
+@generated function transpose(v::StaticVector)
+    n = length(v)
+    newtype = similar_type(v, (1,n))
+    exprs = [:(v[$j]) for j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function ctranspose(v::StaticVector)
+    n = length(v)
+    newtype = similar_type(v, (1,n))
+    exprs = [:(conj(v[$j])) for j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function transpose(m::StaticMatrix)
+    (s1,s2) = size(m)
+    if s1 == s2
+        newtype = m
+    else
+        newtype = similar_type(v, (s2,s1))
+    end
+
+    exprs = [:(m[$j2, $j1]) for j1 = 1:s1, j2 = 1:s2]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function ctranspose(m::StaticMatrix)
+    (s1,s2) = size(m)
+    if s1 == s2
+        newtype = m
+    else
+        newtype = similar_type(v, (s2,s1))
+    end
+
+    exprs = [:(conj(m[$j2, $j1])) for j1 = 1:s1, j2 = 1:s2]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+
+#=
+
+abstract SVector{Size,T,D} <: StaticArray{T,D}
+@pure size{Size}(::SVector{Size}) = (Size,)
+@pure size{T<:SVector}(::Type{T}) = (T.parameters[1],)
+
+#typealias SVector{Size,T,D} SArray{Size,T,1,D}
 typealias MVector{Size,T,D} MArray{Size,T,1,D}
 typealias StaticVector{Size,T,D} Union{SVector{Size,T,D},MVector{Size,T,D}}
 
@@ -102,3 +196,4 @@ end
 # Level-2 ops: matrix-vector multiplication and matrix transpose
 
 # Level-3 ops: matrix-matrix multiplication
+=#

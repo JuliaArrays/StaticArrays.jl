@@ -1,11 +1,7 @@
 using StaticArrays
-if VERSION >= v"0.5-"
-    using Base.Test
-else
-    using BaseTestNext
-    const Test = BaseTestNext
-end
+using Base.Test
 
+#=
 # @inferred throws an error, which doesn't interract particularly well
 # with BaseTestNext
 macro test_inferred(ex)
@@ -25,3 +21,4 @@ end
     include("indexing.jl")
     include("linalg.jl")
 end
+=#

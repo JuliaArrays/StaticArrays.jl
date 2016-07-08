@@ -1,4 +1,5 @@
 @testset "Linear algebra" begin
+#=
     @testset "StaticVector and StaticMatrix constructors" begin
         sv = SArray{(3,)}((1,2,3))
         mv = MArray{(3,)}((1,2,3))
@@ -51,5 +52,5 @@
         @test_inferred convert(Vector,mv)
         @test convert(Matrix, mm) == m
         @test_inferred convert(Matrix,mm)
-    end
+    end =#
 end
