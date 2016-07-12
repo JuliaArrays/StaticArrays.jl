@@ -2,13 +2,13 @@ immutable MArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{T,L}
 
     function MArray(x::NTuple{L})
-        check_MArray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
         new(x)
     end
 end
 
-@generated function check_MArray_parameters{Size,T,N,L}(::Type{Val{Size}}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
-    if !(isa(Size, Tuple{Vararg, Int}))
+@generated function check_marray_parameters{Size,T,N,L}(::Type{Val{Size}}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
+    if !(isa(Size, Tuple{Vararg{Int}}))
         error("MArray parameter Size must be a tuple of Ints (e.g. `MArray{(3,3)}`)")
     end
 

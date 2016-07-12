@@ -1,14 +1,14 @@
 immutable SArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
-    function SArray(x::NTuple{L})
-        #check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
+    function SArray(x)
+        check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
         new(x)
     end
 end
 
 @generated function check_sarray_parameters{Size,T,N,L}(::Type{Val{Size}}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
-    if !(isa(Size, Tuple{Vararg, Int}))
+    if !(isa(Size, Tuple{Vararg{Int}}))
         error("SArray parameter Size must be a tuple of Ints (e.g. `SArray{(3,3)}`)")
     end
 
