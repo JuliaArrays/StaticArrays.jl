@@ -86,6 +86,64 @@ end
 end
 
 
+@inline vcat(a::Union{StaticVector,StaticMatrix}) = a
+@generated function vcat(a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix})
+    if size(a,2) != size(b,2)
+        error("Dimension mismatch")
+    end
+
+    if a <: StaticVector && b <: StaticVector
+        newtype = similar_type(a, (length(a) + length(b),))
+        exprs = vcat([:(a[$i]) for i = 1:length(a)],
+                     [:(b[$i]) for i = 1:length(b)])
+    else
+        newtype = similar_type(a, (size(a,1) + size(b,1), size(a,2)))
+        exprs = [((i <= size(a,1)) ? ((a <: StaticVector) ? :(a[$i]) : :(a[$i,$j]))
+                                   : ((b <: StaticVector) ? :(b[$(i-size(a,1))]) : :(b[$(i-size(a,1)),$j])))
+                                   for i = 1:(size(a,1)+size(b,1)), j = 1:size(a,2)]
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+# TODO make these more efficient
+@inline vcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}) =
+    vcat(vcat(a,b), c)
+@inline vcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
+    vcat(vcat(a,b), c...)
+
+@generated function hcat(a::StaticVector)
+    newtype = similar_type(a, (length(a),1))
+    exprs = [:(a[$i]) for i = 1:length(a)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+@inline hcat(a::StaticMatrix) = a
+@generated function hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix})
+    if size(a,1) != size(b,1)
+        error("Dimension mismatch")
+    end
+
+    exprs1 = [:(a[$i]) for i = 1:length(a)]
+    exprs2 = [:(b[$i]) for i = 1:length(b)]
+
+    newtype = similar_type(a, (size(a,1), size(a,2) + size(b,2)))
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs1..., exprs2...)))
+    end
+end
+# TODO make these more efficient
+@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}) =
+    hcat(hcat(a,b), c)
+@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
+    hcat(hcat(a,b), c...)
+
 #=
 
 abstract SVector{Size,T,D} <: StaticArray{T,D}

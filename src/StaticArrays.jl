@@ -2,7 +2,7 @@ module StaticArrays
 
 import Base: @pure, @propagate_inbounds, getindex, setindex!, size,
              length, convert, promote_op, map, reduce, mapreduce,
-             broadcast, conj, transpose, ctranspose
+             broadcast, conj, transpose, ctranspose, hcat, vcat
 
 export StaticArray, StaticVector, StaticMatrix
 export SArray, SVector, SMatrix

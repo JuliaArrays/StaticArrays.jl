@@ -69,7 +69,7 @@ end
 end
 
 # this one for consistency
-@generated function setindex!{SA<:StaticArray, S}(a::SA, vals, inds::NTuple{S,Integer})
+@generated function setindex!{S}(a::AbstractArray, vals, inds::NTuple{S,Integer})
     exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
     if vals <: StaticArray
         if length(vals) != S
