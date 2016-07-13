@@ -61,13 +61,21 @@ typealias StaticMatrix{T} StaticArray{T, 2}
     SA(NTuple{(length(SA))}(a))
 end
 
-function convert{A<:AbstractArray}(::Type{A}, sa::StaticArray)
-    out = A(size(sa))
+function convert{T,N}(::Type{Array}, sa::StaticArray{T,N})
+    out = Array{T,N}(size(sa))
     @inbounds for i = 1:length(sa)
         out[i] = sa[i]
     end
     return out
 end
+
+#function convert{A<:AbstractArray}(::Type{A}, sa::StaticArray)
+#    out = A(size(sa))
+#    @inbounds for i = 1:length(sa)
+#        out[i] = sa[i]
+#    end
+#    return out
+#end
 
 
 # A general way of going back to a tuple, etc
