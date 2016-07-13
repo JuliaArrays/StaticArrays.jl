@@ -6,7 +6,7 @@ type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
         new(d)
     end
 
-    function MMatrix(d::Tuple)
+    function MMatrix(d::NTuple{L})
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(convert_ntuple(T, d))
     end
@@ -98,20 +98,26 @@ end
 
 macro MMatrix(ex)
     @assert isa(ex, Expr)
-    if ex.head == :hcat
+    if ex.head == :vect && length(ex.args) == 1 # 1 x 1
+        return Expr(:call, MMatrix{1, 1}, Expr(:tuple, ex.args[1]))
+    elseif ex.head == :hcat # 1 x n
         s1 = 1
         s2 = length(ex.args)
         return Expr(:call, MMatrix{s1, s2}, Expr(:tuple, ex.args...))
     elseif ex.head == :vcat
-        # Validate
-        s1 = length(ex.args)
-        s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 0), 1:s1)
-        s2 = minimum(s2s)
-        if maximum(s2s) != s2
-            error("Rows must be of matching lengths")
-        end
+        if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
+            # Validate
+            s1 = length(ex.args)
+            s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 1), 1:s1)
+            s2 = minimum(s2s)
+            if maximum(s2s) != s2
+                error("Rows must be of matching lengths")
+            end
 
-        exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-        return Expr(:call, MMatrix{s1, s2}, Expr(:tuple, exprs...))
+            exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
+            return Expr(:call, MMatrix{s1, s2}, Expr(:tuple, exprs...))
+        else # n x 1
+            return Expr(:call, MMatrix{length(ex.args), 1}, Expr(:tuple, ex.args...))
+        end
     end
 end

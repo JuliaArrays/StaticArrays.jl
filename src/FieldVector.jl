@@ -7,7 +7,7 @@ abstract FieldVector{T} <: StaticVector{T}
 @pure length{FV<:FieldVector}(::Union{FV,Type{FV}}) = length(FV.types)
 
 @inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
-@inline setindex!(v::FieldVector, i::Integer, x) = setfield!(v, i, x)
+@inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)
 
 
 

@@ -34,18 +34,19 @@ include("linalg.jl")
 include("matrix_multiply.jl")
 include("deque.jl")
 
+include("FixedSizeArrays.jl")
+
 # TODO list
 # ---------
 #
-# * map!, broadcast!
+# * tests
 #
 # * reshape() - accept Val? Currently uses `ReshapedArray`. Cool :)
 #
 # * permutedims() - accept Val? Or wait for `PermutedDimsArray` ?
 #
 # * Linear algebra - matrix functions (det, inv, eig, svd, qr, etc...)
-#
-# * @fsa-like macros for easily making matrices, @SMatrix and @MMatrix.
+#                    (currently, we use pointers to interact with LAPACK, etc)
 
 
 end # module

@@ -17,46 +17,48 @@ Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}) = SA
 
 @pure similar_type{SV<:StaticVector, T}(::Union{SV,Type{SV}}, ::Type{T}) = SVector{length(SV),T}
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Integer) = SVector{size, eltype(SA)}
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Integer}) = SVector{sizes[1], eltype(SA)}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Integer) = SVector{size, T}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Integer}) = SVector{sizes[1], T}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Int) = SVector{size, eltype(SA)}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int}) = SVector{sizes[1], eltype(SA)}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Int) = SVector{size, T}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Int}) = SVector{sizes[1], T}
 
 @pure similar_type{SM<:StaticMatrix, T}(::Union{SM,Type{SM}}, ::Type{T}) = SMatrix{size(SM,1),size(SM,2),T}
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Integer,Integer}) = SMatrix{sizes[1], sizes[2], eltype(SA)}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Integer,Integer}) = SMatrix{sizes[1], sizes[2], T}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], eltype(SA)}
+@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], T}
 
 @pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}) = SArray{size(SA),T}
-@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Integer,N}}) = SArray{sizes, eltype(SA)}
-@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Vararg{Integer,N}}) = SArray{sizes, T}
+@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, eltype(SA)}
+@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, T}
 
 # Some specializations for the mutable case
 @pure similar_type{MV<:MVector, T}(::Union{MV,Type{MV}}, ::Type{T}) = MVector{length(MV),T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, size::Integer) = MVector{size, eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Integer}) = MVector{sizes[1], eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, size::Integer) = MVector{size, T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Integer}) = MVector{sizes[1], T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, size::Int) = MVector{size, eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int}) = MVector{sizes[1], eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, size::Int) = MVector{size, T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Int}) = MVector{sizes[1], T}
 
 @pure similar_type{MM<:MMatrix, T}(::Union{MM,Type{MM}}, ::Type{T}) = MMatrix{size(MM,1),size(MM,2),T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], T}
 
 @pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}) = MArray{size(MA),T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Integer,N}}) = MArray{sizes, eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T,N}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Vararg{Integer,N}}) = MArray{sizes, T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T,N}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, T}
 
 # And also similar() returning mutable StaticArrays
 @inline similar{SV <: StaticVector}(::SV) = MVector{length(SV),eltype(SV)}()
 @inline similar{SV <: StaticVector, T}(::SV, ::Type{T}) = MVector{length(SV),T}()
-@inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Integer}) = MVector{sizes[1], eltype{SA}}()
-@inline similar{SA <: StaticArray}(::SA, size::Integer) = MVector{size, eltype{SA}}()
-@inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, sizes::Tuple{Integer}) = MVector{sizes[1],T}()
-@inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, size::Integer) = MVector{size,T}()
+@inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Int}) = MVector{sizes[1], eltype(SA)}()
+@inline similar{SA <: StaticArray}(::SA, size::Int) = MVector{size, eltype(SA)}()
+@inline similar{T}(::StaticArray, ::Type{T}, sizes::Tuple{Int}) = MVector{sizes[1],T}()
+@inline similar{T}(::StaticArray, ::Type{T}, size::Int) = MVector{size,T}()
 
-@inline similar{SM <: StaticMatrix}(::SM) = MMatrix{size(SM,1),size(SM,2),eltype(SM),length(SM)}()
+@inline similar{SM <: StaticMatrix}(m::SM) = MMatrix{size(SM,1),size(SM,2),eltype(SM),length(SM)}()
 @inline similar{SM <: StaticMatrix, T}(::SM, ::Type{T}) = MMatrix{size(SM,1),size(SM,2),T,length(SM)}()
-@inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], eltype{SA}, sizes[1]*sizes[2]}()
-@inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], T, sizes[1]*sizes[2]}()
+@inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(SA), sizes[1]*sizes[2]}()
+@inline similar(a::StaticArray, T::Type, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], T, sizes[1]*sizes[2]}()
+
+
 
 # TODO similar for SArray...
 

@@ -5,11 +5,11 @@
 [![Build Status](https://travis-ci.org/andyferris/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/andyferris/StaticArrays.jl)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
-in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: AbstractArray{T,N}`.
+in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: DenseArray{T,N}`.
 Subtypes of `StaticArray` will provide fast implementations of common array and
 linear algebra operations. Note that here "statically sized" means that the
 size can be determined from the *type* (so concrete implementations of
-`StaticArray` must define a method `size(::Type{T})`), and "static" does *not*
+`StaticArray` must define a method `size(::Type{T})`), and "static" does **not**
 necessarily imply `immutable`.
 
 The package also provides some concrete static array types: `SVector`, `SMatrix`
@@ -20,24 +20,33 @@ of any uniform Julia "struct".
 
 ### Approach
 
-Primarily, the package provides methods for common `AbstractVector` functions,
-specialized for (possibly immutable) statically sized arrays. Many of Julia's
-built-in method definitions inherently assume mutability, and further
+Primarily, the package provides methods for common `AbstractArray` functions,
+specialized for (potentially immutable) statically sized arrays. Many of
+Julia's built-in method definitions inherently assume mutability, and further
 performance optimizations may be made when the size of the array is know to the
 compiler (by loop unrolling, for instance).
 
-At the lowest level, `getindex` on statically sized arrays will call `getfield` on
-types or tuples, and in this package `StaticArray`s are limited to `LinearFast()` access patterns with 1-based indexing.
-What this means is that all `StaticArray`s support linear indexing into a
-dense, column-based storage format. By simply defining `size(::Type{T})` and
-`getindex(::T, ::Integer)`, the `StaticArray` interface will look after
-multi-dimensional indexing, `map`, `reduce`, `broadcast`, matrix multiplication and
-a variety of other operations.
+At the lowest level, `getindex` on statically sized arrays will call `getfield`
+on types or tuples, and in this package `StaticArray`s are limited to
+`LinearFast()` access patterns with 1-based indexing. What this means is that
+all `StaticArray`s support linear indexing into a dense, column-based storage
+format. By simply defining `size(::Type{T})` and `getindex(::T, ::Integer)`,
+the `StaticArray` interface will look after multi-dimensional indexing,
+`map`/`map!`, `reduce`, `broadcast`/`broadcast!`, matrix multiplication and a
+variety of other operations.
+
+Finally, since `StaticArrays <: DenseArray`, many methods such as `sqrtm`,
+`eig`, `svd`, and many, many more are already defined in `Base`. Conversion
+to pointers let us interact with LAPACK and similar C/Fortran libraries through
+the existing `StridedArray` interface. In some instances mutable `StaticArray`s
+(`MVector` or `MMatrix`) will be returned, while in other cases the definitions
+fall back to `Array`. This approach gives us maximal versatility while retaining
+the ability to implement fast specializations in the future.
 
 ### Indexing
 
 Statically sized indexing can be realized by indexing each dimension by a
-scalar, a `NTuple{N, Integer}` or `:` (on statically sized arrays only).
+scalar, an `NTuple{N, Integer}` or `:` (on statically sized arrays only).
 Indexing in this way will result a statically sized array (even if the input was
 dynamically sized) of the closest type (as defined by `similar_type`).
 
@@ -63,7 +72,8 @@ similar_type{A <: StaticArray, ElType}(::Type{A}, ::Type{ElType}, size::Tuple{In
 These setting will affect everything, from indexing, to matrix multiplication
 and `broadcast`.
 
-Use of `similar` will fall back to a mutable container, such as a `MVector` (see below).
+Use of `similar` will fall back to a mutable container, such as a `MVector`
+(see below).
 
 ### `SVector`
 
@@ -99,7 +109,8 @@ convenience macro `@SMatrix [1 2; 3 4]` is provided.
 
 A container with arbitrarily many dimensions is defined as
 `immutable SArray{Size,T,N,L} <: StaticArray{T,N}`, where
-`Size = (S1, S2, ...)` is a tuple of `Int`s.
+`Size = (S1, S2, ...)` is a tuple of `Int`s. You can easily construct one with
+the `@SArray` macro, just like `@SVector` and `@SMatrix`.
 
 Notably, the main reason `SVector` and `SMatrix` are defined is to make it
 easier to define the types without the extra tuple characters (compare
@@ -110,18 +121,21 @@ because it is so easy to define new `StaticArray` subtypes.
 
 These statically-sized arrays are identical to the above, but are defined as
 mutable Julia `type`s, instead of `immutable`. Because they are mutable, they
-allow `setindex!` to be defined (achieved through pointer manipulation).
+allow `setindex!` to be defined (achieved through pointer manipulation, into a
+tuple).
 
 As a consequence of Julia's internal implementation, these mutable containers
 live on the heap, not the stack. Their memory must be allocated and tracked by
 the garbage collector. Nevertheless, there is opportunity for speed
 improvements relative to `Base.Array` because (a) there may be one less
-pointer indirection and (b) their (typically small) static size allows for
-additional loop unrolling and inlining. They are also very useful containers
-that can be constructed on the heap and later copied as e.g. an immutable
-`SVector` to the stack for use, or into e.g. an `Array{SVector}` for storage.
+pointer indirection, (b) their (typically small) static size allows for
+additional loop unrolling and inlining, and consequentially (c) their mutating
+methods like `map!` are extremely fast. They also happen to be very useful
+containers that can be constructed on the heap and later copied as e.g. an
+immutable `SVector` to the stack for use, or into e.g. an `Array{SVector}` for
+storage.
 
-Convenience macros `@MVector` and `@MMatrix` are provided.
+Convenience macros `@MVector`, `@MMatrix` and `@MArray` are provided.
 
 ### `FieldVector`
 
@@ -158,14 +172,22 @@ that takes a tuple of the data (and mutable containers may want to define a
 default constructor).
 
 Other useful functions to overload may be `similar_type` (and `similar` for
-mutable containers)
+mutable containers).
 
 ### SIMD optimizations
 
 It seems Julia and LLVM are smart enough to use processor vectorization extensions
 like SSE and AVX - however they are disabled by default. Run Julia with
 `julia -O` or `julia -O3` to enable these optimizations, and many of your
-`StaticArray` methods *may* become significantly faster!
+(immutable) `StaticArray` methods *may* become significantly faster!
+
+### *FixedSizeArrays* compatibility
+
+You can try `using StaticArrays.FixedSizeArrays` to add some compatibility
+wrappers for the most commonly used features of the *FixedSizeArrays* package,
+such as `Vec`, `Mat`, `Point` and `@fsa`. These wrappers do not provide a
+perfect interface, but may help in trying out *StaticArrays* with pre-existing
+code.
 
 ### See also
 

@@ -1,22 +1,20 @@
 @testset "Indexing" begin
     @testset "Linear getindex() on SVector" begin
         vec = [4,5,6,7]
-        sm = SVector{4}(vec)
+        sv = SVector{4}(vec)
 
         # Scalar
-        @test sm[1] == vec[1]
-        @test sm[2] == vec[2]
-        @test sm[3] == vec[3]
-        @test sm[4] == vec[4]
-        @test_inferred getindex(sm, 1)
+        @test (@inferred getindex(sv, 1)) == vec[1]
+        @test sv[2] == vec[2]
+        @test sv[3] == vec[3]
+        @test sv[4] == vec[4]
+
 
         # Tuple
-        @test sm[(4,3,2,1)] === SVector((7,6,5,4))
-        @test_inferred getindex(sm, (4,3,2,1))
+        @test (@inferred getindex(sv, (4,3,2,1))) === SVector((7,6,5,4))
 
         # Colon
-        @test sm[:] === sm
-        @test_inferred getindex(sm, :)
+        @test (@inferred getindex(sv,:)) === sv
 
     end
 

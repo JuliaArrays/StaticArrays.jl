@@ -44,6 +44,18 @@ end
 # Size-indeterminate linear indexing seems to be provided by AbstractArray,
 # returning a `Vector`.
 
+# We seem to get an error from Base's implementation with UnitRange
+#=
+function Base.getindex(v::StaticVector, r::UnitRange)
+    l = length(r)
+    out = similar(v, (l,))
+    for i in r
+        out[i] = v[i]
+    end
+    return out
+end
+=#
+
 # Same for setindex!
 @generated function setindex!{SA<:StaticArray, S}(a::SA, vals, inds::NTuple{S,Integer})
     exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]

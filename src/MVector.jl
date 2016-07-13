@@ -1,8 +1,16 @@
 type MVector{S, T} <: StaticVector{T}
     data::NTuple{S, T}
 
-    function MVector(in)
+    function MVector(in::NTuple{S, T})
         new(in)
+    end
+
+    function MVector(in::NTuple{S})
+        new(convert_ntuple(T,in))
+    end
+
+    function MVector(in::T)
+        new((in,))
     end
 
     function MVector()

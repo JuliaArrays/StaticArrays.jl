@@ -28,7 +28,7 @@ Otherwise, it may also be useful to define some of the following:
 like `Array`. If your `StaticArray` subtype contains multiple fields, make sure
 the data appears first, or if not define `getindex`/`setindex` yourself.
 """
-abstract StaticArray{T, N} <: AbstractArray{T, N}
+abstract StaticArray{T, N} <: DenseArray{T, N}
 
 typealias StaticVector{T} StaticArray{T, 1}
 typealias StaticMatrix{T} StaticArray{T, 2}
@@ -69,6 +69,38 @@ function convert{T,N}(::Type{Array}, sa::StaticArray{T,N})
     return out
 end
 
+function convert{T,N}(::Type{Array{T}}, sa::StaticArray{T,N})
+    out = Array{T,N}(size(sa))
+    @inbounds for i = 1:length(sa)
+        out[i] = sa[i]
+    end
+    return out
+end
+
+function convert{T,N}(::Type{Array{T,N}}, sa::StaticArray{T,N})
+    out = Array{T,N}(size(sa))
+    @inbounds for i = 1:length(sa)
+        out[i] = sa[i]
+    end
+    return out
+end
+
+function convert{T}(::Type{Matrix}, sa::StaticMatrix{T})
+    out = Matrix{T}(size(sa))
+    @inbounds for i = 1:length(sa)
+        out[i] = sa[i]
+    end
+    return out
+end
+
+function convert{T}(::Type{Vector}, sa::StaticVector{T})
+    out = Vector{T}(size(sa))
+    @inbounds for i = 1:length(sa)
+        out[i] = sa[i]
+    end
+    return out
+end
+
 #function convert{A<:AbstractArray}(::Type{A}, sa::StaticArray)
 #    out = A(size(sa))
 #    @inbounds for i = 1:length(sa)
@@ -87,3 +119,23 @@ end
         $(Expr(:tuple, exprs...))
     end
 end
+
+
+# We may want a pointer... usefull for LAPACK etc
+# TODO these are way too permissive. Need to think of a "general enough" way.
+function Base.unsafe_convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
+    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
+end
+
+function convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
+    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
+end
+
+#function convert(::Type{Ptr{Void}}, a::StaticArray)
+#    Base.data_pointer_from_objref(a)
+#end
+
+# TODO this is bad...
+#function convert{T}(::Type{Ptr{T}}, a::StaticArray)
+#    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
+#end
