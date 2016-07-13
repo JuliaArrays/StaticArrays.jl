@@ -1,4 +1,4 @@
-import Base: *
+import Base: *, A_mul_B!
 
 # TODO size-inferrable products with AbstractArray (such as StaticMatrix * AbstractVector)
 # TODO A*_mul_B*
@@ -38,6 +38,8 @@ import Base: *
     end
 end
 
+#@inline *{S1,S2,S3}(A::MMatrix{S1,S2}, B::MMatrix{S2,S3}) = MMatrix{S1,S3}(SMatrix{S1,S2}(A)*SMatrix{S2,S3}(B))
+
 @generated function *(A::StaticMatrix, B::StaticMatrix)
     sA = size(A)
     sB = size(B)
@@ -66,10 +68,34 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$k1, $j]*B[$j,$k2]) for j = 1:sA[2]]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]) for k1 = 1:sA[1], k2 = 1:sB[2]]
 
     return quote
         $(Expr(:meta,:inline))
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function A_mul_B!(out::StaticMatrix, A::StaticMatrix, B::StaticMatrix)
+    sA = size(A)
+    sB = size(B)
+    TA = eltype(A)
+    TB = eltype(B)
+
+    s = (sA[1], sB[2])
+
+    if sB[1] != sA[2]
+        error("Dimension mismatch")
+    end
+
+    if s != size(out)
+        error("Dimension mismatch")
+    end
+
+    exprs = [:(out[$(sub2ind(s, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]))) for k1 = 1:sA[1], k2 = 1:sB[2]]
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds $(Expr(:block, exprs...))
     end
 end

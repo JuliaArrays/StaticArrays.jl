@@ -10,6 +10,11 @@ type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(convert_ntuple(T, d))
     end
+
+    function MMatrix()
+        check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
+        new()
+    end
 end
 
 @generated function check_MMatrix_params{S1,S2,L}(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}})
@@ -58,6 +63,7 @@ end
     end
 end
 
+@inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::StaticArray{T}) = MMatrix{S1,S2,T}(Tuple(a))
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::AbstractArray{T}) = MMatrix{S1,S2,T}((a...))
 
 #####################
@@ -75,9 +81,9 @@ end
 
 @propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Integer) = setindex!(m, convert(T, val), i)
 @inline function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Integer)
-    @boundscheck if i < 1 || i > length(m)
-        throw(BoundsError())
-    end
+    #@boundscheck if i < 1 || i > length(m)
+    #    throw(BoundsError())
+    #end
 
     if isbits(T)
         unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), val, i)

@@ -1,5 +1,5 @@
 #########
-## Map ##
+## map ##
 #########
 
 # Single input
@@ -59,7 +59,7 @@ end
 # TODO General case involving arbitrary many inputs?
 
 ############
-## Reduce ##
+## reduce ##
 ############
 @generated function reduce(op, a1::StaticArray)
     if length(a1) == 1
@@ -168,16 +168,17 @@ end
 # TODO General case involving arbitrary many inputs?
 
 ###############
-## Broadcast ##
+## broadcast ##
 ###############
 # Single input version
 @inline broadcast(f, a::StaticArray) = map(f, a)
+
 
 # Two input versions
 @generated function broadcast(f, a1::StaticArray, a2::StaticArray)
     if size(a1) == size(a2)
         return quote
-            Expr(:meta, :inline)
+            $(Expr(:meta, :inline))
             map(f, a1, a2)
         end
     else
@@ -251,3 +252,118 @@ end
 @inline broadcast(f, n::Number, a::StaticArray) = map(x -> f(n, x), a)
 
 # Other two-input versions with AbstractArray
+
+##########
+## map! ##
+##########
+
+# Single input
+@generated function map!{F}(f::F, out::StaticArray, a1::StaticArray)
+    if size(a1) != size(a2)
+        error("Dimensions must match. Got sizes $(size(out)) and $(size(a1))")
+    end
+
+    exprs = [:(out[$j] = f(a1[$j])) for j = 1:length(a1)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+# Two inputs
+@generated function map!{F}(f::F, out::StaticArray, a1::StaticArray, a2::StaticArray)
+    if size(a1) != size(a2)
+        error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
+    end
+
+    if size(a1) != size(a2)
+        error("Dimensions must match. Got sizes $(size(out)) and $(size(a1))")
+    end
+
+    exprs = [:(out[$j] = f(a1[$j], a2[$j])) for j = 1:length(a1)]
+    return quote
+        #$(Expr(:meta, :inline))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+
+################
+## broadcast! ##
+################
+
+@inline broadcast!{F}(f::F, out::StaticArray, a::StaticArray) = map!(f, out, a)
+
+# Two input versions
+@generated function broadcast!{F}(f::F, out::StaticArray, a1::StaticArray, a2::StaticArray)
+    if size(a1) == size(a2) && size(out) == size(a1)
+        return quote
+            $(Expr(:meta, :inline))
+            @inbounds map!(f, out, a1, a2)
+        end
+    else
+        s1 = size(a1)
+        s2 = size(a2)
+        ndims = max(length(s1), length(s2))
+
+        s = Vector{Int}(ndims)
+        expands1 = Vector{Bool}(ndims)
+        expands2 = Vector{Bool}(ndims)
+        for i = 1:ndims
+            if length(s1) < i
+                s[i] = s2[i]
+                expands1[i] = false
+                expands2[i] = s2[i] > 1
+            elseif length(s2) < i
+                s[i] = s1[i]
+                expands1[i] = s1[i] > 1
+                expands2[i] = false
+            else
+                s[i] = max(s1[i], s1[i])
+                @assert s1[i] == 1 || s1[i] == s[i]
+                @assert s2[i] == 1 || s2[i] == s[i]
+                expands1[i] = s1[i] > 1
+                expands2[i] = s2[i] > 1
+            end
+        end
+        s = (s...)
+        L = prod(s)
+
+        if s != size(out)
+            error("Dimension mismatch")
+        end
+
+        exprs = Vector{Expr}(L)
+
+        i = 1
+        ind = ones(Int, ndims)
+        while i <= L
+            ind1 = [expands1[j] ? ind[j] : 1 for j = 1:length(s1)]
+            ind2 = [expands2[j] ? ind[j] : 1 for j = 1:length(s2)]
+            index1 = sub2ind(s1, ind1...)
+            index2 = sub2ind(s2, ind1...)
+
+            exprs[i] = :(out[$i] = $(Expr(:call, :f, Expr(:ref, :a1, index1), Expr(:ref, :a2, index2))))
+
+            i += 1
+
+            ind[1] += 1
+            j = 1
+            while j < length(s)
+                if ind[j] > s[j]
+                    ind[j] = 1
+                    ind[j+1] += 1
+                else
+                    break
+                end
+
+                j += 1
+            end
+        end
+
+        return quote
+            $(Expr(:meta, :inline))
+            @inbounds $(Expr(:block, exprs...))
+        end
+    end
+end
