@@ -1,4 +1,4 @@
-immutable MMatrix{S1, S2, T, L} <: StaticMatrix{T}
+type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
     data::NTuple{L, T}
 
     function MMatrix(d::NTuple{L,T})
@@ -73,16 +73,16 @@ function getindex(v::MMatrix, i::Integer)
     v.data[i]
 end
 
-@propagate_inbounds setindex!{S,T}(v::MMatrix{S,T}, val, i::Integer) = setindex!(v, convert(T, val), i)
-@inline function setindex!{S,T}(v::MMatrix{S,T}, val::T, i::Integer)
-    @boundscheck if i < 1 || i > length(v)
+@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Integer) = setindex!(m, convert(T, val), i)
+@inline function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Integer)
+    @boundscheck if i < 1 || i > length(m)
         throw(BoundsError())
     end
 
     if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), val, i)
+        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), val, i)
     else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
-        unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)
+        unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), Base.data_pointer_from_objref(val), i)
     end
 
     return val

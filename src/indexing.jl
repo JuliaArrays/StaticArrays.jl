@@ -120,7 +120,7 @@ end
 ###############################
 # Special 2D case to begin with (and possibly good for avoiding splatting penalties?)
 # Furthermore, avoids stupidity regarding two-dimensional indexing on 3+ dimensional arrays!
-@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, i1::Integer, i2::Integer)
+@generated function getindex{SM<:StaticMatrix}(m::SM, i1::Integer, i2::Integer)
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if (i1 < 1 || i1 > $(size(SM,1)) || i2 < 1 || i2 > $(size(SM,2)))
@@ -132,7 +132,7 @@ end
 end
 
 # TODO put bounds checks here, as they should have less overhead here
-@generated function getindex{SM<:StaticMatrix, S1, S2}(m::Union{SM, Ref{SM}}, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
+@generated function getindex{SM<:StaticMatrix, S1, S2}(m::SM, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
     newtype = similar_type(SM, (S1,S2))
     exprs = [:(m[inds1[$i1], inds2[$i2]]) for i1 = 1:S1, i2 = 1:S2]
 
@@ -142,8 +142,28 @@ end
     end
 end
 
+@generated function getindex{SM<:StaticMatrix, S2}(m::SM, i1::Integer, inds2::NTuple{S2,Integer})
+    newtype = similar_type(SM, (S2,))
+    exprs = [:(m[i1, inds2[$i2]]) for i2 = 1:S2]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function getindex{SM<:StaticMatrix, S1}(m::SM, inds1::NTuple{S1,Integer}, i2::Integer)
+    newtype = similar_type(SM, (S1,))
+    exprs = [:(m[inds1[$i1], i2]) for i1 = 1:S1]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
 # TODO put bounds checks here, as they should have less overhead here
-@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, ::Colon, inds2::Union{Integer, Tuple{Vararg{Integer}}})
+@generated function getindex{SM<:StaticMatrix}(m::SM, ::Colon, inds2::Union{Integer, Tuple{Vararg{Integer}}})
     inds1 = ntuple(identity, size(SM,1))
     quote
         $(Expr(:meta, :inline, :propagate_inbounds))
@@ -152,7 +172,7 @@ end
 end
 
 # TODO put bounds checks here, as they should have less overhead here
-@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, inds1::Union{Integer, Tuple{Vararg{Integer}}}, ::Colon)
+@generated function getindex{SM<:StaticMatrix}(m::SM, inds1::Union{Integer, Tuple{Vararg{Integer}}}, ::Colon)
     inds2 = ntuple(identity, size(SM,2))
     quote
         $(Expr(:meta, :inline, :propagate_inbounds))
@@ -160,7 +180,7 @@ end
     end
 end
 
-@generated function getindex{SM<:StaticMatrix}(m::Union{SM, Ref{SM}}, ::Colon, ::Colon)
+@generated function getindex{SM<:StaticMatrix}(m::SM, ::Colon, ::Colon)
     inds1 = ntuple(identity, size(SM,1))
     inds2 = ntuple(identity, size(SM,2))
     quote
@@ -188,43 +208,173 @@ end
 
 # TODO expand out tuples to vectors in size-indeterminate cases
 
+# 2D setindex!
+
+@generated function setindex!{SM<:StaticMatrix}(m::SM, val, i1::Integer, i2::Integer)
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if (i1 < 1 || i1 > $(size(SM,1)) || i2 < 1 || i2 > $(size(SM,2)))
+            throw(BoundsError(m, (i1,i2)))
+        end
+
+        @inbounds return m[i1 + $(size(SM,1))*(i2-1)] = val
+    end
+end
+
+# TODO: bounds checking?
+@generated function setindex!{SM<:StaticMatrix, S1, S2}(m::SM, val, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
+    exprs = [:(m[inds1[$i1], inds2[$i2]] = val[$i1,$i2]) for i1 = 1:S1, i2 = 1:S2]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        $(Expr(:block, exprs...))
+        return val
+    end
+end
+
+@generated function setindex!{SM<:StaticMatrix, S2}(m::SM, val, i1::Integer, inds2::NTuple{S2,Integer})
+    newtype = similar_type(SM, (S2,))
+    exprs = [:(m[i1, inds2[$i2]] = val[$i2]) for i2 = 1:S2]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:block, exprs...))
+    end
+end
+
+@generated function setindex!{SM<:StaticMatrix, S1}(m::SM, val, inds1::NTuple{S1,Integer}, i2::Integer)
+    newtype = similar_type(SM, (S1,))
+    exprs = [:(m[inds1[$i1], i2] = val[$i1]) for i1 = 1:S1]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:block, exprs...))
+    end
+end
+
+# TODO put bounds checks here, as they should have less overhead here
+@generated function setindex!{SM<:StaticMatrix}(m::SM, val, ::Colon, inds2::Union{Integer, Tuple{Vararg{Integer}}})
+    inds1 = ntuple(identity, size(SM,1))
+    quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        m[$inds1, inds2] = val
+    end
+end
+
+# TODO put bounds checks here, as they should have less overhead here
+@generated function setindex!{SM<:StaticMatrix}(m::SM, val, inds1::Union{Integer, Tuple{Vararg{Integer}}}, ::Colon)
+    inds2 = ntuple(identity, size(SM,2))
+    quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        m[inds1, $inds2] = val
+    end
+end
+
+# Check bounds for val here?
+@generated function setindex!{SM<:StaticMatrix}(m::SM, val, ::Colon, ::Colon)
+    inds1 = ntuple(identity, size(SM,1))
+    inds2 = ntuple(identity, size(SM,2))
+    quote
+        $(Expr(:meta, :inline))
+        return m[$inds1, $inds2] = val
+    end
+end
+
 #################################
 ## Multi-dimensional Indexing  ##
 #################################
 
-# TODO TODO TODO
+# Scalar indexing:
 
-#########################
-## Indexing on Ref{}'s ##
-#########################
-function getindex{SA <: StaticArray}(v::Ref{SA}, index::Integer)
-    @boundscheck if index > length(SA) || index < 1
-        throw(BoundsError(v,index))
-    end
+@generated function getindex(a::StaticArray, i1::Integer, i2::Integer, i3::Integer)
+    @assert ndims(a) <= 3
 
-    # Get a pointer to the vector
-    p = Base.unsafe_convert(Ptr{T}, v)
+    N = 3
+    ind_exprs = [:i1, :i2, :i3]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    ind_expr = Expr(:call, :+, exprs...)
 
-    # Store the value
-    Base.unsafe_load(p, index)
-end
+    bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)) || i3 < 1 || i3 > $(size(a,3)))
 
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if $bounds_expr
+            throw(BoundsError(m, (i1,i2,i3)))
+        end
 
-function setindex!{S,T}(v::Ref{SVector{S,T}}, val, index::Integer)
-    @boundscheck if index > length(SA) || index < 1
-        throw(BoundsError(v,index))
-    end
-
-    # Get a pointer to the vector
-    p = Base.unsafe_convert(Ptr{T}, v)
-
-    # Store the value
-    if eltype(v) == typeof(val)
-        Base.unsafe_store!(p, value, index)
-    else
-        Base.unsafe_store!(p, convert(T, value), index)
+        @inbounds return a[$ind_expr]
     end
 end
+
+# TODO check speed (splatting penalty)
+@generated function getindex(a::StaticArray, i1::Integer, i2::Integer, i_n::Integer...)
+    @assert ndims(a) <= 2 + length(i_n)
+
+    N = 2 + length(i_n)
+    ind_exprs = [:i1, :i2, [:(i_n[$j]) for j = 1:length(i_n)]...]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    ind_expr = Expr(:call, :+, exprs...)
+
+    bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)))
+    for j = 1:N-2
+        bound_expr = :($bounds_expr || i_n[$j] < 1 || i_n[$j] > $(size(a,2+j)))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if $bounds_expr
+            throw(BoundsError(m, (i1,i2,i_n...)))
+        end
+
+        @inbounds return a[$ind_expr]
+    end
+end
+
+@generated function setindex!(a::StaticArray, val, i1::Integer, i2::Integer, i3::Integer)
+    @assert ndims(a) <= 3
+
+    N = 3
+    ind_exprs = [:i1, :i2, :i3]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    ind_expr = Expr(:call, :+, exprs...)
+
+    bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)) || i3 < 1 || i3 > $(size(a,3)))
+
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if $bounds_expr
+            throw(BoundsError(m, (i1,i2,3)))
+        end
+
+        @inbounds return a[$ind_expr] = val
+    end
+end
+
+# TODO check speed (splatting penalty)
+@generated function setindex!(a::StaticArray, val, i1::Integer, i2::Integer, i_n::Integer...)
+    @assert ndims(a) <= 2 + length(i_n)
+
+    N = 2 + length(i_n)
+    ind_exprs = [:i1, :i2, [:(i_n[$j]) for j = 1:length(i_n)]...]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    ind_expr = Expr(:call, :+, exprs...)
+
+    bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)))
+    for j = 1:N-2
+        bound_expr = :($bounds_expr || i_n[$j] < 1 || i_n[$j] > $(size(a,2+j)))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        @boundscheck if $bounds_expr
+            throw(BoundsError(m, (i1,i2,i_n...)))
+        end
+
+        @inbounds return a[$ind_expr] = val
+    end
+end
+
+# TODO higher dimensional versions with tuples and :
 
 #=
 ##############

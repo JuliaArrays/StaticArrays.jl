@@ -6,7 +6,10 @@
 @generated function map{T}(f, a1::StaticArray{T})
     newtype = :(similar_type($a1, promote_op(f, T)))
     exprs = [:(f(a1[$j])) for j = 1:length(a1)]
-    return Expr(:call, newtype, Expr(:tuple, exprs...))
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
 end
 
 # Two inputs
@@ -17,7 +20,10 @@ end
 
     newtype = :(similar_type($a1, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
-    return Expr(:call, newtype, Expr(:tuple, exprs...))
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
 end
 
 # TODO these assume linear fast...
@@ -29,7 +35,10 @@ end
             error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
         end
 
-        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        return quote
+            $(Expr(:meta, :inline))
+            $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        end
     end
 end
 
@@ -37,6 +46,8 @@ end
     newtype = :(similar_type($a2, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a2)]
     return quote
+        $(Expr(:meta, :inline))
+
         @boundscheck if size(a1) != size(a2)
             error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
         end

@@ -27,8 +27,8 @@ Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 @pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Integer,Integer}) = SMatrix{sizes[1], sizes[2], T}
 
 @pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}) = SArray{size(SA),T}
-@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Vararg{Integer,N}) = SArray{sizes, eltype(SA)}
-@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Vararg{Integer,N}) = SArray{sizes, T}
+@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Integer,N}}) = SArray{sizes, eltype(SA)}
+@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Vararg{Integer,N}}) = SArray{sizes, T}
 
 @inline similar{SV <: StaticVector}(::SV) = MVector{length(SV),eltype(SV)}()
 @inline similar{SV <: StaticVector, T}(::SV, ::Type{T}) = MVector{length(SV),T}()
@@ -36,6 +36,22 @@ Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 @inline similar{SA <: StaticArray}(::SA, size::Integer) = MVector{size, eltype{SV}}()
 @inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, sizes::Tuple{Integer}) = MVector{sizes[1],T}()
 @inline similar{SA <: StaticArray, T}(::SA, ::Type{T}, size::Integer) = MVector{size,T}()
+
+# Some specializations for the mutable case
+@pure similar_type{MV<:MVector, T}(::Union{MV,Type{MV}}, ::Type{T}) = MVector{length(MV),T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, size::Integer) = MVector{size, eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Integer}) = MVector{sizes[1], eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, size::Integer) = MVector{size, T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Integer}) = MVector{sizes[1], T}
+
+@pure similar_type{MM<:MMatrix, T}(::Union{MM,Type{MM}}, ::Type{T}) = MMatrix{size(MM,1),size(MM,2),T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Integer,Integer}) = MMatrix{sizes[1], sizes[2], T}
+
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}) = MArray{size(MA),T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Integer,N}}) = MArray{sizes, eltype(MA)}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T,N}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Vararg{Integer,N}}) = MArray{sizes, T}
+
 
 #=
 # Methods necessary to fulfil the AbstractArray interface (plus some extensions, like size() on types)

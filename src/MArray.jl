@@ -1,9 +1,19 @@
-immutable MArray{Size, T, N, L} <: StaticArray{T, N}
-    data::NTuple{T,L}
+type MArray{Size, T, N, L} <: StaticArray{T, N}
+    data::NTuple{L,T}
+
+    function MArray(x::NTuple{L,T})
+        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
+        new(x)
+    end
 
     function MArray(x::NTuple{L})
         check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new(x)
+        new(convert_ntuple(T, x))
+    end
+
+    function MArray()
+        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
+        new()
     end
 end
 
@@ -70,3 +80,25 @@ end
 end
 
 @inline Tuple(v::MArray) = v.data
+
+macro MArray(ex)
+    @assert isa(ex, Expr)
+    if ex.head == :vect
+        return Expr(:call, MArray{(length(ex.args),)}, Expr(:tuple, ex.args...))
+    elseif ex.head == :hcat
+        s1 = 1
+        s2 = length(ex.args)
+        return Expr(:call, MArray{(s1, s2)}, Expr(:tuple, ex.args...))
+    elseif ex.head == :vcat
+        # Validate
+        s1 = length(ex.args)
+        s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 0), 1:s1)
+        s2 = minimum(s2s)
+        if maximum(s2s) != s2
+            error("Rows must be of matching lengths")
+        end
+
+        exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
+        return Expr(:call, MArray{(s1, s2)}, Expr(:tuple, exprs...))
+    end
+end
