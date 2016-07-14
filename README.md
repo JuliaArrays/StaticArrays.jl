@@ -3,6 +3,7 @@
 *Statically-sized arrays for Julia 0.5*
 
 [![Build Status](https://travis-ci.org/andyferris/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/andyferris/StaticArrays.jl)
+[![Coverage Status](https://coveralls.io/repos/github/andyferris/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/andyferris/StaticArrays.jl?branch=master)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: DenseArray{T,N}`.

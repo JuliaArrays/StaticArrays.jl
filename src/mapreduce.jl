@@ -259,10 +259,6 @@ end
 
 # Single input
 @generated function map!{F}(f::F, out::StaticArray, a1::StaticArray)
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(out)) and $(size(a1))")
-    end
-
     exprs = [:(out[$j] = f(a1[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))

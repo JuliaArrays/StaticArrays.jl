@@ -1,4 +1,18 @@
 @testset "Linear algebra" begin
+
+    @testset "SVector as a (mathematical) vector space" begin
+        c = 2
+        v1 = @SVector [2,4,6,8]
+        v2 = @SVector [4,3,2,1]
+
+        @test v1 + c === @SVector [4,6,8,10]
+        @test v1 - c === @SVector [0,2,4,6]
+        @test v1 * c === @SVector [4,8,12,16]
+        @test v1 / c === @SVector [1.0,2.0,3.0,4.0]
+
+        @test v1 + v2 === @SVector [6, 7, 8, 9]
+        @test v1 - v2 === @SVector [-2, 1, 4, 7]
+    end
 #=
     @testset "StaticVector and StaticMatrix constructors" begin
         sv = SArray{(3,)}((1,2,3))

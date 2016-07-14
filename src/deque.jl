@@ -18,9 +18,14 @@ end
     end
 end
 
-# unfortunately index can't be used by a @generated function
-@inline function insert(vec::StaticVector, index, x)
-    similar_type(vec, (length(vec) + 1 ,))((Tuple(vec[1:index-1])..., x, Tuple(vec[index:end])...))
+# unfortunately index can't be used directly by a @generated function... this code is pretty slow
+@generated function insert(vec::StaticVector, index, x)
+    newtype = similar_type(vec, (length(vec) + 1 ,))
+    expr = :((Tuple(vec[1:index-1])..., x, Tuple(vec[index:end])...))
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, expr))
+    end
 end
 
 @generated function pop(vec::StaticVector)
@@ -41,9 +46,15 @@ end
     end
 end
 
-# unfortunately index can't be used by a @generated function
-@inline function deleteat(vec::StaticVector, index)
-    similar_type(vec, (length(vec) - 1 ,))((Tuple(vec[1:index-1])..., Tuple(vec[index+1:end])...))
+# unfortunately index can't be used directly by a @generated function... this code is pretty slow
+@generated function deleteat(vec::StaticVector, index)
+    newtype = similar_type(vec, (length(vec) - 1 ,))
+    expr = :((Tuple(vec[1:index-1])..., Tuple(vec[index+1:end])...))
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, expr))
+    end
 end
 
-# TODO consider prepend, append (can use vcat), and maybe splice (a bit hard to get statically sized)
+# TODO consider prepend, append (can use vcat, but eltype might change), and
+# maybe splice (a bit hard to get statically sized)
