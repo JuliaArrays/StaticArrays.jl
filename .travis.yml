@@ -2,7 +2,7 @@
 language: julia
 os:
   - linux
-  - osx
+#  - osx
 julia:
 #  - release
   - nightly
@@ -12,3 +12,5 @@ notifications:
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("StaticArrays"); Pkg.test("StaticArrays"; coverage=true)'
+after_success:
+    - julia -e 'cd(Pkg.dir("StaticArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
