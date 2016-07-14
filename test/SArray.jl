@@ -48,8 +48,8 @@
 
         @test size(m) === (2, 2)
         @test size(typeof(m)) === (2, 2)
-        @test size(SArray{(2,2),Int64,2}) === (2, 2)
-        @test size(SArray{(2,2),Int64}) === (2, 2)
+        @test size(SArray{(2,2),Int,2}) === (2, 2)
+        @test size(SArray{(2,2),Int}) === (2, 2)
         @test size(SArray{(2,2)}) === (2, 2)
 
         @test size(m, 1) === 2

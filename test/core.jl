@@ -1,50 +1,50 @@
 @testset "Core definitions and constructors" begin
     @testset "Inner Constructors" begin
         # SVector
-        @test SVector{1,Int64}((1,)).data === (1,)
+        @test SVector{1,Int}((1,)).data === (1,)
         @test SVector{1,Float64}((1,)).data === (1.0,)
-        @test_throws Exception SVector{1,Int64}()
+        @test_throws Exception SVector{1,Int}()
 
-        @test SMatrix{1,1,Int64}((1,)).data === (1,)
+        @test SMatrix{1,1,Int}((1,)).data === (1,)
         @test SMatrix{1,1,Float64}((1,)).data === (1.0,)
-        @test_throws Exception SMatrix{1,Int64}()
+        @test_throws Exception SMatrix{1,Int}()
 
-        #@test MArray{(1,),Int64,1,Tuple{Int64}}((1,)).data === (1,)
+        #@test MArray{(1,),Int,1,Tuple{Int}}((1,)).data === (1,)
         #@test MArray{(1,),Float64,1,Tuple{Float64}}((1,)).data === (1.0,)
 
         # default constructors
-        #@test try; MArray{(1,),Int64,1,Tuple{Int64}}(); true; catch; false; end
+        #@test try; MArray{(1,),Int,1,Tuple{Int}}(); true; catch; false; end
     end
 
     @testset "Type parameter errors" begin
         # (not sure what type of exception these should be?)
-        @test_throws Exception SVector{1.0,Int64}((1,))
-        @test_throws Exception SVector{2,Int64}((1,))
+        @test_throws Exception SVector{1.0,Int}((1,))
+        @test_throws Exception SVector{2,Int}((1,))
         @test_throws Exception SVector{1,3}((1,))
 
-        @test_throws Exception SMatrix{1.0,1,Int64,1}((1,))
-        @test_throws Exception SMatrix{1,1.0,Int64,1}((1,))
-        @test_throws Exception SMatrix{2,1,Int64,1}((1,))
-        @test_throws Exception SMatrix{1,2,Int64,1}((1,))
+        @test_throws Exception SMatrix{1.0,1,Int,1}((1,))
+        @test_throws Exception SMatrix{1,1.0,Int,1}((1,))
+        @test_throws Exception SMatrix{2,1,Int,1}((1,))
+        @test_throws Exception SMatrix{1,2,Int,1}((1,))
         @test_throws Exception SMatrix{1,1,3,1}((1,))
-        @test_throws Exception SMatrix{1,1,Int64,2}((1,))
+        @test_throws Exception SMatrix{1,1,Int,2}((1,))
 
     end
 #=
     @testset "Outer constructors" begin
-        @test SArray{(1,),Int64,1}((1,)).data === (1,)
-        @test_inferred SArray{(1,),Int64,1}((1,))
-        @test SArray{(1,),Int64}((1,)).data === (1,)
-        @test_inferred SArray{(1,),Int64}((1,))
+        @test SArray{(1,),Int,1}((1,)).data === (1,)
+        @test_inferred SArray{(1,),Int,1}((1,))
+        @test SArray{(1,),Int}((1,)).data === (1,)
+        @test_inferred SArray{(1,),Int}((1,))
         @test SArray{(1,)}((1,)).data === (1,)
         @test_inferred SArray{(1,)}((1,))
 
-        @test MArray{(1,),Int64,1}((1,)).data === (1,)
-        @test_inferred MArray{(1,),Int64,1}((1,))
-        @test_inferred MArray{(1,),Int64,1}()
-        @test MArray{(1,),Int64}((1,)).data === (1,)
-        @test_inferred MArray{(1,),Int64}((1,))
-        @test_inferred MArray{(1,),Int64}()
+        @test MArray{(1,),Int,1}((1,)).data === (1,)
+        @test_inferred MArray{(1,),Int,1}((1,))
+        @test_inferred MArray{(1,),Int,1}()
+        @test MArray{(1,),Int}((1,)).data === (1,)
+        @test_inferred MArray{(1,),Int}((1,))
+        @test_inferred MArray{(1,),Int}()
         @test MArray{(1,)}((1,)).data === (1,)
         @test_inferred MArray{(1,)}((1,))
     end
