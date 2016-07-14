@@ -50,6 +50,20 @@ end
     end
 end
 
+@generated function (::Type{MArray{Size,T,N}}){Size,T,N}()
+    return quote
+        $(Expr(:meta, :inline))
+        MArray{Size, T, N, $(prod(Size))}()
+    end
+end
+
+@generated function (::Type{MArray{Size,T}}){Size,T}()
+    return quote
+        $(Expr(:meta, :inline))
+        MArray{Size, T, $(length(Size)), $(prod(Size))}()
+    end
+end
+
 ####################
 ## MArray methods ##
 ####################

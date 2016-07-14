@@ -63,6 +63,13 @@ end
     end
 end
 
+@generated function (::Type{MMatrix{S1,S2,T}}){S1,S2,T}()
+    return quote
+        $(Expr(:meta, :inline))
+        MMatrix{S1, S2, T, $(S1*S2)}()
+    end
+end
+
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::StaticArray{T}) = MMatrix{S1,S2,T}(Tuple(a))
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::AbstractArray{T}) = MMatrix{S1,S2,T}((a...))
 

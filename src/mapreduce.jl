@@ -31,14 +31,13 @@ end
     newtype = :(similar_type($a1, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
+        $(Expr(:meta, :inline))
+
         if size(a1) != size(a2)
             error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
         end
 
-        return quote
-            $(Expr(:meta, :inline))
-            $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -337,7 +336,7 @@ end
             ind1 = [expands1[j] ? ind[j] : 1 for j = 1:length(s1)]
             ind2 = [expands2[j] ? ind[j] : 1 for j = 1:length(s2)]
             index1 = sub2ind(s1, ind1...)
-            index2 = sub2ind(s2, ind1...)
+            index2 = sub2ind(s2, ind2...)
 
             exprs[i] = :(out[$i] = $(Expr(:call, :f, Expr(:ref, :a1, index1), Expr(:ref, :a2, index2))))
 

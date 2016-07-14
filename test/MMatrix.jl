@@ -4,6 +4,7 @@
         @test MMatrix{1,1,Float64,1}((1,)).data === (1.0,)
         @test MMatrix{2,2,Float64,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
         @test isa(MMatrix{1,1,Int,1}(), MMatrix{1,1,Int,1})
+        @test isa(MMatrix{1,1,Int}(), MMatrix{1,1,Int,1})
 
         # Bad input
         @test_throws Exception MMatrix{2,1,Int,2}((1,))

@@ -4,8 +4,13 @@
         v2 = @SVector [4,3,2,1]
         mv = MVector{4, Int}()
 
+        normal_v1 = [2,4,6,8]
+        normal_v2 = [4,3,2,1]
+
         @test map(-, v1) === @SVector [-2, -4, -6, -8]
         @test map(+, v1, v2) === @SVector [6, 7, 8, 9]
+        @test map(+, normal_v1, v2) === @SVector [6, 7, 8, 9]
+        @test map(+, v1, normal_v2) === @SVector [6, 7, 8, 9]
 
         map!(+, mv, v1, v2)
         @test mv == @MVector [6, 7, 8, 9]
@@ -31,6 +36,7 @@
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
         mv = MVector{4, Int}()
+        mm = MMatrix{4, 2, Int}()
         M = @SMatrix [1 2; 3 4; 5 6; 7 8]
 
         @test broadcast(-, v1) === map(-, v1)
@@ -44,5 +50,8 @@
 
         broadcast!(+, mv, v1, v2)
         @test mv == @MVector [6, 7, 8, 9]
+
+        broadcast!(+, mm, v1, M)
+        @test mm == @MMatrix [3 4; 7 8; 11 12; 15 16]
     end
 end

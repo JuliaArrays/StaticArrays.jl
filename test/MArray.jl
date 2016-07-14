@@ -4,6 +4,8 @@
         @test MArray{(1,),Float64,1,1}((1,)).data === (1.0,)
         @test MArray{(2,2),Float64,2,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
         @test isa(MArray{(1,),Int,1,1}(), MArray{(1,),Int,1,1})
+        @test isa(MArray{(1,),Int,1}(), MArray{(1,),Int,1,1})
+        @test isa(MArray{(1,),Int}(), MArray{(1,),Int,1,1})
 
         # Bad input
         @test_throws Exception MArray{(2,),Int,1,2}((1,))

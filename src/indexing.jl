@@ -107,7 +107,7 @@ end
 @generated function setindex!{SA<:StaticArray}(a::SA, vals, ::Colon)
     exprs = [:(a[$i] = vals[$i]) for i = 1:length(SA)]
     if vals <: StaticArray
-        if length(vals) != S
+        if length(vals) != length(SA)
             error("Dimension mismatch")
         end
         return quote
@@ -118,7 +118,7 @@ end
     else
         return quote
             $(Expr(:meta, :inline, :propagate_inbounds))
-            @boundscheck if length(vals) != $S
+            @boundscheck if length(vals) != $(length(SA))
                 error("Dimension mismatch")
             end
             $(Expr(:block, exprs...))
