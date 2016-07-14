@@ -1,0 +1,737 @@
+15 July 2016, 11:00am
+--------------------
+
+Observations: - FixedSizeArrays matrix multiplications is slightly slower than StaticArrays, for N <= 7
+              - FixedSizeArrays matrix multiplications is "broken" for N >= 8, leading to allocations and even more slowness
+              - Compilation time is significant for large matrix multiplication
+              - SIMD leads to a factor of two improvement (128 bit registers for 64 bit floats) for both SArray and Mat
+              - MArray is quite slow at matrix multiplication, for 10x10 upwards
+              - Large MArray's are slower than Array for some elementwise operations (Can we get it to process chuncks or something?)
+              - Inlining may need to be turned off for large array operations
+              - Can we use BLAS for more operations, where that makes sense?
+
+=====================================
+    Benchmarks for 2×2 matrices
+=====================================
+StaticArrays compilation time (×3):  0.528689 seconds (123.84 k allocations: 5.339 MB)
+FixedSizeArrays compilation time:    0.727832 seconds (261.13 k allocations: 11.508 MB, 8.94% gc time)
+
+Matrix multiplication
+---------------------
+Array             -> 10.815587 seconds (250.00 M allocations: 16.764 GB, 12.23% gc time)
+Array (mutating)  ->  4.826257 seconds (6 allocations: 384 bytes)
+SArray            ->  0.458544 seconds (5 allocations: 208 bytes)
+MArray            ->  2.093980 seconds (125.00 M allocations: 5.588 GB, 18.21% gc time)
+MArray (mutating) ->  1.102765 seconds (6 allocations: 256 bytes)
+Mat               ->  1.591047 seconds (5 allocations: 208 bytes)
+
+Matrix addition
+---------------
+Array             ->  4.242666 seconds (100.00 M allocations: 6.706 GB, 12.54% gc time)
+Array (mutating)  ->  0.751632 seconds (6 allocations: 384 bytes)
+SArray            ->  0.070096 seconds (5 allocations: 208 bytes)
+MArray            ->  0.747489 seconds (50.00 M allocations: 2.235 GB, 20.43% gc time)
+MArray (mutating) ->  0.175949 seconds (5 allocations: 208 bytes)
+Mat               ->  0.069592 seconds (5 allocations: 208 bytes)
+
+=====================================
+    Benchmarks for 3×3 matrices
+=====================================
+StaticArrays compilation time (×3):  0.239031 seconds (145.63 k allocations: 5.929 MB)
+FixedSizeArrays compilation time:    0.387374 seconds (105.51 k allocations: 4.659 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  5.377203 seconds (74.07 M allocations: 6.623 GB, 15.81% gc time)
+Array (mutating)  ->  2.091279 seconds (6 allocations: 480 bytes)
+SArray            ->  0.326723 seconds (5 allocations: 240 bytes)
+MArray            ->  1.723835 seconds (37.04 M allocations: 2.759 GB, 19.23% gc time)
+MArray (mutating) ->  0.798246 seconds (6 allocations: 320 bytes)
+Mat               ->  0.738758 seconds (5 allocations: 240 bytes)
+
+Matrix addition
+---------------
+Array             ->  3.082548 seconds (44.44 M allocations: 3.974 GB, 16.78% gc time)
+Array (mutating)  ->  0.555056 seconds (6 allocations: 480 bytes)
+SArray            ->  0.073847 seconds (5 allocations: 240 bytes)
+MArray            ->  0.867786 seconds (22.22 M allocations: 1.656 GB, 23.44% gc time)
+MArray (mutating) ->  0.145803 seconds (5 allocations: 240 bytes)
+Mat               ->  0.072862 seconds (5 allocations: 240 bytes)
+
+=====================================
+    Benchmarks for 4×4 matrices
+=====================================
+StaticArrays compilation time (×3):  0.778853 seconds (544.27 k allocations: 21.553 MB)
+FixedSizeArrays compilation time:    0.219371 seconds (145.21 k allocations: 6.230 MB, 2.79% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  6.191941 seconds (31.25 M allocations: 3.492 GB, 7.42% gc time)
+Array (mutating)  ->  4.527858 seconds (6 allocations: 576 bytes)
+SArray            ->  0.372725 seconds (5 allocations: 304 bytes)
+MArray            ->  1.435807 seconds (15.63 M allocations: 2.095 GB, 17.52% gc time)
+MArray (mutating) ->  0.745135 seconds (6 allocations: 448 bytes)
+Mat               ->  0.563750 seconds (5 allocations: 304 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.987028 seconds (25.00 M allocations: 2.794 GB, 18.55% gc time)
+Array (mutating)  ->  0.483685 seconds (6 allocations: 576 bytes)
+SArray            ->  0.066099 seconds (5 allocations: 304 bytes)
+MArray            ->  0.875069 seconds (12.50 M allocations: 1.676 GB, 23.60% gc time)
+MArray (mutating) ->  0.143899 seconds (5 allocations: 304 bytes)
+Mat               ->  0.065707 seconds (5 allocations: 304 bytes)
+
+=====================================
+    Benchmarks for 5×5 matrices
+=====================================
+StaticArrays compilation time (×3):  0.687113 seconds (495.67 k allocations: 19.207 MB, 0.77% gc time)
+FixedSizeArrays compilation time:    0.324516 seconds (279.86 k allocations: 10.623 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  4.378783 seconds (16.00 M allocations: 2.742 GB, 7.99% gc time)
+Array (mutating)  ->  3.198313 seconds (6 allocations: 832 bytes)
+SArray            ->  0.397216 seconds (5 allocations: 368 bytes)
+MArray            ->  1.202472 seconds (8.00 M allocations: 1.550 GB, 14.91% gc time)
+MArray (mutating) ->  0.763935 seconds (6 allocations: 576 bytes)
+Mat               ->  0.822204 seconds (5 allocations: 368 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.727372 seconds (16.00 M allocations: 2.742 GB, 19.79% gc time)
+Array (mutating)  ->  0.451096 seconds (6 allocations: 832 bytes)
+SArray            ->  0.091774 seconds (5 allocations: 368 bytes)
+MArray            ->  0.802008 seconds (8.00 M allocations: 1.550 GB, 22.39% gc time)
+MArray (mutating) ->  0.157628 seconds (5 allocations: 368 bytes)
+Mat               ->  0.279888 seconds (5 allocations: 368 bytes)
+
+=====================================
+    Benchmarks for 6×6 matrices
+=====================================
+StaticArrays compilation time (×3):  1.134777 seconds (819.36 k allocations: 31.128 MB, 0.89% gc time)
+FixedSizeArrays compilation time:    0.518030 seconds (498.23 k allocations: 17.691 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  2.828842 seconds (9.26 M allocations: 1.863 GB, 8.23% gc time)
+Array (mutating)  ->  2.109166 seconds (6 allocations: 960 bytes)
+SArray            ->  0.396145 seconds (5 allocations: 496 bytes)
+MArray            ->  1.117572 seconds (4.63 M allocations: 1.449 GB, 14.73% gc time)
+MArray (mutating) ->  0.761725 seconds (6 allocations: 832 bytes)
+Mat               ->  0.754838 seconds (5 allocations: 496 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.318353 seconds (11.11 M allocations: 2.235 GB, 20.80% gc time)
+Array (mutating)  ->  0.431851 seconds (6 allocations: 960 bytes)
+SArray            ->  0.105452 seconds (5 allocations: 496 bytes)
+MArray            ->  0.873093 seconds (5.56 M allocations: 1.738 GB, 22.88% gc time)
+MArray (mutating) ->  0.134655 seconds (5 allocations: 496 bytes)
+Mat               ->  0.326657 seconds (5 allocations: 496 bytes)
+
+=====================================
+    Benchmarks for 7×7 matrices
+=====================================
+StaticArrays compilation time (×3):  1.868016 seconds (1.28 M allocations: 47.681 MB, 0.77% gc time)
+FixedSizeArrays compilation time:    0.832467 seconds (856.02 k allocations: 28.288 MB, 0.62% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  2.385565 seconds (5.83 M allocations: 1.564 GB, 8.33% gc time)
+Array (mutating)  ->  1.831490 seconds (6 allocations: 1.219 KB)
+SArray            ->  0.408171 seconds (5 allocations: 608 bytes)
+MArray            ->  1.059707 seconds (2.92 M allocations: 1.216 GB, 13.33% gc time)
+MArray (mutating) ->  0.767300 seconds (6 allocations: 1.031 KB)
+Mat               ->  0.753871 seconds (5 allocations: 608 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.199958 seconds (8.16 M allocations: 2.190 GB, 22.39% gc time)
+Array (mutating)  ->  0.421622 seconds (6 allocations: 1.219 KB)
+SArray            ->  0.112232 seconds (5 allocations: 608 bytes)
+MArray            ->  0.851178 seconds (4.08 M allocations: 1.703 GB, 22.81% gc time)
+MArray (mutating) ->  0.133619 seconds (5 allocations: 608 bytes)
+Mat               ->  0.326655 seconds (5 allocations: 608 bytes)
+
+=====================================
+    Benchmarks for 8×8 matrices
+=====================================
+StaticArrays compilation time (×3):  3.028534 seconds (1.91 M allocations: 69.552 MB, 0.63% gc time)
+FixedSizeArrays compilation time:    1.468795 seconds (1.30 M allocations: 41.121 MB, 0.66% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.483025 seconds (3.91 M allocations: 1.193 GB, 9.61% gc time)
+Array (mutating)  ->  1.087042 seconds (6 allocations: 1.375 KB)
+SArray            ->  0.409404 seconds (5 allocations: 704 bytes)
+MArray            ->  0.975833 seconds (1.95 M allocations: 1013.279 MB, 11.89% gc time)
+MArray (mutating) ->  0.762754 seconds (6 allocations: 1.219 KB)
+Mat               -> 11.874296 seconds (875.00 M allocations: 13.039 GB, 14.13% gc time)
+
+Matrix addition
+---------------
+Array             ->  1.032382 seconds (6.25 M allocations: 1.909 GB, 22.31% gc time)
+Array (mutating)  ->  0.414612 seconds (6 allocations: 1.375 KB)
+SArray            ->  0.115579 seconds (5 allocations: 704 bytes)
+MArray            ->  0.803578 seconds (3.13 M allocations: 1.583 GB, 22.64% gc time)
+MArray (mutating) ->  0.133137 seconds (5 allocations: 704 bytes)
+Mat               ->  0.302660 seconds (5 allocations: 704 bytes)
+
+=====================================
+    Benchmarks for 9×9 matrices
+=====================================
+StaticArrays compilation time (×3):  4.713269 seconds (2.71 M allocations: 97.563 MB, 0.46% gc time)
+FixedSizeArrays compilation time:    2.257973 seconds (2.09 M allocations: 61.596 MB, 0.69% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.351413 seconds (2.74 M allocations: 1004.694 MB, 9.09% gc time)
+Array (mutating)  ->  1.051408 seconds (6 allocations: 1.594 KB)
+SArray            ->  0.405172 seconds (5 allocations: 832 bytes)
+MArray            ->  0.957590 seconds (1.37 M allocations: 879.107 MB, 10.13% gc time)
+MArray (mutating) ->  0.736846 seconds (6 allocations: 1.469 KB)
+Mat               -> 10.697515 seconds (777.78 M allocations: 11.590 GB, 14.29% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.928589 seconds (4.94 M allocations: 1.766 GB, 23.19% gc time)
+Array (mutating)  ->  0.425015 seconds (6 allocations: 1.594 KB)
+SArray            ->  0.118830 seconds (5 allocations: 832 bytes)
+MArray            ->  0.799662 seconds (2.47 M allocations: 1.545 GB, 22.64% gc time)
+MArray (mutating) ->  0.133718 seconds (5 allocations: 832 bytes)
+Mat               ->  0.311504 seconds (5 allocations: 832 bytes)
+
+=====================================
+    Benchmarks for 10×10 matrices
+=====================================
+StaticArrays compilation time (×3):  7.436373 seconds (3.74 M allocations: 132.485 MB, 0.43% gc time)
+FixedSizeArrays compilation time:    3.345829 seconds (3.11 M allocations: 86.535 MB, 0.63% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.137410 seconds (2.00 M allocations: 885.010 MB, 9.96% gc time)
+Array (mutating)  ->  0.879572 seconds (6 allocations: 1.906 KB)
+SArray            ->  0.403345 seconds (5 allocations: 1.031 KB)
+MArray            ->  1.007781 seconds (1.00 M allocations: 854.492 MB, 9.80% gc time)
+MArray (mutating) ->  0.732205 seconds (6 allocations: 1.906 KB)
+Mat               -> 13.850163 seconds (1.00 G allocations: 14.901 GB, 13.87% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.901994 seconds (4.00 M allocations: 1.729 GB, 24.42% gc time)
+Array (mutating)  ->  0.418705 seconds (6 allocations: 1.906 KB)
+SArray            ->  0.121079 seconds (5 allocations: 1.031 KB)
+MArray            ->  0.847931 seconds (2.00 M allocations: 1.669 GB, 23.21% gc time)
+MArray (mutating) ->  0.132228 seconds (5 allocations: 1.031 KB)
+Mat               ->  0.313085 seconds (5 allocations: 1.031 KB)
+
+=====================================
+    Benchmarks for 11×11 matrices
+=====================================
+StaticArrays compilation time (×3): 11.888597 seconds (5.01 M allocations: 175.233 MB, 0.41% gc time)
+FixedSizeArrays compilation time:    4.943079 seconds (4.87 M allocations: 126.067 MB, 0.64% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.084146 seconds (1.50 M allocations: 802.490 MB, 9.38% gc time)
+Array (mutating)  ->  0.852836 seconds (6 allocations: 2.281 KB)
+SArray            ->  0.407504 seconds (5 allocations: 1.141 KB)
+MArray            ->  1.180346 seconds (751.32 k allocations: 722.241 MB, 6.57% gc time)
+MArray (mutating) ->  1.171651 seconds (6 allocations: 2.125 KB)
+Mat               -> 11.944237 seconds (909.09 M allocations: 13.546 GB, 14.18% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.849748 seconds (3.31 M allocations: 1.724 GB, 24.93% gc time)
+Array (mutating)  ->  0.414248 seconds (6 allocations: 2.281 KB)
+SArray            ->  0.122796 seconds (5 allocations: 1.141 KB)
+MArray            ->  0.784682 seconds (1.65 M allocations: 1.552 GB, 21.98% gc time)
+MArray (mutating) ->  0.131966 seconds (5 allocations: 1.141 KB)
+Mat               ->  0.320023 seconds (5 allocations: 1.141 KB)
+
+=====================================
+    Benchmarks for 12×12 matrices
+=====================================
+StaticArrays compilation time (×3): 18.421532 seconds (6.56 M allocations: 226.680 MB, 0.46% gc time)
+FixedSizeArrays compilation time:    7.132775 seconds (6.63 M allocations: 166.380 MB, 0.63% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.811694 seconds (1.16 M allocations: 706.425 MB, 9.83% gc time)
+Array (mutating)  ->  0.663257 seconds (6 allocations: 2.594 KB)
+SArray            ->  0.412777 seconds (5 allocations: 1.297 KB)
+MArray            ->  1.351495 seconds (578.71 k allocations: 644.613 MB, 5.21% gc time)
+MArray (mutating) ->  1.302657 seconds (6 allocations: 2.438 KB)
+Mat               -> 13.294573 seconds (1.08 G allocations: 16.143 GB, 14.41% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.721549 seconds (2.78 M allocations: 1.656 GB, 25.38% gc time)
+Array (mutating)  ->  0.410723 seconds (6 allocations: 2.594 KB)
+SArray            ->  0.124078 seconds (5 allocations: 1.297 KB)
+MArray            ->  0.763360 seconds (1.39 M allocations: 1.511 GB, 22.05% gc time)
+MArray (mutating) ->  0.132252 seconds (5 allocations: 1.297 KB)
+Mat               ->  0.321655 seconds (5 allocations: 1.297 KB)
+
+=====================================
+    Benchmarks for 13×13 matrices
+=====================================
+StaticArrays compilation time (×3): 29.247878 seconds (8.42 M allocations: 287.713 MB, 0.67% gc time)
+FixedSizeArrays compilation time:   10.242782 seconds (10.76 M allocations: 247.171 MB, 0.60% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.725232 seconds (910.34 k allocations: 659.802 MB, 7.74% gc time)
+Array (mutating)  ->  0.664388 seconds (6 allocations: 3.063 KB)
+SArray            ->  0.762378 seconds (5 allocations: 1.484 KB)
+MArray            ->  1.434943 seconds (455.17 k allocations: 590.349 MB, 4.49% gc time)
+MArray (mutating) ->  1.330682 seconds (6 allocations: 2.813 KB)
+Mat               -> 13.341134 seconds (1000.00 M allocations: 14.901 GB, 15.39% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.528307 seconds (2.37 M allocations: 1.675 GB, 23.88% gc time)
+Array (mutating)  ->  0.408018 seconds (6 allocations: 3.063 KB)
+SArray            ->  0.125181 seconds (5 allocations: 1.484 KB)
+MArray            ->  0.765733 seconds (1.18 M allocations: 1.499 GB, 22.04% gc time)
+MArray (mutating) ->  0.132630 seconds (5 allocations: 1.484 KB)
+Mat               ->  0.325503 seconds (5 allocations: 1.484 KB)
+
+=====================================
+    Benchmarks for 14×14 matrices
+=====================================
+StaticArrays compilation time (×3): 43.814109 seconds (10.64 M allocations: 359.337 MB, 0.35% gc time)
+FixedSizeArrays compilation time:   14.178324 seconds (12.95 M allocations: 298.597 MB, 1.18% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.638243 seconds (728.87 k allocations: 639.489 MB, 4.58% gc time)
+Array (mutating)  ->  0.681589 seconds (6 allocations: 3.688 KB)
+SArray            ->  0.811665 seconds (5 allocations: 1.750 KB)
+MArray            ->  1.453244 seconds (364.44 k allocations: 567.199 MB, 3.91% gc time)
+MArray (mutating) ->  1.339296 seconds (6 allocations: 3.344 KB)
+Mat               -> 20.435902 seconds (1.14 G allocations: 17.030 GB, 12.50% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.319625 seconds (2.04 M allocations: 1.749 GB, 20.65% gc time)
+Array (mutating)  ->  0.406027 seconds (6 allocations: 3.688 KB)
+SArray            ->  0.125944 seconds (5 allocations: 1.750 KB)
+MArray            ->  0.732433 seconds (1.02 M allocations: 1.551 GB, 21.73% gc time)
+MArray (mutating) ->  0.131552 seconds (5 allocations: 1.750 KB)
+Mat               ->  0.321135 seconds (5 allocations: 1.750 KB)
+
+=====================================
+    Benchmarks for 15×15 matrices
+=====================================
+StaticArrays compilation time (×3): 78.625001 seconds (13.24 M allocations: 442.626 MB, 0.25% gc time)
+FixedSizeArrays compilation time:    7.373262 seconds (3.84 M allocations: 180.657 MB, 0.73% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.746721 seconds (592.60 k allocations: 583.224 MB, 10.41% gc time)
+Array (mutating)  ->  0.602458 seconds (6 allocations: 4.125 KB)
+SArray            ->  0.845734 seconds (5 allocations: 1.922 KB)
+MArray            ->  1.259401 seconds (296.30 k allocations: 510.887 MB, 1.39% gc time)
+MArray (mutating) ->  1.380895 seconds (6 allocations: 3.688 KB)
+Mat               -> 70.101448 seconds (2.33 G allocations: 40.730 GB, 12.80% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.765006 seconds (1.78 M allocations: 1.709 GB, 27.01% gc time)
+Array (mutating)  ->  0.404435 seconds (6 allocations: 4.125 KB)
+SArray            ->  0.126495 seconds (5 allocations: 1.922 KB)
+MArray            ->  0.351794 seconds (888.89 k allocations: 1.497 GB, 13.84% gc time)
+MArray (mutating) ->  0.132281 seconds (5 allocations: 1.922 KB)
+Mat               ->  0.327213 seconds (5 allocations: 1.922 KB)
+
+=====================================
+    Benchmarks for 16×16 matrices
+=====================================
+StaticArrays compilation time (×3):120.419736 seconds (16.40 M allocations: 540.068 MB, 0.26% gc time)
+FixedSizeArrays compilation time:    8.611718 seconds (4.80 M allocations: 220.629 MB, 0.87% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.513276 seconds (488.28 k allocations: 514.089 MB, 8.25% gc time)
+Array (mutating)  ->  0.463705 seconds (6 allocations: 4.406 KB)
+SArray            ->  0.869523 seconds (5 allocations: 2.219 KB)
+MArray            ->  1.428365 seconds (244.14 k allocations: 491.737 MB, 2.31% gc time)
+MArray (mutating) ->  1.399507 seconds (6 allocations: 4.281 KB)
+Mat               -> 19.129822 seconds (1.19 G allocations: 17.695 GB, 12.32% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.549616 seconds (1.56 M allocations: 1.607 GB, 24.04% gc time)
+Array (mutating)  ->  0.403304 seconds (6 allocations: 4.406 KB)
+SArray            ->  0.127151 seconds (5 allocations: 2.219 KB)
+MArray            ->  0.609808 seconds (781.25 k allocations: 1.537 GB, 18.29% gc time)
+MArray (mutating) ->  0.132492 seconds (5 allocations: 2.219 KB)
+Mat               ->  0.356916 seconds (5 allocations: 2.219 KB)
+
+==========================================================================
+==========================================================================
+     SIMD
+==========================================================================
+==========================================================================
+
+=====================================
+    Benchmarks for 2×2 matrices
+=====================================
+StaticArrays compilation time (×3):  0.570747 seconds (123.84 k allocations: 5.339 MB)
+FixedSizeArrays compilation time:    0.799207 seconds (261.11 k allocations: 11.482 MB, 8.07% gc time)
+
+Matrix multiplication
+---------------------
+Array             -> 10.973541 seconds (250.00 M allocations: 16.764 GB, 12.05% gc time)
+Array (mutating)  ->  4.773451 seconds (6 allocations: 384 bytes)
+SArray            ->  0.408451 seconds (5 allocations: 208 bytes)
+MArray            ->  2.107767 seconds (125.00 M allocations: 5.588 GB, 18.09% gc time)
+MArray (mutating) ->  1.101916 seconds (6 allocations: 256 bytes)
+Mat               ->  0.877684 seconds (5 allocations: 208 bytes)
+
+Matrix addition
+---------------
+Array             ->  4.225285 seconds (100.00 M allocations: 6.706 GB, 12.48% gc time)
+Array (mutating)  ->  0.751148 seconds (6 allocations: 384 bytes)
+SArray            ->  0.049091 seconds (5 allocations: 208 bytes)
+MArray            ->  0.750859 seconds (50.00 M allocations: 2.235 GB, 20.20% gc time)
+MArray (mutating) ->  0.168788 seconds (5 allocations: 208 bytes)
+Mat               ->  0.049451 seconds (5 allocations: 208 bytes)
+
+=====================================
+    Benchmarks for 3×3 matrices
+=====================================
+StaticArrays compilation time (×3):  0.243783 seconds (145.63 k allocations: 5.929 MB)
+FixedSizeArrays compilation time:    0.414768 seconds (105.51 k allocations: 4.657 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  5.440714 seconds (74.07 M allocations: 6.623 GB, 15.53% gc time)
+Array (mutating)  ->  2.092346 seconds (6 allocations: 480 bytes)
+SArray            ->  0.218054 seconds (5 allocations: 240 bytes)
+MArray            ->  1.717905 seconds (37.04 M allocations: 2.759 GB, 19.22% gc time)
+MArray (mutating) ->  0.798065 seconds (6 allocations: 320 bytes)
+Mat               ->  0.568457 seconds (5 allocations: 240 bytes)
+
+Matrix addition
+---------------
+Array             ->  3.160323 seconds (44.44 M allocations: 3.974 GB, 16.49% gc time)
+Array (mutating)  ->  0.633648 seconds (6 allocations: 480 bytes)
+SArray            ->  0.050034 seconds (5 allocations: 240 bytes)
+MArray            ->  0.845059 seconds (22.22 M allocations: 1.656 GB, 23.27% gc time)
+MArray (mutating) ->  0.145564 seconds (5 allocations: 240 bytes)
+Mat               ->  0.043778 seconds (5 allocations: 240 bytes)
+
+=====================================
+    Benchmarks for 4×4 matrices
+=====================================
+StaticArrays compilation time (×3):  0.779199 seconds (544.28 k allocations: 22.553 MB, 0.76% gc time)
+FixedSizeArrays compilation time:    0.207886 seconds (145.22 k allocations: 6.236 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  6.320235 seconds (31.25 M allocations: 3.492 GB, 7.13% gc time)
+Array (mutating)  ->  4.721685 seconds (6 allocations: 576 bytes)
+SArray            ->  0.195273 seconds (5 allocations: 304 bytes)
+MArray            ->  1.424721 seconds (15.63 M allocations: 2.095 GB, 17.38% gc time)
+MArray (mutating) ->  0.745202 seconds (6 allocations: 448 bytes)
+Mat               ->  0.270641 seconds (5 allocations: 304 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.937823 seconds (25.00 M allocations: 2.794 GB, 18.41% gc time)
+Array (mutating)  ->  0.484125 seconds (6 allocations: 576 bytes)
+SArray            ->  0.040899 seconds (5 allocations: 304 bytes)
+MArray            ->  0.847318 seconds (12.50 M allocations: 1.676 GB, 23.63% gc time)
+MArray (mutating) ->  0.139123 seconds (5 allocations: 304 bytes)
+Mat               ->  0.041015 seconds (5 allocations: 304 bytes)
+
+=====================================
+    Benchmarks for 5×5 matrices
+=====================================
+StaticArrays compilation time (×3):  0.694316 seconds (495.67 k allocations: 19.207 MB, 0.78% gc time)
+FixedSizeArrays compilation time:    0.324313 seconds (279.86 k allocations: 10.623 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  4.424023 seconds (16.00 M allocations: 2.742 GB, 7.83% gc time)
+Array (mutating)  ->  3.269550 seconds (6 allocations: 832 bytes)
+SArray            ->  0.356253 seconds (5 allocations: 368 bytes)
+MArray            ->  1.189419 seconds (8.00 M allocations: 1.550 GB, 14.76% gc time)
+MArray (mutating) ->  0.755087 seconds (6 allocations: 576 bytes)
+Mat               ->  0.616328 seconds (5 allocations: 368 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.725291 seconds (16.00 M allocations: 2.742 GB, 19.66% gc time)
+Array (mutating)  ->  0.449518 seconds (6 allocations: 832 bytes)
+SArray            ->  0.034096 seconds (5 allocations: 368 bytes)
+MArray            ->  0.802752 seconds (8.00 M allocations: 1.550 GB, 22.36% gc time)
+MArray (mutating) ->  0.136293 seconds (5 allocations: 368 bytes)
+Mat               ->  0.110148 seconds (5 allocations: 368 bytes)
+
+=====================================
+    Benchmarks for 6×6 matrices
+=====================================
+StaticArrays compilation time (×3):  1.167932 seconds (819.36 k allocations: 31.128 MB, 0.86% gc time)
+FixedSizeArrays compilation time:    0.506574 seconds (498.23 k allocations: 17.689 MB)
+
+Matrix multiplication
+---------------------
+Array             ->  3.069240 seconds (9.26 M allocations: 1.863 GB, 7.92% gc time)
+Array (mutating)  ->  2.266499 seconds (6 allocations: 960 bytes)
+SArray            ->  0.225122 seconds (5 allocations: 496 bytes)
+MArray            ->  1.131388 seconds (4.63 M allocations: 1.449 GB, 14.65% gc time)
+MArray (mutating) ->  0.758050 seconds (6 allocations: 832 bytes)
+Mat               ->  0.431305 seconds (5 allocations: 496 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.345600 seconds (11.11 M allocations: 2.235 GB, 20.65% gc time)
+Array (mutating)  ->  0.434395 seconds (6 allocations: 960 bytes)
+SArray            ->  0.040044 seconds (5 allocations: 496 bytes)
+MArray            ->  0.889502 seconds (5.56 M allocations: 1.738 GB, 22.60% gc time)
+MArray (mutating) ->  0.135072 seconds (5 allocations: 496 bytes)
+Mat               ->  0.129092 seconds (5 allocations: 496 bytes)
+
+=====================================
+    Benchmarks for 7×7 matrices
+=====================================
+StaticArrays compilation time (×3):  2.112059 seconds (1.28 M allocations: 47.681 MB, 0.53% gc time)
+FixedSizeArrays compilation time:    0.895945 seconds (856.02 k allocations: 28.288 MB, 0.63% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  2.406519 seconds (5.83 M allocations: 1.564 GB, 8.10% gc time)
+Array (mutating)  ->  1.834694 seconds (6 allocations: 1.219 KB)
+SArray            ->  0.311222 seconds (5 allocations: 608 bytes)
+MArray            ->  1.089865 seconds (2.92 M allocations: 1.216 GB, 12.99% gc time)
+MArray (mutating) ->  0.753160 seconds (6 allocations: 1.031 KB)
+Mat               ->  0.504512 seconds (5 allocations: 608 bytes)
+
+Matrix addition
+---------------
+Array             ->  1.224980 seconds (8.16 M allocations: 2.190 GB, 21.86% gc time)
+Array (mutating)  ->  0.422283 seconds (6 allocations: 1.219 KB)
+SArray            ->  0.048969 seconds (5 allocations: 608 bytes)
+MArray            ->  0.858476 seconds (4.08 M allocations: 1.703 GB, 22.62% gc time)
+MArray (mutating) ->  0.137838 seconds (5 allocations: 608 bytes)
+Mat               ->  0.145558 seconds (5 allocations: 608 bytes)
+
+=====================================
+    Benchmarks for 8×8 matrices
+=====================================
+StaticArrays compilation time (×3):  3.125810 seconds (1.91 M allocations: 69.615 MB, 0.47% gc time)
+FixedSizeArrays compilation time:    1.873876 seconds (1.30 M allocations: 41.121 MB, 0.51% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.498660 seconds (3.91 M allocations: 1.193 GB, 9.65% gc time)
+Array (mutating)  ->  1.125076 seconds (6 allocations: 1.375 KB)
+SArray            ->  0.212240 seconds (5 allocations: 704 bytes)
+MArray            ->  0.983435 seconds (1.95 M allocations: 1013.279 MB, 12.06% gc time)
+MArray (mutating) ->  0.749106 seconds (6 allocations: 1.219 KB)
+Mat               -> 11.513492 seconds (875.00 M allocations: 13.039 GB, 14.93% gc time)
+
+Matrix addition
+---------------
+Array             ->  1.059987 seconds (6.25 M allocations: 1.909 GB, 22.50% gc time)
+Array (mutating)  ->  0.415362 seconds (6 allocations: 1.375 KB)
+SArray            ->  0.050414 seconds (5 allocations: 704 bytes)
+MArray            ->  0.829389 seconds (3.13 M allocations: 1.583 GB, 22.73% gc time)
+MArray (mutating) ->  0.133051 seconds (5 allocations: 704 bytes)
+Mat               ->  0.141969 seconds (5 allocations: 704 bytes)
+
+=====================================
+    Benchmarks for 9×9 matrices
+=====================================
+StaticArrays compilation time (×3):  4.906977 seconds (2.71 M allocations: 97.555 MB, 0.44% gc time)
+FixedSizeArrays compilation time:    2.949499 seconds (2.09 M allocations: 61.596 MB, 0.54% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.369812 seconds (2.74 M allocations: 1004.694 MB, 9.20% gc time)
+Array (mutating)  ->  1.061575 seconds (6 allocations: 1.594 KB)
+SArray            ->  0.297908 seconds (5 allocations: 832 bytes)
+MArray            ->  0.962821 seconds (1.37 M allocations: 879.107 MB, 10.40% gc time)
+MArray (mutating) ->  0.742182 seconds (6 allocations: 1.469 KB)
+Mat               -> 10.656067 seconds (777.78 M allocations: 11.590 GB, 14.59% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.938825 seconds (4.94 M allocations: 1.766 GB, 22.85% gc time)
+Array (mutating)  ->  0.426562 seconds (6 allocations: 1.594 KB)
+SArray            ->  0.058323 seconds (5 allocations: 832 bytes)
+MArray            ->  0.797697 seconds (2.47 M allocations: 1.545 GB, 22.48% gc time)
+MArray (mutating) ->  0.132637 seconds (5 allocations: 832 bytes)
+Mat               ->  0.147042 seconds (5 allocations: 832 bytes)
+
+=====================================
+    Benchmarks for 10×10 matrices
+=====================================
+StaticArrays compilation time (×3):  7.606741 seconds (3.74 M allocations: 132.485 MB, 0.42% gc time)
+FixedSizeArrays compilation time:    4.888820 seconds (3.11 M allocations: 86.535 MB, 0.45% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.145573 seconds (2.00 M allocations: 885.010 MB, 9.83% gc time)
+Array (mutating)  ->  0.877946 seconds (6 allocations: 1.906 KB)
+SArray            ->  0.216399 seconds (5 allocations: 1.031 KB)
+MArray            ->  1.006612 seconds (1.00 M allocations: 854.492 MB, 9.80% gc time)
+MArray (mutating) ->  0.732309 seconds (6 allocations: 1.906 KB)
+Mat               -> 13.732258 seconds (1.00 G allocations: 14.901 GB, 13.87% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.895618 seconds (4.00 M allocations: 1.729 GB, 24.47% gc time)
+Array (mutating)  ->  0.418784 seconds (6 allocations: 1.906 KB)
+SArray            ->  0.056420 seconds (5 allocations: 1.031 KB)
+MArray            ->  0.842600 seconds (2.00 M allocations: 1.669 GB, 23.30% gc time)
+MArray (mutating) ->  0.133477 seconds (5 allocations: 1.031 KB)
+Mat               ->  0.151009 seconds (5 allocations: 1.031 KB)
+
+=====================================
+    Benchmarks for 11×11 matrices
+=====================================
+StaticArrays compilation time (×3): 12.157632 seconds (5.01 M allocations: 175.241 MB, 0.40% gc time)
+FixedSizeArrays compilation time:    6.988987 seconds (4.87 M allocations: 126.067 MB, 0.45% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  1.087842 seconds (1.50 M allocations: 802.490 MB, 9.25% gc time)
+Array (mutating)  ->  0.855415 seconds (6 allocations: 2.281 KB)
+SArray            ->  0.304216 seconds (5 allocations: 1.141 KB)
+MArray            ->  1.223263 seconds (751.32 k allocations: 722.241 MB, 6.43% gc time)
+MArray (mutating) ->  1.169267 seconds (6 allocations: 2.125 KB)
+Mat               -> 11.680718 seconds (909.09 M allocations: 13.546 GB, 14.48% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.851856 seconds (3.31 M allocations: 1.724 GB, 24.53% gc time)
+Array (mutating)  ->  0.414125 seconds (6 allocations: 2.281 KB)
+SArray            ->  0.058079 seconds (5 allocations: 1.141 KB)
+MArray            ->  0.789511 seconds (1.65 M allocations: 1.552 GB, 22.15% gc time)
+MArray (mutating) ->  0.132021 seconds (5 allocations: 1.141 KB)
+Mat               ->  0.157915 seconds (5 allocations: 1.141 KB)
+
+=====================================
+    Benchmarks for 12×12 matrices
+=====================================
+StaticArrays compilation time (×3): 18.771398 seconds (6.56 M allocations: 226.665 MB, 0.45% gc time)
+FixedSizeArrays compilation time:   11.020816 seconds (6.63 M allocations: 166.380 MB, 0.41% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.820534 seconds (1.16 M allocations: 706.425 MB, 10.07% gc time)
+Array (mutating)  ->  0.663686 seconds (6 allocations: 2.594 KB)
+SArray            ->  0.223749 seconds (5 allocations: 1.297 KB)
+MArray            ->  1.355733 seconds (578.71 k allocations: 644.613 MB, 5.26% gc time)
+MArray (mutating) ->  1.294746 seconds (6 allocations: 2.438 KB)
+Mat               -> 12.992979 seconds (1.08 G allocations: 16.143 GB, 14.36% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.734462 seconds (2.78 M allocations: 1.656 GB, 25.42% gc time)
+Array (mutating)  ->  0.412901 seconds (6 allocations: 2.594 KB)
+SArray            ->  0.060518 seconds (5 allocations: 1.297 KB)
+MArray            ->  0.769539 seconds (1.39 M allocations: 1.511 GB, 21.94% gc time)
+MArray (mutating) ->  0.198164 seconds (5 allocations: 1.297 KB)
+Mat               ->  0.166328 seconds (5 allocations: 1.297 KB)
+
+=====================================
+    Benchmarks for 13×13 matrices
+=====================================
+StaticArrays compilation time (×3): 29.609829 seconds (8.42 M allocations: 287.713 MB, 0.66% gc time)
+FixedSizeArrays compilation time:   15.780731 seconds (10.76 M allocations: 247.167 MB, 0.38% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.731200 seconds (910.34 k allocations: 659.802 MB, 7.60% gc time)
+Array (mutating)  ->  0.666911 seconds (6 allocations: 3.063 KB)
+SArray            ->  0.288840 seconds (5 allocations: 1.484 KB)
+MArray            ->  1.419602 seconds (455.17 k allocations: 590.349 MB, 4.58% gc time)
+MArray (mutating) ->  1.329043 seconds (6 allocations: 2.813 KB)
+Mat               -> 13.046507 seconds (1000.00 M allocations: 14.901 GB, 15.59% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.534872 seconds (2.37 M allocations: 1.675 GB, 23.19% gc time)
+Array (mutating)  ->  0.410467 seconds (6 allocations: 3.063 KB)
+SArray            ->  0.061964 seconds (5 allocations: 1.484 KB)
+MArray            ->  0.770817 seconds (1.18 M allocations: 1.499 GB, 22.08% gc time)
+MArray (mutating) ->  0.133537 seconds (5 allocations: 1.484 KB)
+Mat               ->  0.166057 seconds (5 allocations: 1.484 KB)
+
+=====================================
+    Benchmarks for 14×14 matrices
+=====================================
+StaticArrays compilation time (×3): 44.589734 seconds (10.64 M allocations: 359.337 MB, 0.34% gc time)
+FixedSizeArrays compilation time:   22.734988 seconds (12.95 M allocations: 298.597 MB, 0.71% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.561920 seconds (728.87 k allocations: 639.489 MB, 4.62% gc time)
+Array (mutating)  ->  0.593301 seconds (6 allocations: 3.688 KB)
+SArray            ->  0.226799 seconds (5 allocations: 1.750 KB)
+MArray            ->  1.441986 seconds (364.44 k allocations: 567.199 MB, 3.69% gc time)
+MArray (mutating) ->  1.344114 seconds (6 allocations: 3.344 KB)
+Mat               -> 19.418492 seconds (1.14 G allocations: 17.030 GB, 12.64% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.307452 seconds (2.04 M allocations: 1.749 GB, 19.86% gc time)
+Array (mutating)  ->  0.405691 seconds (6 allocations: 3.688 KB)
+SArray            ->  0.060550 seconds (5 allocations: 1.750 KB)
+MArray            ->  0.701957 seconds (1.02 M allocations: 1.551 GB, 20.70% gc time)
+MArray (mutating) ->  0.132284 seconds (5 allocations: 1.750 KB)
+Mat               ->  0.162815 seconds (5 allocations: 1.750 KB)
+
+=====================================
+    Benchmarks for 15×15 matrices
+=====================================
+StaticArrays compilation time (×3): 76.868526 seconds (13.24 M allocations: 442.626 MB, 0.25% gc time)
+FixedSizeArrays compilation time:    9.213497 seconds (3.84 M allocations: 180.657 MB, 0.57% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.740255 seconds (592.60 k allocations: 583.224 MB, 9.73% gc time)
+Array (mutating)  ->  0.600873 seconds (6 allocations: 4.125 KB)
+SArray            ->  0.519317 seconds (5 allocations: 1.922 KB)
+MArray            ->  1.255624 seconds (296.30 k allocations: 510.887 MB, 1.29% gc time)
+MArray (mutating) ->  1.372626 seconds (6 allocations: 3.688 KB)
+Mat               -> 68.310072 seconds (2.33 G allocations: 40.730 GB, 12.70% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.739637 seconds (1.78 M allocations: 1.709 GB, 26.25% gc time)
+Array (mutating)  ->  0.406176 seconds (6 allocations: 4.125 KB)
+SArray            ->  0.063366 seconds (5 allocations: 1.922 KB)
+MArray            ->  0.352047 seconds (888.89 k allocations: 1.497 GB, 14.15% gc time)
+MArray (mutating) ->  0.133989 seconds (5 allocations: 1.922 KB)
+Mat               ->  0.164057 seconds (5 allocations: 1.922 KB)
+
+=====================================
+    Benchmarks for 16×16 matrices
+=====================================
+StaticArrays compilation time (×3):122.943007 seconds (16.40 M allocations: 540.068 MB, 0.25% gc time)
+FixedSizeArrays compilation time:   11.000908 seconds (4.80 M allocations: 220.629 MB, 0.68% gc time)
+
+Matrix multiplication
+---------------------
+Array             ->  0.520563 seconds (488.28 k allocations: 514.089 MB, 8.37% gc time)
+Array (mutating)  ->  0.468087 seconds (6 allocations: 4.406 KB)
+SArray            ->  0.368796 seconds (5 allocations: 2.219 KB)
+MArray            ->  1.440563 seconds (244.14 k allocations: 491.737 MB, 2.34% gc time)
+MArray (mutating) ->  1.391446 seconds (6 allocations: 4.281 KB)
+Mat               -> 18.328322 seconds (1.19 G allocations: 17.695 GB, 12.93% gc time)
+
+Matrix addition
+---------------
+Array             ->  0.555928 seconds (1.56 M allocations: 1.607 GB, 24.15% gc time)
+Array (mutating)  ->  0.404827 seconds (6 allocations: 4.406 KB)
+SArray            ->  0.063057 seconds (5 allocations: 2.219 KB)
+MArray            ->  0.633272 seconds (781.25 k allocations: 1.537 GB, 17.96% gc time)
+MArray (mutating) ->  0.133569 seconds (5 allocations: 2.219 KB)
+Mat               ->  0.162243 seconds (5 allocations: 2.219 KB)

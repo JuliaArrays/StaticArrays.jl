@@ -1,6 +1,8 @@
 13 July 2016, 3:50pm
 --------------------
 
+WARNING: THE RESULTS FOR SARRAY MATRIX MULTIPLICATION HERE ARE SPURIOUS. SEE "bench2.txt"FOR CORRECTED RESULTS
+
 Observations: - FixedSizeArrays matrix multiplications is slower than StaticArrays, for N <= 7
               - FixedSizeArrays matrix multiplications is "broken" for N >= 8, leading to allocations and even more slowness
               - Compilation time is significant for large matrix multiplication
