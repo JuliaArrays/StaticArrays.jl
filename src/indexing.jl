@@ -301,9 +301,11 @@ end
 @generated function getindex(a::StaticArray, i1::Integer, i2::Integer, i3::Integer)
     @assert ndims(a) <= 3
 
+    strides = [1, size(a,1), size(a,1)*size(a,2)]
+
     N = 3
     ind_exprs = [:i1, :i2, :i3]
-    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(strides[j]) * ($(ind_exprs[j])-1) ) for j = 1:N]
     ind_expr = Expr(:call, :+, exprs...)
 
     bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)) || i3 < 1 || i3 > $(size(a,3)))
@@ -323,8 +325,16 @@ end
     @assert ndims(a) <= 2 + length(i_n)
 
     N = 2 + length(i_n)
+
+    strides = ones(Int, N)
+    for j = 2:N
+        for k = 1:j - 1
+            strides[j] *= size(a, k)
+        end
+    end
+
     ind_exprs = [:i1, :i2, [:(i_n[$j]) for j = 1:length(i_n)]...]
-    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(strides[j]) * ($(ind_exprs[j])-1) ) for j = 1:N]
     ind_expr = Expr(:call, :+, exprs...)
 
     bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)))
@@ -345,9 +355,11 @@ end
 @generated function setindex!(a::StaticArray, val, i1::Integer, i2::Integer, i3::Integer)
     @assert ndims(a) <= 3
 
+    strides = [1, size(a,1), size(a,1)*size(a,2)]
+
     N = 3
     ind_exprs = [:i1, :i2, :i3]
-    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    exprs = [j == 1 ? ind_exprs[1] : :($(strides[j]) * ($(ind_exprs[j])-1) ) for j = 1:N]
     ind_expr = Expr(:call, :+, exprs...)
 
     bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)) || i3 < 1 || i3 > $(size(a,3)))
@@ -367,8 +379,16 @@ end
     @assert ndims(a) <= 2 + length(i_n)
 
     N = 2 + length(i_n)
+
+    strides = ones(Int, N)
+    for j = 2:N
+        for k = 1:j - 1
+            strides[j] *= size(a, k)
+        end
+    end
+
     ind_exprs = [:i1, :i2, [:(i_n[$j]) for j = 1:length(i_n)]...]
-    exprs = [j == 1 ? ind_exprs[1] : :( $(size(a,j-1)) * ($(ind_exprs[j])-1) ) for j = 1:N]
+    exprs = [j == 1 ? ind_exprs[1] : :( $(strides[j]) * ($(ind_exprs[j])-1) ) for j = 1:N]
     ind_expr = Expr(:call, :+, exprs...)
 
     bounds_expr = :(i1 < 1 || i1 > $(size(a,1)) || i2 < 1 || i2 > $(size(a,2)))
