@@ -31,6 +31,11 @@
         @test ((@MMatrix [1 ; 2])::MMatrix{2,1}).data === (1, 2)
         @test ((@MMatrix [1 2 ; 3 4])::MMatrix{2,2}).data === (1, 3, 2, 4)
 
+        @test ((@MMatrix Int[1.0])::MMatrix{1,1}).data === (1,)
+        @test ((@MMatrix Float64[1 2])::MMatrix{1,2}).data === (1.0, 2.0)
+        @test ((@MMatrix Float64[1 ; 2])::MMatrix{2,1}).data === (1.0, 2.0)
+        @test ((@MMatrix Float64[1 2 ; 3 4])::MMatrix{2,2}).data === (1.0, 3.0, 2.0, 4.0)
+
         @test (ex = macroexpand(:(@MMatrix [1 2; 3])); isa(ex, Expr) && ex.head == :error)
     end
 

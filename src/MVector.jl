@@ -53,7 +53,9 @@ end
 
 macro MVector(ex)
     if isa(ex, Expr) && ex.head == :vect
-        return Expr(:call, MVector{length(ex.args)}, Expr(:tuple, ex.args...))
+        return esc(Expr(:call, MVector{length(ex.args)}, Expr(:tuple, ex.args...)))
+    elseif isa(ex, Expr) && ex.head == :ref
+        return esc(Expr(:call, Expr(:curly, :MVector, length(ex.args[2:end]), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     else
         error("Use @MVector [a,b,c] or @MVector([a,b,c])")
     end

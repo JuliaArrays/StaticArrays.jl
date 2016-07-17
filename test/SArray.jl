@@ -27,9 +27,13 @@
 
         @test ((@SArray [1])::SArray{(1,)}).data === (1,)
         @test ((@SArray [1,2])::SArray{(2,)}).data === (1,2)
+        @test ((@SArray Float64[1,2,3])::SArray{(3,)}).data === (1.0, 2.0, 3.0)
         @test ((@SArray [1 2])::SArray{(1,2)}).data === (1, 2)
+        @test ((@SArray Float64[1 2])::SArray{(1,2)}).data === (1.0, 2.0)
         @test ((@SArray [1 ; 2])::SArray{(2,1)}).data === (1, 2)
+        @test ((@SArray Float64[1 ; 2])::SArray{(2,1)}).data === (1.0, 2.0)
         @test ((@SArray [1 2 ; 3 4])::SArray{(2,2)}).data === (1, 3, 2, 4)
+        @test ((@SArray Float64[1 2 ; 3 4])::SArray{(2,2)}).data === (1.0, 3.0, 2.0, 4.0)
 
         @test (ex = macroexpand(:(@SArray [1 2; 3])); isa(ex, Expr) && ex.head == :error)
     end

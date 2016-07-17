@@ -25,7 +25,9 @@ end
 
 macro SVector(ex)
     if isa(ex, Expr) && ex.head == :vect
-        return Expr(:call, SVector{length(ex.args)}, Expr(:tuple, ex.args...))
+        return esc(Expr(:call, SVector{length(ex.args)}, Expr(:tuple, ex.args...)))
+    elseif isa(ex, Expr) && ex.head == :ref
+        return esc(Expr(:call, Expr(:curly, :SVector, length(ex.args[2:end]), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     else
         error("Use @SVector [a,b,c] or @SVector([a,b,c])")
     end
