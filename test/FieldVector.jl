@@ -25,16 +25,22 @@
                       0.0 0.0 2.0]
 
         @test m*p === Point3D(2.0, 4.0, 6.0)
+
+        @test similar_type(Point3D) == Point3D
+        @test similar_type(Point3D, Float64) == Point3D
+        @test similar_type(Point3D, Float32) == SVector{3,Float32}
+        @test similar_type(Point3D, (4,)) == SVector{4,Float64}
+        @test similar_type(Point3D, Float32, (4,)) == SVector{4,Float32}
     end
 
     @testset "Mutable Point2D" begin
         eval(quote
-            type Point2D <: FieldVector{Float64}
-                x::Float64
-                y::Float64
+            type Point2D{T} <: FieldVector{T}
+                x::T
+                y::T
             end
 
-            @inline Point2D(xy::NTuple{2,Float64}) = Point2D(xy[1], xy[2])
+            @inline Point2D(xy::NTuple{2}) = Point2D(xy[1], xy[2])
         end)
 
         p = Point2D(0.0, 0.0)
@@ -52,5 +58,10 @@
                       0.0 2.0]
 
         @test (m*p)::Point2D == Point2D(2.0, 4.0)
+
+        @test similar_type(Point2D{Float64}) == Point2D{Float64}
+        @test similar_type(Point2D{Float64}, Float32) == Point2D{Float32}
+        @test similar_type(Point2D{Float64}, (4,)) == SVector{4,Float64}
+        @test similar_type(Point2D{Float64}, Float32, (4,)) == SVector{4,Float32}
     end
 end

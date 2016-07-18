@@ -13,37 +13,94 @@ end
 
 Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 
-# Some fallbacks
+# Default type search for similar_type
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}) = SA
+@pure function similar_type{SA<:StaticArray,N,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::NTuple{N,Int})
+    similar_type(similar_type(SA, T), sizes)
+end
+@pure function similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Int)
+    similar_type(similar_type(SA, T), size)
+end
+@generated function similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T})
+    # This function has a strange error (on tests) regarding double-inference, if it is marked @pure
+    if T == eltype(SA)
+        return SA
+    end
 
-@pure similar_type{SV<:StaticVector, T}(::Union{SV,Type{SV}}, ::Type{T}) = SVector{length(SV),T}
+    primary_type = (SA.name.primary)
+    eltype_param_number = super_eltype_param(primary_type)
+    if isnull(eltype_param_number)
+        if ndims(SA) == 1
+            return SVector{length(SA), T}
+        elseif ndims(SA) == 2
+            sizes = size(SA)
+            return SMatrix{sizes[1], sizes[2], T, prod(sizes)}
+        else
+            sizes = size(SA)
+            return SArray{sizes, T, length(sizes), prod(sizes)}
+        end
+    end
+
+    T_out = primary_type
+    for i = 1:length(T_out.parameters)
+        if i == get(eltype_param_number)
+            T_out = T_out{T}
+        else
+            T_out = T_out{SA.parameters[i]}
+        end
+    end
+    return T_out
+end
+
+@pure function super_eltype_param(T)
+    T_super = supertype(T)
+    if T_super == Any
+        error("Unknown error")
+    end
+
+    if T_super.name.name == :StaticArray
+        if isa(T_super.parameters[1], TypeVar)
+            tv = T_super.parameters[1]
+            for i = 1:length(T.parameters)
+                if tv == T.parameters[i]
+                    return Nullable{Int}(i)
+                end
+            end
+            error("Unknown error")
+        end
+        return Nullable{Int}()
+    else
+        param_number = super_eltype_param(T_super)
+        if isnull(param_number)
+            return Nullable{Int}()
+        else
+            tv = T_super.parameters[get(param_number)]
+            for i = 1:length(T.parameters)
+                if tv == T.parameters[i]
+                    return Nullable{Int}(i)
+                end
+            end
+            error("Unknown error")
+        end
+    end
+end
+
+# Some fallbacks
+
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Int) = SVector{size, eltype(SA)}
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int}) = SVector{sizes[1], eltype(SA)}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Int) = SVector{size, T}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Int}) = SVector{sizes[1], T}
 
-@pure similar_type{SM<:StaticMatrix, T}(::Union{SM,Type{SM}}, ::Type{T}) = SMatrix{size(SM,1),size(SM,2),T}
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], eltype(SA)}
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], T}
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], eltype(SA), sizes[1]*sizes[2]}
 
-@pure similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}) = SArray{size(SA),T}
-@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, eltype(SA)}
-@pure similar_type{SA<:StaticArray,T,N}(::Union{SA,Type{SA}}, ::Type{T}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, T}
+@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, eltype(SA), N, prod(sizes)}
 
 # Some specializations for the mutable case
-@pure similar_type{MV<:MVector, T}(::Union{MV,Type{MV}}, ::Type{T}) = MVector{length(MV),T}
 @pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, size::Int) = MVector{size, eltype(MA)}
 @pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int}) = MVector{sizes[1], eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, size::Int) = MVector{size, T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Int}) = MVector{sizes[1], T}
 
-@pure similar_type{MM<:MMatrix, T}(::Union{MM,Type{MM}}, ::Type{T}) = MMatrix{size(MM,1),size(MM,2),T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(MA), sizes[1]*sizes[2]}
 
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T}(::Union{MA,Type{MA}}, ::Type{T}) = MArray{size(MA),T}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray},T,N}(::Union{MA,Type{MA}}, ::Type{T}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, T}
+@pure similar_type{MA<:Union{MVector,MMatrix,MArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, eltype(MA), N, prod(sizes)}
 
 # And also similar() returning mutable StaticArrays
 @inline similar{SV <: StaticVector}(::SV) = MVector{length(SV),eltype(SV)}()
@@ -58,10 +115,10 @@ Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 @inline similar{SA <: StaticArray}(::SA, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(SA), sizes[1]*sizes[2]}()
 @inline similar(a::StaticArray, T::Type, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], T, sizes[1]*sizes[2]}()
 
-
-
-# TODO similar for SArray...
-
+@inline similar{SA <: StaticArray}(m::SA) = MArray{size(SA),eltype(SA),ndims(SA),length(SA)}()
+@inline similar{SA <: StaticArray,T}(m::SA, ::Type{T}) = MArray{size(SA),T,ndims(SA),length(SA)}()
+@inline similar{SA <: StaticArray,N}(m::SA, sizes::NTuple{N, Int}) = MArray{sizes,eltype(SA),N,prod(sizes)}()
+@inline similar{SA <: StaticArray,N,T}(m::SA, ::Type{T}, sizes::NTuple{N, Int}) = MArray{sizes,T,N,prod(sizes)}()
 
 
 #=

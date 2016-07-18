@@ -10,7 +10,6 @@ using Base.Test
     include("MArray.jl")
     include("FieldVector.jl")
 
-
     include("core.jl")
     include("abstractarray.jl")
     include("indexing.jl")
