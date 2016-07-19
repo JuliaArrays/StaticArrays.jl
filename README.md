@@ -132,10 +132,16 @@ the garbage collector. Nevertheless, there is opportunity for speed
 improvements relative to `Base.Array` because (a) there may be one less
 pointer indirection, (b) their (typically small) static size allows for
 additional loop unrolling and inlining, and consequentially (c) their mutating
-methods like `map!` are extremely fast. They also happen to be very useful
-containers that can be constructed on the heap and later copied as e.g. an
-immutable `SVector` to the stack for use, or into e.g. an `Array{SVector}` for
-storage.
+methods like `map!` are extremely fast. Benchmarking shows that operations such
+as addition and matrix multiplication are faster for `MMatrix` than `Matrix`,
+at least for sizes up to 14 × 14, though keep in mind that optimal speed will
+be obtained by using mutating functions (like `map!` or `A_mul_B!`) where
+possible, rather than reallocating new memory.
+
+Mutable static arrays also happen to be very useful containers that can be
+constructed on the heap (with the ability to use `setindex!`, etc), and later
+copied as e.g. an immutable `SVector` to the stack for use, or into e.g. an
+`Array{SVector}` for storage.
 
 Convenience macros `@MVector`, `@MMatrix` and `@MArray` are provided.
 
@@ -157,7 +163,7 @@ With this type, users can easily access fields to `p = Point3D(x,y,z)` using
 `p.x`, `p.y` or `p.z`, or alternatively via `p[1]`, `p[2]`, or `p[3]`. You may
 even permute the coordinates with `p[(3,2,1)]`). Furthermore, `Point3D` is a
 complete `AbstractVector` implementation where you can add, subtract or scale
-vectors, multiply them by matrices, etc.
+vectors, multiply them by matrices (and return the same type), etc.
 
 It is also worth noting that `FieldVector`s may be mutable or immutable, and
 that `setindex!` is defined for use on mutable types. For mutable containers,
@@ -178,10 +184,11 @@ mutable containers).
 
 ### SIMD optimizations
 
-It seems Julia and LLVM are smart enough to use processor vectorization extensions
-like SSE and AVX - however they are disabled by default. Run Julia with
-`julia -O` or `julia -O3` to enable these optimizations, and many of your
-(immutable) `StaticArray` methods *may* become significantly faster!
+It seems Julia and LLVM are smart enough to use processor vectorization
+extensions like SSE and AVX - however they are currently disabled by default.
+Run Julia with `julia -O` or `julia -O3` to enable these optimizations, and
+many of your (immutable) `StaticArray` methods *should* become significantly
+faster!
 
 ### *FixedSizeArrays* compatibility
 
