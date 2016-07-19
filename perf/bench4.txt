@@ -1,0 +1,1099 @@
+19 July 2016, 1:00pm
+---------------------
+
+Observations: - Auto-tuning choices for matrix multiplication for pragmatic
+                switch to a non-inlined function (N^2 code vs N^3).
+              - Chunk-based algorithm already faster for 16x16 multiplication
+              - MArray code is much slower to compile than SArray
+              - The default MArray tuning is not necessarily the fastest here
+                (for larger than 8x8). In this case, BLAS is called - not sure
+                why Array would be faster?
+              - Mat compilation (and runtime) is slower than SArray
+              - SIMD does OK (but not perfect) for the "chunk" based multiplication.
+
+=====================================
+    Benchmarks for 2×2 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.351415 seconds (104.42 k allocations: 4.557 MB, 24.03% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.361595 seconds (115.85 k allocations: 4.991 MB, 18.63% gc time)
+MMatrix * MMatrix compilation time (unrolled):           0.083792 seconds (11.84 k allocations: 532.735 KB)
+MMatrix * MMatrix compilation time (chunks):             0.092981 seconds (31.38 k allocations: 1.304 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.236867 seconds (99.06 k allocations: 4.423 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.080036 seconds (13.18 k allocations: 575.378 KB)
+Mat * Mat compilation time:                              0.637686 seconds (375.13 k allocations: 16.249 MB, 1.29% gc time)
+
+Matrix multiplication
+---------------------
+Array               -> 10.005870 seconds (250.00 M allocations: 16.764 GB, 11.97% gc time)
+Array (mutating)    ->  4.776616 seconds (6 allocations: 384 bytes)
+SArray              ->  0.449482 seconds (5 allocations: 208 bytes)
+SArray (unrolled)   ->  0.450147 seconds (5 allocations: 208 bytes)
+SArray (chunks)     ->  2.374593 seconds (5 allocations: 208 bytes)
+MArray              ->  1.687099 seconds (125.00 M allocations: 5.588 GB, 16.31% gc time)
+MArray (unrolled)   ->  1.674035 seconds (125.00 M allocations: 5.588 GB, 16.01% gc time)
+MArray (chunks)     ->  7.757724 seconds (625.00 M allocations: 20.489 GB, 27.24% gc time)
+MArray (via SArray) ->  1.572499 seconds (125.00 M allocations: 5.588 GB, 17.68% gc time)
+MArray (mutating)   ->  1.101696 seconds (6 allocations: 256 bytes)
+MArray (BLAS gemm!) -> 18.628719 seconds (6 allocations: 256 bytes)
+Mat                 ->  1.509624 seconds (5 allocations: 208 bytes)
+
+Matrix addition
+---------------
+Array               ->  4.747190 seconds (100.00 M allocations: 6.706 GB, 10.53% gc time)
+Array (mutating)    ->  0.980080 seconds (6 allocations: 384 bytes)
+SArray (unrolled)   ->  0.077383 seconds (5 allocations: 208 bytes)
+MArray (unrolled)   ->  0.600779 seconds (50.00 M allocations: 2.235 GB, 18.45% gc time)
+MArray (via SArray) ->  0.685661 seconds (50.00 M allocations: 2.235 GB, 16.74% gc time)
+MArray (mutating)   ->  0.199593 seconds (5 allocations: 208 bytes)
+Mat                 ->  0.079042 seconds (5 allocations: 208 bytes)
+
+=====================================
+    Benchmarks for 3×3 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.030100 seconds (25.37 k allocations: 1.077 MB)
+SMatrix * SMatrix compilation time (chunks):             0.060553 seconds (48.77 k allocations: 2.024 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.042566 seconds (25.99 k allocations: 1.104 MB)
+MMatrix * MMatrix compilation time (chunks):             0.061591 seconds (49.07 k allocations: 2.030 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.140739 seconds (46.04 k allocations: 1.948 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.024470 seconds (14.02 k allocations: 594.944 KB)
+Mat * Mat compilation time:                              0.327208 seconds (104.59 k allocations: 4.591 MB)
+
+Matrix multiplication
+---------------------
+Array               ->  5.218344 seconds (74.07 M allocations: 6.623 GB, 16.47% gc time)
+Array (mutating)    ->  2.112184 seconds (6 allocations: 480 bytes)
+SArray              ->  0.327091 seconds (5 allocations: 240 bytes)
+SArray (unrolled)   ->  0.326742 seconds (5 allocations: 240 bytes)
+SArray (chunks)     ->  0.882317 seconds (5 allocations: 240 bytes)
+MArray              ->  1.780302 seconds (37.04 M allocations: 2.759 GB, 18.92% gc time)
+MArray (unrolled)   ->  1.784362 seconds (37.04 M allocations: 2.759 GB, 18.90% gc time)
+MArray (chunks)     ->  4.761667 seconds (259.26 M allocations: 9.382 GB, 22.49% gc time)
+MArray (via SArray) ->  1.746036 seconds (37.04 M allocations: 2.759 GB, 19.53% gc time)
+MArray (mutating)   ->  0.805579 seconds (6 allocations: 320 bytes)
+MArray (BLAS gemm!) ->  7.767785 seconds (6 allocations: 320 bytes)
+Mat                 ->  0.713668 seconds (5 allocations: 240 bytes)
+
+Matrix addition
+---------------
+Array               ->  3.515958 seconds (44.44 M allocations: 3.974 GB, 14.52% gc time)
+Array (mutating)    ->  0.727975 seconds (6 allocations: 480 bytes)
+SArray (unrolled)   ->  0.073170 seconds (5 allocations: 240 bytes)
+MArray (unrolled)   ->  0.881637 seconds (22.22 M allocations: 1.656 GB, 23.37% gc time)
+MArray (via SArray) ->  1.012464 seconds (22.22 M allocations: 1.656 GB, 21.35% gc time)
+MArray (mutating)   ->  0.147822 seconds (5 allocations: 240 bytes)
+Mat                 ->  0.072858 seconds (5 allocations: 240 bytes)
+
+=====================================
+    Benchmarks for 4×4 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.253565 seconds (202.27 k allocations: 8.147 MB)
+SMatrix * SMatrix compilation time (chunks):             0.080461 seconds (83.76 k allocations: 3.218 MB, 7.54% gc time)
+MMatrix * MMatrix compilation time (unrolled):           0.251923 seconds (180.33 k allocations: 7.221 MB)
+MMatrix * MMatrix compilation time (chunks):             0.076956 seconds (80.27 k allocations: 3.046 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.104173 seconds (81.71 k allocations: 3.406 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.026454 seconds (15.94 k allocations: 664.870 KB)
+Mat * Mat compilation time:                              0.212471 seconds (166.48 k allocations: 7.218 MB, 2.95% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  6.627062 seconds (31.25 M allocations: 3.492 GB, 7.00% gc time)
+Array (mutating)    ->  4.746219 seconds (6 allocations: 576 bytes)
+SArray              ->  0.376773 seconds (5 allocations: 304 bytes)
+SArray (unrolled)   ->  0.377703 seconds (5 allocations: 304 bytes)
+SArray (chunks)     ->  0.724624 seconds (5 allocations: 304 bytes)
+MArray              ->  1.472585 seconds (15.63 M allocations: 2.095 GB, 16.81% gc time)
+MArray (unrolled)   ->  1.495600 seconds (15.63 M allocations: 2.095 GB, 16.81% gc time)
+MArray (chunks)     ->  3.609919 seconds (140.63 M allocations: 7.683 GB, 18.59% gc time)
+MArray (via SArray) ->  1.500581 seconds (15.63 M allocations: 2.095 GB, 16.35% gc time)
+MArray (mutating)   ->  0.802040 seconds (6 allocations: 448 bytes)
+MArray (BLAS gemm!) ->  3.320034 seconds (6 allocations: 448 bytes)
+Mat                 ->  0.573613 seconds (5 allocations: 304 bytes)
+
+Matrix addition
+---------------
+Array               ->  2.405479 seconds (25.00 M allocations: 2.794 GB, 14.96% gc time)
+Array (mutating)    ->  0.641041 seconds (6 allocations: 576 bytes)
+SArray (unrolled)   ->  0.066362 seconds (5 allocations: 304 bytes)
+MArray (unrolled)   ->  0.851506 seconds (12.50 M allocations: 1.676 GB, 22.73% gc time)
+MArray (via SArray) ->  1.012330 seconds (12.50 M allocations: 1.676 GB, 19.45% gc time)
+MArray (mutating)   ->  0.139187 seconds (5 allocations: 304 bytes)
+Mat                 ->  0.065733 seconds (5 allocations: 304 bytes)
+
+=====================================
+    Benchmarks for 5×5 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.103349 seconds (105.18 k allocations: 4.450 MB)
+SMatrix * SMatrix compilation time (chunks):             0.102095 seconds (135.80 k allocations: 4.896 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.175792 seconds (107.43 k allocations: 4.548 MB, 2.85% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.114152 seconds (136.32 k allocations: 4.913 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.193222 seconds (141.92 k allocations: 5.846 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.034839 seconds (18.39 k allocations: 749.655 KB)
+Mat * Mat compilation time:                              0.328047 seconds (291.69 k allocations: 11.119 MB, 1.75% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  4.611661 seconds (16.00 M allocations: 2.742 GB, 7.53% gc time)
+Array (mutating)    ->  3.255543 seconds (6 allocations: 832 bytes)
+SArray              ->  0.397779 seconds (5 allocations: 368 bytes)
+SArray (unrolled)   ->  0.398324 seconds (5 allocations: 368 bytes)
+SArray (chunks)     ->  0.639584 seconds (5 allocations: 368 bytes)
+MArray              ->  1.234730 seconds (8.00 M allocations: 1.550 GB, 14.41% gc time)
+MArray (unrolled)   ->  1.218480 seconds (8.00 M allocations: 1.550 GB, 14.50% gc time)
+MArray (chunks)     ->  2.678518 seconds (88.00 M allocations: 5.126 GB, 16.11% gc time)
+MArray (via SArray) ->  1.242672 seconds (8.00 M allocations: 1.550 GB, 13.88% gc time)
+MArray (mutating)   ->  0.784159 seconds (6 allocations: 576 bytes)
+MArray (BLAS gemm!) ->  2.478841 seconds (6 allocations: 576 bytes)
+Mat                 ->  0.852020 seconds (5 allocations: 368 bytes)
+
+Matrix addition
+---------------
+Array               ->  2.136393 seconds (16.00 M allocations: 2.742 GB, 15.49% gc time)
+Array (mutating)    ->  0.599474 seconds (6 allocations: 832 bytes)
+SArray (unrolled)   ->  0.091865 seconds (5 allocations: 368 bytes)
+MArray (unrolled)   ->  0.806698 seconds (8.00 M allocations: 1.550 GB, 21.85% gc time)
+MArray (via SArray) ->  0.910217 seconds (8.00 M allocations: 1.550 GB, 19.25% gc time)
+MArray (mutating)   ->  0.138271 seconds (5 allocations: 368 bytes)
+Mat                 ->  0.280183 seconds (5 allocations: 368 bytes)
+
+=====================================
+    Benchmarks for 6×6 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.172220 seconds (180.25 k allocations: 7.599 MB)
+SMatrix * SMatrix compilation time (chunks):             0.137637 seconds (197.37 k allocations: 6.883 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.321128 seconds (184.15 k allocations: 7.774 MB, 1.67% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.154853 seconds (198.11 k allocations: 6.910 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.335925 seconds (228.00 k allocations: 9.332 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.046587 seconds (21.40 k allocations: 859.081 KB)
+Mat * Mat compilation time:                              0.459167 seconds (502.05 k allocations: 17.718 MB)
+
+Matrix multiplication
+---------------------
+Array               ->  2.979486 seconds (9.26 M allocations: 1.863 GB, 7.91% gc time)
+Array (mutating)    ->  2.353287 seconds (6 allocations: 960 bytes)
+SArray              ->  0.396768 seconds (5 allocations: 496 bytes)
+SArray (unrolled)   ->  0.399192 seconds (5 allocations: 496 bytes)
+SArray (chunks)     ->  0.551661 seconds (5 allocations: 496 bytes)
+MArray              ->  1.132669 seconds (4.63 M allocations: 1.449 GB, 14.56% gc time)
+MArray (unrolled)   ->  1.128200 seconds (4.63 M allocations: 1.449 GB, 14.54% gc time)
+MArray (chunks)     ->  3.319320 seconds (60.19 M allocations: 4.760 GB, 16.10% gc time)
+MArray (via SArray) ->  1.337160 seconds (4.63 M allocations: 1.449 GB, 13.32% gc time)
+MArray (mutating)   ->  0.865250 seconds (6 allocations: 832 bytes)
+MArray (BLAS gemm!) ->  1.701654 seconds (6 allocations: 832 bytes)
+Mat                 ->  0.758002 seconds (5 allocations: 496 bytes)
+
+Matrix addition
+---------------
+Array               ->  1.779925 seconds (11.11 M allocations: 2.235 GB, 15.70% gc time)
+Array (mutating)    ->  0.576926 seconds (6 allocations: 960 bytes)
+SArray (unrolled)   ->  0.106309 seconds (5 allocations: 496 bytes)
+MArray (unrolled)   ->  0.876796 seconds (5.56 M allocations: 1.738 GB, 22.35% gc time)
+MArray (via SArray) ->  0.968677 seconds (5.56 M allocations: 1.738 GB, 20.43% gc time)
+MArray (mutating)   ->  0.158901 seconds (5 allocations: 496 bytes)
+Mat                 ->  0.326896 seconds (5 allocations: 496 bytes)
+
+=====================================
+    Benchmarks for 7×7 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.277580 seconds (285.97 k allocations: 12.020 MB)
+SMatrix * SMatrix compilation time (chunks):             0.186636 seconds (269.96 k allocations: 9.300 MB, 2.91% gc time)
+MMatrix * MMatrix compilation time (unrolled):           0.577804 seconds (292.15 k allocations: 12.299 MB)
+MMatrix * MMatrix compilation time (chunks):             0.216588 seconds (270.97 k allocations: 9.335 MB, 2.66% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.576470 seconds (346.55 k allocations: 14.046 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.062738 seconds (26.36 k allocations: 1005.655 KB)
+Mat * Mat compilation time:                              0.737498 seconds (843.91 k allocations: 27.629 MB, 0.78% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  2.401359 seconds (5.83 M allocations: 1.564 GB, 8.13% gc time)
+Array (mutating)    ->  1.842555 seconds (6 allocations: 1.219 KB)
+SArray              ->  0.406409 seconds (5 allocations: 608 bytes)
+SArray (unrolled)   ->  0.406710 seconds (5 allocations: 608 bytes)
+SArray (chunks)     ->  0.546133 seconds (5 allocations: 608 bytes)
+MArray              ->  1.064888 seconds (2.92 M allocations: 1.216 GB, 13.19% gc time)
+MArray (unrolled)   ->  1.186020 seconds (2.92 M allocations: 1.216 GB, 12.89% gc time)
+MArray (chunks)     ->  2.915008 seconds (43.73 M allocations: 3.649 GB, 14.98% gc time)
+MArray (via SArray) ->  1.152350 seconds (2.92 M allocations: 1.216 GB, 12.29% gc time)
+MArray (mutating)   ->  0.754305 seconds (6 allocations: 1.031 KB)
+MArray (BLAS gemm!) ->  1.510005 seconds (6 allocations: 1.031 KB)
+Mat                 ->  0.788663 seconds (5 allocations: 608 bytes)
+
+Matrix addition
+---------------
+Array               ->  1.650795 seconds (8.16 M allocations: 2.190 GB, 16.40% gc time)
+Array (mutating)    ->  0.563883 seconds (6 allocations: 1.219 KB)
+SArray (unrolled)   ->  0.112541 seconds (5 allocations: 608 bytes)
+MArray (unrolled)   ->  0.877212 seconds (4.08 M allocations: 1.703 GB, 22.36% gc time)
+MArray (via SArray) ->  0.959228 seconds (4.08 M allocations: 1.703 GB, 20.81% gc time)
+MArray (mutating)   ->  0.134463 seconds (5 allocations: 608 bytes)
+Mat                 ->  0.327118 seconds (5 allocations: 608 bytes)
+
+=====================================
+    Benchmarks for 8×8 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.439162 seconds (427.81 k allocations: 17.925 MB, 1.09% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.238865 seconds (353.92 k allocations: 11.946 MB, 2.45% gc time)
+MMatrix * MMatrix compilation time (unrolled):           1.013082 seconds (437.08 k allocations: 18.349 MB)
+MMatrix * MMatrix compilation time (chunks):             0.283347 seconds (355.38 k allocations: 12.018 MB, 1.89% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.929531 seconds (504.52 k allocations: 20.233 MB, 0.63% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.083217 seconds (33.64 k allocations: 1.182 MB)
+Mat * Mat compilation time:                              1.330082 seconds (1.28 M allocations: 39.766 MB, 0.85% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.503937 seconds (3.91 M allocations: 1.193 GB, 9.71% gc time)
+Array (mutating)    ->  1.139654 seconds (6 allocations: 1.375 KB)
+SArray              ->  0.413454 seconds (5 allocations: 704 bytes)
+SArray (unrolled)   ->  0.413940 seconds (5 allocations: 704 bytes)
+SArray (chunks)     ->  0.508322 seconds (5 allocations: 704 bytes)
+MArray              ->  0.974816 seconds (1.95 M allocations: 1013.279 MB, 11.88% gc time)
+MArray (unrolled)   ->  0.971449 seconds (1.95 M allocations: 1013.279 MB, 11.58% gc time)
+MArray (chunks)     ->  2.541856 seconds (33.20 M allocations: 3.318 GB, 16.48% gc time)
+MArray (via SArray) ->  1.043052 seconds (1.95 M allocations: 1013.279 MB, 10.91% gc time)
+MArray (mutating)   ->  0.773432 seconds (6 allocations: 1.219 KB)
+MArray (BLAS gemm!) ->  0.866440 seconds (6 allocations: 1.219 KB)
+Mat                 -> 12.481065 seconds (875.00 M allocations: 13.039 GB, 15.76% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.471866 seconds (6.25 M allocations: 1.909 GB, 15.87% gc time)
+Array (mutating)    ->  0.556392 seconds (6 allocations: 1.375 KB)
+SArray (unrolled)   ->  0.115759 seconds (5 allocations: 704 bytes)
+MArray (unrolled)   ->  0.828556 seconds (3.13 M allocations: 1.583 GB, 22.31% gc time)
+MArray (via SArray) ->  0.891912 seconds (3.13 M allocations: 1.583 GB, 20.19% gc time)
+MArray (mutating)   ->  0.133477 seconds (5 allocations: 704 bytes)
+Mat                 ->  0.302869 seconds (5 allocations: 704 bytes)
+
+=====================================
+    Benchmarks for 9×9 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.652994 seconds (611.34 k allocations: 25.537 MB, 0.80% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.310530 seconds (449.35 k allocations: 14.910 MB, 1.96% gc time)
+MMatrix * MMatrix compilation time (unrolled):           1.807139 seconds (624.46 k allocations: 26.134 MB, 0.34% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.368767 seconds (435.20 k allocations: 14.214 MB, 1.68% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  1.497276 seconds (702.63 k allocations: 28.025 MB, 0.39% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.107295 seconds (42.00 k allocations: 1.405 MB)
+Mat * Mat compilation time:                              2.035141 seconds (2.05 M allocations: 59.281 MB, 0.85% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.359397 seconds (2.74 M allocations: 1004.694 MB, 9.23% gc time)
+Array (mutating)    ->  1.086953 seconds (6 allocations: 1.594 KB)
+SArray              ->  0.502728 seconds (5 allocations: 832 bytes)
+SArray (unrolled)   ->  0.407117 seconds (5 allocations: 832 bytes)
+SArray (chunks)     ->  0.504735 seconds (5 allocations: 832 bytes)
+MArray              ->  2.024022 seconds (1.37 M allocations: 879.107 MB, 4.86% gc time)
+MArray (unrolled)   ->  0.975197 seconds (1.37 M allocations: 879.107 MB, 10.29% gc time)
+MArray (chunks)     ->  2.286171 seconds (26.06 M allocations: 2.698 GB, 15.15% gc time)
+MArray (via SArray) ->  0.917822 seconds (1.37 M allocations: 879.107 MB, 10.99% gc time)
+MArray (mutating)   ->  0.741975 seconds (6 allocations: 1.469 KB)
+MArray (BLAS gemm!) ->  0.874491 seconds (6 allocations: 1.469 KB)
+Mat                 -> 10.971779 seconds (777.78 M allocations: 11.590 GB, 16.22% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.345128 seconds (4.94 M allocations: 1.766 GB, 16.34% gc time)
+Array (mutating)    ->  0.526130 seconds (6 allocations: 1.594 KB)
+SArray (unrolled)   ->  0.118914 seconds (5 allocations: 832 bytes)
+MArray (unrolled)   ->  0.797169 seconds (2.47 M allocations: 1.545 GB, 22.14% gc time)
+MArray (via SArray) ->  0.862908 seconds (2.47 M allocations: 1.545 GB, 20.40% gc time)
+MArray (mutating)   ->  0.134072 seconds (5 allocations: 832 bytes)
+Mat                 ->  0.312580 seconds (5 allocations: 832 bytes)
+
+=====================================
+    Benchmarks for 10×10 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.949894 seconds (842.23 k allocations: 35.077 MB, 0.56% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.381835 seconds (556.71 k allocations: 18.382 MB, 1.65% gc time)
+MMatrix * MMatrix compilation time (unrolled):           2.990055 seconds (860.23 k allocations: 35.897 MB, 0.37% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.461649 seconds (558.75 k allocations: 18.472 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  2.310147 seconds (945.84 k allocations: 37.599 MB, 0.48% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.133059 seconds (51.34 k allocations: 1.642 MB)
+Mat * Mat compilation time:                              3.005477 seconds (3.04 M allocations: 83.185 MB, 0.82% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.131970 seconds (2.00 M allocations: 885.010 MB, 9.60% gc time)
+Array (mutating)    ->  0.906651 seconds (6 allocations: 1.906 KB)
+SArray              ->  0.484827 seconds (5 allocations: 1.031 KB)
+SArray (unrolled)   ->  0.403703 seconds (5 allocations: 1.031 KB)
+SArray (chunks)     ->  0.484787 seconds (5 allocations: 1.031 KB)
+MArray              ->  1.568661 seconds (1.00 M allocations: 854.492 MB, 6.03% gc time)
+MArray (unrolled)   ->  0.969150 seconds (1.00 M allocations: 854.492 MB, 9.76% gc time)
+MArray (chunks)     ->  2.208320 seconds (21.00 M allocations: 2.623 GB, 18.03% gc time)
+MArray (via SArray) ->  0.864061 seconds (1.00 M allocations: 854.492 MB, 11.07% gc time)
+MArray (mutating)   ->  0.733294 seconds (6 allocations: 1.906 KB)
+MArray (BLAS gemm!) ->  0.730468 seconds (6 allocations: 1.906 KB)
+Mat                 -> 14.640715 seconds (1.00 G allocations: 14.901 GB, 15.35% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.286862 seconds (4.00 M allocations: 1.729 GB, 16.70% gc time)
+Array (mutating)    ->  0.512495 seconds (6 allocations: 1.906 KB)
+SArray (unrolled)   ->  0.121314 seconds (5 allocations: 1.031 KB)
+MArray (unrolled)   ->  0.844880 seconds (2.00 M allocations: 1.669 GB, 23.00% gc time)
+MArray (via SArray) ->  0.902885 seconds (2.00 M allocations: 1.669 GB, 21.06% gc time)
+MArray (mutating)   ->  0.132396 seconds (5 allocations: 1.031 KB)
+Mat                 ->  0.313105 seconds (5 allocations: 1.031 KB)
+
+=====================================
+    Benchmarks for 11×11 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           1.386856 seconds (1.13 M allocations: 46.765 MB, 0.86% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.481138 seconds (675.46 k allocations: 22.187 MB, 1.27% gc time)
+MMatrix * MMatrix compilation time (unrolled):           5.401325 seconds (1.15 M allocations: 47.857 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.596483 seconds (677.80 k allocations: 22.300 MB, 1.03% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  3.554193 seconds (1.24 M allocations: 49.127 MB, 0.36% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.174033 seconds (61.66 k allocations: 1.914 MB)
+Mat * Mat compilation time:                              4.482811 seconds (4.77 M allocations: 121.380 MB, 0.79% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.079104 seconds (1.50 M allocations: 802.490 MB, 9.22% gc time)
+Array (mutating)    ->  0.879159 seconds (6 allocations: 2.281 KB)
+SArray              ->  0.484021 seconds (5 allocations: 1.141 KB)
+SArray (unrolled)   ->  0.407455 seconds (5 allocations: 1.141 KB)
+SArray (chunks)     ->  0.484198 seconds (5 allocations: 1.141 KB)
+MArray              ->  1.423904 seconds (751.32 k allocations: 722.241 MB, 5.58% gc time)
+MArray (unrolled)   ->  1.259858 seconds (751.32 k allocations: 722.241 MB, 6.27% gc time)
+MArray (chunks)     ->  2.034354 seconds (17.28 M allocations: 2.183 GB, 16.13% gc time)
+MArray (via SArray) ->  0.812611 seconds (751.32 k allocations: 722.241 MB, 9.79% gc time)
+MArray (mutating)   ->  1.168461 seconds (6 allocations: 2.125 KB)
+MArray (BLAS gemm!) ->  0.739344 seconds (6 allocations: 2.125 KB)
+Mat                 -> 13.446404 seconds (909.09 M allocations: 13.546 GB, 15.76% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.252128 seconds (3.31 M allocations: 1.724 GB, 17.14% gc time)
+Array (mutating)    ->  0.503336 seconds (6 allocations: 2.281 KB)
+SArray (unrolled)   ->  0.123271 seconds (5 allocations: 1.141 KB)
+MArray (unrolled)   ->  0.841463 seconds (1.65 M allocations: 1.552 GB, 20.63% gc time)
+MArray (via SArray) ->  0.845706 seconds (1.65 M allocations: 1.552 GB, 20.74% gc time)
+MArray (mutating)   ->  0.132276 seconds (5 allocations: 1.141 KB)
+Mat                 ->  0.314758 seconds (5 allocations: 1.141 KB)
+
+=====================================
+    Benchmarks for 12×12 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           1.958070 seconds (1.47 M allocations: 60.822 MB, 0.95% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.591117 seconds (816.75 k allocations: 26.358 MB, 1.30% gc time)
+MMatrix * MMatrix compilation time (unrolled):           8.941543 seconds (1.50 M allocations: 62.243 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.752606 seconds (819.57 k allocations: 26.482 MB, 1.01% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  5.437148 seconds (1.59 M allocations: 62.855 MB, 0.39% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.214336 seconds (72.97 k allocations: 2.216 MB)
+Mat * Mat compilation time:                              6.420447 seconds (6.50 M allocations: 160.355 MB, 0.65% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.863271 seconds (1.16 M allocations: 706.425 MB, 11.17% gc time)
+Array (mutating)    ->  0.687328 seconds (6 allocations: 2.594 KB)
+SArray              ->  0.466619 seconds (5 allocations: 1.297 KB)
+SArray (unrolled)   ->  0.412513 seconds (5 allocations: 1.297 KB)
+SArray (chunks)     ->  0.467002 seconds (5 allocations: 1.297 KB)
+MArray              ->  1.137604 seconds (578.71 k allocations: 644.613 MB, 6.30% gc time)
+MArray (unrolled)   ->  1.358187 seconds (578.71 k allocations: 644.613 MB, 5.33% gc time)
+MArray (chunks)     ->  1.888812 seconds (14.47 M allocations: 2.078 GB, 12.68% gc time)
+MArray (via SArray) ->  0.760265 seconds (578.71 k allocations: 644.613 MB, 9.42% gc time)
+MArray (mutating)   ->  1.297290 seconds (6 allocations: 2.438 KB)
+MArray (BLAS gemm!) ->  0.569553 seconds (6 allocations: 2.438 KB)
+Mat                 -> 16.135792 seconds (1.08 G allocations: 16.143 GB, 15.09% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.219737 seconds (2.78 M allocations: 1.656 GB, 17.44% gc time)
+Array (mutating)    ->  0.497997 seconds (6 allocations: 2.594 KB)
+SArray (unrolled)   ->  0.123938 seconds (5 allocations: 1.297 KB)
+MArray (unrolled)   ->  0.778736 seconds (1.39 M allocations: 1.511 GB, 22.51% gc time)
+MArray (via SArray) ->  0.848146 seconds (1.39 M allocations: 1.511 GB, 20.66% gc time)
+MArray (mutating)   ->  0.131464 seconds (5 allocations: 1.297 KB)
+Mat                 ->  0.320854 seconds (5 allocations: 1.297 KB)
+
+=====================================
+    Benchmarks for 13×13 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           2.806716 seconds (1.88 M allocations: 77.484 MB, 1.05% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.725354 seconds (979.15 k allocations: 31.446 MB, 1.57% gc time)
+MMatrix * MMatrix compilation time (unrolled):          15.313857 seconds (1.92 M allocations: 79.290 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.938463 seconds (982.45 k allocations: 31.593 MB, 1.25% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  8.272584 seconds (2.00 M allocations: 79.062 MB, 0.47% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.267955 seconds (85.28 k allocations: 2.529 MB)
+Mat * Mat compilation time:                              9.163754 seconds (10.59 M allocations: 239.386 MB, 1.59% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.721283 seconds (910.34 k allocations: 659.802 MB, 7.25% gc time)
+Array (mutating)    ->  0.686380 seconds (6 allocations: 3.063 KB)
+SArray              ->  0.523050 seconds (5 allocations: 1.484 KB)
+SArray (unrolled)   ->  0.758149 seconds (5 allocations: 1.484 KB)
+SArray (chunks)     ->  0.524670 seconds (5 allocations: 1.484 KB)
+MArray              ->  1.073774 seconds (455.17 k allocations: 590.349 MB, 6.32% gc time)
+MArray (unrolled)   ->  1.420360 seconds (455.17 k allocations: 590.349 MB, 4.78% gc time)
+MArray (chunks)     ->  1.575857 seconds (12.29 M allocations: 1.811 GB, 11.06% gc time)
+MArray (via SArray) ->  0.818325 seconds (455.17 k allocations: 590.349 MB, 8.37% gc time)
+MArray (mutating)   ->  1.320723 seconds (6 allocations: 2.813 KB)
+MArray (BLAS gemm!) ->  0.579178 seconds (6 allocations: 2.813 KB)
+Mat                 -> 13.727541 seconds (1000.00 M allocations: 14.901 GB, 12.78% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.873734 seconds (2.37 M allocations: 1.675 GB, 14.03% gc time)
+Array (mutating)    ->  0.491666 seconds (6 allocations: 3.063 KB)
+SArray (unrolled)   ->  0.126230 seconds (5 allocations: 1.484 KB)
+MArray (unrolled)   ->  0.788842 seconds (1.18 M allocations: 1.499 GB, 22.41% gc time)
+MArray (via SArray) ->  0.853307 seconds (1.18 M allocations: 1.499 GB, 20.77% gc time)
+MArray (mutating)   ->  0.132545 seconds (5 allocations: 1.484 KB)
+Mat                 ->  0.326580 seconds (5 allocations: 1.484 KB)
+
+=====================================
+    Benchmarks for 14×14 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           3.849542 seconds (2.36 M allocations: 96.966 MB, 1.01% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.894106 seconds (1.16 M allocations: 36.824 MB, 1.29% gc time)
+MMatrix * MMatrix compilation time (unrolled):          24.464918 seconds (2.41 M allocations: 99.224 MB, 0.16% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.176780 seconds (1.16 M allocations: 37.027 MB, 1.07% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 12.452228 seconds (2.47 M allocations: 97.683 MB, 0.35% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.325411 seconds (98.87 k allocations: 2.864 MB)
+Mat * Mat compilation time:                             12.467644 seconds (12.74 M allocations: 289.002 MB, 0.61% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.776248 seconds (728.87 k allocations: 639.489 MB, 10.99% gc time)
+Array (mutating)    ->  0.614450 seconds (6 allocations: 3.688 KB)
+SArray              ->  0.524274 seconds (5 allocations: 1.750 KB)
+SArray (unrolled)   ->  0.713490 seconds (5 allocations: 1.750 KB)
+SArray (chunks)     ->  0.524969 seconds (5 allocations: 1.750 KB)
+MArray              ->  0.913328 seconds (364.44 k allocations: 567.199 MB, 6.94% gc time)
+MArray (unrolled)   ->  1.492779 seconds (364.44 k allocations: 567.199 MB, 4.23% gc time)
+MArray (chunks)     ->  1.919610 seconds (10.57 M allocations: 1.770 GB, 10.64% gc time)
+MArray (via SArray) ->  0.789338 seconds (364.44 k allocations: 567.199 MB, 7.95% gc time)
+MArray (mutating)   ->  1.358470 seconds (6 allocations: 3.344 KB)
+MArray (BLAS gemm!) ->  0.520827 seconds (6 allocations: 3.344 KB)
+Mat                 -> 16.376209 seconds (1.14 G allocations: 17.030 GB, 14.39% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.225482 seconds (2.04 M allocations: 1.749 GB, 18.32% gc time)
+Array (mutating)    ->  0.487071 seconds (6 allocations: 3.688 KB)
+SArray (unrolled)   ->  0.126162 seconds (5 allocations: 1.750 KB)
+MArray (unrolled)   ->  0.831047 seconds (1.02 M allocations: 1.551 GB, 22.31% gc time)
+MArray (via SArray) ->  0.871819 seconds (1.02 M allocations: 1.551 GB, 20.79% gc time)
+MArray (mutating)   ->  0.133628 seconds (5 allocations: 1.750 KB)
+Mat                 ->  0.321006 seconds (5 allocations: 1.750 KB)
+
+=====================================
+    Benchmarks for 15×15 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           5.271066 seconds (2.91 M allocations: 119.510 MB, 1.00% gc time)
+SMatrix * SMatrix compilation time (chunks):             1.106886 seconds (1.35 M allocations: 42.841 MB, 4.09% gc time)
+MMatrix * MMatrix compilation time (unrolled):          48.122605 seconds (2.97 M allocations: 122.286 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.448434 seconds (1.35 M allocations: 43.033 MB, 1.64% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 18.793832 seconds (3.02 M allocations: 119.302 MB, 0.28% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.410454 seconds (113.55 k allocations: 3.265 MB)
+Mat * Mat compilation time:                              6.575581 seconds (3.60 M allocations: 169.034 MB, 0.86% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.626136 seconds (592.60 k allocations: 583.224 MB, 6.67% gc time)
+Array (mutating)    ->  0.621066 seconds (6 allocations: 4.125 KB)
+SArray              ->  0.536833 seconds (5 allocations: 1.922 KB)
+SArray (unrolled)   ->  0.843320 seconds (5 allocations: 1.922 KB)
+SArray (chunks)     ->  0.537619 seconds (5 allocations: 1.922 KB)
+MArray              ->  0.922925 seconds (296.30 k allocations: 510.887 MB, 6.20% gc time)
+MArray (unrolled)   ->  1.457312 seconds (296.30 k allocations: 510.887 MB, 3.95% gc time)
+MArray (chunks)     ->  1.851077 seconds (9.19 M allocations: 1.559 GB, 9.97% gc time)
+MArray (via SArray) ->  0.786687 seconds (296.30 k allocations: 510.887 MB, 7.65% gc time)
+MArray (mutating)   ->  1.377253 seconds (6 allocations: 3.688 KB)
+MArray (BLAS gemm!) ->  0.634509 seconds (6 allocations: 3.688 KB)
+Mat                 -> 66.574516 seconds (2.33 G allocations: 40.730 GB, 10.85% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.777988 seconds (1.78 M allocations: 1.709 GB, 14.22% gc time)
+Array (mutating)    ->  0.482166 seconds (6 allocations: 4.125 KB)
+SArray (unrolled)   ->  0.126706 seconds (5 allocations: 1.922 KB)
+MArray (unrolled)   ->  0.794240 seconds (888.89 k allocations: 1.497 GB, 22.15% gc time)
+MArray (via SArray) ->  0.848754 seconds (888.89 k allocations: 1.497 GB, 20.80% gc time)
+MArray (mutating)   ->  0.131670 seconds (5 allocations: 1.922 KB)
+Mat                 ->  0.321463 seconds (5 allocations: 1.922 KB)
+
+=====================================
+    Benchmarks for 16×16 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           7.036810 seconds (3.55 M allocations: 145.324 MB, 0.84% gc time)
+SMatrix * SMatrix compilation time (chunks):             1.292713 seconds (1.56 M allocations: 48.723 MB, 2.04% gc time)
+MMatrix * MMatrix compilation time (unrolled):          80.834198 seconds (3.63 M allocations: 148.692 MB, 0.08% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.828577 seconds (1.51 M allocations: 46.627 MB, 5.97% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 28.417157 seconds (3.77 M allocations: 145.601 MB, 0.22% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.504957 seconds (129.33 k allocations: 3.639 MB)
+Mat * Mat compilation time:                              7.782508 seconds (4.51 M allocations: 206.802 MB, 0.91% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.524855 seconds (488.28 k allocations: 514.089 MB, 8.04% gc time)
+Array (mutating)    ->  0.488074 seconds (6 allocations: 4.406 KB)
+SArray              ->  0.546693 seconds (5 allocations: 2.219 KB)
+SArray (unrolled)   ->  0.886188 seconds (5 allocations: 2.219 KB)
+SArray (chunks)     ->  0.547779 seconds (5 allocations: 2.219 KB)
+MArray              ->  0.648368 seconds (244.14 k allocations: 491.737 MB, 5.73% gc time)
+MArray (unrolled)   ->  1.394710 seconds (244.14 k allocations: 491.737 MB, 2.54% gc time)
+MArray (chunks)     ->  1.418863 seconds (8.06 M allocations: 1.528 GB, 5.36% gc time)
+MArray (via SArray) ->  0.734930 seconds (244.14 k allocations: 491.737 MB, 4.77% gc time)
+MArray (mutating)   ->  1.388874 seconds (6 allocations: 4.281 KB)
+MArray (BLAS gemm!) ->  0.408823 seconds (6 allocations: 4.281 KB)
+Mat                 -> 22.624281 seconds (1.19 G allocations: 17.695 GB, 12.66% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.874954 seconds (1.56 M allocations: 1.607 GB, 14.95% gc time)
+Array (mutating)    ->  0.479709 seconds (6 allocations: 4.406 KB)
+SArray (unrolled)   ->  0.127200 seconds (5 allocations: 2.219 KB)
+MArray (unrolled)   ->  0.609856 seconds (781.25 k allocations: 1.537 GB, 18.61% gc time)
+MArray (via SArray) ->  0.668269 seconds (781.25 k allocations: 1.537 GB, 16.68% gc time)
+MArray (mutating)   ->  0.131712 seconds (5 allocations: 2.219 KB)
+Mat                 ->  0.355781 seconds (5 allocations: 2.219 KB)
+
+
+===================================================
+===================================================
+             SIMD
+===================================================
+===================================================
+
+=====================================
+    Benchmarks for 2×2 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.343336 seconds (104.42 k allocations: 4.550 MB, 24.86% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.390094 seconds (115.84 k allocations: 4.896 MB, 17.22% gc time)
+MMatrix * MMatrix compilation time (unrolled):           0.089923 seconds (11.84 k allocations: 532.735 KB)
+MMatrix * MMatrix compilation time (chunks):             0.099419 seconds (31.38 k allocations: 1.304 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.268964 seconds (99.05 k allocations: 4.172 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.095798 seconds (13.18 k allocations: 575.378 KB)
+Mat * Mat compilation time:                              0.618635 seconds (375.08 k allocations: 16.027 MB, 1.39% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  9.816698 seconds (250.00 M allocations: 16.764 GB, 12.71% gc time)
+Array (mutating)    ->  4.798179 seconds (6 allocations: 384 bytes)
+SArray              ->  0.408725 seconds (5 allocations: 208 bytes)
+SArray (unrolled)   ->  0.409578 seconds (5 allocations: 208 bytes)
+SArray (chunks)     ->  1.084132 seconds (5 allocations: 208 bytes)
+MArray              ->  1.724105 seconds (125.00 M allocations: 5.588 GB, 16.73% gc time)
+MArray (unrolled)   ->  1.715694 seconds (125.00 M allocations: 5.588 GB, 16.64% gc time)
+MArray (chunks)     ->  8.381625 seconds (625.00 M allocations: 20.489 GB, 26.65% gc time)
+MArray (via SArray) ->  1.599287 seconds (125.00 M allocations: 5.588 GB, 18.32% gc time)
+MArray (mutating)   ->  1.103928 seconds (6 allocations: 256 bytes)
+MArray (BLAS gemm!) -> 18.710393 seconds (6 allocations: 256 bytes)
+Mat                 ->  0.881380 seconds (5 allocations: 208 bytes)
+
+Matrix addition
+---------------
+Array               ->  4.551187 seconds (100.00 M allocations: 6.706 GB, 11.64% gc time)
+Array (mutating)    ->  0.985360 seconds (6 allocations: 384 bytes)
+SArray (unrolled)   ->  0.049312 seconds (5 allocations: 208 bytes)
+MArray (unrolled)   ->  0.614130 seconds (50.00 M allocations: 2.235 GB, 18.75% gc time)
+MArray (via SArray) ->  0.704118 seconds (50.00 M allocations: 2.235 GB, 16.53% gc time)
+MArray (mutating)   ->  0.166362 seconds (5 allocations: 208 bytes)
+Mat                 ->  0.049252 seconds (5 allocations: 208 bytes)
+
+=====================================
+    Benchmarks for 3×3 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.027692 seconds (25.38 k allocations: 1.077 MB)
+SMatrix * SMatrix compilation time (chunks):             0.056766 seconds (48.76 k allocations: 2.023 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.040036 seconds (25.99 k allocations: 1.104 MB)
+MMatrix * MMatrix compilation time (chunks):             0.058012 seconds (49.07 k allocations: 2.030 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.137429 seconds (46.04 k allocations: 1.948 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.023933 seconds (14.02 k allocations: 594.944 KB)
+Mat * Mat compilation time:                              0.317681 seconds (104.59 k allocations: 4.590 MB)
+
+Matrix multiplication
+---------------------
+Array               ->  5.130537 seconds (74.07 M allocations: 6.623 GB, 16.51% gc time)
+Array (mutating)    ->  2.116233 seconds (6 allocations: 480 bytes)
+SArray              ->  0.221258 seconds (5 allocations: 240 bytes)
+SArray (unrolled)   ->  0.221442 seconds (5 allocations: 240 bytes)
+SArray (chunks)     ->  0.729120 seconds (5 allocations: 240 bytes)
+MArray              ->  1.798314 seconds (37.04 M allocations: 2.759 GB, 18.66% gc time)
+MArray (unrolled)   ->  1.779049 seconds (37.04 M allocations: 2.759 GB, 18.65% gc time)
+MArray (chunks)     ->  4.778320 seconds (259.26 M allocations: 9.382 GB, 23.20% gc time)
+MArray (via SArray) ->  1.748658 seconds (37.04 M allocations: 2.759 GB, 19.16% gc time)
+MArray (mutating)   ->  0.799697 seconds (6 allocations: 320 bytes)
+MArray (BLAS gemm!) ->  7.746489 seconds (6 allocations: 320 bytes)
+Mat                 ->  0.569809 seconds (5 allocations: 240 bytes)
+
+Matrix addition
+---------------
+Array               ->  3.394353 seconds (44.44 M allocations: 3.974 GB, 14.95% gc time)
+Array (mutating)    ->  0.726271 seconds (6 allocations: 480 bytes)
+SArray (unrolled)   ->  0.043801 seconds (5 allocations: 240 bytes)
+MArray (unrolled)   ->  0.867177 seconds (22.22 M allocations: 1.656 GB, 22.99% gc time)
+MArray (via SArray) ->  0.968409 seconds (22.22 M allocations: 1.656 GB, 21.13% gc time)
+MArray (mutating)   ->  0.147804 seconds (5 allocations: 240 bytes)
+Mat                 ->  0.043874 seconds (5 allocations: 240 bytes)
+
+=====================================
+    Benchmarks for 4×4 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.265481 seconds (202.27 k allocations: 8.147 MB)
+SMatrix * SMatrix compilation time (chunks):             0.078301 seconds (83.76 k allocations: 3.218 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.271224 seconds (180.33 k allocations: 7.223 MB, 2.18% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.080948 seconds (80.27 k allocations: 3.046 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.116056 seconds (81.71 k allocations: 3.406 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.029745 seconds (15.94 k allocations: 664.870 KB)
+Mat * Mat compilation time:                              0.224308 seconds (166.48 k allocations: 7.218 MB, 2.82% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  6.532288 seconds (31.25 M allocations: 3.492 GB, 6.72% gc time)
+Array (mutating)    ->  4.518119 seconds (6 allocations: 576 bytes)
+SArray              ->  0.196377 seconds (5 allocations: 304 bytes)
+SArray (unrolled)   ->  0.195345 seconds (5 allocations: 304 bytes)
+SArray (chunks)     ->  0.458269 seconds (5 allocations: 304 bytes)
+MArray              ->  1.432329 seconds (15.63 M allocations: 2.095 GB, 16.77% gc time)
+MArray (unrolled)   ->  1.427170 seconds (15.63 M allocations: 2.095 GB, 16.75% gc time)
+MArray (chunks)     ->  3.438419 seconds (140.63 M allocations: 7.683 GB, 19.29% gc time)
+MArray (via SArray) ->  1.495599 seconds (15.63 M allocations: 2.095 GB, 16.22% gc time)
+MArray (mutating)   ->  0.747223 seconds (6 allocations: 448 bytes)
+MArray (BLAS gemm!) ->  3.309593 seconds (6 allocations: 448 bytes)
+Mat                 ->  0.272981 seconds (5 allocations: 304 bytes)
+
+Matrix addition
+---------------
+Array               ->  2.366458 seconds (25.00 M allocations: 2.794 GB, 15.02% gc time)
+Array (mutating)    ->  0.641182 seconds (6 allocations: 576 bytes)
+SArray (unrolled)   ->  0.041039 seconds (5 allocations: 304 bytes)
+MArray (unrolled)   ->  0.855739 seconds (12.50 M allocations: 1.676 GB, 22.53% gc time)
+MArray (via SArray) ->  1.022953 seconds (12.50 M allocations: 1.676 GB, 19.16% gc time)
+MArray (mutating)   ->  0.140252 seconds (5 allocations: 304 bytes)
+Mat                 ->  0.041647 seconds (5 allocations: 304 bytes)
+
+=====================================
+    Benchmarks for 5×5 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.106823 seconds (105.18 k allocations: 4.450 MB)
+SMatrix * SMatrix compilation time (chunks):             0.108596 seconds (135.80 k allocations: 4.895 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.182851 seconds (107.43 k allocations: 4.548 MB, 2.85% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.118406 seconds (136.32 k allocations: 4.913 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.214855 seconds (141.92 k allocations: 5.846 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.041065 seconds (18.39 k allocations: 749.655 KB)
+Mat * Mat compilation time:                              0.323196 seconds (291.69 k allocations: 11.118 MB, 1.85% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  4.557905 seconds (16.00 M allocations: 2.742 GB, 7.31% gc time)
+Array (mutating)    ->  3.157462 seconds (6 allocations: 832 bytes)
+SArray              ->  0.357520 seconds (5 allocations: 368 bytes)
+SArray (unrolled)   ->  0.357172 seconds (5 allocations: 368 bytes)
+SArray (chunks)     ->  0.471822 seconds (5 allocations: 368 bytes)
+MArray              ->  1.192264 seconds (8.00 M allocations: 1.550 GB, 14.58% gc time)
+MArray (unrolled)   ->  1.200326 seconds (8.00 M allocations: 1.550 GB, 14.31% gc time)
+MArray (chunks)     ->  2.660108 seconds (88.00 M allocations: 5.126 GB, 16.60% gc time)
+MArray (via SArray) ->  1.245085 seconds (8.00 M allocations: 1.550 GB, 13.84% gc time)
+MArray (mutating)   ->  0.795713 seconds (6 allocations: 576 bytes)
+MArray (BLAS gemm!) ->  2.469894 seconds (6 allocations: 576 bytes)
+Mat                 ->  0.637994 seconds (5 allocations: 368 bytes)
+
+Matrix addition
+---------------
+Array               ->  2.098631 seconds (16.00 M allocations: 2.742 GB, 15.80% gc time)
+Array (mutating)    ->  0.600220 seconds (6 allocations: 832 bytes)
+SArray (unrolled)   ->  0.034197 seconds (5 allocations: 368 bytes)
+MArray (unrolled)   ->  0.813958 seconds (8.00 M allocations: 1.550 GB, 21.78% gc time)
+MArray (via SArray) ->  0.899677 seconds (8.00 M allocations: 1.550 GB, 19.13% gc time)
+MArray (mutating)   ->  0.136742 seconds (5 allocations: 368 bytes)
+Mat                 ->  0.110229 seconds (5 allocations: 368 bytes)
+
+=====================================
+    Benchmarks for 6×6 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.170239 seconds (180.25 k allocations: 7.599 MB)
+SMatrix * SMatrix compilation time (chunks):             0.145973 seconds (197.37 k allocations: 6.885 MB)
+MMatrix * MMatrix compilation time (unrolled):           0.337263 seconds (184.15 k allocations: 7.774 MB, 1.66% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.164830 seconds (198.11 k allocations: 6.912 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.372295 seconds (228.00 k allocations: 9.332 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.057647 seconds (21.40 k allocations: 859.081 KB)
+Mat * Mat compilation time:                              0.480710 seconds (502.05 k allocations: 17.719 MB)
+
+Matrix multiplication
+---------------------
+Array               ->  3.007760 seconds (9.26 M allocations: 1.863 GB, 7.82% gc time)
+Array (mutating)    ->  2.155682 seconds (6 allocations: 960 bytes)
+SArray              ->  0.226162 seconds (5 allocations: 496 bytes)
+SArray (unrolled)   ->  0.225142 seconds (5 allocations: 496 bytes)
+SArray (chunks)     ->  0.369455 seconds (5 allocations: 496 bytes)
+MArray              ->  1.120896 seconds (4.63 M allocations: 1.449 GB, 14.57% gc time)
+MArray (unrolled)   ->  1.112473 seconds (4.63 M allocations: 1.449 GB, 14.31% gc time)
+MArray (chunks)     ->  3.282579 seconds (60.19 M allocations: 4.760 GB, 16.45% gc time)
+MArray (via SArray) ->  1.203277 seconds (4.63 M allocations: 1.449 GB, 13.47% gc time)
+MArray (mutating)   ->  0.774562 seconds (6 allocations: 832 bytes)
+MArray (BLAS gemm!) ->  1.700796 seconds (6 allocations: 832 bytes)
+Mat                 ->  0.428600 seconds (5 allocations: 496 bytes)
+
+Matrix addition
+---------------
+Array               ->  1.735369 seconds (11.11 M allocations: 2.235 GB, 15.84% gc time)
+Array (mutating)    ->  0.575693 seconds (6 allocations: 960 bytes)
+SArray (unrolled)   ->  0.040486 seconds (5 allocations: 496 bytes)
+MArray (unrolled)   ->  0.860621 seconds (5.56 M allocations: 1.738 GB, 22.35% gc time)
+MArray (via SArray) ->  0.950905 seconds (5.56 M allocations: 1.738 GB, 20.50% gc time)
+MArray (mutating)   ->  0.135190 seconds (5 allocations: 496 bytes)
+Mat                 ->  0.129217 seconds (5 allocations: 496 bytes)
+
+=====================================
+    Benchmarks for 7×7 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.290773 seconds (285.98 k allocations: 12.033 MB)
+SMatrix * SMatrix compilation time (chunks):             0.199638 seconds (269.97 k allocations: 9.316 MB, 2.85% gc time)
+MMatrix * MMatrix compilation time (unrolled):           0.602622 seconds (292.15 k allocations: 12.299 MB)
+MMatrix * MMatrix compilation time (chunks):             0.226834 seconds (270.97 k allocations: 9.335 MB, 2.60% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.628912 seconds (346.55 k allocations: 14.046 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.079867 seconds (26.36 k allocations: 1005.655 KB)
+Mat * Mat compilation time:                              0.775902 seconds (843.91 k allocations: 27.629 MB, 0.77% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  2.442697 seconds (5.83 M allocations: 1.564 GB, 7.99% gc time)
+Array (mutating)    ->  1.822616 seconds (6 allocations: 1.219 KB)
+SArray              ->  0.310119 seconds (5 allocations: 608 bytes)
+SArray (unrolled)   ->  0.310573 seconds (5 allocations: 608 bytes)
+SArray (chunks)     ->  0.389878 seconds (5 allocations: 608 bytes)
+MArray              ->  1.082724 seconds (2.92 M allocations: 1.216 GB, 13.07% gc time)
+MArray (unrolled)   ->  1.064962 seconds (2.92 M allocations: 1.216 GB, 13.06% gc time)
+MArray (chunks)     ->  2.800982 seconds (43.73 M allocations: 3.649 GB, 15.07% gc time)
+MArray (via SArray) ->  1.132632 seconds (2.92 M allocations: 1.216 GB, 12.27% gc time)
+MArray (mutating)   ->  0.757188 seconds (6 allocations: 1.031 KB)
+MArray (BLAS gemm!) ->  1.512662 seconds (6 allocations: 1.031 KB)
+Mat                 ->  0.492044 seconds (5 allocations: 608 bytes)
+
+Matrix addition
+---------------
+Array               ->  1.628117 seconds (8.16 M allocations: 2.190 GB, 16.47% gc time)
+Array (mutating)    ->  0.561071 seconds (6 allocations: 1.219 KB)
+SArray (unrolled)   ->  0.048748 seconds (5 allocations: 608 bytes)
+MArray (unrolled)   ->  0.863855 seconds (4.08 M allocations: 1.703 GB, 22.36% gc time)
+MArray (via SArray) ->  0.945022 seconds (4.08 M allocations: 1.703 GB, 20.71% gc time)
+MArray (mutating)   ->  0.134457 seconds (5 allocations: 608 bytes)
+Mat                 ->  0.145447 seconds (5 allocations: 608 bytes)
+
+=====================================
+    Benchmarks for 8×8 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.440740 seconds (427.81 k allocations: 17.925 MB, 1.12% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.258211 seconds (353.92 k allocations: 11.946 MB, 2.52% gc time)
+MMatrix * MMatrix compilation time (unrolled):           1.093556 seconds (437.09 k allocations: 18.373 MB)
+MMatrix * MMatrix compilation time (chunks):             0.298830 seconds (355.42 k allocations: 12.097 MB, 1.87% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  1.039134 seconds (504.52 k allocations: 20.233 MB, 0.69% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.110310 seconds (33.64 k allocations: 1.182 MB)
+Mat * Mat compilation time:                              1.793142 seconds (1.28 M allocations: 39.769 MB, 0.66% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.540318 seconds (3.91 M allocations: 1.193 GB, 9.58% gc time)
+Array (mutating)    ->  1.110863 seconds (6 allocations: 1.375 KB)
+SArray              ->  0.214406 seconds (5 allocations: 704 bytes)
+SArray (unrolled)   ->  0.213520 seconds (5 allocations: 704 bytes)
+SArray (chunks)     ->  0.308933 seconds (5 allocations: 704 bytes)
+MArray              ->  0.982096 seconds (1.95 M allocations: 1013.279 MB, 11.64% gc time)
+MArray (unrolled)   ->  0.962159 seconds (1.95 M allocations: 1013.279 MB, 11.52% gc time)
+MArray (chunks)     ->  2.563229 seconds (33.20 M allocations: 3.318 GB, 16.55% gc time)
+MArray (via SArray) ->  1.040165 seconds (1.95 M allocations: 1013.279 MB, 10.92% gc time)
+MArray (mutating)   ->  0.743761 seconds (6 allocations: 1.219 KB)
+MArray (BLAS gemm!) ->  0.875765 seconds (6 allocations: 1.219 KB)
+Mat                 -> 12.255740 seconds (875.00 M allocations: 13.039 GB, 16.12% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.469074 seconds (6.25 M allocations: 1.909 GB, 15.96% gc time)
+Array (mutating)    ->  0.553692 seconds (6 allocations: 1.375 KB)
+SArray (unrolled)   ->  0.050652 seconds (5 allocations: 704 bytes)
+MArray (unrolled)   ->  0.827731 seconds (3.13 M allocations: 1.583 GB, 22.25% gc time)
+MArray (via SArray) ->  0.900561 seconds (3.13 M allocations: 1.583 GB, 20.15% gc time)
+MArray (mutating)   ->  0.134338 seconds (5 allocations: 704 bytes)
+Mat                 ->  0.142152 seconds (5 allocations: 704 bytes)
+
+=====================================
+    Benchmarks for 9×9 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.705543 seconds (611.34 k allocations: 25.537 MB, 0.76% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.335270 seconds (449.35 k allocations: 14.910 MB, 1.83% gc time)
+MMatrix * MMatrix compilation time (unrolled):           1.820338 seconds (624.46 k allocations: 26.134 MB, 0.33% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.375043 seconds (435.20 k allocations: 14.213 MB, 1.54% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  1.618081 seconds (702.63 k allocations: 28.023 MB, 0.37% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.147574 seconds (42.00 k allocations: 1.405 MB)
+Mat * Mat compilation time:                              2.819533 seconds (2.05 M allocations: 59.281 MB, 0.63% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.368685 seconds (2.74 M allocations: 1004.694 MB, 9.11% gc time)
+Array (mutating)    ->  1.074574 seconds (6 allocations: 1.594 KB)
+SArray              ->  0.352953 seconds (5 allocations: 832 bytes)
+SArray (unrolled)   ->  0.297613 seconds (5 allocations: 832 bytes)
+SArray (chunks)     ->  0.352386 seconds (5 allocations: 832 bytes)
+MArray              ->  2.037809 seconds (1.37 M allocations: 879.107 MB, 4.79% gc time)
+MArray (unrolled)   ->  0.961179 seconds (1.37 M allocations: 879.107 MB, 10.18% gc time)
+MArray (chunks)     ->  2.274954 seconds (26.06 M allocations: 2.698 GB, 15.16% gc time)
+MArray (via SArray) ->  0.805454 seconds (1.37 M allocations: 879.107 MB, 12.49% gc time)
+MArray (mutating)   ->  0.742701 seconds (6 allocations: 1.469 KB)
+MArray (BLAS gemm!) ->  0.867790 seconds (6 allocations: 1.469 KB)
+Mat                 -> 11.030903 seconds (777.78 M allocations: 11.590 GB, 16.39% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.354569 seconds (4.94 M allocations: 1.766 GB, 16.97% gc time)
+Array (mutating)    ->  0.527531 seconds (6 allocations: 1.594 KB)
+SArray (unrolled)   ->  0.058467 seconds (5 allocations: 832 bytes)
+MArray (unrolled)   ->  0.811891 seconds (2.47 M allocations: 1.545 GB, 22.81% gc time)
+MArray (via SArray) ->  0.876523 seconds (2.47 M allocations: 1.545 GB, 21.18% gc time)
+MArray (mutating)   ->  0.133787 seconds (5 allocations: 832 bytes)
+Mat                 ->  0.147790 seconds (5 allocations: 832 bytes)
+
+=====================================
+    Benchmarks for 10×10 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           0.988597 seconds (842.23 k allocations: 35.077 MB, 0.55% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.429976 seconds (556.71 k allocations: 18.382 MB, 1.51% gc time)
+MMatrix * MMatrix compilation time (unrolled):           3.024375 seconds (860.23 k allocations: 35.897 MB, 0.39% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.478088 seconds (558.74 k allocations: 18.468 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  2.543983 seconds (945.84 k allocations: 37.599 MB, 0.46% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.195044 seconds (51.34 k allocations: 1.642 MB)
+Mat * Mat compilation time:                              4.523882 seconds (3.04 M allocations: 83.310 MB, 0.55% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.162152 seconds (2.00 M allocations: 885.010 MB, 10.37% gc time)
+Array (mutating)    ->  0.898116 seconds (6 allocations: 1.906 KB)
+SArray              ->  0.301687 seconds (5 allocations: 1.031 KB)
+SArray (unrolled)   ->  0.216604 seconds (5 allocations: 1.031 KB)
+SArray (chunks)     ->  0.302209 seconds (5 allocations: 1.031 KB)
+MArray              ->  1.581855 seconds (1.00 M allocations: 854.492 MB, 6.31% gc time)
+MArray (unrolled)   ->  1.001212 seconds (1.00 M allocations: 854.492 MB, 9.95% gc time)
+MArray (chunks)     ->  2.263527 seconds (21.00 M allocations: 2.623 GB, 18.25% gc time)
+MArray (via SArray) ->  0.753871 seconds (1.00 M allocations: 854.492 MB, 13.36% gc time)
+MArray (mutating)   ->  0.733202 seconds (6 allocations: 1.906 KB)
+MArray (BLAS gemm!) ->  0.844462 seconds (6 allocations: 1.906 KB)
+Mat                 -> 14.815714 seconds (1.00 G allocations: 14.901 GB, 15.80% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.310843 seconds (4.00 M allocations: 1.729 GB, 17.23% gc time)
+Array (mutating)    ->  0.512785 seconds (6 allocations: 1.906 KB)
+SArray (unrolled)   ->  0.056539 seconds (5 allocations: 1.031 KB)
+MArray (unrolled)   ->  0.858733 seconds (2.00 M allocations: 1.669 GB, 23.40% gc time)
+MArray (via SArray) ->  0.965208 seconds (2.00 M allocations: 1.669 GB, 21.20% gc time)
+MArray (mutating)   ->  0.133831 seconds (5 allocations: 1.031 KB)
+Mat                 ->  0.150757 seconds (5 allocations: 1.031 KB)
+
+=====================================
+    Benchmarks for 11×11 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           1.573505 seconds (1.13 M allocations: 46.764 MB, 0.78% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.548081 seconds (675.45 k allocations: 22.181 MB, 1.18% gc time)
+MMatrix * MMatrix compilation time (unrolled):           5.466371 seconds (1.15 M allocations: 47.857 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.614786 seconds (677.80 k allocations: 22.300 MB, 1.02% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  3.870689 seconds (1.24 M allocations: 49.127 MB, 0.33% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.253245 seconds (61.66 k allocations: 1.914 MB)
+Mat * Mat compilation time:                              6.908354 seconds (4.77 M allocations: 121.380 MB, 0.53% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  1.104255 seconds (1.50 M allocations: 802.490 MB, 9.15% gc time)
+Array (mutating)    ->  0.877220 seconds (6 allocations: 2.281 KB)
+SArray              ->  0.334130 seconds (5 allocations: 1.141 KB)
+SArray (unrolled)   ->  0.305164 seconds (5 allocations: 1.141 KB)
+SArray (chunks)     ->  0.333478 seconds (5 allocations: 1.141 KB)
+MArray              ->  1.419830 seconds (751.32 k allocations: 722.241 MB, 5.72% gc time)
+MArray (unrolled)   ->  1.190923 seconds (751.32 k allocations: 722.241 MB, 6.83% gc time)
+MArray (chunks)     ->  2.041352 seconds (17.28 M allocations: 2.183 GB, 16.28% gc time)
+MArray (via SArray) ->  0.689526 seconds (751.32 k allocations: 722.241 MB, 11.82% gc time)
+MArray (mutating)   ->  1.167541 seconds (6 allocations: 2.125 KB)
+MArray (BLAS gemm!) ->  0.739855 seconds (6 allocations: 2.125 KB)
+Mat                 -> 13.462985 seconds (909.09 M allocations: 13.546 GB, 16.09% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.267548 seconds (3.31 M allocations: 1.724 GB, 17.44% gc time)
+Array (mutating)    ->  0.506932 seconds (6 allocations: 2.281 KB)
+SArray (unrolled)   ->  0.058692 seconds (5 allocations: 1.141 KB)
+MArray (unrolled)   ->  0.817294 seconds (1.65 M allocations: 1.552 GB, 22.82% gc time)
+MArray (via SArray) ->  0.872472 seconds (1.65 M allocations: 1.552 GB, 21.31% gc time)
+MArray (mutating)   ->  0.133609 seconds (5 allocations: 1.141 KB)
+Mat                 ->  0.158559 seconds (5 allocations: 1.141 KB)
+
+=====================================
+    Benchmarks for 12×12 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           2.076433 seconds (1.47 M allocations: 60.822 MB, 0.91% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.677644 seconds (816.75 k allocations: 26.358 MB, 1.16% gc time)
+MMatrix * MMatrix compilation time (unrolled):           8.903668 seconds (1.50 M allocations: 62.243 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.776312 seconds (819.57 k allocations: 26.487 MB, 1.00% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  5.900853 seconds (1.59 M allocations: 62.886 MB, 0.37% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.316629 seconds (72.97 k allocations: 2.216 MB)
+Mat * Mat compilation time:                             10.740384 seconds (6.50 M allocations: 160.360 MB, 0.39% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.877041 seconds (1.16 M allocations: 706.425 MB, 11.15% gc time)
+Array (mutating)    ->  0.681962 seconds (6 allocations: 2.594 KB)
+SArray              ->  0.285023 seconds (5 allocations: 1.297 KB)
+SArray (unrolled)   ->  0.222012 seconds (5 allocations: 1.297 KB)
+SArray (chunks)     ->  0.284963 seconds (5 allocations: 1.297 KB)
+MArray              ->  1.155185 seconds (578.71 k allocations: 644.613 MB, 6.30% gc time)
+MArray (unrolled)   ->  1.376154 seconds (578.71 k allocations: 644.613 MB, 5.27% gc time)
+MArray (chunks)     ->  1.881491 seconds (14.47 M allocations: 2.078 GB, 12.99% gc time)
+MArray (via SArray) ->  0.729219 seconds (578.71 k allocations: 644.613 MB, 10.03% gc time)
+MArray (mutating)   ->  1.279854 seconds (6 allocations: 2.438 KB)
+MArray (BLAS gemm!) ->  0.564989 seconds (6 allocations: 2.438 KB)
+Mat                 -> 15.613667 seconds (1.08 G allocations: 16.143 GB, 15.42% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.215473 seconds (2.78 M allocations: 1.656 GB, 17.77% gc time)
+Array (mutating)    ->  0.495361 seconds (6 allocations: 2.594 KB)
+SArray (unrolled)   ->  0.059014 seconds (5 allocations: 1.297 KB)
+MArray (unrolled)   ->  0.782508 seconds (1.39 M allocations: 1.511 GB, 22.94% gc time)
+MArray (via SArray) ->  0.845577 seconds (1.39 M allocations: 1.511 GB, 21.29% gc time)
+MArray (mutating)   ->  0.133226 seconds (5 allocations: 1.297 KB)
+Mat                 ->  0.164804 seconds (5 allocations: 1.297 KB)
+
+=====================================
+    Benchmarks for 13×13 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           3.147933 seconds (1.88 M allocations: 77.484 MB, 0.96% gc time)
+SMatrix * SMatrix compilation time (chunks):             0.848806 seconds (979.15 k allocations: 31.446 MB, 1.36% gc time)
+MMatrix * MMatrix compilation time (unrolled):          15.736398 seconds (1.92 M allocations: 79.290 MB, 0.22% gc time)
+MMatrix * MMatrix compilation time (chunks):             0.969329 seconds (982.45 k allocations: 31.593 MB, 1.23% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  8.954477 seconds (2.00 M allocations: 79.062 MB, 0.45% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.404412 seconds (85.28 k allocations: 2.529 MB)
+Mat * Mat compilation time:                             15.503862 seconds (10.59 M allocations: 239.386 MB, 0.95% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.741988 seconds (910.34 k allocations: 659.802 MB, 7.52% gc time)
+Array (mutating)    ->  0.688923 seconds (6 allocations: 3.063 KB)
+SArray              ->  0.339788 seconds (5 allocations: 1.484 KB)
+SArray (unrolled)   ->  0.286939 seconds (5 allocations: 1.484 KB)
+SArray (chunks)     ->  0.340458 seconds (5 allocations: 1.484 KB)
+MArray              ->  1.081792 seconds (455.17 k allocations: 590.349 MB, 6.32% gc time)
+MArray (unrolled)   ->  1.445444 seconds (455.17 k allocations: 590.349 MB, 4.90% gc time)
+MArray (chunks)     ->  1.585000 seconds (12.29 M allocations: 1.811 GB, 11.13% gc time)
+MArray (via SArray) ->  0.649737 seconds (455.17 k allocations: 590.349 MB, 10.62% gc time)
+MArray (mutating)   ->  1.325631 seconds (6 allocations: 2.813 KB)
+MArray (BLAS gemm!) ->  0.580983 seconds (6 allocations: 2.813 KB)
+Mat                 -> 13.713290 seconds (1000.00 M allocations: 14.901 GB, 12.99% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.875218 seconds (2.37 M allocations: 1.675 GB, 14.33% gc time)
+Array (mutating)    ->  0.491113 seconds (6 allocations: 3.063 KB)
+SArray (unrolled)   ->  0.060337 seconds (5 allocations: 1.484 KB)
+MArray (unrolled)   ->  0.784500 seconds (1.18 M allocations: 1.499 GB, 22.32% gc time)
+MArray (via SArray) ->  0.847921 seconds (1.18 M allocations: 1.499 GB, 20.66% gc time)
+MArray (mutating)   ->  0.132461 seconds (5 allocations: 1.484 KB)
+Mat                 ->  0.164498 seconds (5 allocations: 1.484 KB)
+
+=====================================
+    Benchmarks for 14×14 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           4.136451 seconds (2.36 M allocations: 96.966 MB, 0.95% gc time)
+SMatrix * SMatrix compilation time (chunks):             1.026923 seconds (1.16 M allocations: 36.822 MB, 1.14% gc time)
+MMatrix * MMatrix compilation time (unrolled):          24.478716 seconds (2.41 M allocations: 99.224 MB, 0.17% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.184057 seconds (1.16 M allocations: 37.027 MB, 1.08% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 13.320424 seconds (2.47 M allocations: 97.683 MB, 0.34% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.481522 seconds (98.87 k allocations: 2.864 MB)
+Mat * Mat compilation time:                             22.279816 seconds (12.74 M allocations: 289.002 MB, 0.35% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.787430 seconds (728.87 k allocations: 639.489 MB, 11.09% gc time)
+Array (mutating)    ->  0.611432 seconds (6 allocations: 3.688 KB)
+SArray              ->  0.272882 seconds (5 allocations: 1.750 KB)
+SArray (unrolled)   ->  0.227258 seconds (5 allocations: 1.750 KB)
+SArray (chunks)     ->  0.272201 seconds (5 allocations: 1.750 KB)
+MArray              ->  0.946962 seconds (364.44 k allocations: 567.199 MB, 7.03% gc time)
+MArray (unrolled)   ->  1.482294 seconds (364.44 k allocations: 567.199 MB, 4.41% gc time)
+MArray (chunks)     ->  1.912072 seconds (10.57 M allocations: 1.770 GB, 11.08% gc time)
+MArray (via SArray) ->  0.616920 seconds (364.44 k allocations: 567.199 MB, 10.58% gc time)
+MArray (mutating)   ->  1.334761 seconds (6 allocations: 3.344 KB)
+MArray (BLAS gemm!) ->  0.523782 seconds (6 allocations: 3.344 KB)
+Mat                 -> 15.938569 seconds (1.14 G allocations: 17.030 GB, 15.06% gc time)
+
+Matrix addition
+---------------
+Array               ->  1.224287 seconds (2.04 M allocations: 1.749 GB, 18.82% gc time)
+Array (mutating)    ->  0.484761 seconds (6 allocations: 3.688 KB)
+SArray (unrolled)   ->  0.060735 seconds (5 allocations: 1.750 KB)
+MArray (unrolled)   ->  0.792133 seconds (1.02 M allocations: 1.551 GB, 22.94% gc time)
+MArray (via SArray) ->  0.852691 seconds (1.02 M allocations: 1.551 GB, 20.96% gc time)
+MArray (mutating)   ->  0.131766 seconds (5 allocations: 1.750 KB)
+Mat                 ->  0.163276 seconds (5 allocations: 1.750 KB)
+
+=====================================
+    Benchmarks for 15×15 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           5.878981 seconds (2.91 M allocations: 119.524 MB, 0.88% gc time)
+SMatrix * SMatrix compilation time (chunks):             1.319380 seconds (1.35 M allocations: 42.849 MB, 3.39% gc time)
+MMatrix * MMatrix compilation time (unrolled):          50.530469 seconds (2.97 M allocations: 122.286 MB, 0.21% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.547066 seconds (1.35 M allocations: 43.033 MB, 1.68% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 19.666151 seconds (3.02 M allocations: 119.302 MB, 0.28% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.605913 seconds (113.55 k allocations: 3.265 MB)
+Mat * Mat compilation time:                              8.499358 seconds (3.60 M allocations: 169.034 MB, 0.67% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.637870 seconds (592.60 k allocations: 583.224 MB, 6.83% gc time)
+Array (mutating)    ->  0.620644 seconds (6 allocations: 4.125 KB)
+SArray              ->  0.345293 seconds (5 allocations: 1.922 KB)
+SArray (unrolled)   ->  0.536750 seconds (5 allocations: 1.922 KB)
+SArray (chunks)     ->  0.342127 seconds (5 allocations: 1.922 KB)
+MArray              ->  0.943400 seconds (296.30 k allocations: 510.887 MB, 6.29% gc time)
+MArray (unrolled)   ->  1.477162 seconds (296.30 k allocations: 510.887 MB, 4.06% gc time)
+MArray (chunks)     ->  1.859689 seconds (9.19 M allocations: 1.559 GB, 10.13% gc time)
+MArray (via SArray) ->  0.615720 seconds (296.30 k allocations: 510.887 MB, 9.97% gc time)
+MArray (mutating)   ->  1.384215 seconds (6 allocations: 3.688 KB)
+MArray (BLAS gemm!) ->  0.531309 seconds (6 allocations: 3.688 KB)
+Mat                 -> 70.073948 seconds (2.33 G allocations: 40.730 GB, 10.45% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.783836 seconds (1.78 M allocations: 1.709 GB, 14.60% gc time)
+Array (mutating)    ->  0.481975 seconds (6 allocations: 4.125 KB)
+SArray (unrolled)   ->  0.061833 seconds (5 allocations: 1.922 KB)
+MArray (unrolled)   ->  0.804238 seconds (888.89 k allocations: 1.497 GB, 23.22% gc time)
+MArray (via SArray) ->  0.871165 seconds (888.89 k allocations: 1.497 GB, 21.60% gc time)
+MArray (mutating)   ->  0.132166 seconds (5 allocations: 1.922 KB)
+Mat                 ->  0.161908 seconds (5 allocations: 1.922 KB)
+
+=====================================
+    Benchmarks for 16×16 matrices
+=====================================
+SMatrix * SMatrix compilation time (unrolled):           7.782162 seconds (3.55 M allocations: 145.320 MB, 0.77% gc time)
+SMatrix * SMatrix compilation time (chunks):             1.532563 seconds (1.56 M allocations: 48.723 MB, 1.73% gc time)
+MMatrix * MMatrix compilation time (unrolled):          78.667797 seconds (3.63 M allocations: 148.692 MB, 0.08% gc time)
+MMatrix * MMatrix compilation time (chunks):             1.852835 seconds (1.51 M allocations: 46.627 MB, 5.91% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled): 29.664870 seconds (3.77 M allocations: 145.601 MB, 0.22% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.712477 seconds (129.33 k allocations: 3.643 MB)
+Mat * Mat compilation time:                              9.931378 seconds (4.51 M allocations: 206.802 MB, 0.72% gc time)
+
+Matrix multiplication
+---------------------
+Array               ->  0.511778 seconds (488.28 k allocations: 514.089 MB, 8.22% gc time)
+Array (mutating)    ->  0.480681 seconds (6 allocations: 4.406 KB)
+SArray              ->  0.282960 seconds (5 allocations: 2.219 KB)
+SArray (unrolled)   ->  0.367569 seconds (5 allocations: 2.219 KB)
+SArray (chunks)     ->  0.282759 seconds (5 allocations: 2.219 KB)
+MArray              ->  0.659275 seconds (244.14 k allocations: 491.737 MB, 5.59% gc time)
+MArray (unrolled)   ->  1.392771 seconds (244.14 k allocations: 491.737 MB, 2.55% gc time)
+MArray (chunks)     ->  1.448877 seconds (8.06 M allocations: 1.528 GB, 5.77% gc time)
+MArray (via SArray) ->  0.616436 seconds (244.14 k allocations: 491.737 MB, 5.83% gc time)
+MArray (mutating)   ->  1.388694 seconds (6 allocations: 4.281 KB)
+MArray (BLAS gemm!) ->  0.406428 seconds (6 allocations: 4.281 KB)
+Mat                 -> 21.583115 seconds (1.19 G allocations: 17.695 GB, 13.09% gc time)
+
+Matrix addition
+---------------
+Array               ->  0.870168 seconds (1.56 M allocations: 1.607 GB, 15.20% gc time)
+Array (mutating)    ->  0.478505 seconds (6 allocations: 4.406 KB)
+SArray (unrolled)   ->  0.061974 seconds (5 allocations: 2.219 KB)
+MArray (unrolled)   ->  0.617733 seconds (781.25 k allocations: 1.537 GB, 18.56% gc time)
+MArray (via SArray) ->  0.669662 seconds (781.25 k allocations: 1.537 GB, 16.90% gc time)
+MArray (mutating)   ->  0.131984 seconds (5 allocations: 2.219 KB)
+Mat                 ->  0.161717 seconds (5 allocations: 2.219 KB)

@@ -122,12 +122,20 @@ end
 
 
 # We may want a pointer... usefull for LAPACK etc
-# TODO these are way too permissive. Need to think of a "general enough" way.
-function Base.unsafe_convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
+# TODO these are WAY too permissive. Need to think of a "general enough" way.
+@inline function Base.unsafe_convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
     Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
 end
 
-function convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
+@inline function convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
+    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
+end
+
+function Base.unsafe_convert{T1,SA<:StaticArray}(::Type{Ptr{T1}}, a::Ref{SA})
+    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
+end
+
+function convert{T1,SA<:StaticArray}(::Type{Ptr{T1}}, a::Ref{SA})
     Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
 end
 

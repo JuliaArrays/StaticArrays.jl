@@ -99,7 +99,7 @@ macro SMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @SMatrix")
     end
-    
+
     if ex.head == :vect && length(ex.args) == 1 # 1 x 1
         return esc(Expr(:call, SMatrix{1, 1}, Expr(:tuple, ex.args[1])))
     elseif ex.head == :ref && length(ex.args) == 2 # typed, 1 x 1

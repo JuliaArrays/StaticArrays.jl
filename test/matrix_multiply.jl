@@ -32,7 +32,7 @@
 
         m = @MArray [1 2; 3 4]
         n = @MArray [2 3; 4 5]
-        @test (m*n)::MArray == @MArray [10 13; 22 29]
+        @test (m*n)::MMatrix == @MMatrix [10 13; 22 29] # TODO maybe make these remember their type
     end
 
     @testset "A_mul_B!" begin

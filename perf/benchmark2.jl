@@ -46,81 +46,108 @@ if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite 
     #g_mut(n::Integer, A, B) = @inbounds (C = A + B; for i = 1:n; @inbounds broadcast!(+, C, C, B); end; return C)
 end
 
-# Don't count these compilations either
+# Test and compile f()
+
 C = f(2, A)
 C_mut = f_mut_array(2, A)
 if N == 4;  @assert C_mut ≈ C; end
+
+println("=====================================")
+println("    Benchmarks for $N×$N matrices")
+println("=====================================")
+print("SMatrix * SMatrix compilation time (unrolled):         ")
+@time eval(quote
+    Cs_unrolled = f_unrolled(2, As)
+    Cs_unrolled::SMatrix
+    if N == 4; @assert Cs_unrolled ≈ C; end
+end)
+
+print("SMatrix * SMatrix compilation time (chunks):           ")
+@time eval(quote
+    Cs_chunks = f_unrolled_chunks(2, As)
+    Cs_chunks::SMatrix
+    if N == 4; @assert Cs_chunks ≈ C; end
+end)
+
+print("MMatrix * MMatrix compilation time (unrolled):         ")
+@time eval(quote
+    Cm_unrolled = f_unrolled(2, Am)
+    Cm_unrolled::MMatrix
+    if N == 4; @assert Cm_unrolled ≈ C; end
+end)
+
+print("MMatrix * MMatrix compilation time (chunks):           ")
+@time eval(quote
+    Cm_chunks = f_unrolled_chunks(2, Am)
+    Cm_chunks::MMatrix
+    if N == 4; @assert Cm_chunks ≈ C; end
+end)
+
+print("A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):")
+@time eval(quote
+    Cm_mut = f_mut_marray(2, Am)
+    Cm_mut::MMatrix
+    if N == 4; @assert Cm_mut ≈ C; end
+end)
+
+print("A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):    ")
+@time eval(quote
+    Cm_blas = f_blas_marray(2, Am)
+    Cm_blas::MMatrix
+    if N == 4; @assert Cm_blas ≈ C; end
+end)
+
+
+# Warmup and some checks
+Cs = f(2, As)
+Cm = f(2, Am)
+Cm_via_sarray = f_via_sarray(2, Am)
+
+Cs::SMatrix
+if N == 4; @assert Cs ≈ C; end
+Cm::MMatrix
+if N == 4; @assert Cm ≈ C; end
+Cm_via_sarray::MMatrix
+if N == 4; @assert Cm_via_sarray ≈ C; end
+
+@static if fsa
+    print("Mat * Mat compilation time:                            ")
+    @time eval(quote
+        C = f(2, A)
+        Cf = f(2, Af)
+        Cf::Mat
+        if N == 4; @assert Cf == C; end
+    end)
+end
+
+# Test and compile g()
 
 C = g(2, A)
 C_mut = g_mut(2, A)
 
 if N == 4; @assert C_mut ≈ C; end
 
-println("=====================================")
-println("    Benchmarks for $N×$N matrices")
-println("=====================================")
-print("StaticArrays compilation time (×3):")
-@time eval(quote
-    # Warmup and some checks
-    C = f(2, A)
-    Cs = f(2, As)
-    Cs_unrolled = f_unrolled(2, As)
-    Cs_chunks = f_unrolled_chunks(2, As)
-    Cm = f(2, Am)
-    Cm_unrolled = f_unrolled(2, Am)
-    Cm_chunks = f_unrolled_chunks(2, Am)
-    Cm_via_sarray = f_via_sarray(2, Am)
-    Cm_mut = f_mut_marray(2, Am)
-    Cm_blas = f_blas_marray(2, Am)
+C = g(2, A)
+Cs = g(2, As)
+Cm = g(2, Am)
+Cm_via_sarray = g_via_sarray(2, Am)
+Cm_mut = g_mut(2, Am)
 
-    Cs::SMatrix
-    if N == 4; @assert Cs ≈ C; end
-    Cs_unrolled::SMatrix
-    if N == 4; @assert Cs_unrolled ≈ C; end
-    Cs_chunks::SMatrix
-    if N == 4; @assert Cs_chunks ≈ C; end
-    Cm::MMatrix
-    if N == 4; @assert Cm ≈ C; end
-    Cm_unrolled::MMatrix
-    if N == 4; @assert Cm_unrolled ≈ C; end
-    Cm_chunks::MMatrix
-    if N == 4; @assert Cm_chunks ≈ C; end
-    Cm_via_sarray::MMatrix
-    if N == 4; @assert Cm_via_sarray ≈ C; end
-    Cm_mut::MMatrix
-    if N == 4; @assert Cm_mut ≈ C; end
-    Cm_blas::MMatrix
-    if N == 4; @assert Cm_blas ≈ C; end
+Cs::SMatrix
+if N == 4; @assert Cs == C; end
+Cm::MMatrix
+if N == 4; @assert Cm == C; end
+Cm_via_sarray::MMatrix
+if N == 4; @assert Cm_via_sarray == C; end
+Cm_mut::MMatrix
+if N == 4; @assert Cm_mut == C; end
 
-    C = g(2, A)
-    Cs = g(2, As)
-    Cm = g(2, Am)
-    Cm_via_sarray = g_via_sarray(2, Am)
-    Cm_mut = g_mut(2, Am)
-
-    Cs::SMatrix
-    if N == 4; @assert Cs == C; end
-    Cm::MMatrix
-    if N == 4; @assert Cm == C; end
-    Cm_via_sarray::MMatrix
-    if N == 4; @assert Cm_via_sarray == C; end
-    Cm_mut::MMatrix
-    if N == 4; @assert Cm_mut == C; end
-end)
 @static if fsa
-    print("FixedSizeArrays compilation time:  ")
-    @time eval(quote
-        C = f(2, A)
-        Cf = f(2, Af)
-        Cf::Mat
-        if N == 4; @assert Cf == C; end
-
-        C = g(2, A)
-        Cf = g(2, Af)
-        Cf::Mat
-        if N == 4; @assert Cf == C; end
-    end)
+    Cf = g(2, Af)
+    Cf::Mat
+    if N == 4; @assert Cf == C; end
 end
+
 println()
 
 # Do the performance tests
