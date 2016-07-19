@@ -19,6 +19,8 @@
         @test ((@MVector [1.0])::MVector{1}).data === (1.0,)
         @test ((@MVector [1, 2, 3])::MVector{3}).data === (1, 2, 3)
         @test ((@MVector Float64[1,2,3])::MVector{3}).data === (1.0, 2.0, 3.0)
+        @test ((@MVector [i for i = 1:3])::MVector{3}).data === (1, 2, 3)
+        @test ((@MVector Float64[i for i = 1:3])::MVector{3}).data === (1.0, 2.0, 3.0)
     end
 
     @testset "Methods" begin
