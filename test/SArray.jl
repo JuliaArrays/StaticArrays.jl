@@ -35,6 +35,9 @@
         @test ((@SArray [1 2 ; 3 4])::SArray{(2,2)}).data === (1, 3, 2, 4)
         @test ((@SArray Float64[1 2 ; 3 4])::SArray{(2,2)}).data === (1.0, 3.0, 2.0, 4.0)
 
+        @test ((@SArray [i*j*k for i = 1:2, j = 2:3, k = 3:4])::SArray{(2,2,2)}).data === (6, 12, 9, 18, 8, 16, 12, 24)
+        @test ((@SArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::SArray{(2,2,2)}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
+
         @test (ex = macroexpand(:(@SArray [1 2; 3])); isa(ex, Expr) && ex.head == :error)
     end
 

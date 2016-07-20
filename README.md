@@ -87,8 +87,15 @@ immutable SVector{N,T} <: StaticVector{T}
 end
 ```
 
-`SVector` defines a series of convenience constructors and the `@SVector` macro,
-so you can just type `SVector(1,2,3)` or `@SVector [1,2,3]`.
+`SVector` defines a series of convenience constructors, so you can just type
+e.g. `SVector(1,2,3)`. Alternatively there is an intelligent `@SVector` macro
+where you can use native Julia array literals syntax and comprehensions, such as
+`@SVector [1,2,3]`, `@SVector Float64[1,2,3]`, `@SVector [f(i) for i = 1:10]`,
+etc. (Note: the range of a comprehension is evaluated at global scope by the
+macro, and must be made of combinations of literal values, functions, or global
+variables, but is not limited to just simple ranges. Extending this to
+(hopefully statically known by type-inference) local-scope variables is hoped
+for the future).
 
 ### `SMatrix`
 

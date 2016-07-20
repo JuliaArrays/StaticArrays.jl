@@ -142,7 +142,86 @@ macro SArray(ex)
         else # typed, n x 1
             return esc(Expr(:call, Expr(:curly, :SArray, (length(ex.args)-1, 1), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
         end
-    end
+    elseif isa(ex, Expr) && ex.head == :comprehension
+        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
+            error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
+        end
+        ex = ex.args[1]
+        n_rng = length(ex.args) - 1
+        rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
+        rngs = [eval(current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rng_lengths = map(length, rngs)
 
-    error("Bad input for @SArray")
+        f = gensym()
+        f_expr = :($f = ($(Expr(:tuple, rng_args...)) -> $(ex.args[1])))
+
+        # TODO figure out a generic way of doing this...
+        if n_rng == 1
+            exprs = [:($f($j1)) for j1 in rngs[1]]
+        elseif n_rng == 2
+            exprs = [:($f($j1, $j2)) for j1 in rngs[1], j2 in rngs[2]]
+        elseif n_rng == 3
+            exprs = [:($f($j1, $j2, $j3)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3]]
+        elseif n_rng == 4
+            exprs = [:($f($j1, $j2, $j3, $j4)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4]]
+        elseif n_rng == 5
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5]]
+        elseif n_rng == 6
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6]]
+        elseif n_rng == 7
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6, $j7)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6], j7 in rngs[7]]
+        elseif n_rng == 8
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6, $j7, $j8)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6], j7 in rngs[7], j8 in rngs[8]]
+        else
+            error("@SArray only supports up to 8-dimensional comprehensions")
+        end
+
+        return quote
+            $(Expr(:meta, :inline))
+            $(esc(f_expr))
+            $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...)), Expr(:tuple, exprs...))))
+        end
+    elseif isa(ex, Expr) && ex.head == :typed_comprehension
+        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
+            error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
+        end
+        T = ex.args[1]
+        ex = ex.args[2]
+        n_rng = length(ex.args) - 1
+        rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
+        rngs = [eval(current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rng_lengths = map(length, rngs)
+
+        f = gensym()
+        f_expr = :($f = ($(Expr(:tuple, rng_args...)) -> $(ex.args[1])))
+
+        # TODO figure out a generic way of doing this...
+        if n_rng == 1
+            exprs = [:($f($j1)) for j1 in rngs[1]]
+        elseif n_rng == 2
+            exprs = [:($f($j1, $j2)) for j1 in rngs[1], j2 in rngs[2]]
+        elseif n_rng == 3
+            exprs = [:($f($j1, $j2, $j3)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3]]
+        elseif n_rng == 4
+            exprs = [:($f($j1, $j2, $j3, $j4)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4]]
+        elseif n_rng == 5
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5]]
+        elseif n_rng == 6
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6]]
+        elseif n_rng == 7
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6, $j7)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6], j7 in rngs[7]]
+        elseif n_rng == 8
+            exprs = [:($f($j1, $j2, $j3, $j4, $j5, $j6, $j7, $j8)) for j1 in rngs[1], j2 in rngs[2], j3 in rngs[3], j4 in rngs[4], j5 in rngs[5], j6 in rngs[6], j7 in rngs[7], j8 in rngs[8]]
+        else
+            error("@SArray only supports up to 8-dimensional comprehensions")
+        end
+
+        return quote
+            $(Expr(:meta, :inline))
+            $(esc(f_expr))
+            $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
+        end
+    else
+        error("Bad input for @SArray")
+    end
 end

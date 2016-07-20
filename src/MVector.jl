@@ -61,7 +61,7 @@ macro MVector(ex)
     elseif isa(ex, Expr) && ex.head == :ref
         return esc(Expr(:call, Expr(:curly, :MVector, length(ex.args[2:end]), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif isa(ex, Expr) && ex.head == :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) !! ex.args[1].head != :generator
+        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
             error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
         end
         ex = ex.args[1]

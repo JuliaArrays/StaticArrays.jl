@@ -32,7 +32,7 @@ macro SVector(ex)
     elseif isa(ex, Expr) && ex.head == :ref
         return esc(Expr(:call, Expr(:curly, :SVector, length(ex.args[2:end]), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif isa(ex, Expr) && ex.head == :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) !! ex.args[1].head != :generator
+        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
             error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
         end
         ex = ex.args[1]
@@ -51,7 +51,7 @@ macro SVector(ex)
             $(esc(Expr(:call, Expr(:curly, :SVector, length(rng)), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :typed_comprehension
-        if length(ex.args) != 2 || !isa(ex.args[2], Expr) !! ex.args[2].head != :generator
+        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
             error("Expected generator in typed comprehension, e.g. Float64[f(i) for i = 1:3]")
         end
         T = ex.args[1]
@@ -70,7 +70,7 @@ macro SVector(ex)
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :SVector, length(rng), T), Expr(:tuple, exprs...))))
         end
-    else
+    else # TODO Expr(:call, :zeros), Expr(:call, :ones), Expr(:call, :eye) ?
         error("Use @SVector [a,b,c], @SVector Type[a,b,c] or a comprehension like [f(i) for i = i_min:i_max]")
     end
 end
