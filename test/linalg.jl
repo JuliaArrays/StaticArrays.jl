@@ -13,6 +13,16 @@
         @test v1 + v2 === @SVector [6, 7, 8, 9]
         @test v1 - v2 === @SVector [-2, 1, 4, 7]
     end
+
+    @testset "eye()" begin
+        @test eye(SMatrix{2,2,Int}) === @SMatrix [1 0; 0 1]
+        @test eye(SMatrix{2,2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+        @test eye(SMatrix{2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+
+        @test eye(MMatrix{2,2,Int})::MMatrix == @MMatrix [1 0; 0 1]
+        @test eye(MMatrix{2,2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
+        @test eye(MMatrix{2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
+    end
 #=
     @testset "StaticVector and StaticMatrix constructors" begin
         sv = SArray{(3,)}((1,2,3))

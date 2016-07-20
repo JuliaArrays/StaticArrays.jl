@@ -73,6 +73,12 @@ end
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::StaticArray{T}) = MMatrix{S1,S2,T}(Tuple(a))
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::AbstractArray{T}) = MMatrix{S1,S2,T}((a...))
 
+# Some more advanced constructor-like functions
+@inline eye{N}(::Type{MMatrix{N}}) = eye(MMatrix{N,N})
+@inline eye{N,M}(::Type{MMatrix{N,M}}) = eye(MMatrix{N,M,Float64})
+@inline zeros{N,M}(::Type{MMatrix{N,M}}) = zeros(MMatrix{N,M,Float64})
+@inline ones{N,M}(::Type{MMatrix{N,M}}) = ones(MMatrix{N,M,Float64})
+
 #####################
 ## MMatrix methods ##
 #####################

@@ -144,6 +144,20 @@ end
 @inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
     hcat(hcat(a,b), c...)
 
+@generated function eye{SA <: StaticArray}(::Type{SA})
+    s = size(SA)
+    T = eltype(SA) # try-catch with Float64 backup?
+    if length(s) != 2
+        error("Must call `eye` with a two-dimensional array. Got size $s")
+    end
+    e = eye(T, s...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SA, Expr(:tuple, e...)))
+    end
+end
+
+
 #=
 
 abstract SVector{Size,T,D} <: StaticArray{T,D}

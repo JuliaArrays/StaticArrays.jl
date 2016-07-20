@@ -22,6 +22,10 @@ end
 @inline (::Type{MVector{S}}){S, T}(x::NTuple{S,T}) = MVector{S,T}(x)
 @inline (::Type{MVector{S}}){S, T <: Tuple}(x::T) = MVector{S,promote_tuple_eltype(T)}(x)
 
+# Some more advanced constructor-like functions
+@inline zeros{N}(::Type{MVector{N}}) = zeros(MVector{N,Float64})
+@inline ones{N}(::Type{MVector{N}}) = ones(MVector{N,Float64})
+
 #####################
 ## MVector methods ##
 #####################

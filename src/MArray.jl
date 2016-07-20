@@ -64,6 +64,11 @@ end
     end
 end
 
+# Some more advanced constructor-like functions
+@inline zeros{Size}(::Type{MArray{Size}}) = zeros(MArray{Size,Float64})
+@inline ones{Size}(::Type{MArray{Size}}) = ones(MArray{Size,Float64})
+
+
 ####################
 ## MArray methods ##
 ####################

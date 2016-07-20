@@ -80,6 +80,13 @@ end
 @inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x1,x2,x3,x4) = SMatrix{S1,S2,T}((x1,x2,x3,x4))
 @inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x...) = SMatrix{S1,S2,T}(x)
 =#
+
+# Some more advanced constructor-like functions
+@inline eye{N}(::Type{SMatrix{N}}) = eye(SMatrix{N,N})
+@inline eye{N,M}(::Type{SMatrix{N,M}}) = eye(SMatrix{N,M,Float64})
+@inline zeros{N,M}(::Type{SMatrix{N,M}}) = zeros(SMatrix{N,M,Float64})
+@inline ones{N,M}(::Type{SMatrix{N,M}}) = ones(SMatrix{N,M,Float64})
+
 #####################
 ## SMatrix methods ##
 #####################

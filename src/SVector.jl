@@ -9,6 +9,9 @@ end
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))
 
+# Some more advanced constructor-like functions
+@inline zeros{N}(::Type{SVector{N}}) = zeros(SVector{N,Float64})
+@inline ones{N}(::Type{SVector{N}}) = ones(SVector{N,Float64})
 
 #####################
 ## SVector methods ##

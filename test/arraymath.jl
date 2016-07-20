@@ -24,4 +24,25 @@
         @test m1 .- m2 === @SMatrix [-3 -1; 1 3]
         @test m1 ./ m2 === @SMatrix [0.25 2/3; 1.5 4.0]
     end
+
+    @testset "zeros() and ones()" begin
+        @test zeros(SVector{3,Float64}) === @SVector [0.0, 0.0, 0.0]
+        @test zeros(SVector{3,Int}) === @SVector [0, 0, 0]
+        @test ones(SVector{3,Float64}) === @SVector [1.0, 1.0, 1.0]
+        @test ones(SVector{3,Int}) === @SVector [1, 1, 1]
+
+        @test zeros(SVector{3}) === @SVector [0.0, 0.0, 0.0]
+        @test zeros(SMatrix{2,2}) === @SMatrix [0.0 0.0; 0.0 0.0]
+        @test zeros(SArray{(1,1,1)}) === SArray{(1,1,1)}((0.0,))
+        @test zeros(MVector{3})::MVector == @MVector [0.0, 0.0, 0.0]
+        @test zeros(MMatrix{2,2})::MMatrix == @MMatrix [0.0 0.0; 0.0 0.0]
+        @test zeros(MArray{(1,1,1)})::MArray == MArray{(1,1,1)}((0.0,))
+
+        @test ones(SVector{3}) === @SVector [1.0, 1.0, 1.0]
+        @test ones(SMatrix{2,2}) === @SMatrix [1.0 1.0; 1.0 1.0]
+        @test ones(SArray{(1,1,1)}) === SArray{(1,1,1)}((1.0,))
+        @test ones(MVector{3})::MVector == @MVector [1.0, 1.0, 1.0]
+        @test ones(MMatrix{2,2})::MMatrix == @MMatrix [1.0 1.0; 1.0 1.0]
+        @test ones(MArray{(1,1,1)})::MArray == MArray{(1,1,1)}((1.0,))
+    end
 end

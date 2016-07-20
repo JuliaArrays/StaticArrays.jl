@@ -45,6 +45,11 @@ end
     end
 end
 
+# Some more advanced constructor-like functions
+@inline zeros{Size}(::Type{SArray{Size}}) = zeros(SArray{Size,Float64})
+@inline ones{Size}(::Type{SArray{Size}}) = ones(SArray{Size,Float64})
+
+
 ####################
 ## SArray methods ##
 ####################
