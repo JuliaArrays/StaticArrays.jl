@@ -1,5 +1,5 @@
-fsa = false
-all_methods = false
+fsa = true
+all_methods = true
 
 using StaticArrays
 @static if fsa
@@ -15,7 +15,7 @@ M_g = div(2*10^8, N^2)
 
 # Size
 
-A = rand(Complex{Float32},N,N)
+A = rand(Float64,N,N)
 As = SMatrix{N,N}(A)
 Am = MMatrix{N,N}(A)
 @static if fsa
@@ -24,23 +24,24 @@ end
 
 
 if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite == false
-    f(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C*A; end; return C)
-    f_unrolled{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C)
-    f_unrolled_chunks{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C)
-    f_via_sarray{M}(n::Integer, A::MMatrix{M,M})= @inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C)
-    f_mut_array(n::Integer, A) = @inbounds (C = copy(A); tmp = similar(A); for i = 1:n;  A_mul_B!(tmp, C, A); map!(identity, C, tmp); end; return C)
-    f_mut_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B!(tmp, C, A); C.data = tmp.data; end; return C)
-    f_mut_unrolled(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled!(tmp, C, A); C.data = tmp.data; end; return C)
-    f_mut_chunks(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled_chunks!(tmp, C, A); C.data = tmp.data; end; return C)
-    f_blas_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_blas!(tmp, C, A); C.data = tmp.data; end; return C)
+    @generated f(n::Integer, A) = :(@inbounds (C = A; for i = 1:n; C = C*A; end; return C))
+    @generated f_unrolled{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = :(@inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C))
+    @generated f_unrolled_chunks{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = :(@inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C))
+    @generated f_via_sarray{M}(n::Integer, A::MMatrix{M,M})= :(@inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C))
+    @generated f_mut_array(n::Integer, A) = :(@inbounds (C = copy(A); tmp = similar(A); for i = 1:n;  A_mul_B!(tmp, C, A); map!(identity, C, tmp); end; return C))
+    @generated f_mut_marray(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B!(tmp, C, A); C.data = tmp.data; end; return C))
+    @generated f_mut_unrolled(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled!(tmp, C, A); C.data = tmp.data; end; return C))
+    @generated f_mut_chunks(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled_chunks!(tmp, C, A); C.data = tmp.data; end; return C))
+    @generated f_blas_marray(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_blas!(tmp, C, A); C.data = tmp.data; end; return C))
 
-    g(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C + A; end; return C)
-    g_mut(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; @inbounds map!(+, C, C, A); end; return C)
-    g_via_sarray{M}(n::Integer, A::MMatrix{M,M}) = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C) + SMatrix{M,M}(A)); end; return C)
+    @generated g(n::Integer, A) = :(@inbounds (C = A; for i = 1:n; C = C + A; end; return C))
+    @generated g_mut(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; @inbounds map!(+, C, C, A); end; return C))
+    @generated g_via_sarray{M}(n::Integer, A::MMatrix{M,M}) = :(@inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C) + SMatrix{M,M}(A)); end; return C))
 
     # Notes: - A[:] = B[:] is allocating in Base, unlike `map!`
     #        - Also, the same goes for Base's implementation of broadcast!(f, A, B, C) (but map! is OK).
     #        - I really need to implement copy() in StaticArrays... (and maybe a special instance of setindex!(C, :))
+    #        - I tried generated functions here to see if they force the compiler to specialize more.
 
 end
 
@@ -137,7 +138,7 @@ if N <= 4; @assert Cm_mut ≈ C; end
     println()
     print("A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):")
     @time eval(quote
-        Cm_mut_unrolled = f_mut_marray(2, Am)
+        Cm_mut_unrolled = f_mut_unrolled(2, Am)
         Cm_mut_unrolled::MMatrix
         if N <= 4; @assert Cm_mut_unrolled ≈ C; end
     end)

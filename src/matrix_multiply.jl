@@ -1,10 +1,91 @@
-import Base: *, A_mul_B!
+import Base: *,        Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
+import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
 
 typealias BlasEltypes Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
 
 # TODO size-inferrable products with AbstractArray (such as StaticMatrix * AbstractVector)
-# TODO A*_mul_B*
-# TODO Potentially a loop version for rather large arrays?
+# TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
+
+
+# TODO make faster versions of A*_mul_B*
+@generated function A_mul_Bc(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A * ctranspose(B)
+    end
+end
+@generated function Ac_mul_B(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        ctranspose(A) * B
+    end
+end
+@generated function Ac_mul_Bc(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        ctranspose(B*A) # is this always safe?
+    end
+end
+
+@generated function A_mul_Bt(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A * transpose(B)
+    end
+end
+@generated function At_mul_B(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        transpose(A) * B
+    end
+end
+@generated function At_mul_Bt(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        transpose(B*A) # is this always safe?
+    end
+end
+
+# mutating
+
+@generated function A_mul_Bc!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, A, ctranspose(B))
+    end
+end
+@generated function Ac_mul_B!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, ctranspose(A), B)
+    end
+end
+@generated function Ac_mul_Bc!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, ctranspose(A), ctranspose(B))
+    end
+end
+
+@generated function A_mul_Bt!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, A, transpose(B))
+    end
+end
+@generated function At_mul_B!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, transpose(A), B)
+    end
+end
+@generated function At_mul_Bt!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
+    return quote
+        $(Expr(:meta, :inline))
+        A_mul_B!(C, transpose(A), transpose(B))
+    end
+end
+
 
 @generated function *(A::StaticMatrix, b::StaticVector)
     TA = eltype(A)
@@ -161,8 +242,9 @@ end
     #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
 
     # Do a custom B[:, k2] to return a SVector (an isbits type) rather than (possibly) a mutable type. Avoids allocation == faster
-    tmp_type = SVector{sB[1], T}
-    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, $(Expr(:call, tmp_type, [Expr(:ref, :B, sub2ind(s, i, k2)) for i = 1:sB[1]]...)))) for k2 = 1:sB[2]]
+    tmp_type_in = SVector{sB[1], T}
+    tmp_type_out = SVector{sA[1], T}
+    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(A, $(Expr(:call, tmp_type_in, [Expr(:ref, :B, sub2ind(s, i, k2)) for i = 1:sB[1]]...)))::$tmp_type_out) for k2 = 1:sB[2]]
 
     exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sA[1], k2 = 1:sB[2]]
 
