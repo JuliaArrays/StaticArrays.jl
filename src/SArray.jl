@@ -46,6 +46,7 @@ end
 end
 
 # Some more advanced constructor-like functions
+@inline eye{Size}(::Type{SArray{Size}}) = eye(SArray{Size,Float64})
 @inline zeros{Size}(::Type{SArray{Size}}) = zeros(SArray{Size,Float64})
 @inline ones{Size}(::Type{SArray{Size}}) = ones(SArray{Size,Float64})
 
@@ -220,6 +221,60 @@ macro SArray(ex)
             $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
+        end
+    elseif isa(ex, Expr) && ex.head == :call
+        if ex.args[1] == :zeros
+            if length(ex.args) == 1
+                error("@SArray got bad expression: zeros()")
+            else
+                return quote
+                    $(Expr(:meta, :inline))
+                    if isa($(esc(ex.args[2])), DataType)
+                        zeros($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
+                    else
+                        zeros($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
+                    end
+                end
+            end
+        elseif ex.args[1] == :ones
+            if length(ex.args) == 1
+                error("@SArray got bad expression: ones()")
+            else
+                return quote
+                    $(Expr(:meta, :inline))
+                    if isa($(esc(ex.args[2])), DataType)
+                        ones($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
+                    else
+                        ones($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
+                    end
+                end
+            end
+        elseif ex.args[1] == :eye
+            if length(ex.args) == 2
+                return quote
+                    $(Expr(:meta, :inline))
+                    eye(SArray{($(esc(ex.args[2])), $(esc(ex.args[2])))})
+                end
+            elseif length(ex.args) == 3
+                # We need a branch, depending if the first argument is a type or a size.
+                return quote
+                    $(Expr(:meta, :inline))
+                    if isa($(esc(ex.args[2])), DataType)
+                        eye(SArray{($(esc(ex.args[3])), $(esc(ex.args[3]))), $(esc(ex.args[2]))})
+                    else
+                        eye(SArray{($(esc(ex.args[2])), $(esc(ex.args[3])))})
+                    end
+                end
+            elseif length(ex.args) == 4
+                return quote
+                    $(Expr(:meta, :inline))
+                    eye(SArray{($(esc(ex.args[3])), $(esc(ex.args[4]))), $(esc(ex.args[2]))})
+                end
+            else
+                error("Bad eye() expression for @SArray")
+            end
+        else
+            error("@SArray only supports the zeros(), ones() and eye() functions.")
         end
     else
         error("Bad input for @SArray")

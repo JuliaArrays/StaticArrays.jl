@@ -89,13 +89,15 @@ end
 
 `SVector` defines a series of convenience constructors, so you can just type
 e.g. `SVector(1,2,3)`. Alternatively there is an intelligent `@SVector` macro
-where you can use native Julia array literals syntax and comprehensions, such as
-`@SVector [1,2,3]`, `@SVector Float64[1,2,3]`, `@SVector [f(i) for i = 1:10]`,
+where you can use native Julia array literals syntax, comprehensions, and the
+and the `zeros()` and `ones()` functions, such as `@SVector [1,2,3]`,
+`@SVector Float64[1,2,3]`, `@SVector [f(i) for i = 1:10]`, `@SVector zeros(3)`,
 etc. (Note: the range of a comprehension is evaluated at global scope by the
 macro, and must be made of combinations of literal values, functions, or global
 variables, but is not limited to just simple ranges. Extending this to
 (hopefully statically known by type-inference) local-scope variables is hoped
-for the future).
+for the future. The `zeros()` and `ones()` functions do not have this
+limitation.)
 
 ### `SMatrix`
 
@@ -112,19 +114,22 @@ Here `L` is the `length` of the matrix, such that `S1 × S2 = L`. However,
 convenience constructors are provided, so that `L`, `T` and even `S2` are
 unnecessary. At minimum, you can type `SMatrix{2}(1,2,3,4)` to create a 2×2
 matrix (the total number of elements must divide evenly into `S1`). A
-convenience macro `@SMatrix [1 2; 3 4]` is provided.
+convenience macro `@SMatrix [1 2; 3 4]` is provided (which also accepts
+comprehensions and the `zeros()`, `ones()` and `eye()` functions).
 
 ### `SArray`
 
 A container with arbitrarily many dimensions is defined as
 `immutable SArray{Size,T,N,L} <: StaticArray{T,N}`, where
 `Size = (S1, S2, ...)` is a tuple of `Int`s. You can easily construct one with
-the `@SArray` macro, just like `@SVector` and `@SMatrix`.
+the `@SArray` macro, supporting all the features of `@SVector` and `@SMatrix`
+(with higher-dimensional support for comprehensions, `zeros()` and `ones()`).
 
 Notably, the main reason `SVector` and `SMatrix` are defined is to make it
 easier to define the types without the extra tuple characters (compare
 `SVector{3}` to `SArray{(3,)}`). This extra convenience was made possible
-because it is so easy to define new `StaticArray` subtypes.
+because it is so easy to define new `StaticArray` subtypes, and they naturally
+work together.
 
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 

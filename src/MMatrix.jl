@@ -196,6 +196,62 @@ macro MMatrix(ex)
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :MMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
         end
+    elseif isa(ex, Expr) && ex.head == :call
+        if ex.args[1] == :zeros
+            if length(ex.args) == 3
+                return quote
+                    $(Expr(:meta, :inline))
+                    zeros(MMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
+                end
+            elseif length(ex.args) == 4
+                return quote
+                    $(Expr(:meta, :inline))
+                    zeros(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                end
+            else
+                error("@MMatrix expected a 2-dimensional array expression")
+            end
+        elseif ex.args[1] == :ones
+            if length(ex.args) == 3
+                return quote
+                    $(Expr(:meta, :inline))
+                    ones(MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3]))})
+                end
+            elseif length(ex.args) == 4
+                return quote
+                    $(Expr(:meta, :inline))
+                    ones(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                end
+            else
+                error("@MMatrix expected a 2-dimensional array expression")
+            end
+        elseif ex.args[1] == :eye
+            if length(ex.args) == 2
+                return quote
+                    $(Expr(:meta, :inline))
+                    eye(MMatrix{$(esc(ex.args[2]))})
+                end
+            elseif length(ex.args) == 3
+                # We need a branch, depending if the first argument is a type or a size.
+                return quote
+                    $(Expr(:meta, :inline))
+                    if isa($(esc(ex.args[2])), DataType)
+                        eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))})
+                    else
+                        eye(MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3]))})
+                    end
+                end
+            elseif length(ex.args) == 4
+                return quote
+                    $(Expr(:meta, :inline))
+                    eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                end
+            else
+                error("Bad eye() expression for @MMatrix")
+            end
+        else
+            error("@MMatrix only supports the zeros() and ones() functions.")
+        end
     else
         error("Bad input for @MMatrix")
     end
