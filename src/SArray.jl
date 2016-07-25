@@ -45,6 +45,9 @@ end
     end
 end
 
+@inline SArray(a::StaticArray) = SArray{size(typeof(a))}(Tuple(a))
+
+
 # Some more advanced constructor-like functions
 @inline eye{Size}(::Type{SArray{Size}}) = eye(SArray{Size,Float64})
 @inline zeros{Size}(::Type{SArray{Size}}) = zeros(SArray{Size,Float64})

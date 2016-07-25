@@ -60,6 +60,7 @@ end
 
 @inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::StaticArray{T}) = SMatrix{S1,S2,T}(Tuple(a))
 @inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::AbstractArray{T}) = SMatrix{S1,S2,T}((a...))
+@inline SMatrix(a::StaticMatrix) = SMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
 #=
 @inline (::Type{SMatrix{S1}}){S1}(x1) = SMatrix{S1}((x1,))

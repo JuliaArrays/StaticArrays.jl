@@ -64,6 +64,8 @@ end
     end
 end
 
+@inline MArray(a::StaticArray) = MArray{size(typeof(a))}(Tuple(a))
+
 # Some more advanced constructor-like functions
 @inline eye{Size}(::Type{MArray{Size}}) = eye(MArray{Size,Float64})
 @inline zeros{Size}(::Type{MArray{Size}}) = zeros(MArray{Size,Float64})
