@@ -26,6 +26,11 @@ end
 
 @inline Tuple(v::SVector) = v.data
 
+@inline function Base.unsafe_convert{N,T}(::Type{Ptr{T}}, v::SVector{N,T})
+    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v))
+end
+
+
 macro SVector(ex)
     if isa(ex, Expr) && ex.head == :vect
         return esc(Expr(:call, SVector{length(ex.args)}, Expr(:tuple, ex.args...)))

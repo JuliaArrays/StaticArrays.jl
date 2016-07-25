@@ -102,6 +102,11 @@ end
 
 @inline Tuple(v::SMatrix) = v.data
 
+@inline function Base.unsafe_convert{N,M,T}(::Type{Ptr{T}}, m::SMatrix{N,M,T})
+    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m))
+end
+
+
 macro SMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @SMatrix")

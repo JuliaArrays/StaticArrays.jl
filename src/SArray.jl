@@ -67,34 +67,9 @@ end
 
 @inline Tuple(v::SArray) = v.data
 
-#=
-macro SArray(ex)
-    @assert isa(ex, Expr)
-    if ex.head == :vect # Vector
-        return esc(Expr(:call, SArray{(length(ex.args),)}, Expr(:tuple, ex.args...)))
-    elseif isa(ex, Expr) && ex.head == :ref
-        return esc(Expr(:call, Expr(:curly, :SArray, (length(ex.args[2:end]),), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
-    elseif ex.head == :hcat # 1 x n
-        s1 = 1
-        s2 = length(ex.args)
-        return Expr(:call, SArray{(s1, s2)}, Expr(:tuple, ex.args...))
-    elseif ex.head == :vcat
-        if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
-            # Validate
-            s1 = length(ex.args)
-            s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 1), 1:s1)
-            s2 = minimum(s2s)
-            if maximum(s2s) != s2
-                error("Rows must be of matching lengths")
-            end
-
-            exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-            return Expr(:call, SArray{(s1, s2)}, Expr(:tuple, exprs...))
-        else # n x 1
-            return Expr(:call, SArray{(length(ex.args), 1)}, Expr(:tuple, ex.args...))
-        end
-    end
-end=#
+@inline function Base.unsafe_convert{Size,T}(::Type{Ptr{T}}, a::SArray{Size,T})
+    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
+end
 
 macro SArray(ex)
     if !isa(ex, Expr)

@@ -9,7 +9,9 @@ abstract FieldVector{T} <: StaticVector{T}
 @inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
 @inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)
 
-
+@inline function Base.unsafe_convert{T}(::Type{Ptr{T}}, v::FieldVector{T})
+    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v))
+end
 
 # For example:
 #

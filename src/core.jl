@@ -120,30 +120,10 @@ end
     end
 end
 
-
-# We may want a pointer... usefull for LAPACK etc
-# TODO these are WAY too permissive. Need to think of a "general enough" way.
-@inline function Base.unsafe_convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
-    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
+# We may want a pointer... usefull for LAPACK etc. However, some static arrays
+# might not store a dense representation of their matrix (they may be sparse or
+# some computed representation) so the fallback needs to be safe.
+# Custom-defined, dense, mutable StaticArrays might want to overload this default
+@inline function Base.unsafe_convert{T}(::Type{Ptr{T}}, a::StaticArray{T})
+    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(Tuple(a)))
 end
-
-@inline function convert{T1,T2}(::Type{Ptr{T1}}, a::StaticArray{T2})
-    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
-end
-
-function Base.unsafe_convert{T1,SA<:StaticArray}(::Type{Ptr{T1}}, a::Ref{SA})
-    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
-end
-
-function convert{T1,SA<:StaticArray}(::Type{Ptr{T1}}, a::Ref{SA})
-    Base.unsafe_convert(Ptr{T1}, Base.data_pointer_from_objref(a))
-end
-
-#function convert(::Type{Ptr{Void}}, a::StaticArray)
-#    Base.data_pointer_from_objref(a)
-#end
-
-# TODO this is bad...
-#function convert{T}(::Type{Ptr{T}}, a::StaticArray)
-#    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
-#end
