@@ -35,6 +35,8 @@ include("linalg.jl")
 include("matrix_multiply.jl")
 include("deque.jl")
 
+include("Point.jl")
+
 include("FixedSizeArrays.jl")
 
 # TODO list
