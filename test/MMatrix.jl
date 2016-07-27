@@ -40,6 +40,20 @@
         @test ((@MMatrix Float64[i*j for i = 1:2, j=2:3])::MMatrix{2,2}).data === (2.0, 4.0, 3.0, 6.0)
 
         @test (ex = macroexpand(:(@MMatrix [1 2; 3])); isa(ex, Expr) && ex.head == :error)
+
+        @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+        @test ((@MMatrix ones(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+        @test ((@MMatrix eye(2))::MMatrix{2, 2, Float64}).data === (1.0, 0.0, 0.0, 1.0)
+        @test ((@MMatrix eye(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 0.0, 0.0, 1.0)
+        @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
+        @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
+
+        @test ((@MMatrix zeros(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
+        @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
+        @test ((@MMatrix eye(Float32, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test ((@MMatrix eye(Float32, 2, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
+        @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
     end
 
     @testset "Methods" begin

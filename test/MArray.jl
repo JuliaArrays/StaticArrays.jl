@@ -41,6 +41,20 @@
         @test ((@MArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::MArray{(2,2,2)}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
 
         @test (ex = macroexpand(:(@MArray [1 2; 3])); isa(ex, Expr) && ex.head == :error)
+
+        @test ((@MArray zeros(2,2,1))::MArray{(2,2,1), Float64}).data === (0.0, 0.0, 0.0, 0.0)
+        @test ((@MArray ones(2,2,1))::MArray{(2,2,1), Float64}).data === (1.0, 1.0, 1.0, 1.0)
+        @test ((@MArray eye(2))::MArray{(2,2), Float64}).data === (1.0, 0.0, 0.0, 1.0)
+        @test ((@MArray eye(2,2))::MArray{(2,2), Float64}).data === (1.0, 0.0, 0.0, 1.0)
+        @test isa(@MArray(rand(2,2,1)), MArray{(2,2,1), Float64})
+        @test isa(@MArray(randn(2,2,1)), MArray{(2,2,1), Float64})
+
+        @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{(2,2,1),Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
+        @test ((@MArray ones(Float32, 2, 2, 1))::MArray{(2,2,1),Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
+        @test ((@MArray eye(Float32, 2))::MArray{(2,2), Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test ((@MArray eye(Float32, 2, 2))::MArray{(2,2), Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{(2,2,1), Float32})
+        @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{(2,2,1), Float32})
     end
 
     @testset "Methods" begin

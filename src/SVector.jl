@@ -76,36 +76,22 @@ macro SVector(ex)
             $(esc(Expr(:call, Expr(:curly, :SVector, length(rng), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand ||ex.args[1] == :randn
             if length(ex.args) == 2
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(SVector{$(esc(ex.args[2]))})
+                    $(esc(ex.args[1]))(SVector{$(esc(ex.args[2]))})
                 end
             elseif length(ex.args) == 3
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(SVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
-                end
-            else
-                error("@SVector expected a 1-dimensional array expression")
-            end
-        elseif ex.args[1] == :ones
-            if length(ex.args) == 2
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(SVector{$(esc(ex.args[2]))})
-                end
-            elseif length(ex.args) == 3
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(SVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
+                    $(esc(ex.args[1]))(SVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
                 end
             else
                 error("@SVector expected a 1-dimensional array expression")
             end
         else
-            error("@SVector only supports the zeros() and ones() functions.")
+            error("@SVector only supports the zeros(), ones(), rand() and randn() functions.")
         end
     else # TODO Expr(:call, :zeros), Expr(:call, :ones), Expr(:call, :eye) ?
         error("Use @SVector [a,b,c], @SVector Type[a,b,c] or a comprehension like [f(i) for i = i_min:i_max]")

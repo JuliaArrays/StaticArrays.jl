@@ -104,36 +104,22 @@ macro MVector(ex)
             $(esc(Expr(:call, Expr(:curly, :MVector, length(rng), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand ||ex.args[1] == :randn
             if length(ex.args) == 2
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(MVector{$(esc(ex.args[2]))})
+                    $(esc(ex.args[1]))(MVector{$(esc(ex.args[2]))})
                 end
             elseif length(ex.args) == 3
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(MVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
-                end
-            else
-                error("@MVector expected a 1-dimensional array expression")
-            end
-        elseif ex.args[1] == :ones
-            if length(ex.args) == 2
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(MVector{$(esc(ex.args[2]))})
-                end
-            elseif length(ex.args) == 3
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(MVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
+                    $(esc(ex.args[1]))(MVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
                 end
             else
                 error("@MVector expected a 1-dimensional array expression")
             end
         else
-            error("@MVector only supports the zeros() and ones() functions.")
+            error("@MVector only supports the zeros(), ones(), rand() and randn() functions.")
         end
     else
         error("Use @MVector [a,b,c] or @MVector([a,b,c])")

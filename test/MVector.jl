@@ -21,6 +21,16 @@
         @test ((@MVector Float64[1,2,3])::MVector{3}).data === (1.0, 2.0, 3.0)
         @test ((@MVector [i for i = 1:3])::MVector{3}).data === (1, 2, 3)
         @test ((@MVector Float64[i for i = 1:3])::MVector{3}).data === (1.0, 2.0, 3.0)
+
+        @test ((@MVector zeros(2))::MVector{2, Float64}).data === (0.0, 0.0)
+        @test ((@MVector ones(2))::MVector{2, Float64}).data === (1.0, 1.0)
+        @test isa(@MVector(rand(2)), MVector{2, Float64})
+        @test isa(@MVector(randn(2)), MVector{2, Float64})
+
+        @test ((@MVector zeros(Float32, 2))::MVector{2,Float32}).data === (0.0f0, 0.0f0)
+        @test ((@MVector ones(Float32, 2))::MVector{2,Float32}).data === (1.0f0, 1.0f0)
+        @test isa(@MVector(rand(Float32, 2)), MVector{2, Float32})
+        @test isa(@MVector(randn(Float32, 2)), MVector{2, Float32})
     end
 
     @testset "Methods" begin

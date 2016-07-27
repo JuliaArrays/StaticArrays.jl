@@ -213,30 +213,16 @@ macro MMatrix(ex)
             $(esc(Expr(:call, Expr(:curly, :MMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
             if length(ex.args) == 3
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(MMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
+                    $(ex.args[1])(MMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
                 end
             elseif length(ex.args) == 4
                 return quote
                     $(Expr(:meta, :inline))
-                    zeros(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
-                end
-            else
-                error("@MMatrix expected a 2-dimensional array expression")
-            end
-        elseif ex.args[1] == :ones
-            if length(ex.args) == 3
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3]))})
-                end
-            elseif length(ex.args) == 4
-                return quote
-                    $(Expr(:meta, :inline))
-                    ones(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                    $(ex.args[1])(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
                 end
             else
                 error("@MMatrix expected a 2-dimensional array expression")
@@ -266,7 +252,7 @@ macro MMatrix(ex)
                 error("Bad eye() expression for @MMatrix")
             end
         else
-            error("@MMatrix only supports the zeros() and ones() functions.")
+            error("@MMatrix only supports the zeros(), ones(), rand(), randn() and eye() functions.")
         end
     else
         error("Bad input for @MMatrix")

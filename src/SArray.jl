@@ -201,29 +201,16 @@ macro SArray(ex)
             $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
             if length(ex.args) == 1
-                error("@SArray got bad expression: zeros()")
+                error("@SArray got bad expression: $(ex.args[1])()")
             else
                 return quote
                     $(Expr(:meta, :inline))
                     if isa($(esc(ex.args[2])), DataType)
-                        zeros($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
+                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
                     else
-                        zeros($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
-                    end
-                end
-            end
-        elseif ex.args[1] == :ones
-            if length(ex.args) == 1
-                error("@SArray got bad expression: ones()")
-            else
-                return quote
-                    $(Expr(:meta, :inline))
-                    if isa($(esc(ex.args[2])), DataType)
-                        ones($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
-                    else
-                        ones($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
+                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
                     end
                 end
             end
@@ -252,7 +239,7 @@ macro SArray(ex)
                 error("Bad eye() expression for @SArray")
             end
         else
-            error("@SArray only supports the zeros(), ones() and eye() functions.")
+            error("@SArray only supports the zeros(), ones(), rand(), randn() and eye() functions.")
         end
     else
         error("Bad input for @SArray")
