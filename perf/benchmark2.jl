@@ -1,5 +1,5 @@
-fsa = true
-all_methods = true
+fsa = false
+all_methods = false
 
 using StaticArrays
 @static if fsa
@@ -27,6 +27,7 @@ if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite 
     @generated f(n::Integer, A) = :(@inbounds (C = A; for i = 1:n; C = C*A; end; return C))
     @generated f_unrolled{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = :(@inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C))
     @generated f_unrolled_chunks{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = :(@inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C))
+    @generated f_loop{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = :(@inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_loop(C,A); end; return C))
     @generated f_via_sarray{M}(n::Integer, A::MMatrix{M,M})= :(@inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C))
     @generated f_mut_array(n::Integer, A) = :(@inbounds (C = copy(A); tmp = similar(A); for i = 1:n;  A_mul_B!(tmp, C, A); map!(identity, C, tmp); end; return C))
     @generated f_mut_marray(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B!(tmp, C, A); C.data = tmp.data; end; return C))
@@ -69,6 +70,13 @@ println("=====================================")
         if N <= 4; @assert Cs_chunks ≈ C; end
     end)
 
+    print("SMatrix * SMatrix compilation time (loop):           ")
+    @time eval(quote
+        Cs_loop = f_loop(2, As)
+        Cs_loop::SMatrix
+        if N <= 4; @assert Cs_loop ≈ C; end
+    end)
+
     print("MMatrix * MMatrix compilation time (unrolled):         ")
     @time eval(quote
         Cm_unrolled = f_unrolled(2, Am)
@@ -81,6 +89,13 @@ println("=====================================")
         Cm_chunks = f_unrolled_chunks(2, Am)
         Cm_chunks::MMatrix
         if N <= 4; @assert Cm_chunks ≈ C; end
+    end)
+
+    print("MMatrix * MMatrix compilation time (loop):           ")
+    @time eval(quote
+        Cm_loop = f_loop(2, Am)
+        Cm_loop::MMatrix
+        if N <= 4; @assert Cm_loop ≈ C; end
     end)
 
     Cm_via_sarray = f_via_sarray(2, Am)
@@ -217,8 +232,10 @@ begin
    @static if all_methods
        print("SArray (unrolled)   ->"); @time f_unrolled(M_f, As)
        print("SArray (chunks)     ->"); @time f_unrolled_chunks(M_f, As)
+       print("SArray (loop)       ->"); @time f_loop(M_f, As)
        print("MArray (unrolled)   ->"); @time f_unrolled(M_f, Am)
        print("MArray (chunks)     ->"); @time f_unrolled_chunks(M_f, Am)
+       print("MArray (loop)       ->"); @time f_loop(M_f, Am)
        print("MArray (via SArray) ->"); @time f_via_sarray(M_f, Am)
    end
 end

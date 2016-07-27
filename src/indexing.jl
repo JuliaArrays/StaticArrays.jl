@@ -8,7 +8,7 @@
     exprs = [:(a[inds[$i]]) for i = 1:S]
 
     return quote
-        $(Expr(:meta, :inline))
+        $(Expr(:meta, :inline, :propagate_inbounds))
         return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
@@ -18,7 +18,7 @@ end
     exprs = [:(a[inds[$i]]) for i = 1:S]
 
     return quote
-        $(Expr(:meta, :inline))
+        $(Expr(:meta, :inline, :propagate_inbounds))
         return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
@@ -33,7 +33,7 @@ end
         l = length(SA)
         inds = 1:l
         return quote
-            $(Expr(:meta, :inline))
+            $(Expr(:meta, :inline, :propagate_inbounds))
             $(Expr(:call, :getindex, :a, Expr(:tuple, inds...)))
         end
     end
@@ -134,7 +134,7 @@ end
 # Furthermore, avoids stupidity regarding two-dimensional indexing on 3+ dimensional arrays!
 @generated function getindex{SM<:StaticMatrix}(m::SM, i1::Integer, i2::Integer)
     return quote
-        $(Expr(:meta, :inline))
+        $(Expr(:meta, :inline, :propagate_inbounds))
         @boundscheck if (i1 < 1 || i1 > $(size(SM,1)) || i2 < 1 || i2 > $(size(SM,2)))
             throw(BoundsError(m, (i1,i2)))
         end

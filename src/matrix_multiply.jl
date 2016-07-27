@@ -114,7 +114,7 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$k, $j]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
 
     return quote
         $(Expr(:meta,:inline))
@@ -151,10 +151,15 @@ end
                 $(Expr(:meta, :inline))
                 return A_mul_B_unrolled(A, B)
             end
-        else
+        elseif size(A,1) <= 14 && size(A,2) <= 14 && size(B,2) <= 14
             return quote
                 $(Expr(:meta, :inline))
                 return $(similar_type(A, T, s))(A_mul_B_unrolled_chunks(A, B))
+            end
+        else
+            return quote
+                $(Expr(:meta, :inline))
+                return A_mul_B_loop(A, B)
             end
         end
     else # both are isbits type...
@@ -164,10 +169,15 @@ end
                 $(Expr(:meta, :inline))
                 return A_mul_B_unrolled(A, B)
             end
-        else
+        elseif size(A,1) <= 14 && size(A,2) <= 14 && size(B,2) <= 14
             return quote
                 $(Expr(:meta, :inline))
                 return A_mul_B_unrolled_chunks(A, B)
+            end
+        else
+            return quote
+                $(Expr(:meta, :inline))
+                return A_mul_B_loop(A, B)
             end
         end
     end
@@ -206,6 +216,50 @@ end
     return quote
         $(Expr(:meta,:inline))
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+
+@generated function A_mul_B_loop(A::StaticMatrix, B::StaticMatrix)
+    sA = size(A)
+    sB = size(B)
+    TA = eltype(A)
+    TB = eltype(B)
+
+    s = (sA[1], sB[2])
+    T = promote_type(TA, TB)
+
+    if sB[1] != sA[2]
+        error("Dimension mismatch")
+    end
+
+    # TODO think about which to be similar to
+    if s == sB
+        if T == TB
+            newtype = B
+        else
+            newtype = similar_type(B, T)
+        end
+    else
+        if T == TB
+            newtype = similar_type(B, s)
+        else
+            newtype = similar_type(B, T, s)
+        end
+    end
+
+    tmps = [Symbol("tmp_$(k1)_($k2)") for k1 = 1:sA[1], k2 = 1:sB[2]]
+    exprs_init = [:($(tmps[k1,k2])  = A[$k1] * B[1 + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    exprs_loop = [:($(tmps[k1,k2]) += A[$(k1-sA[1]) + $(sA[1])*j] * B[j + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+
+    return quote
+        $(Expr(:meta,:inline))
+
+        @inbounds $(Expr(:block, exprs_init...))
+        for j = 2:$(sA[2])
+            @inbounds $(Expr(:block, exprs_loop...))
+        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, tmps...)))
     end
 end
 
@@ -282,7 +336,7 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$k, $j]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
 
     return quote
         $(Expr(:meta,:noinline))
