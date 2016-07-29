@@ -288,6 +288,7 @@ end
 ################
 
 @inline broadcast!{F}(f::F, out::StaticArray, a::StaticArray) = map!(f, out, a)
+@inline broadcast!(f::typeof(identity), out::StaticArray, a::StaticArray) = map!(f, out, a)
 
 # Two input versions
 @generated function broadcast!{F}(f::F, out::StaticArray, a1::StaticArray, a2::StaticArray)
