@@ -1,6 +1,6 @@
 # StaticArrays
 
-*Statically-sized arrays for Julia 0.5*
+*Statically sized arrays for Julia 0.5*
 
 [![Build Status](https://travis-ci.org/andyferris/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/andyferris/StaticArrays.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/px9kulhngvs26fka?svg=true)](https://ci.appveyor.com/project/andyferris/staticarrays-jl)
@@ -81,7 +81,7 @@ m2 = @SMatrix [ 1  3 ;
 m3 = eye(SMatrix{3,3})
 m4 = @SMatrix randn(4,4)
 
-# Higher dimensional support
+# Higher-dimensional support
 a = @SArray randn(2, 2, 2, 2, 2, 2)
 
 # Supports all the common operations of AbstractArray
@@ -103,7 +103,7 @@ eig(m3) # eig(), etc use LAPACK
 # Static arrays stay statically sized, even when used by Base functions, etc:
 typeof(eig(m3)) == Tuple{StaticArrays.MVector{3,Float64}, StaticArrays.MMatrix{3,3,Float64,9}}
 
-# similar() returns a mutable container, while similar_type() is a constructor:
+# similar() returns a mutable container, while similar_type() returns a constructor:
 typeof(similar(m3)) == MMatrix{3,3,Float64,9} # (final parameter is length = 9)
 similar_type(m3) == SMatrix{3,3,Float64,9}
 ```
@@ -223,7 +223,7 @@ work together.
 
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 
-These statically-sized arrays are identical to the above, but are defined as
+These statically sized arrays are identical to the above, but are defined as
 mutable Julia `type`s, instead of `immutable`. Because they are mutable, they
 allow `setindex!` to be defined (achieved through pointer manipulation, into a
 tuple).
