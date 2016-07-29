@@ -16,11 +16,99 @@ necessarily imply `immutable`.
 
 The package also provides some concrete static array types: `SVector`, `SMatrix`
 and `SArray`, which may be used as-is (or else embedded in your own type).
-Mutable versions `MVector`, `MMatrix` and `MArray` are also exported.
-Further, the abstract `FieldVector` can be used to make fast `StaticVector`s out
-of any uniform Julia "struct".
+Mutable versions `MVector`, `MMatrix` and `MArray` are also exported. Further,
+the abstract `FieldVector` can be used to make fast `StaticVector`s out of any
+uniform Julia "struct".
 
-### Approach
+## Speed
+
+The speed of small `SVector`s, `SMatrix`s and `SArray`s is often > 10 × faster
+than `Base.Array`. See this sample benchmark (or see the full results [here](https://github.com/andyferris/StaticArrays.jl/blob/master/perf/bench8.txt)):
+
+```
+=====================================
+   Benchmarks for 3×3 matrices
+=====================================
+
+Matrix multiplication
+---------------------
+Array  ->  3.973188 seconds (74.07 M allocations: 6.623 GB, 12.92% gc time)
+SArray ->  0.326989 seconds (5 allocations: 240 bytes)
+MArray ->  2.248258 seconds (37.04 M allocations: 2.759 GB, 14.06% gc time)
+
+Matrix multiplication (mutating)
+--------------------------------
+Array  ->  2.237091 seconds (6 allocations: 480 bytes)
+MArray ->  0.795372 seconds (6 allocations: 320 bytes)
+
+Matrix addition
+---------------
+Array  ->  2.610709 seconds (44.44 M allocations: 3.974 GB, 11.81% gc time)
+SArray ->  0.073024 seconds (5 allocations: 240 bytes)
+MArray ->  0.896849 seconds (22.22 M allocations: 1.656 GB, 21.33% gc time)
+
+Matrix addition (mutating)
+--------------------------
+Array  ->  0.872791 seconds (6 allocations: 480 bytes)
+MArray ->  0.145895 seconds (5 allocations: 240 bytes)
+```
+
+(Run with `julia -O3` for even faster SIMD code with immutable static arrays!)
+
+## Quick start
+
+```julia
+Pkg.add("StaticArrays")  # or Pkg.clone("https://github.com/andyferris/StaticArrays.jl")
+using StaticArrays
+
+# Create an SVector using various forms, using constructors, functions or macros
+v1 = SVector(1, 2, 3)
+v1.data === (1, 2, 3) # SVector uses a tuple for internal storage
+v2 = SVector{3,Float64}(1, 2, 3) # length 3, eltype Float64
+v3 = @SVector [1, 2, 3]
+v4 = @SVector [i^2 for i = 1:10] # arbitrary comprehensions (where range can be evaluated a global scope)
+v5 = zeros(SVector{3}) # defaults to Float64
+v6 = @SVector zeros(3)
+
+# Can get size() from instance or type
+size(v1) == (3,)
+size(typeof(v1)) == (3,)
+
+# Similar constructor syntax for matrices
+m1 = SMatrix{2,2}(1, 2, 3, 4) # flat, column-major storage, equal to m2:
+m2 = @SMatrix [ 1  3 ;
+                2  4 ]
+m3 = eye(SMatrix{3,3})
+m4 = @SMatrix randn(4,4)
+
+# Higher dimensional support
+a = @SArray randn(2, 2, 2, 2, 2, 2)
+
+# Supports all the common operations of AbstractArray
+v7 = v1 + v2
+v8 = sin.(v3)
+v3 == m3 * v3 # m3 = eye(SMatrix{3,3})
+# map, reduce, broadcast, map!, broadcast!, etc...
+
+# Indexing also supports tuples
+v1[1] === 1
+v1[(3,2,1)] === @SVector [3, 2, 1]
+v1[:] === v1
+typeof(v1[[1,2,3]]) == Vector # Can't determine number of elements from the type of [1,2,3]
+
+# Inherits from DenseArray, so is hooked into BLAS, LAPACK, etc:
+rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS multiplication
+eig(m3) # eig(), etc use LAPACK
+
+# Static arrays stay statically sized, even when used by Base functions, etc:
+typeof(eig(m3)) == Tuple{StaticArrays.MVector{3,Float64}, StaticArrays.MMatrix{3,3,Float64,9}}
+
+# similar() returns a mutable container, while similar_type() is a constructor:
+typeof(similar(m3)) == MMatrix{3,3,Float64,9} # (final parameter is length = 9)
+similar_type(m3) == SMatrix{3,3,Float64,9}
+```
+
+## Approach
 
 Primarily, the package provides methods for common `AbstractArray` functions,
 specialized for (potentially immutable) statically sized arrays. Many of
@@ -38,13 +126,14 @@ the `StaticArray` interface will look after multi-dimensional indexing,
 variety of other operations.
 
 Finally, since `StaticArrays <: DenseArray`, many methods such as `sqrtm`,
-`eig`, `svd`, and many, many more are already defined in `Base`. Conversion
+`eig`, `chol`, and more are already defined in `Base`. Conversion
 to pointers let us interact with LAPACK and similar C/Fortran libraries through
 the existing `StridedArray` interface. In some instances mutable `StaticArray`s
 (`MVector` or `MMatrix`) will be returned, while in other cases the definitions
 fall back to `Array`. This approach gives us maximal versatility while retaining
 the ability to implement fast specializations in the future.
 
+## Details
 ### Indexing
 
 Statically sized indexing can be realized by indexing each dimension by a
