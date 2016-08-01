@@ -120,6 +120,40 @@ end
 @inline similar{SA <: StaticArray,N}(m::SA, sizes::NTuple{N, Int}) = MArray{sizes,eltype(SA),N,prod(sizes)}()
 @inline similar{SA <: StaticArray,N,T}(m::SA, ::Type{T}, sizes::NTuple{N, Int}) = MArray{sizes,T,N,prod(sizes)}()
 
+# This is used in Base.LinAlg quite a lot, and it impacts type stability
+# since some functions like expm() branch on a check for Hermitian or Symmetric
+# TODO much more work on type stability. Base functions are using similar() with
+# size, which poses difficulties!!
+@generated function Base.full{T,SM<:StaticMatrix}(sym::Symmetric{T,SM})
+    exprs_up = [i <= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(m[$(sub2ind(size(SM), j, i))]) for i = 1:size(SM,1), j=1:size(SM,2)]
+    exprs_lo = [i >= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(m[$(sub2ind(size(SM), j, i))]) for i = 1:size(SM,1), j=1:size(SM,2)]
+
+    return quote
+        $(Expr(:meta, :inline))
+        m = sym.data
+        if sym.uplo == 'U'
+            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_up...))))
+        else
+            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_lo...))))
+        end
+    end
+end
+
+@generated function Base.full{T,SM<:StaticMatrix}(sym::Hermitian{T,SM})
+    exprs_up = [i <= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(conj(m[$(sub2ind(size(SM), j, i))])) for i = 1:size(SM,1), j=1:size(SM,2)]
+    exprs_lo = [i >= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(conj(m[$(sub2ind(size(SM), j, i))])) for i = 1:size(SM,1), j=1:size(SM,2)]
+
+    return quote
+        $(Expr(:meta, :inline))
+        m = sym.data
+        if sym.uplo == 'U'
+            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_up...))))
+        else
+            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_lo...))))
+        end
+    end
+end
+
 
 #=
 # Methods necessary to fulfil the AbstractArray interface (plus some extensions, like size() on types)
