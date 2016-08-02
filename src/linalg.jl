@@ -58,10 +58,10 @@ end
     if s1 == s2
         newtype = m
     else
-        newtype = similar_type(v, (s2,s1))
+        newtype = similar_type(m, (s2,s1))
     end
 
-    exprs = [:(m[$j2, $j1]) for j1 = 1:s1, j2 = 1:s2]
+    exprs = [:(m[$j1, $j2]) for j2 = 1:s2, j1 = 1:s1]
 
     return quote
         $(Expr(:meta, :inline))
@@ -74,10 +74,10 @@ end
     if s1 == s2
         newtype = m
     else
-        newtype = similar_type(v, (s2,s1))
+        newtype = similar_type(m, (s2,s1))
     end
 
-    exprs = [:(conj(m[$j2, $j1])) for j1 = 1:s1, j2 = 1:s2]
+    exprs = [:(conj(m[$j1, $j2])) for j2 = 1:s2, j1 = 1:s1]
 
     return quote
         $(Expr(:meta, :inline))

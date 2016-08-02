@@ -23,58 +23,29 @@
         @test eye(MMatrix{2,2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
         @test eye(MMatrix{2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
     end
-#=
-    @testset "StaticVector and StaticMatrix constructors" begin
-        sv = SArray{(3,)}((1,2,3))
-        mv = MArray{(3,)}((1,2,3))
 
-        sm = SMatrix{(2,2)}((3,4,5,6))
-        mm = MMatrix{(2,2)}((3,4,5,6))
+    @testset "transpose() and conj()" begin
+        @test conj(SVector(1+im, 2+im)) === SVector(1-im, 2-im)
 
-        @test SVector((1,2,3)) === sv
-        @test_inferred SVector((1,2,3))
-        @test SVector{(3,)}((1,2,3)) === sv
-        @test_inferred SVector{(3,)}((1,2,3))
+        @test @SVector([1, 2, 3]).' === @SMatrix([1 2 3])
+        @test @SMatrix([1 2; 0 3]).' === @SMatrix([1 0; 2 3])
+        @test @SMatrix([1 2 3; 4 5 6]).' === @SMatrix([1 4; 2 5; 3 6])
 
-        @test SMatrix{(2,2)}((3,4,5,6)) === sm
-        @test_inferred SMatrix{(2,2)}((3,4,5,6))
-
-        @test MVector((1,2,3)) == mv
-        @test_inferred SVector((1,2,3))
-        @test SVector{(3,)}((1,2,3)) == mv
-        @test_inferred SVector{(3,)}((1,2,3))
-
-        @test MMatrix{(2,2)}((3,4,5,6)) == mm
-        @test_inferred SMatrix{(2,2)}((3,4,5,6))
+        @test @SVector([1, 2, 3])' === @SMatrix([1 2 3])
+        @test @SMatrix([1 2; 0 3])' === @SMatrix([1 0; 2 3])
+        @test @SMatrix([1 2 3; 4 5 6])' === @SMatrix([1 4; 2 5; 3 6])
     end
 
-    @testset "Conversion with AbstractVector and AbstractMatrix" begin
-        sv = SArray{(3,)}((1,2,3))
-        mv = MArray{(3,)}((1,2,3))
-        v = [1,2,3]
+    @testset "vcat() and hcat()" begin
+        @test vcat(SVector(1,2,3), SVector(4,5,6)) === SVector(1,2,3,4,5,6)
+        @test hcat(SVector(1,2,3), SVector(4,5,6)) === @SMatrix [1 4; 2 5; 3 6]
 
-        sm = SMatrix{(2,2)}((3,4,5,6))
-        mm = MMatrix{(2,2)}((3,4,5,6))
-        m = [3 5; 4 6]
+        @test vcat(@SMatrix([1;2;3]), SVector(4,5,6)) === @SMatrix([1;2;3;4;5;6])
+        @test vcat(SVector(1,2,3), @SMatrix([4;5;6])) === @SMatrix([1;2;3;4;5;6])
+        @test hcat(@SMatrix([1;2;3]), SVector(4,5,6)) === @SMatrix [1 4; 2 5; 3 6]
+        @test hcat(SVector(1,2,3), @SMatrix([4;5;6])) === @SMatrix [1 4; 2 5; 3 6]
 
-        @test convert(SVector{(3,)}, v) === sv
-        @test_inferred convert(SVector{(3,)}, v)
-        @test convert(SMatrix{(2,2)}, m) === sm
-        @test_inferred convert(SMatrix{(2,2)}, m)
-
-        @test convert(MVector{(3,)}, v) == mv
-        @test_inferred convert(MVector{(3,)}, v)
-        @test convert(MMatrix{(2,2)}, m) == mm
-        @test_inferred convert(MMatrix{(2,2)}, m)
-
-        @test convert(Vector, sv) == v
-        @test_inferred convert(Vector,sv)
-        @test convert(Matrix, sm) == m
-        @test_inferred convert(Matrix,sm)
-
-        @test convert(Vector, mv) == v
-        @test_inferred convert(Vector,mv)
-        @test convert(Matrix, mm) == m
-        @test_inferred convert(Matrix,mm)
-    end =#
+        @test vcat(@SMatrix([1;2;3]), @SMatrix([4;5;6])) === @SMatrix([1;2;3;4;5;6])
+        @test hcat(@SMatrix([1;2;3]), @SMatrix([4;5;6])) === @SMatrix [1 4; 2 5; 3 6]
+    end
 end
