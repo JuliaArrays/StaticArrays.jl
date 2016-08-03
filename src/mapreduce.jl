@@ -15,7 +15,7 @@ end
 # Two inputs
 @generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::StaticArray{T2})
     if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
+        error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
     end
 
     newtype = :(similar_type($a1, promote_op(f, T1, T2)))
@@ -34,7 +34,7 @@ end
         $(Expr(:meta, :inline))
 
         if size(a1) != size(a2)
-            error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
+            error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
         end
 
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
@@ -48,7 +48,7 @@ end
         $(Expr(:meta, :inline))
 
         @boundscheck if size(a1) != size(a2)
-            error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
+            error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
         end
 
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))

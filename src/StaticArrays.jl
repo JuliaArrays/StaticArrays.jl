@@ -34,6 +34,7 @@ include("arraymath.jl")
 include("linalg.jl")
 include("matrix_multiply.jl")
 include("deque.jl")
+include("cholesky.jl")
 
 include("FixedSizeArrays.jl")
 
