@@ -17,6 +17,12 @@
         @test (m*v)::MArray == @MArray [5, 11]
     end
 
+    @testset "Vector-matrix" begin
+        m = @SMatrix [1 2 3 4]
+        v = @SVector [1, 2]
+        @test v*m === @SMatrix [1 2 3 4; 2 4 6 8]
+    end
+
     @testset "Matrix-matrix" begin
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]

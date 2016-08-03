@@ -114,7 +114,46 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    else
+        exprs = []
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function *(a::StaticVector, B::StaticMatrix)
+    Ta = eltype(a)
+    TB = eltype(B)
+    sa = size(a)
+    sB = size(B)
+
+    s = (sa[1],sB[2])
+    T = promote_type(Ta, TB)
+
+    if sB[1] != 1
+        error("Dimension mismatch")
+    end
+
+    if s == sB
+        if T == TB
+            newtype = B
+        else
+            newtype = similar_type(B, T)
+        end
+    else
+        if T == TB
+            newtype = similar_type(B, s)
+        else
+            newtype = similar_type(B, T, s)
+        end
+    end
+
+    exprs = [:(a[$j] * B[$k]) for j = 1:s[1], k = 1:s[2]]
 
     return quote
         $(Expr(:meta,:inline))
@@ -211,7 +250,11 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    else
+        exprs = []
+    end
 
     return quote
         $(Expr(:meta,:inline))
@@ -336,7 +379,11 @@ end
         end
     end
 
-    exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    else
+        exprs = []
+    end
 
     return quote
         $(Expr(:meta,:noinline))
@@ -483,7 +530,11 @@ end
         error("Dimension mismatch")
     end
 
-    exprs = [:(C[$(sub2ind(s, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]))) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    if sA[2] != 0
+        exprs = [:(C[$(sub2ind(s, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]))) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    else
+        exprs = []
+    end
 
     return quote
         $(Expr(:meta,:inline))
