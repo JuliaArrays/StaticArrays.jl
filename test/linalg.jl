@@ -24,6 +24,10 @@
         @test eye(MMatrix{2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
     end
 
+    @testset "cross()" begin
+        @test cross(SVector(1,2,3), SVector(4,5,6)) === SVector(-3, 6, -3)
+    end
+
     @testset "transpose() and conj()" begin
         @test conj(SVector(1+im, 2+im)) === SVector(1-im, 2-im)
 
