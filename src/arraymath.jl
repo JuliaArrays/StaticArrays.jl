@@ -19,7 +19,7 @@ import Base: .+, .-, .*, ./
 @inline .*(a1::Number, a2::StaticArray) = broadcast(*, a1, a2)
 @inline ./(a1::Number, a2::StaticArray) = broadcast(/, a1, a2)
 
-@generated function Base.zeros{SA <: StaticArray}(::Type{SA})
+@generated function Base.zeros{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -32,7 +32,7 @@ import Base: .+, .-, .*, ./
     end
 end
 
-@generated function Base.ones{SA <: StaticArray}(::Type{SA})
+@generated function Base.ones{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -45,7 +45,7 @@ end
     end
 end
 
-@generated function Base.rand{SA <: StaticArray}(::Type{SA})
+@generated function Base.rand{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -58,7 +58,7 @@ end
     end
 end
 
-@generated function Base.randn{SA <: StaticArray}(::Type{SA})
+@generated function Base.randn{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any

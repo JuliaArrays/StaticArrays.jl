@@ -146,10 +146,23 @@ end
 
 @generated function eye{SA <: StaticArray}(::Type{SA})
     s = size(SA)
-    T = eltype(SA) # try-catch with Float64 backup?
+    T = eltype(SA)
+    if T == Any
+        T = Float64
+    end
     if length(s) != 2
         error("Must call `eye` with a two-dimensional array. Got size $s")
     end
+    e = eye(T, s...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SA, Expr(:tuple, e...)))
+    end
+end
+
+@generated function eye{SA <: StaticMatrix}(::SA)
+    s = size(SA)
+    T = eltype(SA)
     e = eye(T, s...)
     return quote
         $(Expr(:meta, :inline))
