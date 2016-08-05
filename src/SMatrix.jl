@@ -25,7 +25,7 @@ end
         return nothing
     else
         str = "Size mismatch in SMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"
-        return :(error(str))
+        return :(error($str))
     end
 end
 
