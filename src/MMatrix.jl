@@ -227,6 +227,15 @@ macro MMatrix(ex)
             else
                 error("@MMatrix expected a 2-dimensional array expression")
             end
+        elseif ex.args[1] == :fill
+            if length(ex.args) == 4
+                return quote
+                    $(Expr(:meta, :inline))
+                    $(esc(ex.args[1]))($(esc(ex.args[2])), MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4]))})
+                end
+            else
+                error("@MMatrix expected a 2-dimensional array expression")
+            end
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
@@ -252,7 +261,7 @@ macro MMatrix(ex)
                 error("Bad eye() expression for @MMatrix")
             end
         else
-            error("@MMatrix only supports the zeros(), ones(), rand(), randn() and eye() functions.")
+            error("@MMatrix only supports the zeros(), ones(), fill(), rand(), randn() and eye() functions.")
         end
     else
         error("Bad input for @MMatrix")

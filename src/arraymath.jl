@@ -45,6 +45,25 @@ end
     end
 end
 
+@generated function Base.fill{SA <: StaticArray}(val, ::Union{SA,Type{SA}})
+    l = length(SA)
+    expr = Expr(:tuple, fill(:val, l)...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SA, expr))
+    end
+end
+
+@generated function Base.fill!{SA <: StaticArray}(a::SA, val)
+    l = length(SA)
+    exprs = [:(@inbounds a[$i] = val) for i = 1:l]
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:block, exprs...))
+        return a
+    end
+end
+
 @generated function Base.rand{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)

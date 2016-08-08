@@ -118,8 +118,17 @@ macro MVector(ex)
             else
                 error("@MVector expected a 1-dimensional array expression")
             end
+        elseif ex.args[1] == :fill
+            if length(ex.args) == 3
+                return quote
+                    $(Expr(:meta, :inline))
+                    $(esc(ex.args[1]))($(esc(ex.args[2])), MVector{$(esc(ex.args[3]))})
+                end
+            else
+                error("@MVector expected a 1-dimensional array expression")
+            end
         else
-            error("@MVector only supports the zeros(), ones(), rand() and randn() functions.")
+            error("@MVector only supports the zeros(), ones(), fill(), rand() and randn() functions.")
         end
     else
         error("Use @MVector [a,b,c] or @MVector([a,b,c])")
