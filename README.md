@@ -67,7 +67,7 @@ v1 = SVector(1, 2, 3)
 v1.data === (1, 2, 3) # SVector uses a tuple for internal storage
 v2 = SVector{3,Float64}(1, 2, 3) # length 3, eltype Float64
 v3 = @SVector [1, 2, 3]
-v4 = @SVector [i^2 for i = 1:10] # arbitrary comprehensions (where range can be evaluated a global scope)
+v4 = @SVector [i^2 for i = 1:10] # arbitrary comprehensions (range is evaluated at global scope)
 v5 = zeros(SVector{3}) # defaults to Float64
 v6 = @SVector zeros(3)
 
@@ -95,18 +95,22 @@ v3 == m3 * v3 # m3 = eye(SMatrix{3,3})
 v1[1] === 1
 v1[(3,2,1)] === @SVector [3, 2, 1]
 v1[:] === v1
-typeof(v1[[1,2,3]]) == Vector # Can't determine number of elements from the type of [1,2,3]
+typeof(v1[[1,2,3]]) == Vector # Can't determine size from the type of [1,2,3]
 
 # Inherits from DenseArray, so is hooked into BLAS, LAPACK, etc:
-rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS multiplication
+rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS
 eig(m3) # eig(), etc use LAPACK
 
 # Static arrays stay statically sized, even when used by Base functions, etc:
-typeof(eig(m3)) == Tuple{StaticArrays.MVector{3,Float64}, StaticArrays.MMatrix{3,3,Float64,9}}
+typeof(eig(m3)) == Tuple{MVector{3,Float64}, MMatrix{3,3,Float64,9}}
 
 # similar() returns a mutable container, while similar_type() returns a constructor:
 typeof(similar(m3)) == MMatrix{3,3,Float64,9} # (final parameter is length = 9)
 similar_type(m3) == SMatrix{3,3,Float64,9}
+
+# reshape() uses types to specify size:
+reshape([1,2,3,4], SMatrix{2,2}) === @SMatrix [ 1  3 ;
+                                                2  4 ]
 ```
 
 ## Approach
