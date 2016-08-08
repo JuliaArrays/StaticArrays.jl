@@ -181,6 +181,22 @@ end
     end
 end
 
+@generated function vecdot(a::StaticArray, b::StaticArray)
+    if length(a) == length(b)
+        expr = :(a[1] * b[1])
+        for j = 2:length(a)
+            expr = :($expr + a[$j] * b[$j])
+        end
+        
+        return quote
+            $(Expr(:meta, :inline))
+            $expr
+        end
+    else
+        error("vecdot() expects arrays of same length. Got sizes $(size(a)) and $(size(b)).")
+    end
+end
+
 #=
 
 abstract SVector{Size,T,D} <: StaticArray{T,D}
