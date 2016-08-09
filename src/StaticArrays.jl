@@ -3,7 +3,8 @@ module StaticArrays
 import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              length, convert, promote_op, map, map!, reduce, mapreduce,
              broadcast, broadcast!, conj, transpose, ctranspose, hcat, vcat,
-             ones, zeros, eye, cross, vecdot, reshape, fill, fill!
+             ones, zeros, eye, cross, vecdot, reshape, fill, fill!, det, inv,
+             eig, trace, vecnorm
 
 export StaticArray, StaticVector, StaticMatrix
 export SArray, SVector, SMatrix
@@ -34,6 +35,9 @@ include("arraymath.jl")
 include("linalg.jl")
 include("matrix_multiply.jl")
 include("deque.jl")
+include("det.jl")
+include("inv.jl")
+include("eigen.jl")
 include("cholesky.jl")
 
 include("FixedSizeArrays.jl")

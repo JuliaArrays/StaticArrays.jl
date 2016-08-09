@@ -131,12 +131,13 @@ the `StaticArray` interface will look after multi-dimensional indexing,
 variety of other operations.
 
 Finally, since `StaticArrays <: DenseArray`, many methods such as `sqrtm`,
-`eig`, `chol`, and more are already defined in `Base`. Conversion
-to pointers let us interact with LAPACK and similar C/Fortran libraries through
+`eig`, `chol`, and more are already defined in `Base`. Fast, specialized methods
+for `det`, `inv`, `eig` and `chol` are provided for square matrices up to 3×3.
+Meanwhile, conversion to pointers let us interact with LAPACK and similar C/Fortran libraries through
 the existing `StridedArray` interface. In some instances mutable `StaticArray`s
 (`MVector` or `MMatrix`) will be returned, while in other cases the definitions
-fall back to `Array`. This approach gives us maximal versatility while retaining
-the ability to implement fast specializations in the future.
+fall back to `Array`. This approach gives us maximal versatility now while
+retaining the ability to implement more fast specializations in the future.
 
 ## Details
 ### Indexing

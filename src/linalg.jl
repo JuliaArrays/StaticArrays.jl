@@ -26,6 +26,78 @@ import Base: +, -, *, /
 @inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
 
 @inline /(a::StaticArray, b::Number) = broadcast(/, a, b)
+@inline \(a::Number, b::StaticArray) = broadcast(\, a, b)
+
+
+# With UniformScaling
+@generated function +(a::StaticMatrix, b::UniformScaling)
+    n = size(a,1)
+    newtype = similar_type(a, promote_type(eltype(a), eltype(b)))
+
+    if size(a,2) != n
+        error("Dimension mismatch")
+    end
+
+    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] + b.λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function +(a::UniformScaling, b::StaticMatrix)
+    n = size(b,1)
+    newtype = similar_type(b, promote_type(eltype(a), eltype(b)))
+
+    if size(b,2) != n
+        error("Dimension mismatch")
+    end
+
+    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(a), i, j))]) : :(b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function -(a::StaticMatrix, b::UniformScaling)
+    n = size(a,1)
+    newtype = similar_type(a, promote_type(eltype(a), eltype(b)))
+
+    if size(a,2) != n
+        error("Dimension mismatch")
+    end
+
+    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] - b.λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@generated function -(a::UniformScaling, b::StaticMatrix)
+    n = size(b,1)
+    newtype = similar_type(b, promote_type(eltype(a), eltype(b)))
+
+    if size(b,2) != n
+        error("Dimension mismatch")
+    end
+
+    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(a), i, j))]) : :(-b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+@inline *(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ * b
+@inline *(a::StaticMatrix, b::UniformScaling) = a * b.λ
+@inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
+@inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
 
 # Transpose, conjugate, etc
@@ -187,13 +259,48 @@ end
         for j = 2:length(a)
             expr = :($expr + a[$j] * b[$j])
         end
-        
+
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     else
         error("vecdot() expects arrays of same length. Got sizes $(size(a)) and $(size(b)).")
+    end
+end
+
+@generated function vecnorm(a::StaticArray)
+    if length(a) == 0
+        return zero(eltype(a))
+    end
+
+    expr = :(real(conj(a[1]) * a[1]))
+    for j = 2:length(a)
+        expr = :($expr + real(conj(a[$j]) * a[$j]))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return sqrt($expr)
+    end
+end
+
+@generated function trace(a::StaticMatrix)
+    s = size(a)
+    if s[1] != s[2]
+        error("matrix is not square")
+    end
+
+    if s[1] == 0
+        return zero(eltype(a))
+    end
+
+    exprs = [:(a[$(sub2ind(s, i, i))]) for i = 1:s[1]]
+    total = reduce((ex1, ex2) -> :($ex1 + $ex2), exprs)
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $total
     end
 end
 
