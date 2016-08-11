@@ -47,18 +47,22 @@ end
 
 @generated function Base.fill{SA <: StaticArray}(val, ::Union{SA,Type{SA}})
     l = length(SA)
-    expr = Expr(:tuple, fill(:val, l)...)
+    T = eltype(SA)
+    expr = [:valT for i = 1:l]
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, SA, expr))
+        valT = convert($T, val)
+        SA($(expr...))
     end
 end
 
 @generated function Base.fill!{SA <: StaticArray}(a::SA, val)
     l = length(SA)
-    exprs = [:(@inbounds a[$i] = val) for i = 1:l]
+    T = eltype(SA)
+    exprs = [:(@inbounds a[$i] = valT) for i = 1:l]
     return quote
         $(Expr(:meta, :inline))
+        valT = convert($T, val)
         $(Expr(:block, exprs...))
         return a
     end
