@@ -1,5 +1,13 @@
 immutable SVector{S, T} <: StaticVector{T}
     data::NTuple{S, T}
+
+    function SVector(x::NTuple{S,T})
+        new(x)
+    end
+
+    function SVector(x::NTuple{S})
+        new(convert_ntuple(T, x))
+    end
 end
 
 @inline (::Type{SVector}){S}(x::NTuple{S}) = SVector{S}(x)
