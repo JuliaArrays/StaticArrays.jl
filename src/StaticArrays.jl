@@ -1,3 +1,5 @@
+__precompile__()
+
 module StaticArrays
 
 import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
