@@ -3,6 +3,11 @@
         m = @SMatrix [1 2; 3 4]
         v = @SVector [1, 2]
         @test m*v === @SVector [5, 11]
+        # More complicated eltype inference
+        v = @SVector [CartesianIndex((1,3)), CartesianIndex((3,1))]
+        x = @inferred(m*v)
+        @test isa(x, SVector{2,CartesianIndex{2}})
+        @test x == @SVector [CartesianIndex((7,5)), CartesianIndex((15,13))]
 
         m = @MMatrix [1 2; 3 4]
         v = @MVector [1, 2]
@@ -26,7 +31,11 @@
     @testset "Matrix-matrix" begin
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]
-        @test m*n === @SMatrix [10 13; 22 29]
+        nc = @SMatrix [CartesianIndex((2,2)) CartesianIndex((3,3));
+                       CartesianIndex((4,4)) CartesianIndex((5,5))]
+        @test m*n  === @SMatrix [10 13; 22 29]
+        @test m*nc === @SMatrix [CartesianIndex((10,10)) CartesianIndex((13,13));
+                                 CartesianIndex((22,22)) CartesianIndex((29,29))]
 
         @test m'*n === @SMatrix [14 18; 20 26]
         @test m*n' === @SMatrix [8 14; 18 32]

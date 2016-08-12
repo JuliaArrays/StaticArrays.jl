@@ -94,7 +94,7 @@ end
     sb = size(b)
 
     s = (sA[1],)
-    T = promote_type(TA, Tb)
+    T = typeof(zero(TA)*zero(Tb))
 
     if sb[1] != sA[2]
         error("Dimension mismatch")
@@ -133,7 +133,7 @@ end
     sB = size(B)
 
     s = (sa[1],sB[2])
-    T = promote_type(Ta, TB)
+    T = typeof(zero(Ta)*zero(TB))
 
     if sB[1] != 1
         error("Dimension mismatch")
@@ -167,7 +167,7 @@ end
     TA = eltype(A)
     TB = eltype(B)
 
-    T = promote_type(TA, TB)
+    T = typeof(zero(TA)*zero(TB))
 
     can_mutate = !isbits(A) || !isbits(B) # !isbits implies can get a persistent pointer (to pass to BLAS). Probably will change to !isimmutable in a future version of Julia.
     can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
@@ -229,7 +229,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_type(TA, TB)
+    T = typeof(zero(TA)*zero(TB))
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -270,7 +270,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_type(TA, TB)
+    T = typeof(zero(TA)*zero(TB))
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -315,7 +315,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_type(TA, TB)
+    T = typeof(zero(TA)*zero(TB))
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -359,7 +359,7 @@ end
     sb = size(b)
 
     s = (sA[1],)
-    T = promote_type(TA, Tb)
+    T = typeof(zero(TA)*zero(Tb))
 
     if sb[1] != sA[2]
         error("Dimension mismatch")
@@ -417,7 +417,7 @@ end
 
     TA = eltype(A)
     TB = eltype(B)
-    T = promote_type(TA, TB)
+    T = typeof(zero(TA)*zero(TB))
 
     can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
 
