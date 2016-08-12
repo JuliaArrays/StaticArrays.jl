@@ -71,26 +71,39 @@ end
 # TODO allow ranges/collections as inputs...
 # Signatures = rand{SA <: StaticArray}(::AbstractRNG, range::AbstractArray, dims::Union{SA, Type{SA}})
 #              rand{SA <: StaticArray}(range::AbstractArray, dims::Union{SA, Type{SA}})
-@generated function Base.rand{SA <: StaticArray}(::AbstractRNG, ::Union{SA,Type{SA}})
+@generated function Base.rand{SA <: StaticArray}(rng::AbstractRNG, ::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
         T = Float64
     end
-    v = [:(rand($T)) for i = 1:prod(s)]
+    v = [:(rand(rng, $T)) for i = 1:prod(s)]
     return quote
         $(Expr(:meta, :inline))
         $(Expr(:call, SA, Expr(:tuple, v...)))
     end
 end
 
-@generated function Base.randn{SA <: StaticArray}(::AbstractRNG, ::Union{SA,Type{SA}})
+@generated function Base.randn{SA <: StaticArray}(rng::AbstractRNG, ::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
         T = Float64
     end
-    v = [:(randn($T)) for i = 1:prod(s)]
+    v = [:(randn(rng, $T)) for i = 1:prod(s)]
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SA, Expr(:tuple, v...)))
+    end
+end
+
+@generated function Base.randexp{SA <: StaticArray}(rng::AbstractRNG, ::Union{SA,Type{SA}})
+    s = size(SA)
+    T = eltype(SA)
+    if T == Any
+        T = Float64
+    end
+    v = [:(randexp(rng, $T)) for i = 1:prod(s)]
     return quote
         $(Expr(:meta, :inline))
         $(Expr(:call, SA, Expr(:tuple, v...)))
