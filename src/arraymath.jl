@@ -68,7 +68,10 @@ end
     end
 end
 
-@generated function Base.rand{SA <: StaticArray}(::Union{SA,Type{SA}})
+# TODO allow ranges/collections as inputs...
+# Signatures = rand{SA <: StaticArray}(::AbstractRNG, range::AbstractArray, dims::Union{SA, Type{SA}})
+#              rand{SA <: StaticArray}(range::AbstractArray, dims::Union{SA, Type{SA}})
+@generated function Base.rand{SA <: StaticArray}(::AbstractRNG, ::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -81,7 +84,7 @@ end
     end
 end
 
-@generated function Base.randn{SA <: StaticArray}(::Union{SA,Type{SA}})
+@generated function Base.randn{SA <: StaticArray}(::AbstractRNG, ::Union{SA,Type{SA}})
     s = size(SA)
     T = eltype(SA)
     if T == Any
