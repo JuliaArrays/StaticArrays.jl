@@ -56,18 +56,6 @@ end
     end
 end
 
-@generated function Base.fill!{SA <: StaticArray}(a::SA, val)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = valT) for i = 1:l]
-    return quote
-        $(Expr(:meta, :inline))
-        valT = convert($T, val)
-        $(Expr(:block, exprs...))
-        return a
-    end
-end
-
 # TODO allow ranges/collections as inputs...
 # Signatures = rand{SA <: StaticArray}(::AbstractRNG, range::AbstractArray, dims::Union{SA, Type{SA}})
 #              rand{SA <: StaticArray}(range::AbstractArray, dims::Union{SA, Type{SA}})
