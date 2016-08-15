@@ -103,18 +103,6 @@ end
 # @generated function Base.zeros!{SA <: StaticArray}(a::SA)
 # @generated function Base.ones!{SA <: StaticArray}(a::SA)
 
-@generated function Base.fill!{SA <: StaticArray}(a::SA, val)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = valT) for i = 1:l]
-    return quote
-        $(Expr(:meta, :inline))
-        valT = convert($T, val)
-        $(Expr(:block, exprs...))
-        return a
-    end
-end
-
 @generated function Base.rand!{SA <: StaticArray}(rng::AbstractRNG, a::SA)
     l = length(SA)
     T = eltype(SA)
