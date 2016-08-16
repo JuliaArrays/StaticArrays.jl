@@ -2,23 +2,21 @@
 ## map ##
 #########
 
-# Single input
-@generated function map{T}(f, a1::StaticArray{T})
-    newtype = :(similar_type($a1, promote_op(f, T)))
-    exprs = [:(f(a1[$j])) for j = 1:length(a1)]
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
+@inline function map{T}(f, a1::StaticArray{T})
+    fT = eltype_f(f, T)
+    C = similar_type(typeof(a1), fT)
+    C(map(f, a1.data))
 end
+@pure eltype_f{T}(f, ::Type{T}) = promote_op(f, T)
+@pure eltype_f{T1,T2}(f, ::Type{T1}, ::Type{T2}) = promote_op(f, T1, T2)
 
 # Two inputs
-@generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::StaticArray{T2})
+@generated function map{F,T1,T2}(f::F, a1::StaticArray{T1}, a2::StaticArray{T2})
     if size(a1) != size(a2)
         error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
     end
 
-    newtype = :(similar_type($a1, promote_op(f, T1, T2)))
+    newtype = :(similar_type($a1, eltype_f(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
@@ -28,7 +26,7 @@ end
 
 # TODO these assume linear fast...
 @generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::AbstractArray{T2})
-    newtype = :(similar_type($a1, promote_op(f, T1, T2)))
+    newtype = :(similar_type($a1, eltype_f(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
@@ -42,7 +40,7 @@ end
 end
 
 @generated function map{T1,T2}(f, a1::AbstractArray{T1}, a2::StaticArray{T2})
-    newtype = :(similar_type($a2, promote_op(f, T1, T2)))
+    newtype = :(similar_type($a2, eltype_f(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a2)]
     return quote
         $(Expr(:meta, :inline))
