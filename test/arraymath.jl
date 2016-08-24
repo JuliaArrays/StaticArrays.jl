@@ -1,4 +1,15 @@
 @testset "Array math" begin
+    @testset "AbstractArray-of-StaticArray with scalar math" begin
+        v = SVector{2,Float64}[SVector{2,Float64}(1,1)]
+        @test v .* 1.0 == v
+        @test typeof(v .* 1.0) == typeof(v)
+        @test 1 .- v == v .- v
+        @test typeof(1 .- v) == typeof(v)
+        v2 = SVector{2,Int}[SVector{2,Int}(1,1)]
+        @test v2 .* 1.0 == v
+        @test typeof(v2 .* 1.0) == typeof(v)
+    end
+
     @testset "Array-scalar math" begin
         m = @SMatrix [1 2; 3 4]
 
