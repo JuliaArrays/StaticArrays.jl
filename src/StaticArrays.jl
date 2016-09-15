@@ -28,6 +28,7 @@ include("SArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
 include("MArray.jl")
+include("StaticIndex.jl")
 
 
 include("indexing.jl")

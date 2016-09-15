@@ -53,6 +53,18 @@ macro SVector(ex)
             error("Use a one-dimensional comprehension for @SVector")
         end
 
+        # If its a 1:N we allow N to be a constant (e.g. a type parameter)
+        rng_expr = ex.args[2].args[2]
+        if isa(rng_expr, Expr) && rng.expr.head = :(:) && rng.expr.args[1] === 1 && length(rng.expr.args) == 2
+            f_expr = :($(ex.args[2].args[1]) -> $(ex.args[1]))
+            return quote
+                $(Expr(:meta, :inline))
+                T = eltype($(ex.args[2].args[2]))
+                map($(ex.args[2].args[1]) -> $(ex.args[1]), StaticOneTo{$(rng_expr.args[2])}())
+            end
+        end
+
+        # Otherwise these have to be evaluated at global scope
         rng = eval(current_module(), ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
