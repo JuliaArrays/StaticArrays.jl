@@ -113,7 +113,9 @@ end
     if isbits(T)
         unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), val, i)
     else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
-        unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), Base.data_pointer_from_objref(val), i)
+        # This one is thought to be unsafe (#27)
+        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), Base.data_pointer_from_objref(val), i)
+        error("setindex!() with non-isbits eltype is not supported by StaticArrays")
     end
 
     return val
