@@ -253,6 +253,22 @@ end
     end
 end
 
+@generated function dot(a::StaticVector, b::StaticVector)
+    if length(a) == length(b)
+        expr = :(a[1] * b[1])
+        for j = 2:length(a)
+            expr = :($expr + a[$j] * b[$j])
+        end
+
+        return quote
+            $(Expr(:meta, :inline))
+            @inbounds return $expr
+        end
+    else
+        error("dot() expects vectors of same length. Got lengths $(length(a)) and $(length(b)).")
+    end
+end
+
 @generated function vecdot(a::StaticArray, b::StaticArray)
     if length(a) == length(b)
         expr = :(a[1] * b[1])
