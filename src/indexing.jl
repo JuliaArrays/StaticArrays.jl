@@ -313,7 +313,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if $bounds_expr
-            throw(BoundsError(m, (i1,i2,i3)))
+            throw(BoundsError(a, (i1,i2,i3)))
         end
 
         @inbounds return a[$ind_expr]
@@ -345,7 +345,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if $bounds_expr
-            throw(BoundsError(m, (i1,i2,i_n...)))
+            throw(BoundsError(a, (i1,i2,i_n...)))
         end
 
         @inbounds return a[$ind_expr]
@@ -367,7 +367,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if $bounds_expr
-            throw(BoundsError(m, (i1,i2,3)))
+            throw(BoundsError(a, (i1,i2,3)))
         end
 
         @inbounds return a[$ind_expr] = val
@@ -399,7 +399,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if $bounds_expr
-            throw(BoundsError(m, (i1,i2,i_n...)))
+            throw(BoundsError(a, (i1,i2,i_n...)))
         end
 
         @inbounds return a[$ind_expr] = val
