@@ -40,7 +40,7 @@
             else
                 Ai = inv(lufact(AA))
             end
-            return convert(typeof(parent(Ai)), Ai)
+            return convert($newtype, Ai)
         end
     end
 end
