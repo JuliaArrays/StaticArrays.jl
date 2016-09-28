@@ -139,7 +139,7 @@ the existing `StridedArray` interface. In some instances mutable `StaticArray`s
 fall back to `Array`. This approach gives us maximal versatility now while
 retaining the ability to implement more fast specializations in the future.
 
-## Details
+## API Details
 ### Indexing
 
 Statically sized indexing can be realized by indexing each dimension by a
@@ -185,7 +185,7 @@ end
 `SVector` defines a series of convenience constructors, so you can just type
 e.g. `SVector(1,2,3)`. Alternatively there is an intelligent `@SVector` macro
 where you can use native Julia array literals syntax, comprehensions, and the
-and the `zeros()`, `ones()`, `fill()`, `rand()` and `randn()` functions, such as `@SVector [1,2,3]`,
+`zeros()`, `ones()`, `fill()`, `rand()` and `randn()` functions, such as `@SVector [1,2,3]`,
 `@SVector Float64[1,2,3]`, `@SVector [f(i) for i = 1:10]`, `@SVector zeros(3)`,
 `@SVector randn(Float32, 4)`, etc (Note: the range of a comprehension is evaluated at global scope by the
 macro, and must be made of combinations of literal values, functions, or global
@@ -289,6 +289,29 @@ default constructor).
 
 Other useful functions to overload may be `similar_type` (and `similar` for
 mutable containers).
+
+### Conversions from `Array`
+
+In order to convert from a dynamically sized `AbstractArray` to one of the
+statically sized array types, you must specify the size explicitly.  For
+example,
+
+```julia
+v = [1,2]
+
+m = [1 2;
+     3 4]
+
+# ... a lot of intervening code
+
+sv = SVector{2}(v)
+sm = SMatrix{2,2}(m)
+```
+
+We have avoided adding `SVector(v::AbstractVector)` as a valid constructor to
+help users avoid the type instability (and potential performance disaster, if
+used without care) of this innocuous looking expression.
+
 
 ### SIMD optimizations
 
