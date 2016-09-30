@@ -53,6 +53,9 @@
         @test ((@SArray eye(Float32, 2, 2))::SArray{(2,2), Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@SArray(rand(Float32, 2, 2, 1)), SArray{(2,2,1), Float32})
         @test isa(@SArray(randn(Float32, 2, 2, 1)), SArray{(2,2,1), Float32})
+
+        m = [1 2; 3 4]
+        @test SArray{(2,2)}(m) === @SArray [1 2; 3 4]
     end
 
     @testset "Methods" begin

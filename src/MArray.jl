@@ -29,24 +29,24 @@ end
     return nothing
 end
 
-@generated function (::Type{MArray{Size,T,N}}){Size,T,N}(x)
+@generated function (::Type{MArray{Size,T,N}}){Size,T,N}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
         MArray{Size,T,N,$(prod(Size))}(x)
     end
 end
 
-@generated function (::Type{MArray{Size,T}}){Size,T}(x)
+@generated function (::Type{MArray{Size,T}}){Size,T}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
         MArray{Size,T,$(length(Size)),$(prod(Size))}(x)
     end
 end
 
-@generated function (::Type{MArray{Size}}){Size}(x)
+@generated function (::Type{MArray{Size}}){Size, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,$(promote_tuple_eltype(x)),$(length(Size)),$(prod(Size))}(x)
+        MArray{Size,$(promote_tuple_eltype(T)),$(length(Size)),$(prod(Size))}(x)
     end
 end
 

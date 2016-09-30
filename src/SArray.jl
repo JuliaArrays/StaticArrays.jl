@@ -24,24 +24,24 @@ end
     return nothing
 end
 
-@generated function (::Type{SArray{Size,T,N}}){Size,T,N}(x)
+@generated function (::Type{SArray{Size,T,N}}){Size,T,N}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
         SArray{Size,T,N,$(prod(Size))}(x)
     end
 end
 
-@generated function (::Type{SArray{Size,T}}){Size,T}(x)
+@generated function (::Type{SArray{Size,T}}){Size,T}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
         SArray{Size,T,$(length(Size)),$(prod(Size))}(x)
     end
 end
 
-@generated function (::Type{SArray{Size}}){Size}(x)
+@generated function (::Type{SArray{Size}}){Size, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
-        SArray{Size,$(promote_tuple_eltype(x)),$(length(Size)),$(prod(Size))}(x)
+        SArray{Size,$(promote_tuple_eltype(T)),$(length(Size)),$(prod(Size))}(x)
     end
 end
 

@@ -55,6 +55,9 @@
         @test ((@MArray eye(Float32, 2, 2))::MArray{(2,2), Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{(2,2,1), Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{(2,2,1), Float32})
+
+        m = [1 2; 3 4]
+        @test MArray{(2,2)}(m) == @MArray [1 2; 3 4]
     end
 
     @testset "Methods" begin
