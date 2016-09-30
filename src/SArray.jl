@@ -58,7 +58,7 @@ end
 ## SArray methods ##
 ####################
 
-@pure size{Size}(::Union{SArray{Size},Type{SArray{Size}}}) = Size
+@pure size{Size}(::Type{SArray{Size}}) = Size
 @pure size{Size,T}(::Type{SArray{Size,T}}) = Size
 @pure size{Size,T,N}(::Type{SArray{Size,T,N}}) = Size
 @pure size{Size,T,N,L}(::Type{SArray{Size,T,N,L}}) = Size

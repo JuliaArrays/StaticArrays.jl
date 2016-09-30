@@ -92,7 +92,7 @@ end
 ## SMatrix methods ##
 #####################
 
-@pure size{S1,S2}(::Union{SMatrix{S1,S2},Type{SMatrix{S1,S2}}}) = (S1, S2)
+@pure size{S1,S2}(::Type{SMatrix{S1,S2}}) = (S1, S2)
 @pure size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = (S1, S2)
 @pure size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = (S1, S2)
 

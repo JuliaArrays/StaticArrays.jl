@@ -127,3 +127,20 @@ end
 @inline function Base.unsafe_convert{T}(::Type{Ptr{T}}, a::StaticArray{T})
     Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(Tuple(a)))
 end
+
+@inline size(x::StaticArray) = size(typeof(x))
+
+function size{SA <: StaticArray}(::Type{SA})
+    error("""
+        The size of type `$SA` is not known.
+
+        If you were trying to call the construct (or `convert` to) a `StaticArray` you
+        may need to add the size explicitly as a type parameter so it's size is
+        inferrable to the Julia compiler (or performance would be terrible). For
+        example, you might try
+
+            m = zeros(3,3)
+            SMatrix(m)      # this error
+            SMatrix{3,3}(m) # correct - size is inferrable
+        """)
+end

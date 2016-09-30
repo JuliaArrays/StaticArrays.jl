@@ -30,7 +30,7 @@ end
 ## MVector methods ##
 #####################
 
-@pure size{S}(::Union{MVector{S},Type{MVector{S}}}) = (S, )
+@pure size{S}(::Type{MVector{S}}) = (S, )
 @pure size{S,T}(::Type{MVector{S,T}}) = (S,)
 
 @propagate_inbounds function getindex(v::MVector, i::Integer)

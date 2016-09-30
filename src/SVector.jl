@@ -25,7 +25,7 @@ end
 ## SVector methods ##
 #####################
 
-@pure size{S}(::Union{SVector{S},Type{SVector{S}}}) = (S, )
+@pure size{S}(::Type{SVector{S}}) = (S, )
 @pure size{S,T}(::Type{SVector{S,T}}) = (S,)
 
 @propagate_inbounds function getindex(v::SVector, i::Integer)

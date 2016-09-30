@@ -76,7 +76,7 @@ end
 ## MArray methods ##
 ####################
 
-@pure size{Size}(::Union{MArray{Size},Type{MArray{Size}}}) = Size
+@pure size{Size}(::Type{MArray{Size}}) = Size
 @pure size{Size,T}(::Type{MArray{Size,T}}) = Size
 @pure size{Size,T,N}(::Type{MArray{Size,T,N}}) = Size
 @pure size{Size,T,N,L}(::Type{MArray{Size,T,N,L}}) = Size

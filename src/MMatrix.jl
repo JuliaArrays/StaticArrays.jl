@@ -85,7 +85,7 @@ end
 ## MMatrix methods ##
 #####################
 
-@pure size{S1,S2}(::Union{MMatrix{S1,S2},Type{MMatrix{S1,S2}}}) = (S1, S2)
+@pure size{S1,S2}(::Type{MMatrix{S1,S2}}) = (S1, S2)
 @pure size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = (S1, S2)
 @pure size{S1,S2,T,L}(::Type{MMatrix{S1,S2,T,L}}) = (S1, S2)
 

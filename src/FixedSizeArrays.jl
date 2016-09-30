@@ -62,7 +62,7 @@ end
 @inline (::Type{Point{S}}){S, T}(x::NTuple{S,T}) = Point{S,T}(x)
 @inline (::Type{Point{S}}){S, T <: Tuple}(x::T) = Point{S,promote_tuple_eltype(T)}(x)
 
-Base.@pure Base.size{S}(::Union{Point{S},Type{Point{S}}}) = (S, )
+Base.@pure Base.size{S}(::Type{Point{S}}) = (S, )
 Base.@pure Base.size{S,T}(::Type{Point{S,T}}) = (S,)
 
 Base.@propagate_inbounds function Base.getindex(v::Point, i::Integer)
