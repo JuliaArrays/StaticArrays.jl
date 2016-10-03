@@ -306,6 +306,7 @@ m = [1 2;
 
 sv = SVector{2}(v)
 sm = SMatrix{2,2}(m)
+sa = SArray{(2,2)}(m)
 ```
 
 We have avoided adding `SVector(v::AbstractVector)` as a valid constructor to
