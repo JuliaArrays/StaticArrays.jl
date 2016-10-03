@@ -37,7 +37,10 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 # Generic case, with least 2 inputs
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,xs...) = SA((x1,x2,xs...))
 
-# Avoiding splatting penalties. Being here, implementations of StaticArray will not have to deal with these.
+@inline (::Type{SA}){SA<:StaticArray}(x::Tuple) = error("No precise constructor found. Length of input was $(length(x)) while length of $SA is $(length(SA)).")
+
+# Avoiding splatting penalties. Being here, implementations of StaticArray will not have to deal with these. TODO check these are necessary or not
+#@inline (::Type{SA}){SA<:StaticArray}(x1) = SA((x1,)) # see convert below (lesser precedence than other constructors?)
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2) = SA((x1,x2))
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3) = SA((x1,x2,x3))
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4) = SA((x1,x2,x3,x4))
@@ -54,10 +57,11 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15))
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16))
 
+@inline convert{SA<:StaticArray}(::Type{SA}, x1) = SA((x1,))
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert{SA<:StaticArray}(::Type{SA}, sa::StaticArray) = SA(Tuple(sa))
-@inline function convert{SA<:StaticArray}(::Type{SA}, a)
+@inline function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
     SA(NTuple{(length(SA))}(a))
 end
 
