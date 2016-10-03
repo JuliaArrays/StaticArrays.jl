@@ -1,3 +1,20 @@
+"""
+    SArray{Size, T, L}(x::NTuple{L, T})
+    SArray{Size, T, L}(x1, x2, x3, ...)
+
+Construct a statically-sized array `SArray`. Since this type is immutable,
+the data must be provided upon construction and cannot be mutated later. The
+`Size` parameter is a Tuple specifying the dimensions of the array. The
+`L` parameter is the `length` of the array and is always equal to `prod(S)`.
+Constructors may drop the `L` and `T` parameters if they are inferrable
+from the input (e.g. `L` is always inferrable from `Size`).
+
+    SArray{Size}(a::Array)
+
+Construct a statically-sized array of dimensions `Size` using the data from
+`a`. The `Size` parameter is mandatory since the size of `a` is unknown to the
+compiler (the element type may optionally also be specified).
+"""
 immutable SArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 

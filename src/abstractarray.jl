@@ -6,7 +6,7 @@
 end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
-function Base.isassigned(a::StaticArray, i::Int...)
+@inline function Base.isassigned(a::StaticArray, i::Int...)
     ii = sub2ind(size(a), i...)
     1 <= ii <= length(a) ? true : false
 end
@@ -14,6 +14,23 @@ end
 Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
 
 # Default type search for similar_type
+"""
+    similar_type(static_array)
+    similar_type(static_array, T)
+    similar_type(static_array, Size)
+    similar_type(static_array, T, Size)
+
+Returns a constructor for a statically-sized array similar to the input array
+(or type) `static_array`, optionally with different element type `T` or size
+`Size`.
+
+This differs from `similar()` in that the resulting array type may not be
+mutable (or define `setindex()`)  and therefore the returned type may need to
+be *constructed* with its data.
+
+Note that `Size` will need to be a compile-time constant in order for the result
+to be inferrable by the compiler.
+"""
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}) = SA
 @pure function similar_type{SA<:StaticArray,N,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::NTuple{N,Int})
     similar_type(similar_type(SA, T), sizes)

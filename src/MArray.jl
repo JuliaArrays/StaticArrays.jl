@@ -1,3 +1,21 @@
+"""
+    MArray{Size, T, L}()
+    MArray{Size, T, L}(x::NTuple{L, T})
+    MArray{Size, T, L}(x1, x2, x3, ...)
+
+Construct a statically-sized, mutable array `MArray`. The data may optionally be
+provided upon construction and can be mutated later. The `Size` parameter is a
+Tuple specifying the dimensions of the array. The `L` parameter is the `length`
+of the array and is always equal to `prod(S)`. Constructors may drop the `L` and
+`T` parameters if they are inferrable from the input (e.g. `L` is always
+inferrable from `Size`).
+
+    MArray{Size}(a::Array)
+
+Construct a statically-sized, mutable array of dimensions `Size` using the data from
+`a`. The `Size` parameter is mandatory since the size of `a` is unknown to the
+compiler (the element type may optionally also be specified).
+"""
 type MArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 

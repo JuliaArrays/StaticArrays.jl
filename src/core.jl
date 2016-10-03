@@ -1,32 +1,38 @@
 """
     abstract StaticArray{T, N} <: DenseArray{T, N}
+    typealias StaticVector{T} StaticArray{T, 1}
+    typealias StaticMatrix{T} StaticArray{T, 2}
 
 `StaticArray`s are Julia arrays with fixed, known size.
 
 ## Dev docs
 
-They must define the following methods.
+They must define the following methods:
+ - Constructors that accept a flat tuple of data.
  - `size()` on the *type*, as well as the instances, returning a tuple of `Int`s
  - `getindex()` with an integer (linear indexing)
  - `Tuple()`, returning the data in a flat Tuple.
 
-It is strongly recommended to implement
+It is strongly recommended to implement:
 
 - `similar_type()` returns a type (or type constructor) that accepts a flat
-  tuple of data. Otherwise, the built-in `SArray`, `SVector` and `SMatrix` types will
-  be used.
+  tuple of data. Element type can be automatically switched, but if that is not
+  possible or if the size is changed the built-in `SArray`, `SVector` and
+  `SMatrix` types will be used by default.
 
-Otherwise, it may also be useful to define some of the following:
+For mutable containers you may need to define the following:
 
  - `similar()` returns a *mutable* container of similar type, defaults to using
-   a `Ref{}`. You will benefit from overloading this if your container is
-   already mutable!
- - `getindex` on Ref{MyStaticArray} or whatever type is returned by `similar` (\*)
- - `setindex!` on Ref{MyStaticArray} or whatever type is returned by `similar` (\*)
+   a `MVector`, `MMatrix` or `MArray`. You will benefit from overloading this if
+   your container is already mutable!
+ - `setindex!` on mutable arrays (e.g. those returned by `similar`)
 
-(\*) It is assumed by default that your memory is laid out in a dense format,
-like `Array`. If your `StaticArray` subtype contains multiple fields, make sure
-the data appears first, or if not define `getindex`/`setindex` yourself.
+Finally, if you define `unsafe_convert(Ptr, ...)` it is assumed by default that
+your memory is laid out in a dense format, like `Array`. This conversion may
+be used to call C libraries like LAPACK. If your `StaticArray` subtype contains
+additional fields, make sure the array data appears first.
+
+(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray` and `FieldVector`)
 """
 abstract StaticArray{T, N} <: DenseArray{T, N}
 
@@ -61,6 +67,7 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert{SA<:StaticArray}(::Type{SA}, sa::StaticArray) = SA(Tuple(sa))
+
 @inline function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
     SA(NTuple{(length(SA))}(a))
 end
@@ -138,8 +145,8 @@ function size{SA <: StaticArray}(::Type{SA})
     error("""
         The size of type `$SA` is not known.
 
-        If you were trying to call the construct (or `convert` to) a `StaticArray` you
-        may need to add the size explicitly as a type parameter so it's size is
+        If you were trying to construct (or `convert` to) a `StaticArray` you
+        may need to add the size explicitly as a type parameter so its size is
         inferrable to the Julia compiler (or performance would be terrible). For
         example, you might try
 

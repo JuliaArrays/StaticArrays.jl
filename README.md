@@ -70,6 +70,7 @@ v3 = @SVector [1, 2, 3]
 v4 = @SVector [i^2 for i = 1:10] # arbitrary comprehensions (range is evaluated at global scope)
 v5 = zeros(SVector{3}) # defaults to Float64
 v6 = @SVector zeros(3)
+v7 = SVector{3}([1, 2, 3]) # Array conversions must specify size
 
 # Can get size() from instance or type
 size(v1) == (3,)
@@ -81,6 +82,7 @@ m2 = @SMatrix [ 1  3 ;
                 2  4 ]
 m3 = eye(SMatrix{3,3})
 m4 = @SMatrix randn(4,4)
+m5 = SMatrix{2,2}([1 3 ; 2 4]) # Array conversions must specify size
 
 # Higher-dimensional support
 a = @SArray randn(2, 2, 2, 2, 2, 2)
@@ -88,7 +90,7 @@ a = @SArray randn(2, 2, 2, 2, 2, 2)
 # Supports all the common operations of AbstractArray
 v7 = v1 + v2
 v8 = sin.(v3)
-v3 == m3 * v3 # m3 = eye(SMatrix{3,3})
+v3 == m3 * v3 # recall that m3 = eye(SMatrix{3,3})
 # map, reduce, broadcast, map!, broadcast!, etc...
 
 # Indexing also supports tuples
