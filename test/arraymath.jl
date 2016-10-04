@@ -56,4 +56,9 @@
         @test ones(MMatrix{2,2})::MMatrix == @MMatrix [1.0 1.0; 1.0 1.0]
         @test ones(MArray{(1,1,1)})::MArray == MArray{(1,1,1)}((1.0,))
     end
+
+    @testset "zero()" begin
+        @test zero(SVector{3, Float64}) === @SVector [0.0, 0.0, 0.0]
+        @test zero(SVector{3, Int}) === @SVector [0, 0, 0]
+    end
 end
