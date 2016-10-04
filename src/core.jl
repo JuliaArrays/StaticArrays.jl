@@ -68,8 +68,18 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 # this covers most conversions and "statically-sized reshapes"
 @inline convert{SA<:StaticArray}(::Type{SA}, sa::StaticArray) = SA(Tuple(sa))
 
-@inline function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
-    SA(NTuple{(length(SA))}(a))
+@generated function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
+    L = length(SA)
+    exprs = [:(a[$i]) for i = 1:L]
+
+    return quote
+        $(Expr(:meta, :inline))
+        if length(a) != $L
+            L = $L
+            error("Dimension mismatch. Expected input array of length $L, got length $(length(a))")
+        end
+        @inbounds return SA($(Expr(:tuple, exprs...)))
+    end
 end
 
 function convert{T,N}(::Type{Array}, sa::StaticArray{T,N})
