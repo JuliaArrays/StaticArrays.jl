@@ -291,7 +291,7 @@ end
         end
     end
 
-    tmps = [Symbol("tmp_$(k1)_($k2)") for k1 = 1:sA[1], k2 = 1:sB[2]]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:sA[1], k2 = 1:sB[2]]
     exprs_init = [:($(tmps[k1,k2])  = A[$k1] * B[1 + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
     exprs_loop = [:($(tmps[k1,k2]) += A[$(k1-sA[1]) + $(sA[1])*j] * B[j + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
 
