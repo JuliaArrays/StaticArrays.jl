@@ -65,13 +65,13 @@
         n = SMatrix{10,10}(n_array)
         @test m*n === SMatrix{10,10}(a_array)
 
-        m_array = rand(1:10, 16, 16)
-        n_array = rand(1:10, 16, 16)
-        a_array = m_array*n_array
+        m_array2 = rand(1:10, 16, 16) # see JuliaLang/julia#18794 for reason for variable name changes
+        n_array2 = rand(1:10, 16, 16)
+        a_array2 = m_array2*n_array2
 
-        m = SMatrix{16,16}(m_array)
-        n = SMatrix{16,16}(n_array)
-        @test m*n === SMatrix{16,16}(a_array)
+        m2 = SMatrix{16,16}(m_array2)
+        n2 = SMatrix{16,16}(n_array2)
+        @test m2*n2 === SMatrix{16,16}(a_array2)
 
         # Mutating types follow different behaviour
         m_array = rand(1:10, 10, 10)
