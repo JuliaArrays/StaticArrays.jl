@@ -36,6 +36,7 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
         $(Expr(:call, SA, Expr(:tuple, v...)))
     end
 end
+@inline Base.zero{SA <: StaticArray}(a::Union{SA,Type{SA}}) = zeros(a)
 
 @generated function Base.ones{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
