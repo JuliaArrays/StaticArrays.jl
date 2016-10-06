@@ -3,9 +3,9 @@
 *Statically sized arrays for Julia 0.5*
 
 [![StaticArrays](http://pkg.julialang.org/badges/StaticArrays_0.5.svg)](http://pkg.julialang.org/?pkg=StaticArrays)
-[![Build Status](https://travis-ci.org/andyferris/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/andyferris/StaticArrays.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/px9kulhngvs26fka?svg=true)](https://ci.appveyor.com/project/andyferris/staticarrays-jl)
-[![Coverage Status](https://coveralls.io/repos/github/andyferris/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/andyferris/StaticArrays.jl?branch=master)
+[![Build Status](https://travis-ci.org/JuliaArrays/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/StaticArrays.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/px9kulhngvs26fka?svg=true)](https://ci.appveyor.com/project/JuliaArrays/staticarrays-jl)
+[![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: DenseArray{T,N}`.
