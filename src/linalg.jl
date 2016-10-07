@@ -301,6 +301,8 @@ end
     end
 end
 
+@inline Base.normalize(a::StaticVector) = inv(vecnorm(a))*a
+
 @generated function trace(a::StaticMatrix)
     s = size(a)
     if s[1] != s[2]

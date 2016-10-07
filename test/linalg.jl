@@ -52,4 +52,11 @@
         @test vcat(@SMatrix([1;2;3]), @SMatrix([4;5;6])) === @SMatrix([1;2;3;4;5;6])
         @test hcat(@SMatrix([1;2;3]), @SMatrix([4;5;6])) === @SMatrix [1 4; 2 5; 3 6]
     end
+
+    @testset "normalization" begin
+        @test vecnorm(SVector(1.0,2.0)) ≈ vecnorm([1.0,2.0])
+        @test vecnorm(@SMatrix [1 2; 3 4.0+im]) ≈ vecnorm([1 2; 3 4.0+im])
+
+        @test normalize(SVector(1,2,3)) ≈ normalize([1,2,3])
+    end
 end
