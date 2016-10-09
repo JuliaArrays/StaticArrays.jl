@@ -163,3 +163,11 @@ end
         return a
     end
 end
+
+Base.min{T1<:Real,T2<:Real}(a::StaticArray{T1}, b::StaticArray{T2}) = _min(promote(a, b)...)
+Base.min{SA<:StaticArray}(a::SA, b::SA) = _min(promote(a, b)...)
+_min{SA<:StaticArray}(a::SA, b::SA) = SA(map(min, convert(Tuple, a), convert(Tuple, b)))
+
+Base.max{T1<:Real,T2<:Real}(a::StaticArray{T1}, b::StaticArray{T2}) = _max(promote(a, b)...)
+Base.max{SA<:StaticArray}(a::SA, b::SA) = _max(promote(a, b)...)
+_max{SA<:StaticArray}(a::SA, b::SA) = SA(map(max, convert(Tuple, a), convert(Tuple, b)))

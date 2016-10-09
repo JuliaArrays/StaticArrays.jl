@@ -79,5 +79,8 @@
         @test length(m) === 4
 
         @test_throws Exception m[1] = 1
+
+        @test isa(promote(@SMatrix([1 2; 3 4]), @SMatrix([1.0 3.0; 2.0 4.0])),
+                  Tuple{SMatrix{2,2,Float64,4},SMatrix{2,2,Float64,4}})
     end
 end

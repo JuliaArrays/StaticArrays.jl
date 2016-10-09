@@ -1,3 +1,5 @@
+using StaticArrays, Base.Test
+
 @testset "Array math" begin
     @testset "AbstractArray-of-StaticArray with scalar math" begin
         v = SVector{2,Float64}[SVector{2,Float64}(1,1)]
@@ -60,5 +62,14 @@
     @testset "zero()" begin
         @test zero(SVector{3, Float64}) === @SVector [0.0, 0.0, 0.0]
         @test zero(SVector{3, Int}) === @SVector [0, 0, 0]
+    end
+
+    @testset "min() and max()" begin
+        x = rand(SVector{2})
+        @test @inferred(min(x, x)) == x
+        @test @inferred(max(x, x)) == x
+        y = @SVector [0,1]
+        @test @inferred(min(x, y)) == @SVector [0,x[2]]
+        @test @inferred(max(x, y)) == @SVector [x[1],1]
     end
 end
