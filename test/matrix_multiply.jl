@@ -16,6 +16,8 @@
         m = @SArray [1 2; 3 4]
         v = @SArray [1, 2]
         @test m*v === @SArray [5, 11]
+        v = CartesianIndex((1,2))
+        @test m*v === @SVector [5, 11]
 
         m = @MArray [1 2; 3 4]
         v = @MArray [1, 2]

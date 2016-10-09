@@ -46,6 +46,8 @@ end
     end
 end
 
+*(A::StaticMatrix, b::CartesianIndex) = A * SVector(b.I)
+
 # mutating
 
 @generated function A_mul_Bc!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
