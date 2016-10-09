@@ -43,7 +43,7 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 # Generic case, with least 2 inputs
 @inline (::Type{SA}){SA<:StaticArray}(x1,x2,xs...) = SA((x1,x2,xs...))
 
-@inline (::Type{SA}){SA<:StaticArray}(x::Tuple) = error("No precise constructor found. Length of input was $(length(x)) while length of $SA is $(length(SA)).")
+@inline convert{SA<:StaticArray}(::Type{SA}, x::Tuple) = error("No precise constructor found. Length of input was $(length(x)) while length of $SA is $(length(SA)).")
 
 # Avoiding splatting penalties. Being here, implementations of StaticArray will not have to deal with these. TODO check these are necessary or not
 #@inline (::Type{SA}){SA<:StaticArray}(x1) = SA((x1,)) # see convert below (lesser precedence than other constructors?)
