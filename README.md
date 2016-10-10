@@ -324,13 +324,17 @@ default. Run Julia with `julia -O` or `julia -O3` to enable these optimizations,
 and many of your (immutable) `StaticArray` methods *should* become significantly
 faster!
 
-### *FixedSizeArrays* compatibility
+### *FixedSizeArrays* and *ImmutableArrays* compatibility
 
 You can try `using StaticArrays.FixedSizeArrays` to add some compatibility
 wrappers for the most commonly used features of the *FixedSizeArrays* package,
 such as `Vec`, `Mat`, `Point` and `@fsa`. These wrappers do not provide a
 perfect interface, but may help in trying out *StaticArrays* with pre-existing
 code.
+
+Furthermore, `using StaticArrays.ImmutableArrays` will let you use the typenames
+from the *ImmutableArrays* package, which does not include the array size as a
+type parameter (e.g. `Vector3{T}` and `Matrix3x3{T}`).
 
 ### See also
 
