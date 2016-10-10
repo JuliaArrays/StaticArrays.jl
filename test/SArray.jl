@@ -84,5 +84,8 @@
         @test length(m) === 4
 
         @test_throws Exception m[1] = 1
+
+        @test isa(promote(@SArray([1 2; 3 4]), @SArray([1.0 3.0; 2.0 4.0])),
+                  Tuple{SArray{(2,2),Float64,2,4},SArray{(2,2),Float64,2,4}})
     end
 end

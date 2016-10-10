@@ -19,3 +19,5 @@ using Base.Test
     include("matrix_multiply.jl")
     include("deque.jl")
 end
+
+nothing

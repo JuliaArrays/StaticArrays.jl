@@ -58,5 +58,8 @@
         @test length(v) === 3
 
         @test_throws Exception v[1] = 1
+
+        @test isa(promote(@SVector([1,2]), @SVector([1.0,2.0])),
+                  Tuple{SVector{2,Float64},SVector{2,Float64}})
     end
 end

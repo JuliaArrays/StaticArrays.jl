@@ -165,3 +165,10 @@ function size{SA <: StaticArray}(::Type{SA})
             SMatrix{3,3}(m) # correct - size is inferrable
         """)
 end
+
+function Base.promote_rule{SA1<:StaticArray, SA2<:StaticArray}(::Type{SA1}, ::Type{SA2})
+    T = promote_type(eltype(SA1), eltype(SA2))
+    _promote_rule(similar_type(SA1, T), similar_type(SA2, T))
+end
+_promote_rule{SA<:StaticArray}(::Type{SA}, ::Type{SA}) = SA
+_promote_rule{SA1<:StaticArray, SA2<:StaticArray}(::Type{SA1}, ::Type{SA2}) = error("no promotion exists for $SA1 and $SA2")
