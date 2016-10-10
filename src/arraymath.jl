@@ -1,4 +1,4 @@
-import Base: .+, .-, .*, ./
+import Base: .+, .-, .*, ./, +, -
 
 # Support for elementwise ops on AbstractArray{S<:StaticArray} with Number
 Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = similar_type(A, promote_op(op, eltype(A), T))
@@ -23,6 +23,13 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
 @inline .-(a1::Number, a2::StaticArray) = broadcast(-, a1, a2)
 @inline .*(a1::Number, a2::StaticArray) = broadcast(*, a1, a2)
 @inline ./(a1::Number, a2::StaticArray) = broadcast(/, a1, a2)
+
+for op in (:+, :-, :.+, :.-, :.*, :./)
+    @eval begin
+        @inline $op(a1::StaticVector, a2::CartesianIndex) = $op(a1, convert(SVector, a2))
+        @inline $op(a1::CartesianIndex, a2::StaticVector) = $op(convert(SVector, a1), a2)
+    end
+end
 
 @generated function Base.zeros{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)

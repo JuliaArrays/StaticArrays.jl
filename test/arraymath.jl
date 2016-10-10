@@ -36,6 +36,15 @@ using StaticArrays, Base.Test
         @test m1 .* m2 === @SMatrix [4 6; 6 4]
         @test m1 .- m2 === @SMatrix [-3 -1; 1 3]
         @test m1 ./ m2 === @SMatrix [0.25 2/3; 1.5 4.0]
+
+        v = rand(SVector{2,Float64})+0.1
+        I = CartesianIndex((3,-5))
+        @test v + I == I + v == SVector(v[1]+3,v[2]-5)
+        @test v - I == SVector(v[1]-3,v[2]+5)
+        @test I - v == SVector(3-v[1],-5-v[2])
+        @test v .* I == I .* v == SVector(v[1]*3,-5*v[2])
+        @test v ./ I == SVector(v[1]/3,-v[2]/5)
+        @test I ./ v == SVector(3/v[1],-5/v[2])
     end
 
     @testset "zeros() and ones()" begin
