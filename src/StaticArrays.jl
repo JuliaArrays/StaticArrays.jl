@@ -43,11 +43,12 @@ include("eigen.jl")
 include("cholesky.jl")
 
 include("FixedSizeArrays.jl")
+include("ImmutableArrays.jl")
 
 # TODO list
 # ---------
 #
-# * tests
+# * more tests
 #
 # * reshape() - accept Val? Currently uses `ReshapedArray`. Cool :)
 #
