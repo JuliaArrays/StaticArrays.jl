@@ -53,6 +53,12 @@ end
     Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v))
 end
 
+# Converting a CartesianIndex to an SVector
+convert(::Type{SVector}, I::CartesianIndex) = SVector(I.I)
+convert{N}(::Type{SVector{N}}, I::CartesianIndex{N}) = SVector{N}(I.I)
+convert{N,T}(::Type{SVector{N,T}}, I::CartesianIndex{N}) = SVector{N,T}(I.I)
+
+Base.promote_rule{N,T}(::Type{SVector{N,T}}, ::Type{CartesianIndex{N}}) = SVector{N,promote_type(T,Int)}
 
 macro SVector(ex)
     if isa(ex, Expr) && ex.head == :vect

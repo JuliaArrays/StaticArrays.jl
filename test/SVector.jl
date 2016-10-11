@@ -59,4 +59,11 @@
 
         @test_throws Exception v[1] = 1
     end
+
+    @testset "CartesianIndex" begin
+        a, b = SVector(0x01, 0x02), SVector(1.0f0, 1.2f0)
+        c = CartesianIndex((1,2))
+        @test @inferred(eltype([a,c])) == SVector{2,Int}
+        @test @inferred(eltype([b,c])) == SVector{2,Float32}
+    end
 end
