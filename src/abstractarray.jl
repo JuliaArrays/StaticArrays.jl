@@ -107,6 +107,7 @@ end
 
 # Some fallbacks
 
+@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Tuple{}) = Scalar{eltype(SA)} # No mutable fallback here...
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Int) = SVector{size, eltype(SA)}
 @pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int}) = SVector{sizes[1], eltype(SA)}
 
