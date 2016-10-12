@@ -229,6 +229,18 @@ easier to define the types without the extra tuple characters (compare
 because it is so easy to define new `StaticArray` subtypes, and they naturally
 work together.
 
+### `Scalar`
+
+Sometimes you want to broadcast an operation, but not over one of your inputs.
+A classic example is attempting to displace a collection of vectors by the
+same vector. We can now do this with the `Scalar` type:
+
+```julia
+[[1,2,3], [4,5,6]] .+ Scalar([1,0,-1]) # [[2,2,2], [5,5,5]]
+```
+
+`Scalar` is simply an implementation of an immutable, 0-dimensional `StaticArray`.
+
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 
 These statically sized arrays are identical to the above, but are defined as

@@ -8,8 +8,8 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              ones, zeros, eye, cross, vecdot, reshape, fill, fill!, det, inv,
              eig, trace, vecnorm, dot
 
-export StaticArray, StaticVector, StaticMatrix
-export SArray, SVector, SMatrix
+export StaticScalar, StaticArray, StaticVector, StaticMatrix
+export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector, MutableFieldVector
 
@@ -21,6 +21,7 @@ export similar_type
 include("util.jl")
 
 include("core.jl")
+include("Scalar.jl")
 include("SVector.jl")
 include("FieldVector.jl")
 include("SMatrix.jl")
