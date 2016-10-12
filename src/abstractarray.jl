@@ -1,4 +1,7 @@
+typealias StaticScalar{T} StaticArray{T,0}
+
 @pure length{T<:StaticArray}(a::Union{T,Type{T}}) = prod(size(a))
+@pure length{T<:StaticScalar}(a::Union{T,Type{T}}) = 1
 
 @pure function size{T<:StaticArray}(a::Union{T,Type{T}}, d::Integer)
     s = size(a)
