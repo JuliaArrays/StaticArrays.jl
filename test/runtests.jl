@@ -9,6 +9,7 @@ using Base.Test
     include("SArray.jl")
     include("MArray.jl")
     include("FieldVector.jl")
+    include("Scalar.jl")
 
     include("core.jl")
     include("abstractarray.jl")
