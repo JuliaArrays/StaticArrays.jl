@@ -1,4 +1,4 @@
-import Base: +, -, *, /
+import Base: +, -, *, /, \
 
 # TODO: more operators, like AbstractArray
 
