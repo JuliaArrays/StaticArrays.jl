@@ -162,6 +162,34 @@ end
     end
 end
 
+# Ambiguity with BLAS function
+@generated function *{TA <: Base.LinAlg.BlasFloat, Tb}(A::StaticMatrix{TA}, b::StridedVector{Tb})
+    sA = size(A)
+
+    s = (sA[1],)
+    T = promote_op(matprod, TA, Tb)
+
+    if T == Tb
+        newtype = similar_type(A, s)
+    else
+        newtype = similar_type(A, T, s)
+    end
+
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    else
+        exprs = [zero(T) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        if length(b) != $(sA[2])
+            error("Dimension mismatch")
+        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
 @generated function *(a::StaticVector, B::StaticMatrix)
     Ta = eltype(a)
     TB = eltype(B)
@@ -426,25 +454,9 @@ end
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
+7
 
-
-#function A_mul_B_blas(a, b, c, A, B)
-#q
-#end
-
-# The idea here is to get pointers to stack variables and call BLAS.
-# This saves an aweful lot of time compared to copying SArray's to Ref{SArray{...}}
-# and using BLAS should be fastest for (very) large SArrays
-
-# Here is an LLVM function that gets the pointer to its input, %x
-# After this we would make the ccall above.
-#
-# define i8* @f(i32 %x) #0 {
-#     %1 = alloca i32, align 4
-#     store i32 %x, i32* %1, align 4
-#     ret i32* %1
-# }
-
+# TODO aliasing problems if c === b?
 @generated function A_mul_B!(c::StaticVector, A::StaticMatrix, b::StaticVector)
     sA = size(A)
     sb = size(b)
@@ -474,6 +486,25 @@ end
 
     if sA[2] != 0
         exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        if length(b) != $(sA[2]) || length(c) != $(sA[1])
+            error("Dimension mismatch")
+        end
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+# Ambiguity with a BLAS specialized function
+@generated function Base.A_mul_B!{T<:Base.LinAlg.BlasFloat}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
+    sA = size(A)
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(2*A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
     else
         exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
     end
@@ -647,3 +678,20 @@ end
         exprs...
     )
 end
+
+#function A_mul_B_blas(a, b, c, A, B)
+#q
+#end
+
+# The idea here is to get pointers to stack variables and call BLAS.
+# This saves an aweful lot of time compared to copying SArray's to Ref{SArray{...}}
+# and using BLAS should be fastest for (very) large SArrays
+
+# Here is an LLVM function that gets the pointer to its input, %x
+# After this we would make the ccall above.
+#
+# define i8* @f(i32 %x) #0 {
+#     %1 = alloca i32, align 4
+#     store i32 %x, i32* %1, align 4
+#     ret i32* %1
+# }
