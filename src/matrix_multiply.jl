@@ -4,9 +4,11 @@ import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, A
 typealias BlasEltypes Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
 
 # Stolen from https://github.com/JuliaLang/julia/pull/18218
-matprod(x,y) = x*y + x*y;
+matprod(x,y) = x*y + x*y
+# I think promote_op has a pure context problem... and we use lots of generated functions
+# Attempt to retrofit this and revert it to rely on `zero` (which is a bit annoying!)
+@pure promote_op{T1,T2}(::typeof(matprod), ::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
 
-# TODO size-inferrable products with AbstractArray (such as StaticMatrix * AbstractVector)
 # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
 
 # TODO make faster versions of A*_mul_B*
