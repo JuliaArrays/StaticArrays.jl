@@ -99,6 +99,7 @@ end
 
     s = (sA[1],)
     T = promote_op(matprod, TA, Tb)
+    #println(T)
 
     if sb[1] != sA[2]
         error("Dimension mismatch")
@@ -126,6 +127,37 @@ end
 
     return quote
         $(Expr(:meta,:inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+# This happens to be size-inferrable from A
+@generated function *(A::StaticMatrix, b::AbstractVector)
+    TA = eltype(A)
+    Tb = eltype(b)
+    sA = size(A)
+    #sb = size(b)
+
+    s = (sA[1],)
+    T = promote_op(matprod, TA, Tb)
+
+    if T == Tb
+        newtype = similar_type(A, s)
+    else
+        newtype = similar_type(A, T, s)
+    end
+
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    else
+        exprs = [zero(T) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        if length(b) != $(sA[2])
+            error("Dimension mismatch")
+        end
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
@@ -402,7 +434,7 @@ end
 
 # The idea here is to get pointers to stack variables and call BLAS.
 # This saves an aweful lot of time compared to copying SArray's to Ref{SArray{...}}
-# and should be fastest for (very) large SArrays
+# and using BLAS should be fastest for (very) large SArrays
 
 # Here is an LLVM function that gets the pointer to its input, %x
 # After this we would make the ccall above.
@@ -412,6 +444,48 @@ end
 #     store i32 %x, i32* %1, align 4
 #     ret i32* %1
 # }
+
+@generated function A_mul_B!(c::StaticVector, A::StaticMatrix, b::StaticVector)
+    sA = size(A)
+    sb = size(b)
+    s = size(c)
+    T = eltype(c)
+
+    if sb[1] != sA[2] || s[1] != sA[1]
+        error("Dimension mismatch")
+    end
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+# The unrolled code is inferrable from the size of A
+@generated function A_mul_B!(c::AbstractVector, A::StaticMatrix, b::AbstractVector)
+    sA = size(A)
+    T = eltype(c)
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        if length(b) != $(sA[2]) || length(c) != $(sA[1])
+            error("Dimension mismatch")
+        end
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
 
 
 @generated function A_mul_B!(C::StaticMatrix, A::StaticMatrix, B::StaticMatrix)

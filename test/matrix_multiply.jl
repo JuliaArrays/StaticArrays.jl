@@ -4,22 +4,25 @@
         v = @SVector [1, 2]
         @test m*v === @SVector [5, 11]
         # More complicated eltype inference
-        v = @SVector [CartesianIndex((1,3)), CartesianIndex((3,1))]
-        x = @inferred(m*v)
+        v2 = @SVector [CartesianIndex((1,3)), CartesianIndex((3,1))]
+        x = @inferred(m*v2)
         @test isa(x, SVector{2,CartesianIndex{2}})
         @test x == @SVector [CartesianIndex((7,5)), CartesianIndex((15,13))]
 
-        m = @MMatrix [1 2; 3 4]
-        v = @MVector [1, 2]
-        @test (m*v)::MVector == @MVector [5, 11]
+        v3 = [1, 2]
+        @test m*v3 === @SVector [5, 11]
 
-        m = @SArray [1 2; 3 4]
-        v = @SArray [1, 2]
-        @test m*v === @SArray [5, 11]
+        m2 = @MMatrix [1 2; 3 4]
+        v4 = @MVector [1, 2]
+        @test (m2*v4)::MVector == @MVector [5, 11]
 
-        m = @MArray [1 2; 3 4]
-        v = @MArray [1, 2]
-        @test (m*v)::MArray == @MArray [5, 11]
+        m3 = @SArray [1 2; 3 4]
+        v5 = @SArray [1, 2]
+        @test m3*v5 === @SArray [5, 11]
+
+        m4 = @MArray [1 2; 3 4]
+        v6 = @MArray [1, 2]
+        @test (m4*v6)::MArray == @MArray [5, 11]
     end
 
     @testset "Vector-matrix" begin
@@ -117,8 +120,17 @@
     end
 
     @testset "A_mul_B!" begin
+        v = @SVector [2, 4]
+        v2 = [2, 4]
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]
+
+        outvec = MVector{2,Int}()
+        A_mul_B!(outvec, m, v)
+        @test outvec == @MVector [10,22]
+        outvec2 = Vector{Int}(2)
+        A_mul_B!(outvec2, m, v2)
+        @test outvec2 == [10,22]
 
         a = MMatrix{2,2,Int,4}()
         A_mul_B!(a, m, n)
