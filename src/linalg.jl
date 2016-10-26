@@ -285,9 +285,14 @@ end
     end
 end
 
+@inline norm(v::StaticVector) = vecnorm(v)
+@inline norm(v::StaticVector, p::Real) = vecnorm(v, p)
+
+@inline Base.LinAlg.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
+
 @generated function vecnorm(a::StaticArray)
     if length(a) == 0
-        return zero(eltype(a))
+        return zero(real(eltype(a)))
     end
 
     expr = :(real(conj(a[1]) * a[1]))
@@ -301,7 +306,43 @@ end
     end
 end
 
+@generated function vecnorm(a::StaticArray, p::Real)
+    if length(a) == 0
+        return zero(real(eltype(a)))
+    end
+
+    expr = :(abs(a[1])^p)
+    for j = 2:length(a)
+        expr = :($expr + abs(a[$j])^p)
+    end
+
+    expr_p1 = :(abs(a[1]))
+    for j = 2:length(a)
+        expr_p1 = :($expr_p1 + abs(a[$j]))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        if p == Inf
+            return mapreduce(abs, max, $(zero(real(eltype(a)))), a)
+        elseif p == 1
+            @inbounds return $expr_p1
+        elseif p == 2
+            return vecnorm(a)
+        elseif p == 0
+            return mapreduce(x -> (x == 0 ? zero(real(eltype(a))) : one(real(eltype(a)))), +, $(zero(real(eltype(a)))), a)
+        else
+            @inbounds return ($expr)^(inv(p))
+        end
+    end
+end
+
 @inline Base.normalize(a::StaticVector) = inv(vecnorm(a))*a
+@inline Base.normalize(a::StaticVector, p::Real) = inv(vecnorm(a, p))*a
+
+@inline Base.normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)))
+@inline Base.normalize!(a::StaticVector, p::Real) = (a.*= inv(vecnorm(a, p)))
+
 
 @generated function trace(a::StaticMatrix)
     s = size(a)

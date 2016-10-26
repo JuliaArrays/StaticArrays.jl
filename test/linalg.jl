@@ -54,6 +54,12 @@
     end
 
     @testset "normalization" begin
+        @test norm(SVector(1.0,2.0,2.0)) ≈ 3.0
+        @test norm(SVector(1.0,2.0,2.0),2) ≈ 3.0
+        @test norm(SVector(1.0,2.0,2.0),Inf) ≈ 2.0
+        @test norm(SVector(1.0,2.0,2.0),1) ≈ 5.0
+        @test norm(SVector(1.0,2.0,0.0),0) ≈ 2.0
+
         @test vecnorm(SVector(1.0,2.0)) ≈ vecnorm([1.0,2.0])
         @test vecnorm(@SMatrix [1 2; 3 4.0+im]) ≈ vecnorm([1 2; 3 4.0+im])
 
