@@ -64,7 +64,6 @@ end
 
 @inline SArray(a::StaticArray) = SArray{size(typeof(a))}(Tuple(a))
 
-
 # Some more advanced constructor-like functions
 @inline eye{Size}(::Type{SArray{Size}}) = eye(SArray{Size,Float64})
 @inline zeros{Size}(::Type{SArray{Size}}) = zeros(SArray{Size,Float64})
@@ -87,9 +86,10 @@ end
 
 @inline Tuple(v::SArray) = v.data
 
-@inline function Base.unsafe_convert{Size,T}(::Type{Ptr{T}}, a::SArray{Size,T})
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
-end
+# See #53
+Base.cconvert{T}(::Type{Ptr{T}}, a::SArray) = Ref(a)
+Base.unsafe_convert{S,T,D,L}(::Type{Ptr{T}}, a::Ref{SArray{S,T,D,L}}) =
+    Ptr{T}(Base.unsafe_convert(Ptr{SArray{S,T,D,L}}, a))
 
 macro SArray(ex)
     if !isa(ex, Expr)

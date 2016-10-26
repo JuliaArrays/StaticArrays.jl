@@ -27,6 +27,9 @@ abstract FieldVector{T} <: StaticVector{T}
 @inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
 @inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)
 
-@inline function Base.unsafe_convert{T}(::Type{Ptr{T}}, v::FieldVector{T})
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v))
-end
+# See #53
+Base.cconvert{T}(::Type{Ptr{T}}, v::FieldVector) = Ref(v)
+Base.unsafe_convert{T, FV <: FieldVector}(::Type{Ptr{T}}, m::Ref{FV}) =
+    _unsafe_convert(Ptr{T}, eltype(FV), m)
+_unsafe_convert{T, FV <: FieldVector}(::Type{Ptr{T}}, ::Type{T}, m::Ref{FV}) =
+         Ptr{T}(Base.unsafe_convert(Ptr{FV}, m))

@@ -49,9 +49,10 @@ end
 
 @inline Tuple(v::SVector) = v.data
 
-@inline function Base.unsafe_convert{N,T}(::Type{Ptr{T}}, v::SVector{N,T})
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v))
-end
+# See #53
+Base.cconvert{T}(::Type{Ptr{T}}, v::SVector) = Ref(v)
+Base.unsafe_convert{N,T}(::Type{Ptr{T}}, v::Ref{SVector{N,T}}) =
+    Ptr{T}(Base.unsafe_convert(Ptr{SVector{N,T}}, v))
 
 # Converting a CartesianIndex to an SVector
 convert(::Type{SVector}, I::CartesianIndex) = SVector(I.I)
