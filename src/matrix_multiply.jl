@@ -176,7 +176,7 @@ end
     s = (sA[1],)
     T = promote_op(matprod, TA, Tb)
 
-    if T == Tb
+    if T == TA
         newtype = similar_type(A, s)
     else
         newtype = similar_type(A, T, s)
@@ -204,7 +204,7 @@ end
     s = (sA[1],)
     T = promote_op(matprod, TA, Tb)
 
-    if T == Tb
+    if T == TA
         newtype = similar_type(A, s)
     else
         newtype = similar_type(A, T, s)
