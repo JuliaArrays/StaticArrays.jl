@@ -23,6 +23,10 @@
         m4 = @MArray [1 2; 3 4]
         v6 = @MArray [1, 2]
         @test (m4*v6)::MArray == @MArray [5, 11]
+
+        m5 = @SMatrix [1.0 2.0; 3.0 4.0]
+        v7 = [1.0, 2.0]
+        @test (m5*v7)::SVector ≈ @SVector [5.0, 11.0]
     end
 
     @testset "Vector-matrix" begin
@@ -194,5 +198,17 @@
         a = MMatrix{16,16,Int}()
         A_mul_B!(a, m, n)
         @test a ≈ a_array
+
+        # Float64
+        vf = @SVector [2.0, 4.0]
+        vf2 = [2.0, 4.0]
+        mf = @SMatrix [1.0 2.0; 3.0 4.0]
+
+        outvecf = MVector{2,Float64}()
+        A_mul_B!(outvecf, mf, vf)
+        @test outvecf ≈ @MVector [10.0, 22.0]
+        outvec2f = Vector{Float64}(2)
+        A_mul_B!(outvec2f, mf, vf2)
+        @test outvec2f ≈ [10.0, 22.0]
     end
 end

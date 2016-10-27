@@ -91,9 +91,46 @@ end
 end
 
 
-@generated function *(A::StaticMatrix, b::StaticVector)
-    TA = eltype(A)
-    Tb = eltype(b)
+@generated function *{TA,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
+    sA = size(A)
+    sb = size(b)
+
+    s = (sA[1],)
+    T = promote_op(matprod, TA, Tb)
+    #println(T)
+
+    if sb[1] != sA[2]
+        error("Dimension mismatch")
+    end
+
+    if s == sb
+        if T == Tb
+            newtype = b
+        else
+            newtype = similar_type(b, T)
+        end
+    else
+        if T == Tb
+            newtype = similar_type(b, s)
+        else
+            newtype = similar_type(b, T, s)
+        end
+    end
+
+    if sA[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
+    else
+        exprs = [zero(T) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
+# For an ambiguity relating to the below two functions
+@generated function *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
     sA = size(A)
     sb = size(b)
 
@@ -132,9 +169,7 @@ end
 end
 
 # This happens to be size-inferrable from A
-@generated function *(A::StaticMatrix, b::AbstractVector)
-    TA = eltype(A)
-    Tb = eltype(b)
+@generated function *{TA,Tb}(A::StaticMatrix{TA}, b::AbstractVector{Tb})
     sA = size(A)
     #sb = size(b)
 
@@ -457,11 +492,52 @@ end
 7
 
 # TODO aliasing problems if c === b?
-@generated function A_mul_B!(c::StaticVector, A::StaticMatrix, b::StaticVector)
+@generated function A_mul_B!{T1,T2,T3}(c::StaticVector{T1}, A::StaticMatrix{T2}, b::StaticVector{T3})
     sA = size(A)
     sb = size(b)
     s = size(c)
-    T = eltype(c)
+
+    if sb[1] != sA[2] || s[1] != sA[1]
+        error("Dimension mismatch")
+    end
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T1))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+# These two for ambiguity with a BLAS calling function
+@generated function A_mul_B!{T<:Union{Float32, Float64}}(c::StaticVector{T}, A::StaticMatrix{T}, b::StaticVector{T})
+    sA = size(A)
+    sb = size(b)
+    s = size(c)
+
+    if sb[1] != sA[2] || s[1] != sA[1]
+        error("Dimension mismatch")
+    end
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+@generated function A_mul_B!{T<:Union{Complex{Float32}, Complex{Float64}}}(c::StaticVector{T}, A::StaticMatrix{T}, b::StaticVector{T})
+    sA = size(A)
+    sb = size(b)
+    s = size(c)
 
     if sb[1] != sA[2] || s[1] != sA[1]
         error("Dimension mismatch")
@@ -480,7 +556,7 @@ end
 end
 
 # The unrolled code is inferrable from the size of A
-@generated function A_mul_B!(c::AbstractVector, A::StaticMatrix, b::AbstractVector)
+@generated function A_mul_B!{T1,T2,T3}(c::AbstractVector{T1}, A::StaticMatrix{T2}, b::AbstractVector{T3})
     sA = size(A)
     T = eltype(c)
 
@@ -500,11 +576,30 @@ end
 end
 
 # Ambiguity with a BLAS specialized function
-@generated function Base.A_mul_B!{T<:Base.LinAlg.BlasFloat}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
+# Also possible bug makes this harder to resolve (see https://github.com/JuliaLang/julia/issues/19124)
+# (problem being that I can't use T<:BlasFloat)
+@generated function A_mul_B!{T<:Union{Float64,Float32}}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
     sA = size(A)
 
     if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(2*A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    else
+        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        if length(b) != $(sA[2]) || length(c) != $(sA[1])
+            error("Dimension mismatch")
+        end
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+@generated function A_mul_B!{T<:Union{Complex{Float64},Complex{Float32}}}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
+    sA = size(A)
+
+    if sA[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
     else
         exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
     end
