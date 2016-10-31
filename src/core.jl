@@ -34,7 +34,7 @@ additional fields, make sure the array data appears first.
 
 (see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray` and `FieldVector`)
 """
-abstract StaticArray{T, N} <: DenseArray{T, N}
+abstract StaticArray{T, N} <: AbstractArray{T, N}
 
 typealias StaticVector{T} StaticArray{T, 1}
 typealias StaticMatrix{T} StaticArray{T, 2}
@@ -47,21 +47,21 @@ typealias StaticMatrix{T} StaticArray{T, 2}
 
 # Avoiding splatting penalties. Being here, implementations of StaticArray will not have to deal with these. TODO check these are necessary or not
 #@inline (::Type{SA}){SA<:StaticArray}(x1) = SA((x1,)) # see convert below (lesser precedence than other constructors?)
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2) = SA((x1,x2))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3) = SA((x1,x2,x3))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4) = SA((x1,x2,x3,x4))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5) = SA((x1,x2,x3,x4,x5))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6) = SA((x1,x2,x3,x4,x5,x6))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7) = SA((x1,x2,x3,x4,x5,x6,x7))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8) = SA((x1,x2,x3,x4,x5,x6,x7,x8))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15))
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2) = SA((x1,x2))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3) = SA((x1,x2,x3))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4) = SA((x1,x2,x3,x4))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5) = SA((x1,x2,x3,x4,x5))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6) = SA((x1,x2,x3,x4,x5,x6))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7) = SA((x1,x2,x3,x4,x5,x6,x7))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8) = SA((x1,x2,x3,x4,x5,x6,x7,x8))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15))
+@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16))
 
 @inline convert{SA<:StaticArray}(::Type{SA}, x1) = SA((x1,))
 
@@ -122,31 +122,14 @@ function convert{T}(::Type{Vector}, sa::StaticVector{T})
     return out
 end
 
-#function convert{A<:AbstractArray}(::Type{A}, sa::StaticArray)
-#    out = A(size(sa))
-#    @inbounds for i = 1:length(sa)
-#        out[i] = sa[i]
-#    end
-#    return out
-#end
-
-
 # A general way of going back to a tuple, etc
 @generated function convert(::Type{Tuple}, a::StaticArray)
     n = length(a)
     exprs = [:(a[$j]) for j = 1:n]
     quote
         $(Expr(:meta, :inline))
-        $(Expr(:tuple, exprs...))
+        @inbounds return $(Expr(:tuple, exprs...))
     end
-end
-
-# We may want a pointer... usefull for LAPACK etc. However, some static arrays
-# might not store a dense representation of their matrix (they may be sparse or
-# some computed representation) so the fallback needs to be safe.
-# Custom-defined, dense, mutable StaticArrays might want to overload this default
-@inline function Base.unsafe_convert{T}(::Type{Ptr{T}}, a::StaticArray{T})
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(Tuple(a)))
 end
 
 @inline size(x::StaticArray) = size(typeof(x))
