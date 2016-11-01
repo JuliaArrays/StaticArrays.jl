@@ -1,36 +1,34 @@
+@inline det(A::StaticMatrix) = _det(Size(A), A)
 
-@generated function det{T}(A::StaticMatrix{T})
-    if size(A) == (1,1)
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return A[1]
-        end
-    elseif size(A) == (2,2)
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return A[1]*A[4] - A[3]*A[2]
-        end
-    elseif size(A) == (3,3)
-        return quote
-            $(Expr(:meta, :inline))
-            #@inbounds a = A[5]*A[9] - A[8]*A[6]
-            #@inbounds b = A[8]*A[3] - A[2]*A[9]
-            #@inbounds c = A[2]*A[6] - A[5]*A[3]
-            #@inbounds return A[1]*a + A[4]*b + A[7]*c
+"""
+    det(Size(m,m), mat)
 
-            @inbounds x0 = SVector(A[1], A[2], A[3])
-            @inbounds x1 = SVector(A[4], A[5], A[6])
-            @inbounds x2 = SVector(A[7], A[8], A[9])
-            return vecdot(x0, cross(x1, x2))
+Calculate the matrix determinate using an algorithm specialized on the size of
+the `m`×`m` matrix `mat`, which is much faster for small matrices.
+"""
+@inline _det(::Size{(1,1)}, A::AbstractMatrix) = @inbounds return A[1]
+
+@inline function _det(::Size{(2,2)}, A::AbstractMatrix)
+    @inbounds return A[1]*A[4] - A[3]*A[2]
+end
+
+@inline function _det(::Size{(3,3)}, A::AbstractMatrix)
+    @inbounds x0 = SVector(A[1], A[2], A[3])
+    @inbounds x1 = SVector(A[4], A[5], A[6])
+    @inbounds x2 = SVector(A[7], A[8], A[9])
+    return vecdot(x0, cross(x1, x2))
+end
+
+@generated function _det{S,T}(::Size{S}, A::AbstractMatrix{T})
+    if S[1] != S[2]
+        throw(DimensionMismatch("matrix is not square"))
+    end
+    T2 = typeof((one(T)*zero(T) + zero(T))/one(T))
+    return quote # Implementation from Base
+        if istriu(A) || istril(A)
+            return convert($T2, det(UpperTriangular(A)))::$T2 # Is this a Julia bug that a convert is not type stable??
         end
-    else
-        S = typeof((one(T)*zero(T) + zero(T))/one(T))
-        return quote # Implementation from Base
-            if istriu(A) || istril(A)
-                return convert($S, det(UpperTriangular(A)))::$S # Is this a Julia bug that a convert is not type stable??
-            end
-            AA = convert(Array{$S}, A)
-            return det(lufact(AA))
-        end
+        AA = convert(Array{$T2}, A)
+        return det(lufact(AA))
     end
 end

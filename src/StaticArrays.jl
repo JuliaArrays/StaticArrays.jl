@@ -13,6 +13,8 @@ export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector, MutableFieldVector
 
+export Size
+
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
@@ -21,6 +23,7 @@ export similar_type
 include("util.jl")
 
 include("core.jl")
+include("traits.jl")
 include("Scalar.jl")
 include("SVector.jl")
 include("FieldVector.jl")
@@ -29,7 +32,6 @@ include("SArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
 include("MArray.jl")
-
 
 include("indexing.jl")
 include("abstractarray.jl")
