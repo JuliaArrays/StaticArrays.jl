@@ -13,7 +13,7 @@ export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector, MutableFieldVector
 
-export Size, SizeOf
+export Size
 
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
