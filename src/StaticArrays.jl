@@ -12,6 +12,7 @@ export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector, MutableFieldVector
+export SizedArray, SizedVector, SizedMatrix
 
 export Size
 
@@ -32,6 +33,7 @@ include("SArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
 include("MArray.jl")
+include("SizedArray.jl")
 
 include("indexing.jl")
 include("abstractarray.jl")
