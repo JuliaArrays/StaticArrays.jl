@@ -14,6 +14,10 @@
         @test v1 - v2 === @SVector [-2, 1, 4, 7]
     end
 
+    @testset "diagm()" begin
+        @test diagm(SVector(1,2)) === @SMatrix [1 0; 0 2]
+    end
+
     @testset "eye()" begin
         @test eye(SMatrix{2,2,Int}) === @SMatrix [1 0; 0 1]
         @test eye(SMatrix{2,2}) === @SMatrix [1.0 0.0; 0.0 1.0]

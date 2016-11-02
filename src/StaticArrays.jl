@@ -6,7 +6,7 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              length, convert, promote_op, map, map!, reduce, mapreduce,
              broadcast, broadcast!, conj, transpose, ctranspose, hcat, vcat,
              ones, zeros, eye, cross, vecdot, reshape, fill, fill!, det, inv,
-             eig, trace, vecnorm, norm, dot
+             eig, trace, vecnorm, norm, dot, diagm
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

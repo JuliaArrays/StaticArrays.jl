@@ -242,6 +242,16 @@ end
     end
 end
 
+@generated function diagm(v::StaticVector)
+    T = eltype(v)
+    exprs = [i == j ? :(v[$i]) : zero(T) for i = 1:length(v), j = 1:length(v)]
+    newtype = similar_type(v, (length(v), length(v)))
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
+
 @generated function cross(a::StaticVector, b::StaticVector)
     if length(a) === 3 && length(b) === 3
         return quote
