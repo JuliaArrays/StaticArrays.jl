@@ -175,15 +175,17 @@ end
     end
 end
 
-# Reshape uses types to specify size (and also conveniently, the output type)
+# Reshape used types to specify size (and also conveniently, the output type)
 @generated function reshape{SA<:StaticArray}(a::StaticArray, ::Type{SA})
     if !(SA <: StaticVector) && length(a) != length(SA)
         error("Static array of size $(size(a)) cannot be reshaped to size $(size(SA))")
     end
 
+    Base.depwarn("Use reshape(array, Size(dims...)) rather than reshape(array, StaticArrayType)", :reshape)
+
     return quote
         $(Expr(:meta, :inline))
-        return SA(tuple(a))
+        return SA(Tuple(a))
     end
 end
 
@@ -192,5 +194,31 @@ function reshape{SA<:StaticArray}(a::AbstractArray, ::Type{SA})
         error("Static array of size $(size(a)) cannot be reshaped to size $(size(SA))")
     end
 
+    Base.depwarn("Use reshape(array, Size(dims...)) rather than reshape(array, StaticArrayType)", :reshape)
+
     return SA((a...))
+end
+
+
+# Versions using Size{}
+@generated function reshape{S}(a::StaticArray, ::Size{S})
+    if length(a) != prod(S)
+        error("Static array of size $(size(a)) cannot be reshaped to size $S")
+    end
+
+    newtype = similar_type(a, S)
+
+    return quote
+        $(Expr(:meta, :inline))
+        return $newtype(a)
+    end
+end
+
+@generated function reshape{S}(a::Array, ::Size{S})
+    newtype = SizedArray{S, eltype(a), length(S)}
+
+    return quote
+        $(Expr(:meta, :inline))
+        return $newtype(a)
+    end
 end
