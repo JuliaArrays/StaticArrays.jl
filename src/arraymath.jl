@@ -5,7 +5,7 @@ Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = sim
 Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = similar_type(A, promote_op(op, T, eltype(A)))
 
 
-# TODO lots more operators
+# TODO any more operators?
 
 @inline .-(a1::StaticArray) = broadcast(-, a1)
 
@@ -13,16 +13,25 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
 @inline .-(a1::StaticArray, a2::StaticArray) = broadcast(-, a1, a2)
 @inline .*(a1::StaticArray, a2::StaticArray) = broadcast(*, a1, a2)
 @inline ./(a1::StaticArray, a2::StaticArray) = broadcast(/, a1, a2)
+@inline .\(a1::StaticArray, a2::StaticArray) = broadcast(\, a1, a2)
+@inline .%(a1::StaticArray, a2::StaticArray) = broadcast(%, a1, a2)
+@inline .^(a1::StaticArray, a2::StaticArray) = broadcast(^, a1, a2)
 
 @inline .+(a1::StaticArray, a2::Number) = broadcast(+, a1, a2)
 @inline .-(a1::StaticArray, a2::Number) = broadcast(-, a1, a2)
 @inline .*(a1::StaticArray, a2::Number) = broadcast(*, a1, a2)
 @inline ./(a1::StaticArray, a2::Number) = broadcast(/, a1, a2)
+@inline .\(a1::StaticArray, a2::Number) = broadcast(\, a1, a2)
+@inline .%(a1::StaticArray, a2::Number) = broadcast(%, a1, a2)
+@inline .^(a1::StaticArray, a2::Number) = broadcast(^, a1, a2)
 
 @inline .+(a1::Number, a2::StaticArray) = broadcast(+, a1, a2)
 @inline .-(a1::Number, a2::StaticArray) = broadcast(-, a1, a2)
 @inline .*(a1::Number, a2::StaticArray) = broadcast(*, a1, a2)
 @inline ./(a1::Number, a2::StaticArray) = broadcast(/, a1, a2)
+@inline .\(a1::Number, a2::StaticArray) = broadcast(\, a1, a2)
+@inline .%(a1::Number, a2::StaticArray) = broadcast(%, a1, a2)
+@inline .^(a1::Number, a2::StaticArray) = broadcast(^, a1, a2)
 
 @generated function Base.zeros{SA <: StaticArray}(::Union{SA,Type{SA}})
     s = size(SA)
