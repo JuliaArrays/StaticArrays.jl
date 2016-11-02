@@ -1,4 +1,4 @@
-import Base: .+, .-, .*, ./
+import Base: .+, .-, .*, ./, .\, .%, .^
 
 # Support for elementwise ops on AbstractArray{S<:StaticArray} with Number
 Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = similar_type(A, promote_op(op, eltype(A), T))
