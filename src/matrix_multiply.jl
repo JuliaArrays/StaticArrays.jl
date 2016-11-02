@@ -280,7 +280,7 @@ end
         if can_blas && size(A,1)*size(A,2)*size(B,2) >= 14*14*14
             return quote
                 $(Expr(:meta, :inline))
-                C = similar(A, $T, $s)
+                C = similar(A, $T, $(Size(s)))
                 A_mul_B_blas!(C, A, B)
                 return C
             end
