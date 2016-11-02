@@ -1,11 +1,5 @@
 @inline det(A::StaticMatrix) = _det(Size(A), A)
 
-"""
-    det(Size(m,m), mat)
-
-Calculate the matrix determinate using an algorithm specialized on the size of
-the `m`×`m` matrix `mat`, which is much faster for small matrices.
-"""
 @inline _det(::Size{(1,1)}, A::AbstractMatrix) = @inbounds return A[1]
 
 @inline function _det(::Size{(2,2)}, A::AbstractMatrix)
