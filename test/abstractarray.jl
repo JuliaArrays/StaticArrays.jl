@@ -48,20 +48,18 @@
 
         @test isa(similar(sv), MVector{3,Int})
         @test isa(similar(sv, Float64), MVector{3,Float64})
-        @test isa(similar(sv, 4), MVector{4,Int})
-        @test isa(similar(sv, (4,)), MVector{4,Int})
-        @test isa(similar(sv, Float64, 4), MVector{4,Float64})
-        @test isa(similar(sv, Float64, (4,)), MVector{4,Float64})
+        @test isa(similar(sv, Size(4)), MVector{4,Int})
+        @test isa(similar(sv, Float64, Size(4)), MVector{4,Float64})
 
         @test isa(similar(sm), MMatrix{2,2,Int,4})
         @test isa(similar(sm, Float64), MMatrix{2,2,Float64,4})
-        @test isa(similar(sv, (3,3)), MMatrix{3,3,Int,9})
-        @test isa(similar(sv, Float64, (3,3)), MMatrix{3,3,Float64,9})
+        @test isa(similar(sv, Size(3,3)), MMatrix{3,3,Int,9})
+        @test isa(similar(sv, Float64, Size(3,3)), MMatrix{3,3,Float64,9})
 
         @test isa(similar(sa), MArray{(1,1,1),Int,3,1})
         @test isa(similar(sa, Float64), MArray{(1,1,1),Float64,3,1})
-        @test isa(similar(sv, (3,3,3)), MArray{(3,3,3),Int,3,27})
-        @test isa(similar(sv, Float64, (3,3,3)), MArray{(3,3,3),Float64,3,27})
+        @test isa(similar(sv, Size(3,3,3)), MArray{(3,3,3),Int,3,27})
+        @test isa(similar(sv, Float64, Size(3,3,3)), MArray{(3,3,3),Float64,3,27})
     end
 
     @testset "reshape" begin
