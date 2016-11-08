@@ -24,7 +24,7 @@ const Vec = SVector
 const Mat = SMatrix
 const FixedVectorNoTuple = FieldVector
 
-macro fsa(ex)
+function fsa_ast(ex)
     @assert isa(ex, Expr)
     if ex.head == :vect # Vector
         return Expr(:call, SVector{length(ex.args)}, Expr(:tuple, ex.args...))
@@ -49,6 +49,10 @@ macro fsa(ex)
         end
     end
 end
+macro fsa(ex)
+    expr = fsa_ast(ex)
+    esc(expr)
+end
 
 ###########
 ## Point ##
@@ -72,5 +76,9 @@ Base.@propagate_inbounds function Base.getindex(v::Point, i::Integer)
 end
 
 @inline Base.Tuple(v::Point) = v.data
+
+@inline Base.Tuple(v::Point) = v.data
+
+
 
 end
