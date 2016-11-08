@@ -23,4 +23,5 @@ using Base.Test
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
+    include("fixed_size_arrays.jl")
 end

@@ -1,6 +1,4 @@
-using StaticArrays
 using StaticArrays.FixedSizeArrays
-using Base.Test
 
 typealias Vec1d Vec{1, Float64}
 typealias Vec2d Vec{2, Float64}
@@ -55,10 +53,20 @@ end
 # not passing, will port later, don't really care right now
 
 #=
+# Unit not implemented
 unit(Vec4d, 1)
+
+# rand not all versions implemented
 rand(Vec{7, Int}, 1:7)
 randn(Mat{4,2, Complex{Float64}})
+@test typeof(rand(Mat4d, -20f0:0.192f0:230f0)) == Mat4d
+@test typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) == Mat{4,21,Float32}
+
+# one not implemented
+
 x = one(Mat{4,2, Int})
+
+# complex yields different results:
 
 v2 = Vec(6.0,5.0,4.0)
 v1 = Vec(1.0,2.0,3.0)
@@ -70,7 +78,7 @@ v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 
 @testset "Complex Ops" begin
     @testset "dot product" begin
-        # different results:
+
         @test dot(v1c,v2c) == dot([6.0+3.0im,5.0-2im,4.0+0.0im], [1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
         @test Vector(transpose(v1c)*v2c) == [6.0+3.0im 5.0-2im 4.0+0.0im]*([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)
         @test Matrix(v2c*transpose(v1c)) == ([1.0,2.0,3.0] + [6.0,5.0,4.0]*im)*[6.0+3.0im 5.0-2im 4.0+0.0im]
@@ -134,19 +142,6 @@ end
 rand(Mat{4,2, Int})
 @test typeof(rand(Mat{4,2, Int})) == Mat{4,2, Int, 8}
 @test typeof(rand(Vec{7, Int})) == Vec{7, Int}
-@test typeof(rand(Mat4d, -20f0:0.192f0:230f0)) == Mat4d
-@test typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) == Mat{4,21,Float32}
-
-x = rand(D3{4,4,4, Float32})
-@test typeof(x) == D3{4,4,4, Float32}
-@test eltype(x) == Float32
-@test size(x) == (4,4,4)
-@test typeof(rand(Vec4d, 5,5)) == Matrix{Vec4d}
-#end
-# @testset "Randn" begin
-
-
-#end
 
 @testset "eye" begin
     @test typeof(eye(Mat4d)) == Mat4d
@@ -228,15 +223,22 @@ v1 = Vec3d(1,2,3)
 @test (<).(Vec(1,3), Vec(2,2)) === Vec{2,Bool}(true, false)
 
 
-
+v2 = Vec(6.0,5.0,4.0)
+v1 = Vec(1.0,2.0,3.0)
+vi = Vec(1,2,3)
+v1c = Vec(6.0+3.0im,5.0-2im,4.0+0.0im)
+v2c = v1 + v2*im
+v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
 # cross product
 @testset "cross" begin
+
     @test cross(v1,v2) == Vec3d(-7.0,14.0,-7.0)
     @test isa(cross(v1,v2), Vec3d)  == true
 
     @test cross(vi,v2) == Vec3d(-7.0,14.0,-7.0)
     @test isa(cross(vi,v2),Vec3d)  == true
 end
+
 @testset "norm/normalize" begin
     @test norm(Vec3d(1.0,2.0,2.0)) == 3.0
 
