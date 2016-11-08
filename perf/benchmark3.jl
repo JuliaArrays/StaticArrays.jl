@@ -3,6 +3,13 @@ using BenchmarkTools
 
 import BenchmarkTools: prettytime, prettymemory
 
+@noinline plus(a,b) = a+b
+@noinline plus!(c,a,b) = broadcast!(+, c, a, b)
+
+@noinline mul(a,b) = a*b
+@noinline mul!(c,a,b) = A_mul_B!(c, a, b)
+
+
 for T ∈ [Int64, Float64]
     for N ∈ [1,2,4,8,16,32,64,128,256]
         println("=====================================================================")
@@ -16,15 +23,15 @@ for T ∈ [Int64, Float64]
         maxnamelength = maximum(namelengths)
 
         for v ∈ instances
-            result = mean(@benchmark +($(copy(v)), $(copy(v))))
+            result = mean(@benchmark plus($(copy(v)), $(copy(v))))
             padding = maxnamelength - length(string(typeof(v).name.name))
-            println(typeof(v).name.name, ":", " " ^ padding, " v3 = v1 + v2 takes ", prettytime(time(result)), ", ", prettymemory(memory(result)), "(GC ", prettytime(gctime(result)) , ")")
+            println(typeof(v).name.name, ":", " " ^ padding, " v3 = v1 + v2 takes ", prettytime(time(result)), ", ", prettymemory(memory(result)), " (GC ", prettytime(gctime(result)) , ")")
         end
 
         println()
 
         for v ∈ mutables
-            result = mean(@benchmark broadcast!(+, $(copy(v)), $(copy(v)), $(copy(v))))
+            result = mean(@benchmark plus!($(copy(v)), $(copy(v)), $(copy(v))))
             padding = maxnamelength - length(string(typeof(v).name.name))
             println(typeof(v).name.name, ":", " " ^ padding, " v3 .= +.(v1, v2) takes ", prettytime(time(result)), ", ", prettymemory(memory(result)), " (GC ", prettytime(gctime(result)) , ")")
         end
@@ -45,7 +52,7 @@ for T ∈ [Int64, Float64]
         maxnamelength = maximum(namelengths)
 
         for m ∈ instances
-            result = mean(@benchmark *($(copy(m)), $(copy(m))))
+            result = mean(@benchmark mul($(copy(m)), $(copy(m))))
             padding = maxnamelength - length(string(typeof(m).name.name))
             println(typeof(m).name.name, ":", " " ^ padding, " m3 = m1 * m2 takes ", prettytime(time(result)), ", ", prettymemory(memory(result)), " (GC ", prettytime(gctime(result)) , ")")
         end
@@ -53,7 +60,7 @@ for T ∈ [Int64, Float64]
         println()
 
         for m ∈ mutables
-            result = mean(@benchmark A_mul_B!($(copy(m)), $(copy(m)), $(copy(m))))
+            result = mean(@benchmark mul!($(copy(m)), $(copy(m)), $(copy(m))))
             padding = maxnamelength - length(string(typeof(m).name.name))
             println(typeof(m).name.name, ":", " " ^ padding, " A_mul_B!(m3, m1, m2) takes ", prettytime(time(result)), ", ", prettymemory(memory(result)), " (GC ", prettytime(gctime(result)) , ")")
         end

@@ -40,7 +40,8 @@
             else
                 Ai = inv(lufact(AA))
             end
-            return convert(typeof(parent(Ai)), Ai)
+            # Return a `SizedArray`
+            return $(Size(A))(convert(typeof(parent(Ai)), Ai))
         end
     end
 end
