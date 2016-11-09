@@ -22,6 +22,10 @@
         @test one(SMatrix{2,2,Int}) === @SMatrix [1 0; 0 1]
         @test one(SMatrix{2,2}) === @SMatrix [1.0 0.0; 0.0 1.0]
         @test one(SMatrix{2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+
+        @test one(MMatrix{2,2,Int})::MMatrix == @MMatrix [1 0; 0 1]
+        @test one(MMatrix{2,2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
+        @test one(MMatrix{2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
     end
 
     @testset "eye()" begin

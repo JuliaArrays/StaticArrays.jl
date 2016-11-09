@@ -98,6 +98,7 @@ end
 =#
 
 # Some more advanced constructor-like functions
+@inline one{N}(::Type{SMatrix{N}}) = one(SMatrix{N,N})
 @inline eye{N}(::Type{SMatrix{N}}) = eye(SMatrix{N,N})
 @inline eye{N,M}(::Type{SMatrix{N,M}}) = eye(SMatrix{N,M,Float64})
 @inline zeros{N,M}(::Type{SMatrix{N,M}}) = zeros(SMatrix{N,M,Float64})

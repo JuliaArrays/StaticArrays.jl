@@ -296,7 +296,7 @@ end
     if length(a) == length(b)
         expr = :(a[1] * b[1])
         for j = 2:length(a)
-            expr = :($expr + a[$j] * b[$j])
+            expr = :($expr + conj(a[$j]) * b[$j])
         end
 
         return quote

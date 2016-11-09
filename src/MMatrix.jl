@@ -92,6 +92,7 @@ end
 
 
 # Some more advanced constructor-like functions
+@inline one{N}(::Type{MMatrix{N}}) = one(MMatrix{N,N})
 @inline eye{N}(::Type{MMatrix{N}}) = eye(MMatrix{N,N})
 @inline eye{N,M}(::Type{MMatrix{N,M}}) = eye(MMatrix{N,M,Float64})
 @inline zeros{N,M}(::Type{MMatrix{N,M}}) = zeros(MMatrix{N,M,Float64})
