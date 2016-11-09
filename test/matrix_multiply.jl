@@ -1,4 +1,4 @@
-@testset "Matrix multiplication" begin
+@testset "Matrix multiplication" begin 
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
         v = @SVector [1, 2]
@@ -163,46 +163,46 @@
         @test a2::MArray{(2,2),Int,2,4} == @MArray [10 13; 22 29]
 
         # Alternative builtin method used for n > 8
-        m_array = rand(1:10, 10, 10)
-        n_array = rand(1:10, 10, 10)
-        a_array = m_array*n_array
+        m_array_2 = rand(1:10, 10, 10)
+        n_array_2 = rand(1:10, 10, 10)
+        a_array_2 = m_array_2*n_array_2
 
-        m = MMatrix{10,10}(m_array)
-        n = MMatrix{10,10}(n_array)
-        a = MMatrix{10,10,Int}()
-        A_mul_B!(a, m, n)
-        @test a == a_array
+        m_2 = MMatrix{10,10}(m_array_2)
+        n_2 = MMatrix{10,10}(n_array_2)
+        a_2 = MMatrix{10,10,Int}()
+        A_mul_B!(a_2, m_2, n_2)
+        @test a_2 == a_array_2
 
         # BLAS used for n > 14
-        m_array = randn(4, 4)
-        n_array = randn(4, 4)
-        a_array = m_array*n_array
+        m_array_3 = randn(4, 4)
+        n_array_3 = randn(4, 4)
+        a_array_3 = m_array_3*n_array_3
 
-        m = MMatrix{4,4}(m_array)
-        n = MMatrix{4,4}(n_array)
-        a = MMatrix{4,4,Float64}()
-        A_mul_B!(a, m, n)
-        @test a ≈ a_array
+        m_3 = MMatrix{4,4}(m_array_3)
+        n_3 = MMatrix{4,4}(n_array_3)
+        a_3 = MMatrix{4,4,Float64}()
+        A_mul_B!(a_3, m_3, n_3)
+        @test a_3 ≈ a_array_3
 
-        m_array = randn(10, 10)
-        n_array = randn(10, 10)
-        a_array = m_array*n_array
+        m_array_4 = randn(10, 10)
+        n_array_4 = randn(10, 10)
+        a_array_4 = m_array_4*n_array_4
 
-        m = MMatrix{10,10}(m_array)
-        n = MMatrix{10,10}(n_array)
-        a = MMatrix{10,10,Float64}()
-        A_mul_B!(a, m, n)
-        @test a ≈ a_array
+        m_4 = MMatrix{10,10}(m_array_4)
+        n_4 = MMatrix{10,10}(n_array_4)
+        a_4 = MMatrix{10,10,Float64}()
+        A_mul_B!(a_4, m_4, n_4)
+        @test a_4 ≈ a_array_4
 
-        m_array = rand(1:10, 16, 16)
-        n_array = rand(1:10, 16, 16)
-        a_array = m_array*n_array
+        m_array_5 = rand(1:10, 16, 16)
+        n_array_5 = rand(1:10, 16, 16)
+        a_array_5 = m_array_5*n_array_5
 
-        m = MMatrix{16,16}(m_array)
-        n = MMatrix{16,16}(n_array)
-        a = MMatrix{16,16,Int}()
-        A_mul_B!(a, m, n)
-        @test a ≈ a_array
+        m_5 = MMatrix{16,16}(m_array_5)
+        n_5 = MMatrix{16,16}(n_array_5)
+        a_5 = MMatrix{16,16,Int}()
+        A_mul_B!(a_5, m_5, n_5)
+        @test a_5 ≈ a_array_5
 
         # Float64
         vf = @SVector [2.0, 4.0]

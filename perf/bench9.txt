@@ -1,0 +1,342 @@
+2 November 2016
+----------------
+
+Notes: Moved to BenchmarkTools.jl for tests.
+
+       Here, SizedArray operations do not yield a new SizedArray
+
+=====================================================================
+ Vectors of length 1 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+Array:      v3 = v1 + v2 takes 35.00 ns, 112.00 bytes
+MVector:    v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+SizedArray: v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 15.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 1×1 and eltype Int64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+Array:      m3 = m1 * m2 takes 160.00 ns, 352.00 bytes
+MMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+SizedArray: m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 29.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 2 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+Array:      v3 = v1 + v2 takes 37.00 ns, 112.00 bytes
+MVector:    v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+SizedArray: v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 16.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 2×2 and eltype Int64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
+Array:      m3 = m1 * m2 takes 39.00 ns, 144.00 bytes
+MMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
+SizedArray: m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 4 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+Array:      v3 = v1 + v2 takes 41.00 ns, 128.00 bytes
+MVector:    v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+SizedArray: v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 16.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 4×4 and eltype Int64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 34.00 ns, 144.00 bytes
+Array:      m3 = m1 * m2 takes 290.00 ns, 464.00 bytes
+MMatrix:    m3 = m1 * m2 takes 34.00 ns, 144.00 bytes
+SizedArray: m3 = m1 * m2 takes 34.00 ns, 144.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 8 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 8.00 ns, 80.00 bytes
+Array:      v3 = v1 + v2 takes 46.00 ns, 160.00 bytes
+MVector:    v3 = v1 + v2 takes 8.00 ns, 80.00 bytes
+SizedArray: v3 = v1 + v2 takes 10.00 ns, 80.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 17.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 5.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 8×8 and eltype Int64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 198.00 ns, 544.00 bytes
+Array:      m3 = m1 * m2 takes 639.00 ns, 880.00 bytes
+MMatrix:    m3 = m1 * m2 takes 198.00 ns, 544.00 bytes
+SizedArray: m3 = m1 * m2 takes 209.00 ns, 544.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 74.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 16 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 15.00 ns, 144.00 bytes
+Array:      v3 = v1 + v2 takes 58.00 ns, 224.00 bytes
+MVector:    v3 = v1 + v2 takes 15.00 ns, 144.00 bytes
+SizedArray: v3 = v1 + v2 takes 15.00 ns, 144.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 18.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 6.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 6.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 16×16 and eltype Int64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 1.78 μs, 2.06 kb
+Array:      m3 = m1 * m2 takes 2.63 μs, 2.38 kb
+MMatrix:    m3 = m1 * m2 takes 1.79 μs, 2.06 kb
+SizedArray: m3 = m1 * m2 takes 1.79 μs, 2.06 kb
+
+Array:      A_mul_B!(m3, m1, m2) takes 148.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 75.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 78.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 32 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 27.00 ns, 336.00 bytes
+Array:      v3 = v1 + v2 takes 101.00 ns, 416.00 bytes
+MVector:    v3 = v1 + v2 takes 27.00 ns, 336.00 bytes
+SizedArray: v3 = v1 + v2 takes 27.00 ns, 336.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 20.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 11.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 11.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 64 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 49.00 ns, 544.00 bytes
+Array:      v3 = v1 + v2 takes 147.00 ns, 640.00 bytes
+MVector:    v3 = v1 + v2 takes 49.00 ns, 544.00 bytes
+SizedArray: v3 = v1 + v2 takes 48.00 ns, 544.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 29.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 20.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 20.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 128 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 97.00 ns, 1.06 kb
+Array:      v3 = v1 + v2 takes 244.00 ns, 1.16 kb
+MVector:    v3 = v1 + v2 takes 97.00 ns, 1.06 kb
+SizedArray: v3 = v1 + v2 takes 99.00 ns, 1.06 kb
+
+Array:      v3 .= +.(v1, v2) takes 30.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 38.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 38.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 256 and eltype Int64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 386.00 ns, 2.06 kb
+Array:      v3 = v1 + v2 takes 580.00 ns, 2.14 kb
+MVector:    v3 = v1 + v2 takes 399.00 ns, 2.06 kb
+SizedArray: v3 = v1 + v2 takes 385.00 ns, 2.06 kb
+
+Array:      v3 .= +.(v1, v2) takes 48.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 76.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 75.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 1 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+Array:      v3 = v1 + v2 takes 35.00 ns, 112.00 bytes
+MVector:    v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+SizedArray: v3 = v1 + v2 takes 4.00 ns, 16.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 15.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 1×1 and eltype Float64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+Array:      m3 = m1 * m2 takes 151.00 ns, 128.00 bytes
+MMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+SizedArray: m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 28.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 2 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+Array:      v3 = v1 + v2 takes 37.00 ns, 112.00 bytes
+MVector:    v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+SizedArray: v3 = v1 + v2 takes 5.00 ns, 32.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 15.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 2×2 and eltype Float64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
+Array:      m3 = m1 * m2 takes 41.00 ns, 144.00 bytes
+MMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
+SizedArray: m3 = m1 * m2 takes 11.00 ns, 48.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 4 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+Array:      v3 = v1 + v2 takes 40.00 ns, 128.00 bytes
+MVector:    v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+SizedArray: v3 = v1 + v2 takes 6.00 ns, 48.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 16.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 3.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 4×4 and eltype Float64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 36.00 ns, 144.00 bytes
+Array:      m3 = m1 * m2 takes 183.00 ns, 240.00 bytes
+MMatrix:    m3 = m1 * m2 takes 36.00 ns, 144.00 bytes
+SizedArray: m3 = m1 * m2 takes 36.00 ns, 144.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 8 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 8.00 ns, 80.00 bytes
+Array:      v3 = v1 + v2 takes 46.00 ns, 160.00 bytes
+MVector:    v3 = v1 + v2 takes 8.00 ns, 80.00 bytes
+SizedArray: v3 = v1 + v2 takes 8.00 ns, 80.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 17.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 4.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 8×8 and eltype Float64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 97.00 ns, 544.00 bytes
+Array:      m3 = m1 * m2 takes 274.00 ns, 656.00 bytes
+MMatrix:    m3 = m1 * m2 takes 102.00 ns, 544.00 bytes
+SizedArray: m3 = m1 * m2 takes 98.00 ns, 544.00 bytes
+
+Array:      A_mul_B!(m3, m1, m2) takes 77.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 16 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 12.00 ns, 144.00 bytes
+Array:      v3 = v1 + v2 takes 58.00 ns, 224.00 bytes
+MVector:    v3 = v1 + v2 takes 12.00 ns, 144.00 bytes
+SizedArray: v3 = v1 + v2 takes 12.00 ns, 144.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 18.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 6.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 6.00 ns, 0.00 bytes
+
+=====================================================================
+ Matrices of size 16×16 and eltype Float64
+=====================================================================
+SMatrix:    m3 = m1 * m2 takes 796.00 ns, 2.06 kb
+Array:      m3 = m1 * m2 takes 867.00 ns, 2.16 kb
+MMatrix:    m3 = m1 * m2 takes 798.00 ns, 2.06 kb
+SizedArray: m3 = m1 * m2 takes 809.00 ns, 2.06 kb
+
+Array:      A_mul_B!(m3, m1, m2) takes 145.00 ns, 0.00 bytes
+MMatrix:    A_mul_B!(m3, m1, m2) takes 80.00 ns, 0.00 bytes
+SizedArray: A_mul_B!(m3, m1, m2) takes 83.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 32 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 25.00 ns, 336.00 bytes
+Array:      v3 = v1 + v2 takes 99.00 ns, 416.00 bytes
+MVector:    v3 = v1 + v2 takes 24.00 ns, 336.00 bytes
+SizedArray: v3 = v1 + v2 takes 24.00 ns, 336.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 20.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 11.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 11.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 64 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 47.00 ns, 544.00 bytes
+Array:      v3 = v1 + v2 takes 144.00 ns, 640.00 bytes
+MVector:    v3 = v1 + v2 takes 47.00 ns, 544.00 bytes
+SizedArray: v3 = v1 + v2 takes 46.00 ns, 544.00 bytes
+
+Array:      v3 .= +.(v1, v2) takes 26.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 21.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 21.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 128 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 96.00 ns, 1.06 kb
+Array:      v3 = v1 + v2 takes 242.00 ns, 1.16 kb
+MVector:    v3 = v1 + v2 takes 96.00 ns, 1.06 kb
+SizedArray: v3 = v1 + v2 takes 96.00 ns, 1.06 kb
+
+Array:      v3 .= +.(v1, v2) takes 29.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 40.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 40.00 ns, 0.00 bytes
+
+=====================================================================
+ Vectors of length 256 and eltype Float64
+=====================================================================
+SVector:    v3 = v1 + v2 takes 395.00 ns, 2.06 kb
+Array:      v3 = v1 + v2 takes 581.00 ns, 2.14 kb
+MVector:    v3 = v1 + v2 takes 398.00 ns, 2.06 kb
+SizedArray: v3 = v1 + v2 takes 398.00 ns, 2.06 kb
+
+Array:      v3 .= +.(v1, v2) takes 40.00 ns, 0.00 bytes
+MVector:    v3 .= +.(v1, v2) takes 79.00 ns, 0.00 bytes
+SizedArray: v3 .= +.(v1, v2) takes 83.00 ns, 0.00 bytes

@@ -1,21 +1,20 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
-
-# Currently all sanity checks are disabled!
-@generated function Base.chol(A::StaticMatrix)
-    if size(A) === (1, 1)
-        return :(_chol1(A))
-    elseif size(A) === (2, 2)
-        #ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
-        return :(_chol2(A))
-    elseif size(A) === (3, 3)
-        #ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
-        return :(_chol3(A))
-    else
-        return :(chol(Array(A)))
-    end
+@inline function Base.chol(A::StaticMatrix)
+    ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
+    _chol(Size(A), A)
 end
 
-@generated function _chol1(A::StaticMatrix)
+@inline function Base.chol{T<:Real, SM <: StaticMatrix}(A::Base.LinAlg.RealHermSymComplexHerm{T,SM})
+    ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
+    _chol(Size(A), A)
+end
+
+@inline function Base.chol{SM<:StaticMatrix}(A::Symmetric{SM})
+    eltype(A) <: Real && (ishermitian(A) || Base.LinAlg.non_hermitian_error("chol"))
+    _chol(Size(A), A)
+end
+
+@generated function _chol(::Size{(1,1)}, A::StaticMatrix)
     @assert size(A) == (1,1)
     T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
     newtype = similar_type(A,T)
@@ -26,8 +25,7 @@ end
     end
 end
 
-
-@generated function _chol2(A::StaticMatrix)
+@generated function _chol(::Size{(2,2)}, A::StaticMatrix)
     @assert size(A) == (2,2)
     T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
     newtype = similar_type(A,T)
@@ -41,7 +39,7 @@ end
     end
 end
 
-@generated function _chol3(A::StaticMatrix)
+@generated function _chol(::Size{(3,3)}, A::StaticMatrix)
     @assert size(A) == (3,3)
     T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
     newtype = similar_type(A,T)
@@ -57,3 +55,6 @@ end
         ($newtype)((a11, $(zero(T)), $(zero(T)), a12, a22, $(zero(T)), a13, a23, a33))
     end
 end
+
+# Otherwise default algorithm returning wrapped SizedArray
+@inline _chol(s::Size, A::StaticArray) = s(full(chol(Hermitian(Array(A)))))
