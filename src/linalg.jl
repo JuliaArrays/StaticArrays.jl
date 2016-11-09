@@ -216,29 +216,58 @@ end
 @inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
     hcat(hcat(a,b), c...)
 
-@generated function eye{SA <: StaticArray}(::Type{SA})
-    s = size(SA)
-    T = eltype(SA)
+@generated function one{SM <: StaticArray}(::Type{SM})
+    s = size(SM)
+    if (length(s) != 2) || (s[1] != s[2])
+        error("multiplicative identity defined only for square matrices")
+    end
+    T = eltype(SM)
     if T == Any
         T = Float64
     end
-    if length(s) != 2
-        error("Must call `eye` with a two-dimensional array. Got size $s")
-    end
     e = eye(T, s...)
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, e...)))
+        $(Expr(:call, SM, Expr(:tuple, e...)))
     end
 end
 
-@generated function eye{SA <: StaticMatrix}(::SA)
-    s = size(SA)
-    T = eltype(SA)
+@generated function one{SM <: StaticMatrix}(::SM)
+    s = size(SM)
+    if s[1] != s[2]
+        error("multiplicative identity defined only for square matrices")
+    end
+    T = eltype(SM)
     e = eye(T, s...)
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, e...)))
+        $(Expr(:call, SM, Expr(:tuple, e...)))
+    end
+end
+
+@generated function eye{SM <: StaticArray}(::Type{SM})
+    s = size(SM)
+    if length(s) != 2
+        error("`eye` is only defined for matrices")
+    end
+    T = eltype(SM)
+    if T == Any
+        T = Float64
+    end
+    e = eye(T, s...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SM, Expr(:tuple, e...)))
+    end
+end
+
+@generated function eye{SM <: StaticMatrix}(::SM)
+    s = size(SM)
+    T = eltype(SM)
+    e = eye(T, s...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:call, SM, Expr(:tuple, e...)))
     end
 end
 

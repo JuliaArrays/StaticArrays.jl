@@ -18,10 +18,19 @@
         @test diagm(SVector(1,2)) === @SMatrix [1 0; 0 2]
     end
 
+    @testset "one()" begin
+        @test one(SMatrix{2,2,Int}) === @SMatrix [1 0; 0 1]
+        @test one(SMatrix{2,2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+        @test one(SMatrix{2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+    end
+
     @testset "eye()" begin
         @test eye(SMatrix{2,2,Int}) === @SMatrix [1 0; 0 1]
         @test eye(SMatrix{2,2}) === @SMatrix [1.0 0.0; 0.0 1.0]
         @test eye(SMatrix{2}) === @SMatrix [1.0 0.0; 0.0 1.0]
+
+        @test eye(SMatrix{2,3,Int}) === @SMatrix [1 0 0; 0 1 0]
+        @test eye(SMatrix{2,3}) === @SMatrix [1.0 0.0 0.0; 0.0 1.0 0.0]
 
         @test eye(MMatrix{2,2,Int})::MMatrix == @MMatrix [1 0; 0 1]
         @test eye(MMatrix{2,2})::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
