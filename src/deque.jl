@@ -1,4 +1,4 @@
-export push, pop, shift, unshift, insert, deleteat
+export push, pop, shift, unshift, insert, deleteat, setindex
 
 @generated function push(vec::StaticVector, x)
     newtype = similar_type(vec, (length(vec) + 1 ,))
@@ -18,13 +18,15 @@ end
     end
 end
 
-# unfortunately index can't be used directly by a @generated function... this code is pretty slow
 @generated function insert(vec::StaticVector, index, x)
     newtype = similar_type(vec, (length(vec) + 1 ,))
-    expr = :((Tuple(vec[1:index-1])..., x, Tuple(vec[index:end])...))
+    exprs = [:(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1]))) for i = 1:length(vec) + 1]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, expr))
+        @boundscheck if (index < 1 || index > $(length(a)+1))
+            throw(BoundsError(a, index))
+        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -46,13 +48,15 @@ end
     end
 end
 
-# unfortunately index can't be used directly by a @generated function... this code is pretty slow
 @generated function deleteat(vec::StaticVector, index)
     newtype = similar_type(vec, (length(vec) - 1 ,))
-    expr = :((Tuple(vec[1:index-1])..., Tuple(vec[index+1:end])...))
+    exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) + 1]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, expr))
+        @boundscheck if (index < 1 || index > $(length(a)+1))
+            throw(BoundsError(a, index))
+        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -60,27 +64,21 @@ end
 # maybe splice (a bit hard to get statically sized)
 
 
-# Immutable version of setindex!(). Do these belong here?
-# TODO make this faster... currently generated code is bad because size of the
-# various things is fast. One idea is to populate all the data as variables,
-# overwrite one, and put them back into a static array. Same for deleteat() and insert()
-@generated function setindex{T}(a::StaticArray{T}, x::T, index)
+# Immutable version of setindex!(). Seems similar in nature to the above, but
+# could also live in src/indexing.jl
+@generated function setindex{T}(a::StaticArray{T}, x::T, index::Int)
     newtype = a
-    expr = :((Tuple(a[1:index-1])..., x, Tuple(a[index+1:end])...))
+    exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:length(a)]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, expr))
+        @boundscheck if (index < 1 || index > $(length(a)))
+            throw(BoundsError(a, index))
+        end
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
+@propagate_inbounds setindex(a::StaticArray, x, index::Int) = setindex(a, convert(eltype(typeof(a)), x), index)
 
-@generated function setindex(a::StaticArray, x, index)
-    newtype = a
-    expr = :((Tuple(a[1:index-1])..., convert($(eltype(a)), x), Tuple(a[index+1:end])...))
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, expr))
-    end
-end
-
-@inline setindex(a::StaticArray, x, inds...) = setindex(a, x, sub2ind(size(a), inds...))
+# TODO proper multidimension boundscheck
+@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))
