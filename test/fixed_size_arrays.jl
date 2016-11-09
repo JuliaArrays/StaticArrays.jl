@@ -291,7 +291,7 @@ const unaryOps = (
 
 # vec-vec and vec-scalar
 const binaryOps = (
-    .+, .-, .*, ./, .\, /,
+    .+, .-, .*, ./, .\,
     .==, .!=, .<, .<=, .>, .>=, +, -,
     min, max,
 
