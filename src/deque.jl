@@ -58,3 +58,29 @@ end
 
 # TODO consider prepend, append (can use vcat, but eltype might change), and
 # maybe splice (a bit hard to get statically sized)
+
+
+# Immutable version of setindex!(). Do these belong here?
+# TODO make this faster... currently generated code is bad because size of the
+# various things is fast. One idea is to populate all the data as variables,
+# overwrite one, and put them back into a static array. Same for deleteat() and insert()
+@generated function setindex{T}(a::StaticArray{T}, x::T, index)
+    newtype = a
+    expr = :((Tuple(a[1:index-1])..., x, Tuple(a[index+1:end])...))
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, expr))
+    end
+end
+
+
+@generated function setindex(a::StaticArray, x, index)
+    newtype = a
+    expr = :((Tuple(a[1:index-1])..., convert($(eltype(a)), x), Tuple(a[index+1:end])...))
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, newtype, expr))
+    end
+end
+
+@inline setindex(a::StaticArray, x, inds...) = setindex(a, x, sub2ind(size(a), inds...))

@@ -20,7 +20,7 @@ export Size
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
-export similar_type
+export similar_type, setindex
 
 include("util.jl")
 
