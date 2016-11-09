@@ -8,7 +8,7 @@
     exprs = [:(f(a1[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -22,7 +22,7 @@ end
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -60,35 +60,46 @@ end
 ############
 ## reduce ##
 ############
-@generated function reduce(op, a1::StaticArray)
-    if length(a1) == 1
-        return :(a1[1])
+@generated function reduce(op, a::StaticArray)
+    if length(a) == 1
+        return :(@inbounds return a[1])
     else
-        expr = :(op(a1[1], a1[2]))
-        for j = 3:length(a1)
-            expr = :(op($expr, a1[$j]))
+        expr = :(op(a[1], a[2]))
+        for j = 3:length(a)
+            expr = :(op($expr, a[$j]))
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
 
-@generated function reduce(op, v0, a1::StaticArray)
-    if length(a1) == 0
+@generated function reduce(op, v0, a::StaticArray)
+    if length(a) == 0
         return :(v0)
     else
-        expr = :(op(v0, a1[1]))
-        for j = 2:length(a1)
-            expr = :(op($expr, a1[$j]))
+        expr = :(op(v0, a[1]))
+        for j = 2:length(a)
+            expr = :(op($expr, a[$j]))
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
+
+# These are all similar in Base but not @inline'd
+@inline sum{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
+@inline prod{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
+@inline count(a::StaticArray{Bool}) = reduce(+, 0, a)
+@inline mean(a::StaticArray) = sum(a) / length(a)
+@inline sumabs{T}(a::StaticArray{T}) = mapreduce(abs, +, zero(T), a)
+@inline sumabs2{T}(a::StaticArray{T}) = mapreduce(abs2, +, zero(T), a)
+@inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
+@inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
+
 
 ###############
 ## mapreduce ##
@@ -105,7 +116,7 @@ end
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
@@ -120,7 +131,7 @@ end
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
@@ -140,7 +151,7 @@ end
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
@@ -159,7 +170,7 @@ end
         end
         return quote
             $(Expr(:meta, :inline))
-            $expr
+            @inbounds return $expr
         end
     end
 end
