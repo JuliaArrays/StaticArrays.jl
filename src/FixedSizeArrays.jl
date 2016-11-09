@@ -77,8 +77,5 @@ end
 
 @inline Base.Tuple(v::Point) = v.data
 
-@inline Base.Tuple(v::Point) = v.data
-
-
 
 end
