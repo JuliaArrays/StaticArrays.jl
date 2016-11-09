@@ -489,7 +489,7 @@ end
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
-7
+
 
 # TODO aliasing problems if c === b?
 @generated function A_mul_B!{T1,T2,T3}(c::StaticVector{T1}, A::StaticMatrix{T2}, b::StaticVector{T3})
@@ -767,11 +767,11 @@ end
 
     exprs = [:(C[$(sub2ind(s, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sA[1], k2 = 1:sB[2]]
 
-    return Expr(:block,
-        Expr(:meta,:inline),
-        vect_exprs...,
-        exprs...
-    )
+    return quote
+        Expr(:meta,:inline)
+        @inbounds $(Expr(:block, vect_exprs...))
+        @inbounds $(Expr(:block, exprs...))
+    end
 end
 
 #function A_mul_B_blas(a, b, c, A, B)

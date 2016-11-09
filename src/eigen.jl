@@ -3,19 +3,18 @@
 end
 
 @inline function eig{T, SM <: StaticMatrix}(A::Base.LinAlg.HermOrSym{T,SM}; permute::Bool=true, scale::Bool=true)
-    _eig(Size(A), A, permute, scale)
+    _eig(Size(SM), A, permute, scale)
 end
 
 @inline function _eig(s::Size, A::StaticMatrix, permute, scale)
-    # TODO This is not type stable: both this fast branch, and the implementation of `Base.eigfact`.
-    # Decision needed in how to proceed. See e.g. JuliaLang/julia#12304
+    # Only cover the hermitian branch, for now ast least
+    # This also solves some type-stability issues such as arise in Base
     if ishermitian(A)
        return _eig(s, Hermitian(A), permute, scale)
+    else
+       error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
     end
-    eigen = eigfact(Array(A); permute=permute, scale=scale)
-    return (Size(Size(typeof(A))[1])(eigen.values), s(eigen.vectors)) # Return a SizedArray
 end
-
 
 @inline function _eig{T<:Real}(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
     eigen = eigfact(Hermitian(Array(parent(A))); permute=permute, scale=scale)
@@ -23,7 +22,7 @@ end
 end
 
 
-@inline function _eig(::Size{(1,1)}, A, permute, scale)
+@inline function _eig{T<:Real}(::Size{(1,1)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
     @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
 end
 
@@ -148,66 +147,3 @@ end
         end
     end
 end
-
-
-
-
-# TODO: the non-symmetric case: type stable version (real -> real) since it is more useful to us!
-
-#=
-@generated function eig{T<:Real, SM <: StaticMatrix}(A::Base.LinAlg.RealHermSymComplexHerm{T,SM}; permute::Bool=true, scale::Bool=true)
-    if size(SM) == (1,1)
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
-        end
-    elseif size(SM) == (2,2)
-        return quote
-            $(Expr(:meta, :inline))
-            a = A.data
-
-            if m2.uplo == 'U'
-                @inbounds t_half = real(A[1] + A[4])/2
-                @inbounds d = real(A[1]*A[4] - A[3]'*A[3]) # Should be real
-
-                tmp2 = t_half*t_half - d
-                tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-                vals = SVector(t_half - tmp, t_half + tmp)
-f
-                @inbounds if A[3] == 0
-                    @inbounds if A[3] == 0
-                        vecs = eye(SMatrix{2,2,T})
-                    else
-                        @inbounds vecs = @SMatrix [ A[3]          A[3]         ;
-                                                    vals[1]-A[1]  vals[2]-A[1] ]
-                    end
-                else
-                    @inbounds v11 = vals[1]-A[4]
-                    @inbounds n1 = sqrt(v11'*v11 + A[2]'*A[2])
-                    v11 = v11 / n1
-                    @inbounds v12 = A[2] / n1
-
-                    @inbounds v21 = vals[2]-A[4]
-                    @inbounds n2 = sqrt(v21'*v21 + A[2]'*A[2])
-                    v21 = v21 / n2
-                    @inbounds v22 = A[2] / n2
-
-                    vecs = @SMatrix [ v11  v21 ;
-                                      v12  v22 ]
-                end
-                return (vals,vecs)
-            else
-
-            end
-        end
-    elseif size(SM) == (3,3)
-        error("not implemented")
-    else
-        return quote
-            $(Expr(:meta, :inline))
-            eigen = eigfact(A)
-            return (eigen.values, eigen.vectors)
-        end
-    end
-end
-=#
