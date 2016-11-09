@@ -298,6 +298,11 @@ end
                 similar_type(a, $S)((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
             end
         end
+    elseif length(a) === 2 && length(b) === 2
+        return quote
+            $(Expr(:meta, :inline))
+            promote_type(eltype(a), eltype(b))(a[1]*b[2]-a[2]*b[1])
+        end
     else
         error("Cross product only defined for 3-vectors")
     end
