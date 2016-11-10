@@ -343,8 +343,7 @@ Julia, noteably *FixedSizeArrays* and *ImmutableArrays*. Upon consultation, it
 has been decided to move forward with *StaticArrays* which has found a new home
 in the *JuliaArrays* github organization. It is recommended that new users use
 this package, and that existing dependent packages consider switching to
-*StaticArrays* sometime during the life-cycle of Julia v0.5 as development for
-those other packages may or may not be ongoing.
+*StaticArrays* sometime during the life-cycle of Julia v0.5.
 
 You can try `using StaticArrays.FixedSizeArrays` to add some compatibility
 wrappers for the most commonly used features of the *FixedSizeArrays* package,
