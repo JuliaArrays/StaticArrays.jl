@@ -23,8 +23,8 @@ end
     exprs = [:(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1]))) for i = 1:length(vec) + 1]
     return quote
         $(Expr(:meta, :inline))
-        @boundscheck if (index < 1 || index > $(length(a)+1))
-            throw(BoundsError(a, index))
+        @boundscheck if (index < 1 || index > $(length(vec)+1))
+            throw(BoundsError(vec, index))
         end
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
@@ -53,19 +53,19 @@ end
     exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) + 1]
     return quote
         $(Expr(:meta, :inline))
-        @boundscheck if (index < 1 || index > $(length(a)+1))
-            throw(BoundsError(a, index))
+        @boundscheck if (index < 1 || index > $(length(vec)+1))
+            throw(BoundsError(vec, index))
         end
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
 
 # TODO consider prepend, append (can use vcat, but eltype might change), and
-# maybe splice (a bit hard to get statically sized)
+# maybe splice (a bit hard to get statically sized without a "static" range)
 
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
-# could also live in src/indexing.jl
+# could also be justified to live in src/indexing.jl
 @generated function setindex{T}(a::StaticArray{T}, x::T, index::Int)
     newtype = a
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:length(a)]
