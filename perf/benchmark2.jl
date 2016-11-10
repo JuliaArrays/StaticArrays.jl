@@ -16,8 +16,10 @@ M_g = div(2*10^8, N^2)
 # Size
 
 A = rand(Float64,N,N)
+A = A*A'
 As = SMatrix{N,N}(A)
 Am = MMatrix{N,N}(A)
+Az = Size(N,N)(copy(A))
 @static if fsa
     Af = Mat(ntuple(j -> ntuple(i->A[i,j], N), N)) # there is a bug in FixedSizeArrays Mat constructor (13 July 2016)
 end
@@ -36,8 +38,18 @@ if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite 
     @generated f_blas_marray(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_blas!(tmp, C, A); C.data = tmp.data; end; return C))
 
     @generated g(n::Integer, A) = :(@inbounds (C = A; for i = 1:n; C = C + A; end; return C))
-    @generated g_mut(n::Integer, A) = :(@inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; @inbounds map!(+, C, C, A); end; return C))
+    @generated g_mut(n::Integer, A) = :(@inbounds (C = copy(A); for i = 1:n; @inbounds map!(+, C, C, A); end; return C))
     @generated g_via_sarray{M}(n::Integer, A::MMatrix{M,M}) = :(@inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C) + SMatrix{M,M}(A)); end; return C))
+
+    @noinline _det(x) = det(x)
+    @noinline _inv(x) = inv(x)
+    @noinline _eig(x) = eig(x)
+    @noinline _chol(x) = chol(x)
+
+    f_det(n::Int, A) = (for i = 1:n; _det(A); end)
+    f_inv(n::Int, A) = (for i = 1:n; _inv(A); end)
+    f_eig(n::Int, A) = (for i = 1:n; _eig(A); end)
+    f_chol(n::Int, A) = (for i = 1:n; _chol(A); end)
 
     # Notes: - A[:] = B[:] is allocating in Base, unlike `map!`
     #        - Also, the same goes for Base's implementation of broadcast!(f, A, B, C) (but map! is OK).
@@ -122,11 +134,14 @@ end
 # Warmup and some checks
 Cs = f(2, As)
 Cm = f(2, Am)
+Cz = f(2, Az)
 
 Cs::SMatrix
 if N <= 4; @assert Cs ≈ C; end
 Cm::MMatrix
 if N <= 4; @assert Cm ≈ C; end
+Cz::SizedMatrix
+if N <= 4; @assert Cz ≈ C; end
 
 @static if fsa
     @static if all_methods
@@ -148,6 +163,10 @@ end
 Cm_mut = f_mut_marray(2, Am)
 Cm_mut::MMatrix
 if N <= 4; @assert Cm_mut ≈ C; end
+
+Cz_mut = f_mut_array(2, Az)
+Cz_mut::SizedMatrix
+if N <= 4; @assert Cz_mut ≈ C; end
 
 @static if all_methods
     println()
@@ -196,6 +215,8 @@ if N <= 4; @assert C_mut ≈ C; end
 Cs = g(2, As)
 Cm = g(2, Am)
 Cm_mut = g_mut(2, Am)
+Cz = g(2, Az)
+Cz_mut = g_mut(2, Az)
 
 Cs::SMatrix
 if N <= 4; @assert Cs == C; end
@@ -203,6 +224,10 @@ Cm::MMatrix
 if N <= 4; @assert Cm == C; end
 Cm_mut::MMatrix
 if N <= 4; @assert Cm_mut == C; end
+Cz::SizedMatrix
+if N <= 4; @assert Cz == C; end
+Cz_mut::SizedMatrix
+if N <= 4; @assert Cz_mut == C; end
 
 @static if all_methods
     Cm_via_sarray = g_via_sarray(2, Am)
@@ -214,6 +239,29 @@ end
     Cf = g(2, Af)
     Cf::Mat
     if N <= 4; @assert Cf == C; end
+end
+
+if N <= 3
+    # det, eig etc
+    C = f_det(2, A)
+    Cs = f_det(2, As)
+    Cm = f_det(2, Am)
+    Cz = f_det(2, Az)
+
+    C = f_inv(2, A)
+    Cs = f_inv(2, As)
+    Cm = f_inv(2, Am)
+    Cz = f_inv(2, Az)
+
+    C = f_eig(2, Symmetric(A))
+    Cs = f_eig(2, Symmetric(As))
+    Cm = f_eig(2, Symmetric(Am))
+    Cz = f_eig(2, Symmetric(Az))
+
+    C = f_chol(2, Symmetric(A))
+    Cs = f_chol(2, Symmetric(As))
+    Cm = f_chol(2, Symmetric(Am))
+    Cz = f_chol(2, Symmetric(Az))
 end
 
 println()
@@ -229,6 +277,7 @@ begin
    end
    print("SArray              ->"); @time f(M_f, As)
    print("MArray              ->"); @time f(M_f, Am)
+   print("SizedArray          ->"); @time f(M_f, Az)
    @static if all_methods
        print("SArray (unrolled)   ->"); @time f_unrolled(M_f, As)
        print("SArray (chunks)     ->"); @time f_unrolled_chunks(M_f, As)
@@ -246,6 +295,7 @@ println("--------------------------------")
 begin
    print("Array               ->"); @time f_mut_array(M_f, A)
    print("MArray              ->"); @time f_mut_marray(M_f, Am)
+   print("SizedArray          ->"); @time f_mut_array(M_f, Az)
    @static if all_methods
        print("MArray (unrolled)   ->"); @time f_mut_unrolled(M_f, Am)
        print("MArray (chunks)     ->"); @time f_mut_chunks(M_f, Am)
@@ -263,6 +313,7 @@ begin
    end
    print("SArray              ->"); @time g(M_g, As)
    print("MArray              ->"); @time g(M_g, Am)
+   print("SizedArray          ->"); @time g(M_g, Az)
    @static if all_methods
        print("MArray (via SArray) ->"); @time g_via_sarray(M_g, Am)
    end
@@ -272,7 +323,50 @@ println()
 println("Matrix addition (mutating)")
 println("--------------------------")
 begin
-   print("Array  ->"); @time g_mut(M_g, A) # broadcast! seems to be broken!
-   print("MArray ->"); @time g_mut(M_g, Am)
+   print("Array      ->"); @time g_mut(M_g, A) # broadcast! seems to be broken!
+   print("MArray     ->"); @time g_mut(M_g, Am)
+   print("SizedArray ->"); @time g_mut(M_g, Az)
 end
 println()
+
+if N <= 3
+    println("Matrix determinant")
+    println("------------------")
+    begin
+       print("Array      ->"); @time f_det(M_f, A)
+       print("SArray     ->"); @time f_det(M_f, As)
+       print("MArray     ->"); @time f_det(M_f, Am)
+       print("SizedArray ->"); @time f_det(M_f, Az)
+    end
+    println()
+
+    println("Matrix inverse")
+    println("--------------")
+    begin
+       print("Array      ->"); @time f_inv(M_f, A)
+       print("SArray     ->"); @time f_inv(M_f, As)
+       print("MArray     ->"); @time f_inv(M_f, Am)
+       print("SizedArray ->"); @time f_inv(M_f, Az)
+    end
+    println()
+
+    println("Matrix symmetric eigenvalue")
+    println("---------------------------")
+    begin
+       print("Array      ->"); @time f_eig(M_f, Symmetric(A))
+       print("SArray     ->"); @time f_eig(M_f, Symmetric(As))
+       print("MArray     ->"); @time f_eig(M_f, Symmetric(Am))
+       print("SizedArray ->"); @time f_eig(M_f, Symmetric(Az))
+    end
+    println()
+
+    println("Matrix Cholesky")
+    println("---------------")
+    begin
+       print("Array      ->"); @time f_chol(M_f, Symmetric(A))
+       print("SArray     ->"); @time f_chol(M_f, Symmetric(As))
+       print("MArray     ->"); @time f_chol(M_f, Symmetric(Am))
+       print("SizedArray ->"); @time f_chol(M_f, Symmetric(Az))
+    end
+    println()
+end #if N <= 3

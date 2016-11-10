@@ -5,14 +5,12 @@
 end
 
 @inline function Base.chol{T<:Real, SM <: StaticMatrix}(A::Base.LinAlg.RealHermSymComplexHerm{T,SM})
-    ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
-    _chol(Size(A), A)
+    _chol(Size(A), A.data)
 end
-
-@inline function Base.chol{SM<:StaticMatrix}(A::Symmetric{SM})
-    eltype(A) <: Real && (ishermitian(A) || Base.LinAlg.non_hermitian_error("chol"))
-    _chol(Size(A), A)
-end
+#=
+@inline function Base.chol{T<:Real,SM<:StaticMatrix}(A::Symmetric{T,SM})
+    _chol(Size(A), A.data)
+end=#
 
 @generated function _chol(::Size{(1,1)}, A::StaticMatrix)
     @assert size(A) == (1,1)
