@@ -1,0 +1,59 @@
+10 November 2016
+
+=====================================
+    Benchmarks for 3×3 matrices
+=====================================
+
+Matrix multiplication (8.2x speedup)
+------------------------------------
+Array               ->  2.024568 seconds (74.07 M allocations: 6.623 GB, 9.37% gc time)
+SArray              ->  0.247364 seconds (5 allocations: 240 bytes)
+MArray              ->  1.603798 seconds (37.04 M allocations: 2.759 GB, 13.61% gc time)
+SizedArray          ->  2.223853 seconds (74.07 M allocations: 6.071 GB, 10.05% gc time)
+
+Matrix multiplication (mutating) (3.1x speedup)
+-----------------------------------------------
+Array               ->  1.360940 seconds (6 allocations: 480 bytes)
+MArray              ->  0.443528 seconds (7 allocations: 400 bytes)
+SizedArray          ->  0.681896 seconds (7 allocations: 416 bytes)
+
+Matrix addition (45x speedup)
+-----------------------------
+Array               ->  1.458899 seconds (44.44 M allocations: 3.974 GB, 7.96% gc time)
+SArray              ->  0.032043 seconds (5 allocations: 240 bytes)
+MArray              ->  0.682318 seconds (22.22 M allocations: 1.656 GB, 18.70% gc time)
+SizedArray          ->  1.111785 seconds (44.44 M allocations: 3.643 GB, 12.02% gc time)
+
+Matrix addition (mutating) (5.1x speedup)
+-----------------------------------------
+Array      ->  0.493796 seconds (5 allocations: 320 bytes)
+MArray     ->  0.096303 seconds (5 allocations: 240 bytes)
+SizedArray ->  0.135803 seconds (6 allocations: 336 bytes)
+
+Matrix determinant (170x speedup)
+---------------------------------
+Array      -> 15.291557 seconds (222.22 M allocations: 12.694 GB, 16.97% gc time)
+SArray     ->  0.094409 seconds (4 allocations: 160 bytes)
+MArray     ->  0.089569 seconds (4 allocations: 160 bytes)
+SizedArray ->  0.114134 seconds (4 allocations: 160 bytes)
+
+Matrix inverse (125x speedup)
+-----------------------------
+Array      -> 47.704314 seconds (407.41 M allocations: 82.232 GB, 23.67% gc time)
+SArray     ->  0.379657 seconds (4 allocations: 160 bytes)
+MArray     ->  1.294672 seconds (37.04 M allocations: 2.759 GB, 19.77% gc time)
+SizedArray ->  2.136363 seconds (74.07 M allocations: 6.071 GB, 8.61% gc time)
+
+Matrix symmetric eigenvalue (105x speedup)
+------------------------------------------
+Array      -> 418.304283 seconds (740.74 M allocations: 89.407 GB, 1.22% gc time)
+SArray     ->   3.963118 seconds (5 allocations: 256 bytes)
+MArray     ->   3.964029 seconds (6 allocations: 272 bytes)
+SizedArray ->   4.028497 seconds (6 allocations: 208 bytes)
+
+Matrix Cholesky (23.6x speedup)
+-------------------------------
+Array      ->  8.139431 seconds (222.22 M allocations: 9.934 GB, 6.28% gc time)
+SArray     ->  0.344283 seconds (5 allocations: 256 bytes)
+MArray     ->  0.812532 seconds (37.04 M allocations: 2.759 GB, 6.19% gc time)
+SizedArray ->  2.225999 seconds (74.07 M allocations: 6.071 GB, 11.41% gc time)
