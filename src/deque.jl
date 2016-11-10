@@ -20,7 +20,9 @@ end
 
 @generated function insert(vec::StaticVector, index, x)
     newtype = similar_type(vec, (length(vec) + 1 ,))
-    exprs = [:(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1]))) for i = 1:length(vec) + 1]
+    exprs = [(i == 1 ? :(ifelse($i < index, vec[$i], x)) :
+              i == length(vec)+1 ? :(ifelse($i == index, x, vec[$i-1])) :
+              :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:length(vec) + 1]
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if (index < 1 || index > $(length(vec)+1))
@@ -50,7 +52,7 @@ end
 
 @generated function deleteat(vec::StaticVector, index)
     newtype = similar_type(vec, (length(vec) - 1 ,))
-    exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) + 1]
+    exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) - 1]
     return quote
         $(Expr(:meta, :inline))
         @boundscheck if (index < 1 || index > $(length(vec)+1))
