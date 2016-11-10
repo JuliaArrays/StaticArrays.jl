@@ -294,3 +294,22 @@ end
         return $newtype(a)
     end
 end
+
+# Clever ruse to determine if a type is "mutable"
+# Definitely *not* a deep copy.
+@generated function copy(a::StaticArray)
+    try
+        out = a()
+        return quote
+            $(Expr(:meta, :inline))
+            out = $(a)()
+            out .= a
+            return out
+        end
+    catch
+        return quote
+            $(Expr(:meta, :inline))
+            a
+        end
+    end
+end
