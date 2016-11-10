@@ -8,7 +8,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
-in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: DenseArray{T,N}`.
+in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: AbstractArray{T,N}`.
 Subtypes of `StaticArray` will provide fast implementations of common array and
 linear algebra operations. Note that here "statically sized" means that the
 size can be determined from the *type* (so concrete implementations of
@@ -17,9 +17,10 @@ necessarily imply `immutable`.
 
 The package also provides some concrete static array types: `SVector`, `SMatrix`
 and `SArray`, which may be used as-is (or else embedded in your own type).
-Mutable versions `MVector`, `MMatrix` and `MArray` are also exported. Further,
-the abstract `FieldVector` can be used to make fast `StaticVector`s out of any
-uniform Julia "struct".
+Mutable versions `MVector`, `MMatrix` and `MArray` are also exported, as well
+as `SizedArray` for annotating standard `Array`s with static size information.
+Further, the abstract `FieldVector` can be used to make fast `StaticVector`s
+out of any uniform Julia "struct".
 
 ## Speed
 
@@ -97,11 +98,11 @@ v3 == m3 * v3 # recall that m3 = eye(SMatrix{3,3})
 v1[1] === 1
 v1[(3,2,1)] === @SVector [3, 2, 1]
 v1[:] === v1
-typeof(v1[[1,2,3]]) == Vector # Can't determine size from the type of [1,2,3]
+typeof(v1[[1,2,3]]) <: Vector # Can't determine size from the type of [1,2,3]
 
-# Inherits from DenseArray, so is hooked into BLAS, LAPACK, etc:
+# Is (partially) hooked into BLAS, LAPACK, etc:
 rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS
-eig(m3) # eig(), etc use LAPACK
+eig(m3) # eig(), etc uses specialized algorithms up to 3×3, or else LAPACK
 
 # Static arrays stay statically sized, even when used by Base functions, etc:
 typeof(eig(m3)) == Tuple{MVector{3,Float64}, MMatrix{3,3,Float64,9}}
@@ -110,9 +111,18 @@ typeof(eig(m3)) == Tuple{MVector{3,Float64}, MMatrix{3,3,Float64,9}}
 typeof(similar(m3)) == MMatrix{3,3,Float64,9} # (final parameter is length = 9)
 similar_type(m3) == SMatrix{3,3,Float64,9}
 
-# reshape() uses types to specify size:
+# The Size trait is a compile-time constant representing the size
+Size(m3) === Size(3,3)
+
+# reshape() uses Size() or types to specify size:
+reshape([1,2,3,4], Size(2,2)) === @SMatrix [ 1  3 ;
+                                             2  4 ]
 reshape([1,2,3,4], SMatrix{2,2}) === @SMatrix [ 1  3 ;
                                                 2  4 ]
+
+# A standard Array can be wrapped into a SizedArray
+m4 = Size(3,3)(rand(3,3))
+inv(m4) # Take advantage of specialized fast methods
 ```
 
 ## Approach
@@ -173,6 +183,36 @@ and `broadcast`.
 
 Use of `similar` will fall back to a mutable container, such as a `MVector`
 (see below).
+
+### The `Size` trait
+
+The size of a statically sized array is a static parameter associated with the
+type of the array. The `Size` trait is provided as an abstract representation of
+the dimensions of a static array. An array `sa::SA` of size `(dims...)` is
+associated with `Size{(dims...)}()`. The following are equivalent (`@pure`)
+constructors:
+```julia
+Size{(dims...)}()
+Size(dims...)
+Size(sa::StaticArray)
+Size(SA) # SA <: StaticArray
+```
+This is extremely useful for (a) performing dispatch depending on the size of an
+array, and (b) passing array dimensions that the compiler can reason about.
+
+An example of size-based dispatch for the determinant of a matrix would be:
+```julia
+det(x::StaticMatrix) = _det(Size(x), x)
+_det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]
+_det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
+# and other definitions as necessary
+```
+
+Examples of using `Size` as a compile-time constant include
+```julia
+reshape(svector, Size(2,2))  # Convert SVector{4} to SMatrix{2,2}
+Size(3,3)(rand(3,3))         # Construct a random 3×3 SizedArray (see below)
+```
 
 ### `SVector`
 
@@ -267,6 +307,24 @@ copied as e.g. an immutable `SVector` to the stack for use, or into e.g. an
 
 Convenience macros `@MVector`, `@MMatrix` and `@MArray` are provided.
 
+### `SizedArray`: a decorate size wrapper for `Array`
+
+Another convenient mutable type is the `SizedArray`, which is just a wrapper-type
+about a standard Julia `Array` which declares its knwon size. For example, if
+we knew that `a` was a 2×2 `Matrix`, then we can type `sa = SizedArray{(2,2)}(a)`
+to construct a new object which knows the type (the size will be verified
+automatically). A more convenient syntax for obtaining a `SizedArray` is by calling
+a `Size` object, e.g. `sa = Size(2,2)(a)`.
+
+Then, methods on `sa` will use the specialized code provided by the *StaticArrays*
+pacakge, which in many cases will be much, much faster. For example, calling
+`eig(sa)` will be signficantly faster than `eig(a)` since it will perform a
+specialized 2×2 matrix diagonalization rather than a general algorithm provided
+by Julia and *LAPACK*.
+
+In some cases it will make more sense to use a `SizedArray`, and in other cases
+an `MArray` might be preferable.
+
 ### `FieldVector`
 
 Sometimes it might be useful to imbue your own types, having multiple fields,
@@ -321,12 +379,80 @@ m = [1 2;
 sv = SVector{2}(v)
 sm = SMatrix{2,2}(m)
 sa = SArray{(2,2)}(m)
+
+sized_v = Size(2)(v)     # SizedArray{(2,)}(v)
+sized_m = Size(2,2)(m)   # SizedArray{(2,2)}(m)
 ```
 
 We have avoided adding `SVector(v::AbstractVector)` as a valid constructor to
 help users avoid the type instability (and potential performance disaster, if
-used without care) of this innocuous looking expression.
+used without care) of this innocuous looking expression. However, the simplest
+way to deal with an `Array` is to create a `SizedArray` by calling a `Size`
+instance, e.g. `Size(2)(v)`.
 
+### Arrays of static arrays
+
+Storing a large number of static arrays is convenient as an array of static
+arrays. For example, a collection of positions (3D coordinates - `SVector{3,Float64}`)
+could be represented as a `Vector{SVector{3,Float64}}`.
+
+Another common way of storing the same data is as a 3×`N` `Matrix{Float64}`.
+Rather conveniently, such types have *exactly* the same binary layout in memory,
+and therefore we can use `reinterpret` to convert between the two formats
+```julia
+function svectors(x::Matrix{Float64})
+    @assert size(x,1) == 3
+    reinterpret(SVector{3,Float64}, x, (size(x,2),))
+end
+```
+Such a conversion does not copy the data, rather it refers to the *same* memory
+referenced by two different Julia `Array`s. Arguably, a `Vector` of `SVector`s
+is preferable to a `Matrix` because (a) it provides a better abstraction of the
+objects contained in the array and (b) it allows the fast *StaticArrays* methods
+to act on elements.
+
+### Working with mutable and immutable arrays
+
+Generally, it is performant to rebind an *immutable* array, such as
+```julia
+function average_position(positions::Vector{SVector{3,Float64}})
+    x = zeros(SVector{3,Float64})
+    for pos ∈ positions
+        x = x + pos
+    end
+    return x / length(positions)
+end
+```
+so long as the `Type` of the rebound variable (`x`, above) does not change.
+
+On the other hand, the above code for mutable containers like `Array`, `MArray`
+or `SizedArray` is *not* very efficient. Mutable containers in Julia 0.5 must
+be *allocated* and later *garbage collected*, and for small, fixed-size arrays
+this can be a leading contribution to the cost. In the above code, a new array
+will be instantiated and allocated on each iteration of the loop. In order to
+avoid unnecessary allocations, it is best to allocate an array only once and
+apply mutating functions to it:
+```julia
+function average_position(positions::Vector{SVector{3,Float64}})
+    x = zeros(MVector{3,Float64})
+    for pos ∈ positions
+        # Take advantage of Julia 0.5 broadcast fusion
+        x .= (+).(x, pos) # same as broadcast!(+, x, x, positions[i])
+    end
+    x .= (/).(x, length(positions))
+    return x
+end
+```
+Keep in mind that Julia 0.5 does not fuse calls to `.+`, etc (or `.+=` etc),
+however the `.=` and `(+).()` syntaxes are fused into a single, efficient call
+to `broadcast!`. The simpler syntax `x .+= pos` is expected to be non-allocating
+(and therefore faster) in Julia 0.6.
+
+The functions `setindex`, `push`, `pop`, `shift`, `unshift`, `insert` and `deleteat`
+are provided for performing certain specific operations on static arrays, in
+analogy with the standard functions `setindex!`, `push!`, `pop!`, etc. (Note that
+if the size of the static array changes, the type of the output will differ from
+the input.)
 
 ### SIMD optimizations
 
@@ -336,14 +462,15 @@ default. Run Julia with `julia -O` or `julia -O3` to enable these optimizations,
 and many of your (immutable) `StaticArray` methods *should* become significantly
 faster!
 
-### *FixedSizeArrays* and *ImmutableArrays* compatibility
+## Relationship to *FixedSizeArrays* and *ImmutableArrays*
 
 Several existing packages for statically sized arrays have been developed for
-Julia, noteably *FixedSizeArrays* and *ImmutableArrays*. Upon consultation, it
-has been decided to move forward with *StaticArrays* which has found a new home
-in the *JuliaArrays* github organization. It is recommended that new users use
-this package, and that existing dependent packages consider switching to
-*StaticArrays* sometime during the life-cycle of Julia v0.5.
+Julia, noteably *FixedSizeArrays* and *ImmutableArrays* which provided signficant
+inspiration for this package. Upon consultation, it has been decided to move
+forward with *StaticArrays* which has found a new home in the *JuliaArrays*
+github organization. It is recommended that new users use this package, and
+that existing dependent packages consider switching to *StaticArrays* sometime
+during the life-cycle of Julia v0.5.
 
 You can try `using StaticArrays.FixedSizeArrays` to add some compatibility
 wrappers for the most commonly used features of the *FixedSizeArrays* package,
@@ -354,11 +481,3 @@ code.
 Furthermore, `using StaticArrays.ImmutableArrays` will let you use the typenames
 from the *ImmutableArrays* package, which does not include the array size as a
 type parameter (e.g. `Vector3{T}` and `Matrix3x3{T}`).
-
-### See also
-
-This package takes inspiration from:
-
-* [Julep: More support for working with immutables #11902](https://github.com/JuliaLang/julia/issues/11902)
-* [FixedSizeArrays.jl](https://github.com/SimonDanisch/FixedSizeArrays.jl)
-* [ImmutableArrays.jl](https://github.com/JuliaGeometry/ImmutableArrays.jl)
