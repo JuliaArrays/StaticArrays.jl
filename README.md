@@ -127,29 +127,22 @@ inv(m4) # Take advantage of specialized fast methods
 
 ## Approach
 
-Primarily, the package provides methods for common `AbstractArray` functions,
-specialized for (potentially immutable) statically sized arrays. Many of
-Julia's built-in method definitions inherently assume mutability, and further
+The package provides an range of different useful built-in `StaticArray` types,
+which include mutable and immutable arrays based upon tuples, arrays based upon
+structs, and wrappers of `Array`. There is a relatively simple interface for
+creating your own, custom `StaticArray` types, too.
+
+This package also provides methods for a wide range of `AbstractArray` functions,
+specialized for (potentially immutable) `StaticArray`s. Many of Julia's
+built-in method definitions inherently assume mutability, and further
 performance optimizations may be made when the size of the array is know to the
-compiler (by loop unrolling, for instance).
-
-At the lowest level, `getindex` on statically sized arrays will call `getfield`
-on types or tuples, and in this package `StaticArray`s are limited to
-`LinearFast()` access patterns with 1-based indexing. What this means is that
-all `StaticArray`s support linear indexing into a dense, column-based storage
-format. By simply defining `size(::Type{T})` and `getindex(::T, ::Integer)`,
-the `StaticArray` interface will look after multi-dimensional indexing,
-`map`/`map!`, `reduce`, `broadcast`/`broadcast!`, matrix multiplication and a
-variety of other operations.
-
-Finally, since `StaticArrays <: DenseArray`, many methods such as `sqrtm`,
-`eig`, `chol`, and more are already defined in `Base`. Fast, specialized methods
-for `det`, `inv`, `eig` and `chol` are provided for square matrices up to 3×3.
-Meanwhile, conversion to pointers let us interact with LAPACK and similar C/Fortran libraries through
-the existing `StridedArray` interface. In some instances mutable `StaticArray`s
-(`MVector` or `MMatrix`) will be returned, while in other cases the definitions
-fall back to `Array`. This approach gives us maximal versatility now while
-retaining the ability to implement more fast specializations in the future.
+compiler. One example of this is by loop unrolling, which has a substantial
+effect on small arrays and tends to automatically triger LLVM's SIMD
+optimizations. Another way performance is boosted is by providing specialized
+methods for `det`, `inv`, `eig` and `chol` where the algorithm depends on the
+precise dimensions of the input. In combination with intelligent fallbacks to
+the methods in Base, we seek to provide a comprehensive support for statically
+sized arrays, large or small, that hopefully "just works".
 
 ## API Details
 ### Indexing
