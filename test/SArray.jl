@@ -56,6 +56,9 @@
 
         m = [1 2; 3 4]
         @test SArray{(2,2)}(m) === @SArray [1 2; 3 4]
+
+        # Non-square comprehensions built from SVectors - see #76
+        @test @SArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
     end
 
     @testset "Methods" begin
