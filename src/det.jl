@@ -6,10 +6,21 @@
     @inbounds return A[1]*A[4] - A[3]*A[2]
 end
 
+@inline function _det{T<:Unsigned}(::Size{(2,2)}, A::AbstractMatrix{T})
+    @inbounds return Signed(A[1]*A[4]) - Signed(A[3]*A[2])
+end
+
 @inline function _det(::Size{(3,3)}, A::AbstractMatrix)
     @inbounds x0 = SVector(A[1], A[2], A[3])
     @inbounds x1 = SVector(A[4], A[5], A[6])
     @inbounds x2 = SVector(A[7], A[8], A[9])
+    return vecdot(x0, cross(x1, x2))
+end
+
+@inline function _det{T<:Unsigned}(::Size{(3,3)}, A::AbstractMatrix{T})
+    @inbounds x0 = SVector(Signed(A[1]), Signed(A[2]), Signed(A[3]))
+    @inbounds x1 = SVector(Signed(A[4]), Signed(A[5]), Signed(A[6]))
+    @inbounds x2 = SVector(Signed(A[7]), Signed(A[8]), Signed(A[9]))
     return vecdot(x0, cross(x1, x2))
 end
 

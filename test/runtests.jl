@@ -18,6 +18,7 @@ using Base.Test
     include("arraymath.jl")
     include("linalg.jl")
     include("matrix_multiply.jl")
+    include("det.jl")
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
