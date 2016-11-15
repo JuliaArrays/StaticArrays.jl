@@ -3,11 +3,8 @@ import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, A
 
 typealias BlasEltypes Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
 
-# Stolen from https://github.com/JuliaLang/julia/pull/18218
-matprod(x,y) = x*y + x*y
-# I think promote_op has a pure context problem... and we use lots of generated functions
-# Attempt to retrofit this and revert it to rely on `zero` (which is a bit annoying!)
-@pure promote_op{T1,T2}(::typeof(matprod), ::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
+# Idea inspired by https://github.com/JuliaLang/julia/pull/18218
+promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
 
 # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
 
@@ -96,7 +93,7 @@ end
     sb = size(b)
 
     s = (sA[1],)
-    T = promote_op(matprod, TA, Tb)
+    T = promote_matprod(TA, Tb)
     #println(T)
 
     if sb[1] != sA[2]
@@ -135,7 +132,7 @@ end
     sb = size(b)
 
     s = (sA[1],)
-    T = promote_op(matprod, TA, Tb)
+    T = promote_matprod(TA, Tb)
     #println(T)
 
     if sb[1] != sA[2]
@@ -174,7 +171,7 @@ end
     #sb = size(b)
 
     s = (sA[1],)
-    T = promote_op(matprod, TA, Tb)
+    T = promote_matprod(TA, Tb)
 
     if T == TA
         newtype = similar_type(A, s)
@@ -202,7 +199,7 @@ end
     sA = size(A)
 
     s = (sA[1],)
-    T = promote_op(matprod, TA, Tb)
+    T = promote_matprod(TA, Tb)
 
     if T == TA
         newtype = similar_type(A, s)
@@ -232,7 +229,7 @@ end
     sB = size(B)
 
     s = (sa[1],sB[2])
-    T = promote_op(matprod, Ta, TB)
+    T = promote_matprod(Ta, TB)
 
     if sB[1] != 1
         error("Dimension mismatch")
@@ -266,7 +263,7 @@ end
     TA = eltype(A)
     TB = eltype(B)
 
-    T = promote_op(matprod, TA, TB)
+    T = promote_matprod(TA, TB)
 
     can_mutate = !isbits(A) || !isbits(B) # !isbits implies can get a persistent pointer (to pass to BLAS). Probably will change to !isimmutable in a future version of Julia.
     can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
@@ -328,7 +325,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_op(matprod, TA, TB)
+    T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -369,7 +366,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_op(matprod, TA, TB)
+    T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -414,7 +411,7 @@ end
     TB = eltype(B)
 
     s = (sA[1], sB[2])
-    T = promote_op(matprod, TA, TB)
+    T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
         error("Dimension mismatch")
@@ -458,7 +455,7 @@ end
     sb = size(b)
 
     s = (sA[1],)
-    T = promote_op(matprod, TA, Tb)
+    T = promote_matprod(TA, Tb)
 
     if sb[1] != sA[2]
         error("Dimension mismatch")
@@ -621,7 +618,7 @@ end
 
     TA = eltype(A)
     TB = eltype(B)
-    T = promote_op(matprod, TA, TB)
+    T = promote_matprod(TA, TB)
 
     can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
 

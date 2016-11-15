@@ -4,11 +4,11 @@
 
 # Single input
 @generated function map{T}(f, a1::StaticArray{T})
-    newtype = :(similar_type($a1, promote_op(f, T)))
     exprs = [:(f(a1[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        newtype = similar_type(typeof(a1), promote_op(f, T))
+        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
     end
 end
 
@@ -18,17 +18,16 @@ end
         error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
     end
 
-    newtype = :(similar_type($a1, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        newtype = similar_type(typeof(a1), promote_op(f, T1, T2))
+        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
     end
 end
 
 # TODO these assume linear fast...
 @generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::AbstractArray{T2})
-    newtype = :(similar_type($a1, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
     return quote
         $(Expr(:meta, :inline))
@@ -37,12 +36,12 @@ end
             error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
         end
 
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        newtype = similar_type(typeof(a1), promote_op(f, T1, T2))
+        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
     end
 end
 
 @generated function map{T1,T2}(f, a1::AbstractArray{T1}, a2::StaticArray{T2})
-    newtype = :(similar_type($a2, promote_op(f, T1, T2)))
     exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a2)]
     return quote
         $(Expr(:meta, :inline))
@@ -51,7 +50,8 @@ end
             error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
         end
 
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        newtype = similar_type(typeof(a2), promote_op(f, T1, T2))
+        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
     end
 end
 
