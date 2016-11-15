@@ -282,10 +282,18 @@ end
 end
 
 @generated function cross(a::StaticVector, b::StaticVector)
+    S = typeof(zero(eltype(a))*zero(eltype(b)))
     if length(a) === 3 && length(b) === 3
-        return quote
-            $(Expr(:meta, :inline))
-            similar_type(a, promote_type(eltype(a), eltype(b)))((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
+        if S <: Unsigned
+            return quote
+                $(Expr(:meta, :inline))
+                similar_type(a, $(typeof(Signed(zero(eltype(a))*zero(eltype(b))))))((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1])))
+            end
+        else
+            return quote
+                $(Expr(:meta, :inline))
+                similar_type(a, $S)((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
+            end
         end
     else
         error("Cross product only defined for 3-vectors")
