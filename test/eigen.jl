@@ -39,4 +39,41 @@
         @test vals::SVector ≈ vals_a
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
     end
+
+    @testset "3x3 degenerate cases" begin
+        # Rank 1
+        v = randn(SVector{3,Float64})
+        m = v*v'
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4) # This algorithm isn't super accurate
+        @test eigvals ≈ SVector(0.0, 0.0, sumabs2(v))
+
+        # Rank 2
+        v2 = randn(SVector{3,Float64})
+        v2 -= dot(v,v2)*v/sumabs2(v)
+        m += v2*v2'
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4)
+        if sumabs2(v) < sumabs2(v2)
+            @test eigvals ≈ SVector(0.0, sumabs2(v), sumabs2(v2))
+        else
+            @test eigvals ≈ SVector(0.0, sumabs2(v2), sumabs2(v))
+        end
+
+        # Degeneracy (2 large)
+        m = -99*(v*v')/sumabs2(v) + 100*eye(SMatrix{3,3,Float64})
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4)
+        @test eigvals ≈ SVector(1.0, 100.0, 100.0)
+
+        # Degeneracy (2 small)
+        m = (v*v')/sumabs2(v) + 1e-2*eye(SMatrix{3,3,Float64})
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4)
+        @test eigvals ≈ SVector(1e-2, 1e-2, 1.01)
+    end
 end

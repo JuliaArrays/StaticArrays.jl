@@ -84,66 +84,104 @@ end
 end
 
 # TODO fix for complex case
-@generated function _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
     S = typeof((one(T)*zero(T) + zero(T))/one(T))
 
-    return quote
-        $(Expr(:meta, :inline))
+    uplo = A.uplo
+    data = A.data
+    if uplo == 'U'
+        @inbounds Afull = SMatrix{3,3}(data[1], data[4], data[7], data[4], data[5], data[8], data[7], data[8], data[9])
+    else
+        @inbounds Afull = SMatrix{3,3}(data[1], data[2], data[3], data[2], data[5], data[6], data[3], data[6], data[9])
+    end
 
-        uplo = A.uplo
-        data = A.data
-        if uplo == 'U'
-            @inbounds Afull = SMatrix{3,3}(data[1], data[4], data[7], data[4], data[5], data[8], data[7], data[8], data[9])
+    # Adapted from Wikipedia
+    @inbounds p1 = Afull[4]*Afull[4] + Afull[7]*Afull[7] + Afull[8]*Afull[8]
+    if (p1 == 0)
+        # Afull is diagonal.
+        @inbounds eig1 = Afull[1]
+        @inbounds eig2 = Afull[5]
+        @inbounds eig3 = Afull[9]
+
+        return (SVector{3,S}(eig1, eig2, eig3), eye(SMatrix{3,3,S}))
+    else
+        q = trace(Afull)/3
+        @inbounds p2 = (Afull[1] - q)^2 + (Afull[5] - q)^2 + (Afull[9] - q)^2 + 2 * p1
+        p = sqrt(p2 / 6)
+        B = (1 / p) * (Afull - UniformScaling(q)) # q*I
+        r = det(B) / 2
+
+        # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+        # but computation error can leave it slightly outside this range.
+        if (r <= -1)
+            phi = S(pi) / 3
+        elseif (r >= 1)
+            phi = zero(S)
         else
-            @inbounds Afull = SMatrix{3,3}(data[1], data[2], data[3], data[2], data[5], data[6], data[3], data[6], data[9])
+            phi = acos(r) / 3
         end
 
-        # Adapted from Wikipedia
-        @inbounds p1 = Afull[4]*Afull[4] + Afull[7]*Afull[7] + Afull[8]*Afull[8]
-        if (p1 == 0)
-            # Afull is diagonal.
-            @inbounds eig1 = Afull[1]
-            @inbounds eig2 = Afull[5]
-            @inbounds eig3 = Afull[9]
+        # the eigenvalues satisfy eig1 <= eig2 <= eig3
+        eig3 = q + 2 * p * cos(phi)
+        eig1 = q + 2 * p * cos(phi + (2*pi/3))
+        eig2 = 3 * q - eig1 - eig3     # since trace(Afull) = eig1 + eig2 + eig3
 
-            return (SVector{3,$S}(eig1, eig2, eig3), eye(SMatrix{3,3,$S}))
-        else
-            q = trace(Afull)/3
-            @inbounds p2 = (Afull[1] - q)^2 + (Afull[5] - q)^2 + (Afull[9] - q)^2 + 2 * p1
-            p = sqrt(p2 / 6)
-            B = (1 / p) * (Afull - UniformScaling(q)) # q*I
-            r = det(B) / 2
+        # Now get the eigenvectors
 
-            # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
-            # but computation error can leave it slightly outside this range.
-            if (r <= -1) # TODO what type should phi be?
-                phi = pi / 3
-            elseif (r >= 1)
-                phi = 0.0
+        # To avoid problems with double degeneracies, we tackle the most distinct
+        # eigenvalue first
+        if eig2 - eig1 > eig3 - eig2
+            # The first eigenvalue is "most distinct"
+            @inbounds tmp1 = SVector(Afull[1] - eig3, Afull[2], Afull[3])
+            @inbounds tmp2 = SVector(Afull[4], Afull[5] - eig3, Afull[6])
+            v3 = cross(tmp1, tmp2)
+            n3 = vecnorm(v3)
+            v3 = v3 / n3
+
+            # Find the second one from this one
+            @inbounds tmp3 = normalize(SVector(Afull[1] - eig2, Afull[2], Afull[3]))
+            @inbounds tmp4 = normalize(SVector(Afull[4], Afull[5] - eig2, Afull[6]))
+            v2_1 = cross(tmp3, v3)
+            v2_2 = cross(tmp4, v3)
+            n2_1 = vecnorm(v2_1)
+            n2_2 = vecnorm(v2_2)
+            if n2_1 > n2_2
+                v2 = v2_1 / n2_1
             else
-                phi = acos(r) / 3
+                v2 = v2_2 / n2_2
             end
 
-            # the eigenvalues satisfy eig1 <= eig2 <= eig3
-            eig3 = q + 2 * p * cos(phi)
-            eig1 = q + 2 * p * cos(phi + (2*pi/3))
-            eig2 = 3 * q - eig1 - eig3     # since trace(Afull) = eig1 + eig2 + eig3
+            # The third is easy
+            v1 = cross(v2, v3) # should be normalized already
 
-            # Now get the eigenvectors
-            # TODO branch for when eig1 == eig2?
+            @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
+        else
+            # The third eigenvalue is "most distinct"
             @inbounds tmp1 = SVector(Afull[1] - eig1, Afull[2], Afull[3])
             @inbounds tmp2 = SVector(Afull[4], Afull[5] - eig1, Afull[6])
             v1 = cross(tmp1, tmp2)
-            v1 = v1 / vecnorm(v1)
+            n1 = vecnorm(v1)
+            v1 = v1 / n1
 
-            @inbounds tmp1 = SVector(Afull[1] - eig2, Afull[2], Afull[3])
-            @inbounds tmp2 = SVector(Afull[4], Afull[5] - eig2, Afull[6])
-            v2 = cross(tmp1, tmp2)
-            v2 = v2 / vecnorm(v2)
+            # Find the second one from this one
+            @inbounds tmp3 = normalize(SVector(Afull[1] - eig2, Afull[2], Afull[3]))
+            @inbounds tmp4 = normalize(SVector(Afull[4], Afull[5] - eig2, Afull[6]))
+            v2_1 = cross(tmp3, v1)
+            v2_2 = cross(tmp4, v1)
+            n2_1 = vecnorm(v2_1)
+            n2_2 = vecnorm(v2_2)
+            if n2_1 > n2_2
+                v2 = v2_1 / n2_1
+            else
+                v2 = v2_2 / n2_2
+            end
 
+            # The third is easy
             v3 = cross(v1, v2) # should be normalized already
 
             @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
         end
+
+        @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
     end
 end
