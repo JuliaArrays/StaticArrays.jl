@@ -61,4 +61,9 @@
         @test zero(SVector{3, Float64}) === @SVector [0.0, 0.0, 0.0]
         @test zero(SVector{3, Int}) === @SVector [0, 0, 0]
     end
+
+    @testset "fill()" begin
+        @test all(fill(3., SMatrix{4, 16, Float64}) .== 3.)
+        @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
+    end
 end
