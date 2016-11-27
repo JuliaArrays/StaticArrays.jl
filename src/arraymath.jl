@@ -104,7 +104,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         valT = convert($T, val)
-        SA($(expr...))
+        $(Expr(:call, SA, Expr(:tuple, expr...)))
     end
 end
 
