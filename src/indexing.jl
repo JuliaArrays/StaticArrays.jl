@@ -13,15 +13,71 @@
     end
 end
 
+# Tuple indexing into AbstractArray. TODO, move into base
 @generated function getindex{S}(a::AbstractArray, inds::NTuple{S,Integer})
-    newtype = SVector{S,eltype(a)}
     exprs = [:(a[inds[$i]]) for i = 1:S]
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:tuple, exprs...))
+    end
+end
+# Convert to StaticArrays using tuples
+# TODO think about bounds checks here.
+@generated function getindex{S,T}(m::AbstractArray{T}, inds1::NTuple{S, Integer}, i2::Integer)
+    exprs = [:(m[inds1[$j], i2]) for j = 1:S]
+    return Expr(:tuple, exprs...)
+end
 
+@generated function getindex{S,T}(m::AbstractArray{T}, i1::Integer, inds2::NTuple{S, Integer})
+    exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
+    return Expr(:tuple, exprs...)
+end
+
+@generated function getindex{S1,S2,T}(m::AbstractArray{T}, inds1::NTuple{S1, Integer}, inds2::NTuple{S2, Integer})
+    exprs = [:(m[inds1[$j1], inds2[$j2]]) for j1 = 1:S1, j2 = 1:S2]
+    return Expr(:call, SMatrix{S1,S2,T}, Expr(:tuple, exprs...)) # TODO decision: return tuple? Leave it?
+end
+
+# Static Vector indexing into AbstractArrays
+@generated function getindex{T, I <: Integer}(
+        a::AbstractArray{T}, inds::StaticVector{I}
+    )
+    S = length(inds)
+    newtype = similar_type(inds, T, (S,))
+    exprs = [:(a[inds[$i]]) for i = 1:S]
     return quote
         $(Expr(:meta, :inline, :propagate_inbounds))
         return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
+# Convert to StaticArrays using tuples
+# TODO think about bounds checks here.
+@generated function getindex{T, I <: Integer}(
+        m::AbstractArray{T}, inds1::StaticVector{I}, i2::Integer
+    )
+    S = length(inds1)
+    newtype = similar_type(inds1, T, (S,)) # drop singular dimension like in base
+    exprs = [:(m[inds1[$j], i2]) for j = 1:S]
+    return Expr(:call, newtype, Expr(:tuple, exprs...))
+end
+
+@generated function getindex{T, I <: Integer}(
+        m::AbstractArray{T}, i1::Integer, inds2::StaticVector{I}
+    )
+    S = length(inds)
+    newtype = similar_type(inds2, T, (S,))
+    exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
+    return Expr(:call, newtype, Expr(:tuple, exprs...))
+end
+
+@generated function getindex{I1 <: Integer,I2 <: Integer, T}(
+        m::AbstractArray{T}, inds1::StaticVector{I1}, inds2::StaticVector{I2}
+    )
+    S1, S2 = length(inds1), lengths(inds2)
+    exprs = [:(m[inds1[$j1], inds2[$j2]]) for j1 = 1:S1, j2 = 1:S2]
+    return Expr(:call, SMatrix{S1, S2, T}, Expr(:tuple, exprs...)) # I guess SMatrix should be fine?
+end
+
 
 @generated function getindex{SA<:StaticArray}(a::SA, ::Colon)
     if SA <: StaticVector && a == similar_type(SA)
@@ -56,8 +112,12 @@ function Base.getindex(v::StaticVector, r::UnitRange)
 end
 =#
 
+
 # Same for setindex!
-@generated function setindex!{SA<:StaticArray, S}(a::SA, vals, inds::NTuple{S,Integer})
+@generated function setindex!{SA <: StaticArray, I <: Integer}(
+        a::SA, vals, inds::Union{Tuple{Vararg{I}}, StaticVector{I}}
+    )
+    S = inds <: Tuple ? length(inds.parameters) : length(inds)
     exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
     if vals <: StaticArray
         if length(vals) != S # We should be able to annotate that the RHS of the above exprs is @inbounds, but not the LHS...
@@ -81,7 +141,10 @@ end
 end
 
 # this one for consistency
-@generated function setindex!{S}(a::AbstractArray, vals, inds::NTuple{S,Integer})
+@generated function setindex!{I <: Integer}(
+        a::AbstractArray, vals, inds::Union{Tuple{Vararg{I}}, StaticVector{I}}
+    )
+    S = inds <: Tuple ? length(inds.parameters) : length(inds)
     exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
     if vals <: StaticArray
         if length(vals) != S
@@ -145,7 +208,7 @@ end
 
 # TODO put bounds checks here, as they should have less overhead here
 @generated function getindex{SM<:StaticMatrix, S1, S2}(m::SM, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
-    newtype = similar_type(SM, (S1,S2))
+    newtype = similar_type(SM, (S1, S2))
     exprs = [:(m[inds1[$i1], inds2[$i2]]) for i1 = 1:S1, i2 = 1:S2]
 
     return quote
@@ -174,6 +237,22 @@ end
     end
 end
 
+
+
+
+
+
+
+# TODO: bounds checking?
+@generated function setindex!{SM<:StaticMatrix, S1, S2}(m::SM, val, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
+    exprs = [:(m[inds1[$i1], inds2[$i2]] = val[$i1,$i2]) for i1 = 1:S1, i2 = 1:S2]
+
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        $(Expr(:block, exprs...))
+        return val
+    end
+end
 # TODO put bounds checks here, as they should have less overhead here
 @generated function getindex{SM<:StaticMatrix}(m::SM, ::Colon, inds2::Union{Integer, Tuple{Vararg{Integer}}})
     inds1 = ntuple(identity, size(SM,1))
@@ -192,6 +271,7 @@ end
     end
 end
 
+
 @generated function getindex{SM<:StaticMatrix}(m::SM, ::Colon, ::Colon)
     inds1 = ntuple(identity, size(SM,1))
     inds2 = ntuple(identity, size(SM,2))
@@ -201,23 +281,16 @@ end
     end
 end
 
-# Convert to StaticArrays using tuples
-# TODO think about bounds checks here.
-@generated function getindex{S,T}(m::AbstractArray{T}, inds1::NTuple{S, Integer}, i2::Integer)
-    exprs = [:(m[inds1[$j], i2]) for j = 1:S]
-    return Expr(:call, SVector{S,T}, Expr(:tuple, exprs...))
-end
 
-@generated function getindex{S,T}(m::AbstractArray{T}, i1::Integer, inds2::NTuple{S, Integer})
-    exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
-    return Expr(:call, SVector{S,T}, Expr(:tuple, exprs...))
-end
+@generated function setindex!{SM<:StaticMatrix, S2}(m::SM, val, i1::Integer, inds2::NTuple{S2,Integer})
+    newtype = similar_type(SM, (S2,))
+    exprs = [:(m[i1, inds2[$i2]] = val[$i2]) for i2 = 1:S2]
 
-@generated function getindex{S1,S2,T}(m::AbstractArray{T}, inds1::NTuple{S1, Integer}, inds2::NTuple{S2, Integer})
-    exprs = [:(m[inds1[$j1], inds2[$j2]]) for j1 = 1:S1, j2 = 1:S2]
-    return Expr(:call, SMatrix{S1,S2,T}, Expr(:tuple, exprs...))
+    return quote
+        $(Expr(:meta, :inline, :propagate_inbounds))
+        return $(Expr(:block, exprs...))
+    end
 end
-
 # TODO expand out tuples to vectors in size-indeterminate cases
 
 # 2D setindex!
@@ -233,26 +306,7 @@ end
     end
 end
 
-# TODO: bounds checking?
-@generated function setindex!{SM<:StaticMatrix, S1, S2}(m::SM, val, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
-    exprs = [:(m[inds1[$i1], inds2[$i2]] = val[$i1,$i2]) for i1 = 1:S1, i2 = 1:S2]
 
-    return quote
-        $(Expr(:meta, :inline, :propagate_inbounds))
-        $(Expr(:block, exprs...))
-        return val
-    end
-end
-
-@generated function setindex!{SM<:StaticMatrix, S2}(m::SM, val, i1::Integer, inds2::NTuple{S2,Integer})
-    newtype = similar_type(SM, (S2,))
-    exprs = [:(m[i1, inds2[$i2]] = val[$i2]) for i2 = 1:S2]
-
-    return quote
-        $(Expr(:meta, :inline, :propagate_inbounds))
-        return $(Expr(:block, exprs...))
-    end
-end
 
 @generated function setindex!{SM<:StaticMatrix, S1}(m::SM, val, inds1::NTuple{S1,Integer}, i2::Integer)
     newtype = similar_type(SM, (S1,))
