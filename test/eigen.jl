@@ -3,10 +3,12 @@
         m = @SMatrix [2.0]
         (vals, vecs) = eig(m)
         @test vals === SVector(2.0)
+        @test eigvals(m) === SVector(2.0)
         @test vecs === SMatrix{1,1}(1.0)
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals === SVector(2.0)
+        @test eigvals(Symmetric(m)) === SVector(2.0)
         @test vecs === SMatrix{1,1}(1.0)
     end
 
@@ -18,10 +20,12 @@
         (vals_a, vecs_a) = eig(m)
         (vals, vecs) = eig(m)
         @test vals::SVector ≈ vals_a
+        @test eigvals(m)::SVector ≈ vals_a
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
+        @test eigvals(Symmetric(m))::SVector ≈ vals_a
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
     end
 
@@ -33,10 +37,12 @@
         (vals_a, vecs_a) = eig(m)
         (vals, vecs) = eig(m)
         @test vals::SVector ≈ vals_a
+        @test eigvals(m)::SVector ≈ vals_a
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
+        @test eigvals(Symmetric(m))::SVector ≈ vals_a
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
     end
 
@@ -75,5 +81,30 @@
 
         @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4)
         @test eigvals ≈ SVector(1e-2, 1e-2, 1.01)
+
+        # Block diagonal
+        m = @SMatrix [1.0 0.0 0.0;
+                      0.0 1.0 1.0;
+                      0.0 1.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
+
+        m = @SMatrix [1.0 0.0 1.0;
+                      0.0 1.0 0.0;
+                      1.0 0.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
+
+        m = @SMatrix [1.0 1.0 0.0;
+                      1.0 1.0 0.0;
+                      0.0 0.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
     end
 end

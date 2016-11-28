@@ -10,9 +10,9 @@ end
     # Only cover the hermitian branch, for now ast least
     # This also solves some type-stability issues such as arise in Base
     if ishermitian(A)
-       return _eig(s, Hermitian(A), permute, scale)
+        return _eig(s, Hermitian(A), permute, scale)
     else
-       error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
+        error("Only Hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
     end
 end
 
@@ -96,14 +96,30 @@ end
     end
 
     # Adapted from Wikipedia
-    @inbounds p1 = Afull[4]*Afull[4] + Afull[7]*Afull[7] + Afull[8]*Afull[8]
+    @inbounds p1 = abs2(Afull[4]) + abs2(Afull[7]) + abs2(Afull[8])
     if (p1 == 0)
-        # Afull is diagonal.
-        @inbounds eig1 = Afull[1]
-        @inbounds eig2 = Afull[5]
-        @inbounds eig3 = Afull[9]
+        # Afull is diagonal. Sort answers
+        @inbounds eig1 = real(Afull[1])
+        @inbounds eig2 = real(Afull[5])
+        @inbounds eig3 = real(Afull[9])
 
-        return (SVector{3,S}(eig1, eig2, eig3), eye(SMatrix{3,3,S}))
+        if eig1 < eig2
+            if eig2 < eig3
+                return (SVector(eig1, eig2, eig3), eye(SMatrix{3,3,S}))
+            elseif eig3 < eig1
+                return (SVector(eig3, eig1, eig2), eye(SMatrix{3,3,S}))
+            else
+                return (SVector(eig1, eig3, eig2), eye(SMatrix{3,3,S}))
+            end
+        else #eig2 < eig1
+            if eig1 < eig3
+                return (SVector(eig2, eig1, eig3), eye(SMatrix{3,3,S}))
+            elseif eig3 < eig2
+                return (SVector(eig3, eig2, eig1), eye(SMatrix{3,3,S}))
+            else
+                return (SVector(eig2, eig3, eig1), eye(SMatrix{3,3,S}))
+            end
+        end
     else
         q = trace(Afull)/3
         @inbounds p2 = (Afull[1] - q)^2 + (Afull[5] - q)^2 + (Afull[9] - q)^2 + 2 * p1
@@ -184,4 +200,99 @@ end
 
         @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
     end
+end
+
+
+@inline eigvals{T<:Real,SA<:StaticArray}(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) = _eigvals(Size(SA), a, permute, scale)
+@inline function eigvals(a::StaticArray; permute::Bool=true, scale::Bool=true)
+    if ishermitian(a)
+        _eigvals(Size(a), Hermitian(a), permute, scale)
+    else
+        error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
+    end
+end
+
+@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(real(a.data[1]))
+
+@inline function _eigvals{T<:Real}(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+    a = A.data
+
+    if A.uplo == 'U'
+        @inbounds t_half = real(a[1] + a[4])/2
+        @inbounds d = real(a[1]*a[4] - a[3]'*a[3]) # Should be real
+
+        tmp2 = t_half*t_half - d
+        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
+        return SVector(t_half - tmp, t_half + tmp)
+    else
+        @inbounds t_half = real(a[1] + a[4])/2
+        @inbounds d = real(a[1]*a[4] - a[2]'*a[2]) # Should be real
+
+        tmp2 = t_half*t_half - d
+        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
+        return SVector(t_half - tmp, t_half + tmp)
+    end
+end
+
+@inline function _eigvals{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+    S = typeof((one(T)*zero(T) + zero(T))/one(T))
+
+    uplo = A.uplo
+    data = A.data
+    if uplo == 'U'
+        @inbounds Afull = SMatrix{3,3}(data[1], data[4], data[7], data[4], data[5], data[8], data[7], data[8], data[9])
+    else
+        @inbounds Afull = SMatrix{3,3}(data[1], data[2], data[3], data[2], data[5], data[6], data[3], data[6], data[9])
+    end
+
+    # Adapted from Wikipedia
+    @inbounds p1 = abs2(Afull[4]) + abs2(Afull[7]) + abs2(Afull[8])
+    if (p1 == 0)
+        # Afull is diagonal. Sort answers
+        @inbounds eig1 = real(Afull[1])
+        @inbounds eig2 = real(Afull[5])
+        @inbounds eig3 = real(Afull[9])
+
+        if eig1 < eig2
+            if eig2 < eig3
+                return SVector(eig1, eig2, eig3)
+            elseif eig3 < eig1
+                return SVector(eig3, eig1, eig2)
+            else
+                return SVector(eig1, eig3, eig2)
+            end
+        else #eig2 < eig1
+            if eig1 < eig3
+                return SVector(eig2, eig1, eig3)
+            elseif eig3 < eig2
+                return SVector(eig3, eig2, eig1)
+            else
+                return SVector(eig2, eig3, eig1)
+            end
+        end
+    else
+        q = trace(Afull)/3
+        @inbounds p2 = (Afull[1] - q)^2 + (Afull[5] - q)^2 + (Afull[9] - q)^2 + 2 * p1
+        p = sqrt(p2 / 6)
+        B = (1 / p) * (Afull - UniformScaling(q)) # q*I
+        r = det(B) / 2
+
+        # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+        # but computation error can leave it slightly outside this range.
+        if (r <= -1)
+            phi = S(pi) / 3
+        elseif (r >= 1)
+            phi = zero(S)
+        else
+            phi = acos(r) / 3
+        end
+
+        # the eigenvalues satisfy eig1 <= eig2 <= eig3
+        eig3 = q + 2 * p * cos(phi)
+        eig1 = q + 2 * p * cos(phi + (2*pi/3))
+        eig2 = 3 * q - eig1 - eig3     # since trace(Afull) = eig1 + eig2 + eig3
+
+        return SVector(eig1, eig2, eig3)
+    end
+
 end
