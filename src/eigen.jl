@@ -123,7 +123,7 @@ end
 
         # the eigenvalues satisfy eig1 <= eig2 <= eig3
         eig3 = q + 2 * p * cos(phi)
-        eig1 = q + 2 * p * cos(phi + (2*pi/3))
+        eig1 = q + 2 * p * cos(phi + (2*S(pi)/3))
         eig2 = 3 * q - eig1 - eig3     # since trace(Afull) = eig1 + eig2 + eig3
 
         # Now get the eigenvectors
