@@ -1,4 +1,5 @@
-The StaticArrays.jl package is licensed under the MIT "Expat" License:
+The majority of the StaticArrays.jl package is licensed under the MIT "Expat"
+License:
 
 > Copyright (c) 2016: Andy Ferris.
 >
@@ -20,3 +21,6 @@ The StaticArrays.jl package is licensed under the MIT "Expat" License:
 > CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 > TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 > SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+However, a small part of the 3x3 eigenvalue solver is under the Boost Software
+License - see src/eigen.jl

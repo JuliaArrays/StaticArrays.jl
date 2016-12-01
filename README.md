@@ -32,14 +32,14 @@ than `Base.Array`. See this simplified benchmark (or see the full results [here]
     Benchmarks for 3×3 Float64 matrices
 ============================================
 
-Matrix multiplication            -> 8.2x speedup
-Matrix multiplication (mutating) -> 3.1x speedup
-Matrix addition                  -> 45x speedup
-Matrix addition (mutating)       -> 5.1x speedup
-Matrix determinant               -> 170x speedup
-Matrix inverse                   -> 125x speedup
-Matrix symmetric eigenvalue      -> 105x speedup
-Matrix Cholesky decomposition    -> 23.6x speedup
+Matrix multiplication               -> 8.2x speedup
+Matrix multiplication (mutating)    -> 3.1x speedup
+Matrix addition                     -> 45x speedup
+Matrix addition (mutating)          -> 5.1x speedup
+Matrix determinant                  -> 170x speedup
+Matrix inverse                      -> 125x speedup
+Matrix symmetric eigendecomposition -> 82x speedup
+Matrix Cholesky decomposition       -> 23.6x speedup
 ```
 
 (Run with `julia -O3` for even faster SIMD code with immutable static arrays!)

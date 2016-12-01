@@ -75,5 +75,30 @@
 
         @test isapprox(eigvecs'*eigvecs, eye(SMatrix{3,3,Float64}); atol = 1e-4)
         @test eigvals ≈ SVector(1e-2, 1e-2, 1.01)
+
+        # Block diagonal
+        m = @SMatrix [1.0 0.0 0.0;
+                      0.0 1.0 1.0;
+                      0.0 1.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
+
+        m = @SMatrix [1.0 0.0 1.0;
+                      0.0 1.0 0.0;
+                      1.0 0.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
+
+        m = @SMatrix [1.0 1.0 0.0;
+                      1.0 1.0 0.0;
+                      0.0 0.0 1.0]
+        eigvals, eigvecs = eig(m)::Tuple{SVector,SMatrix}
+
+        @test eigvals ≈ [0.0, 1.0, 2.0]
+        @test eigvecs*diagm(eigvals)*eigvecs' ≈ m
     end
 end

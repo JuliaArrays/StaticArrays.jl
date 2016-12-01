@@ -83,105 +83,193 @@ end
     end
 end
 
-# TODO fix for complex case
+# A small part of the code in the following method was inspired by works of David
+# Eberly, Geometric Tools LLC, in code released under the Boost Software
+# License (included at the end of this file).
 @inline function _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
     S = typeof((one(T)*zero(T) + zero(T))/one(T))
+    Sreal = real(S)
 
-    uplo = A.uplo
-    data = A.data
-    if uplo == 'U'
-        @inbounds Afull = SMatrix{3,3}(data[1], data[4], data[7], data[4], data[5], data[8], data[7], data[8], data[9])
+    @inbounds a11 = convert(Sreal, A.data[1])
+    @inbounds a22 = convert(Sreal, A.data[5])
+    @inbounds a33 = convert(Sreal, A.data[9])
+    if A.uplo == 'U'
+        @inbounds a12 = convert(S, A.data[4])
+        @inbounds a13 = convert(S, A.data[7])
+        @inbounds a23 = convert(S, A.data[8])
     else
-        @inbounds Afull = SMatrix{3,3}(data[1], data[2], data[3], data[2], data[5], data[6], data[3], data[6], data[9])
+        @inbounds a12 = conj(convert(S, A.data[2]))
+        @inbounds a13 = conj(convert(S, A.data[3]))
+        @inbounds a23 = conj(convert(S, A.data[6]))
     end
 
-    # Adapted from Wikipedia
-    @inbounds p1 = Afull[4]*Afull[4] + Afull[7]*Afull[7] + Afull[8]*Afull[8]
+    p1 = abs2(a12) + abs2(a13) + abs2(a23)
     if (p1 == 0)
-        # Afull is diagonal.
-        @inbounds eig1 = Afull[1]
-        @inbounds eig2 = Afull[5]
-        @inbounds eig3 = Afull[9]
-
-        return (SVector{3,S}(eig1, eig2, eig3), eye(SMatrix{3,3,S}))
-    else
-        q = trace(Afull)/3
-        @inbounds p2 = (Afull[1] - q)^2 + (Afull[5] - q)^2 + (Afull[9] - q)^2 + 2 * p1
-        p = sqrt(p2 / 6)
-        B = (1 / p) * (Afull - UniformScaling(q)) # q*I
-        r = det(B) / 2
-
-        # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
-        # but computation error can leave it slightly outside this range.
-        if (r <= -1)
-            phi = S(pi) / 3
-        elseif (r >= 1)
-            phi = zero(S)
-        else
-            phi = acos(r) / 3
-        end
-
-        # the eigenvalues satisfy eig1 <= eig2 <= eig3
-        eig3 = q + 2 * p * cos(phi)
-        eig1 = q + 2 * p * cos(phi + (2*S(pi)/3))
-        eig2 = 3 * q - eig1 - eig3     # since trace(Afull) = eig1 + eig2 + eig3
-
-        # Now get the eigenvectors
-
-        # To avoid problems with double degeneracies, we tackle the most distinct
-        # eigenvalue first
-        if eig2 - eig1 > eig3 - eig2
-            # The first eigenvalue is "most distinct"
-            @inbounds tmp1 = SVector(Afull[1] - eig3, Afull[2], Afull[3])
-            @inbounds tmp2 = SVector(Afull[4], Afull[5] - eig3, Afull[6])
-            v3 = cross(tmp1, tmp2)
-            n3 = vecnorm(v3)
-            v3 = v3 / n3
-
-            # Find the second one from this one
-            @inbounds tmp3 = normalize(SVector(Afull[1] - eig2, Afull[2], Afull[3]))
-            @inbounds tmp4 = normalize(SVector(Afull[4], Afull[5] - eig2, Afull[6]))
-            v2_1 = cross(tmp3, v3)
-            v2_2 = cross(tmp4, v3)
-            n2_1 = vecnorm(v2_1)
-            n2_2 = vecnorm(v2_2)
-            if n2_1 > n2_2
-                v2 = v2_1 / n2_1
-            else
-                v2 = v2_2 / n2_2
-            end
-
-            # The third is easy
-            v1 = cross(v2, v3) # should be normalized already
-
-            @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
-        else
-            # The third eigenvalue is "most distinct"
-            @inbounds tmp1 = SVector(Afull[1] - eig1, Afull[2], Afull[3])
-            @inbounds tmp2 = SVector(Afull[4], Afull[5] - eig1, Afull[6])
-            v1 = cross(tmp1, tmp2)
-            n1 = vecnorm(v1)
-            v1 = v1 / n1
-
-            # Find the second one from this one
-            @inbounds tmp3 = normalize(SVector(Afull[1] - eig2, Afull[2], Afull[3]))
-            @inbounds tmp4 = normalize(SVector(Afull[4], Afull[5] - eig2, Afull[6]))
-            v2_1 = cross(tmp3, v1)
-            v2_2 = cross(tmp4, v1)
-            n2_1 = vecnorm(v2_1)
-            n2_2 = vecnorm(v2_2)
-            if n2_1 > n2_2
-                v2 = v2_1 / n2_1
-            else
-                v2 = v2_2 / n2_2
-            end
-
-            # The third is easy
-            v3 = cross(v1, v2) # should be normalized already
-
-            @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
-        end
-
-        @inbounds return (SVector((eig1, eig2, eig3)), SMatrix{3,3}((v1[1], v1[2], v1[3], v2[1], v2[2], v2[3], v3[1], v3[2], v3[3])))
+        # Matrix is diagonal
+        # TODO need to sort the eigenvalues
+        return (SVector(a11, a22, a33), eye(SMatrix{3,3,S}))
     end
+
+    q = (a11 + a22 + a33) / 3
+    p2 = abs2(a11 - q) + abs2(a22 - q) + abs2(a33 - q) + 2 * p1
+    p = sqrt(p2 / 6)
+    invp = inv(p)
+    b11 = (a11 - q) * invp
+    b22 = (a22 - q) * invp
+    b33 = (a33 - q) * invp
+    b12 = a12 * invp
+    b13 = a13 * invp
+    b23 = a23 * invp
+    B = SMatrix{3,3,S}((b11, conj(b12), conj(b13), b12, b22, conj(b23), b13, b23, b33))
+    r = real(det(B)) / 2
+
+    # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+    # but computation error can leave it slightly outside this range.
+    if (r <= -1)
+        phi = Sreal(pi) / 3
+    elseif (r >= 1)
+        phi = zero(Sreal)
+    else
+        phi = acos(r) / 3
+    end
+
+    eig3 = q + 2 * p * cos(phi)
+    eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
+    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+
+    if r > 0 # Helps with conditioning the eigenvector calculation
+        (eig1, eig3) = (eig3, eig1)
+    end
+
+    # Calculate the first eigenvector
+    # This should be orthogonal to these three rows of A - eig1*I
+    # Use all combinations of cross products and choose the "best" one
+    r₁ = SVector(a11 - eig1, a12, a13)
+    r₂ = SVector(conj(a12), a22 - eig1, a23)
+    r₃ = SVector(conj(a13), conj(a23), a33 - eig1)
+    n₁ = sumabs2(r₁)
+    n₂ = sumabs2(r₂)
+    n₃ = sumabs2(r₃)
+
+    r₁₂ = r₁ × r₂
+    r₂₃ = r₂ × r₃
+    r₃₁ = r₃ × r₁
+    n₁₂ = sumabs2(r₁₂)
+    n₂₃ = sumabs2(r₂₃)
+    n₃₁ = sumabs2(r₃₁)
+
+    # we want best angle so we put all norms on same footing
+    # (cheaper to multiply by third nᵢ rather than divide by the two involved)
+    if n₁₂ * n₃ > n₂₃ * n₁
+        if n₁₂ * n₃ > n₃₁ * n₂
+            eigvec1 = r₁₂ / sqrt(n₁₂)
+        else
+            eigvec1 = r₃₁ / sqrt(n₃₁)
+        end
+    else
+        if n₂₃ * n₁ > n₃₁ * n₂
+            eigvec1 = r₂₃ / sqrt(n₂₃)
+        else
+            eigvec1 = r₃₁ / sqrt(n₃₁)
+        end
+    end
+
+    # Calculate the second eigenvector
+    # This should be orthogonal to the previous eigenvector and the three
+    # rows of A - eig2*I. However, we need to "solve" the remaining 2x2 subspace
+    # problem in case the cross products are identically or nearly zero
+
+    # The remaing 2x2 subspace is:
+    @inbounds if abs(eigvec1[1]) < abs(eigvec1[2]) # safe to set one component to zero, depending on this
+        orthogonal1 = SVector(-eigvec1[3], zero(S), eigvec1[1]) / sqrt(abs2(eigvec1[1]) + abs2(eigvec1[3]))
+    else
+        orthogonal1 = SVector(zero(S), eigvec1[3], -eigvec1[2]) / sqrt(abs2(eigvec1[2]) + abs2(eigvec1[3]))
+    end
+    orthogonal2 = eigvec1 × orthogonal1
+
+    # The projected 2x2 eigenvalue problem is C x = 0 where C is the projection
+    # of (A - eig2*I) onto the subspace {orthogonal1, orthogonal2}
+    @inbounds a_orth1_1 = a11 * orthogonal1[1] + a12 * orthogonal1[2] + a13 * orthogonal1[3]
+    @inbounds a_orth1_2 = conj(a12) * orthogonal1[1] + a22 * orthogonal1[2] + a23 * orthogonal1[3]
+    @inbounds a_orth1_3 = conj(a13) * orthogonal1[1] + conj(a23) * orthogonal1[2] + a33 * orthogonal1[3]
+
+    @inbounds a_orth2_1 = a11 * orthogonal2[1] + a12 * orthogonal2[2] + a13 * orthogonal2[3]
+    @inbounds a_orth2_2 = conj(a12) * orthogonal2[1] + a22 * orthogonal2[2] + a23 * orthogonal2[3]
+    @inbounds a_orth2_3 = conj(a13) * orthogonal2[1] + conj(a23) * orthogonal2[2] + a33 * orthogonal2[3]
+
+    @inbounds c11 = conj(orthogonal1[1])*a_orth1_1 + conj(orthogonal1[2])*a_orth1_2 + conj(orthogonal1[3])*a_orth1_3 - eig2
+    @inbounds c12 = conj(orthogonal1[1])*a_orth2_1 + conj(orthogonal1[2])*a_orth2_2 + conj(orthogonal1[3])*a_orth2_3
+    @inbounds c22 = conj(orthogonal2[1])*a_orth2_1 + conj(orthogonal2[2])*a_orth2_2 + conj(orthogonal2[3])*a_orth2_3 - eig2
+
+    # Solve this robustly (some values might be small or zero)
+    c11² = abs2(c11)
+    c12² = abs2(c12)
+    c22² = abs2(c22)
+    if c11² >= c22²
+        if c11² > 0 || c12² > 0
+            if c11² >= c12²
+                tmp = c12 / c11 # TODO check for compex input
+                p2 = inv(sqrt(1 + abs2(tmp)))
+                p1 = tmp * p2
+            else
+                tmp = c11 / c12 # TODO check for compex input
+                p1 = inv(sqrt(1 + abs2(tmp)))
+                p2 = tmp * p1
+            end
+            eigvec2 = p1*orthogonal1 - p2*orthogonal2
+        else # c11 == 0 && c12 == 0 && c22 == 0 (smaller than c11)
+            eigvec2 = orthogonal1
+        end
+    else
+        if c22² >= c12²
+            tmp = c12 / c22 # TODO check for compex input
+            p1 = inv(sqrt(1 + abs2(tmp)))
+            p2 = tmp * p1
+        else
+            tmp = c22 / c12 # TODO check for compex input
+            p2 = inv(sqrt(1 + abs2(tmp)))
+            p1 = tmp * p2
+        end
+        eigvec2 = p1*orthogonal1 - p2*orthogonal2
+    end
+
+    # The third eigenvector is a simple cross product of the other two
+    eigvec3 = eigvec1 × eigvec2 # should be normalized already
+
+    # Sort them back to the original ordering, if necessary
+    if r > 0
+        (eig1, eig3) = (eig3, eig1)
+        (eigvec1, eigvec3) = (eigvec3, eigvec1)
+    end
+
+    return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
+
+# NOTE: The following Boost Software License applies to parts of the method:
+#     _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+
+#=
+Boost Software License - Version 1.0 - August 17th, 2003
+
+Permission is hereby granted, free of charge, to any person or organization
+obtaining a copy of the software and accompanying documentation covered by
+this license (the "Software") to use, reproduce, display, distribute,
+execute, and transmit the Software, and to prepare derivative works of the
+Software, and to permit third-parties to whom the Software is furnished to
+do so, all subject to the following:
+
+The copyright notices in the Software and this entire statement, including
+the above license grant, this restriction and the following disclaimer,
+must be included in all copies of the Software, in whole or in part, and
+all derivative works of the Software, unless such copies or derivative
+works are solely in the form of machine-executable object code generated by
+a source language processor.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE AND NON-INFRINGEMENT. IN NO EVENT
+SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE BE LIABLE
+FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+=#
