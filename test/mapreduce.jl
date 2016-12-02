@@ -20,6 +20,8 @@
         v1 = @SVector [2,4,6,8]
         @test reduce(+, v1) === 20
         @test reduce(+, 0, v1) === 20
+        @test sum(v1) === 20
+        @test prod(v1) === 384
     end
 
     @testset "mapreduce" begin
