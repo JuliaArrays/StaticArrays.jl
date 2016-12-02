@@ -92,7 +92,7 @@ end
 
 # These are all similar in Base but not @inline'd
 @inline sum{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
-@inline prod{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
+@inline prod{T}(a::StaticArray{T}) = reduce(*, zero(T), a)
 @inline count(a::StaticArray{Bool}) = reduce(+, 0, a)
 @inline all(a::StaticArray{Bool}) = reduce(&, true, a)  # non-branching versions
 @inline any(a::StaticArray{Bool}) = reduce(|, false, a) # (benchmarking needed)
