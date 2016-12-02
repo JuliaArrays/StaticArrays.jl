@@ -1,3 +1,107 @@
+
+@inline eigvals{T<:Real,SA<:StaticArray}(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) = _eigvals(Size(SA), a, permute, scale)
+@inline function eigvals(a::StaticArray; permute::Bool=true, scale::Bool=true)
+    if ishermitian(a)
+        _eigvals(Size(a), Hermitian(a), permute, scale)
+    else
+        error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
+    end
+end
+
+@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(real(a.data[1]))
+
+@inline function _eigvals{T<:Real}(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+    a = A.data
+
+    if A.uplo == 'U'
+        @inbounds t_half = real(a[1] + a[4])/2
+        @inbounds d = real(a[1]*a[4] - a[3]'*a[3]) # Should be real
+
+        tmp2 = t_half*t_half - d
+        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
+        return SVector(t_half - tmp, t_half + tmp)
+    else
+        @inbounds t_half = real(a[1] + a[4])/2
+        @inbounds d = real(a[1]*a[4] - a[2]'*a[2]) # Should be real
+
+        tmp2 = t_half*t_half - d
+        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
+        return SVector(t_half - tmp, t_half + tmp)
+    end
+end
+
+@inline function _eigvals{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+    S = typeof((one(T)*zero(T) + zero(T))/one(T))
+    Sreal = real(S)
+
+    @inbounds a11 = convert(Sreal, A.data[1])
+    @inbounds a22 = convert(Sreal, A.data[5])
+    @inbounds a33 = convert(Sreal, A.data[9])
+    if A.uplo == 'U'
+        @inbounds a12 = convert(S, A.data[4])
+        @inbounds a13 = convert(S, A.data[7])
+        @inbounds a23 = convert(S, A.data[8])
+    else
+        @inbounds a12 = conj(convert(S, A.data[2]))
+        @inbounds a13 = conj(convert(S, A.data[3]))
+        @inbounds a23 = conj(convert(S, A.data[6]))
+    end
+
+    p1 = abs2(a12) + abs2(a13) + abs2(a23)
+    if (p1 == 0)
+        # Matrix is diagonal
+        if a11 < a22
+            if a22 < a33
+                return SVector(a11, a22, a33)
+            elseif a33 < a11
+                return SVector(a33, a11, a22)
+            else
+                return SVector(a11, a33, a22)
+            end
+        else #a22 < a11
+            if a11 < a33
+                return SVector(a22, a11, a33)
+            elseif a33 < a22
+                return SVector(a33, a22, a11)
+            else
+                return SVector(a22, a33, a11)
+            end
+        end
+    end
+
+    q = (a11 + a22 + a33) / 3
+    p2 = abs2(a11 - q) + abs2(a22 - q) + abs2(a33 - q) + 2 * p1
+    p = sqrt(p2 / 6)
+    invp = inv(p)
+    b11 = (a11 - q) * invp
+    b22 = (a22 - q) * invp
+    b33 = (a33 - q) * invp
+    b12 = a12 * invp
+    b13 = a13 * invp
+    b23 = a23 * invp
+    B = SMatrix{3,3,S}((b11, conj(b12), conj(b13), b12, b22, conj(b23), b13, b23, b33))
+    r = real(det(B)) / 2
+
+    # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+    # but computation error can leave it slightly outside this range.
+    if (r <= -1)
+        phi = Sreal(pi) / 3
+    elseif (r >= 1)
+        phi = zero(Sreal)
+    else
+        phi = acos(r) / 3
+    end
+
+    eig3 = q + 2 * p * cos(phi)
+    eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
+    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+
+    return SVector(eig1, eig2, eig3)
+end
+
+
+
+
 @inline function eig(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
     _eig(Size(A), A, permute, scale)
 end
@@ -106,8 +210,27 @@ end
     p1 = abs2(a12) + abs2(a13) + abs2(a23)
     if (p1 == 0)
         # Matrix is diagonal
-        # TODO need to sort the eigenvalues
-        return (SVector(a11, a22, a33), eye(SMatrix{3,3,S}))
+        v1 = SVector(one(S),  zero(S), zero(S))
+        v2 = SVector(zero(S), one(S),  zero(S))
+        v3 = SVector(zero(S), zero(S), one(S) )
+
+        if a11 < a22
+            if a22 < a33
+                return (SVector(a11, a22, a33), hcat(v1,v2,v3))
+            elseif a33 < a11
+                return (SVector(a33, a11, a22), hcat(v3,v1,v2))
+            else
+                return (SVector(a11, a33, a22), hcat(v1,v3,v2))
+            end
+        else #a22 < a11
+            if a11 < a33
+                return (SVector(a22, a11, a33), hcat(v2,v1,v3))
+            elseif a33 < a22
+                return (SVector(a33, a22, a11), hcat(v3,v2,v1))
+            else
+                return (SVector(a22, a33, a11), hcat(v2,v3,v1))
+            end
+        end
     end
 
     q = (a11 + a22 + a33) / 3
@@ -250,6 +373,8 @@ end
 
 #=
 Boost Software License - Version 1.0 - August 17th, 2003
+
+
 
 Permission is hereby granted, free of charge, to any person or organization
 obtaining a copy of the software and accompanying documentation covered by
