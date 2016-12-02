@@ -20,7 +20,6 @@ export FixedVectorNoTuple
 const FixedArray = StaticArray
 const FixedVector = StaticVector
 const FixedMatrix = StaticMatrix
-const Vec = SVector
 const Mat = SMatrix
 const FixedVectorNoTuple = FieldVector
 
@@ -54,28 +53,32 @@ macro fsa(ex)
     esc(expr)
 end
 
-###########
-## Point ##
-###########
 
-immutable Point{S, T} <: StaticVector{T}
-    data::NTuple{S, T}
+function Base.isnan(x::StaticArray)
+    for elem in x
+        isnan(elem) && return true
+    end
+    false
 end
 
-if VERSION < v"0.5+"
-    @inline (::Type{Point}){S}(x::NTuple{S}) = Point{S}(x)
-end
-@inline (::Type{Point{S}}){S, T}(x::NTuple{S,T}) = Point{S,T}(x)
-@inline (::Type{Point{S}}){S, T <: Tuple}(x::T) = Point{S,promote_tuple_eltype(T)}(x)
 
-Base.@pure Base.size{S}(::Type{Point{S}}) = (S, )
-Base.@pure Base.size{S,T}(::Type{Point{S,T}}) = (S,)
 
-Base.@propagate_inbounds function Base.getindex(v::Point, i::Integer)
-    v.data[i]
+function unit{T <: StaticVector}(::Type{T}, i::Integer)
+    T(ntuple(Val{length(T)}) do j
+        ifelse(i == j, 1, 0)
+    end)
 end
 
-@inline Base.Tuple(v::Point) = v.data
+export unit
 
+function Base.extrema{T <: StaticVector}(a::AbstractVector{T})
+    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), a)
+end
+function Base.minimum{T <: StaticVector}(a::AbstractVector{T})
+    reduce((x, v)-> min.(x[1], v), a)
+end
+function Base.maximum{T <: StaticVector}(a::AbstractVector{T})
+    reduce((x, v)-> max.(x[1], v), a)
+end
 
 end

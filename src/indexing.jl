@@ -64,7 +64,7 @@ end
 @generated function getindex{T, I <: Integer}(
         m::AbstractArray{T}, i1::Integer, inds2::StaticVector{I}
     )
-    S = length(inds)
+    S = length(inds2)
     newtype = similar_type(inds2, T, (S,))
     exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
     return Expr(:call, newtype, Expr(:tuple, exprs...))
@@ -142,7 +142,7 @@ end
 
 # this one for consistency
 @generated function setindex!{I <: Integer}(
-        a::AbstractArray, vals, inds::Union{Tuple{Vararg{I}}, StaticVector{I}}
+        a::Array, vals::AbstractArray, inds::StaticVector{I}
     )
     S = inds <: Tuple ? length(inds.parameters) : length(inds)
     exprs = [:(a[inds[$i]] = vals[$i]) for i = 1:S]
