@@ -90,6 +90,36 @@ end
     end
 end
 
+@generated function reduce{D}(op, a::StaticArray, ::Type{Val{D}})
+    S = size(a)
+    if S[D] == 1
+        return :(return a)
+    else
+        N = ndims(a)
+        Snew = ([n==D ? 1:S[n] for n = 1:N]...)
+        newtype = similar_type(a, Snew)
+
+        exprs = Array{Expr}(Snew)
+        itr = [1:n for n = Snew]
+        for i = Base.product(itr...)
+            ik = copy([i...])
+            ik[D] = 2
+            expr = :(op(a[$(i...)], a[$(ik...)]))
+            for k = 3:S[D]
+                ik[D] = k
+                expr = :(op($expr, a[$(ik...)]))
+            end
+
+            exprs[i...] = expr
+        end
+
+        return quote
+            $(Expr(:meta,:inline))
+            @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        end
+    end
+end
+
 # These are all similar in Base but not @inline'd
 @inline sum{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
 @inline prod{T}(a::StaticArray{T}) = reduce(*, one(T), a)
@@ -101,8 +131,29 @@ end
 @inline sumabs2{T}(a::StaticArray{T}) = mapreduce(abs2, +, zero(T), a)
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
+@inline minimum{D}(a::StaticArray, dim::Type{Val{D}}) = reduce(min, a, dim)
+@inline maximum{D}(a::StaticArray, dim::Type{Val{D}}) = reduce(max, a, dim)
 
+@generated function diff{D}(a::StaticArray, ::Type{Val{D}}=Val{1})
+    S = size(a)
+    N = ndims(a)
+    Snew = ([n==D ? S[n]-1:S[n] for n = 1:N]...)
+    newtype = similar_type(a, Snew)
 
+    exprs = Array{Expr}(Snew)
+    itr = [1:n for n = Snew]
+
+    for i1 = Base.product(itr...)
+        i2 = copy([i1...])
+        i2[D] = i1[D] + 1
+        exprs[i1...] = :(a[$(i2...)] - a[$(i1...)])
+    end
+
+    return quote
+        $(Expr(:meta,:inline))
+        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+    end
+end
 
 ###############
 ## mapreduce ##

@@ -8,7 +8,7 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              ones, zeros, eye, one, cross, vecdot, reshape, fill, fill!, det,
              inv, eig, eigvals, trace, vecnorm, norm, dot, diagm, sum, prod,
              count, any, all, sumabs, sumabs2, minimum, maximum, extrema, mean,
-             copy
+             copy, diff
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
