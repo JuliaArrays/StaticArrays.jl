@@ -377,7 +377,7 @@ end
         elseif p == 2
             return vecnorm(a)
         elseif p == 0
-            return mapreduce(x -> (x == 0 ? zero(real(eltype(a))) : one(real(eltype(a)))), +, $(zero(real(eltype(a)))), a)
+            return mapreduce(x -> (x== 0 ? $(zero(real(eltype(a)))) : $(one(real(eltype(a))))), +, $(zero(real(eltype(a)))), a)
         else
             @inbounds return ($expr)^(inv(p))
         end
