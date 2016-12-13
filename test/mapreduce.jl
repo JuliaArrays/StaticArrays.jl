@@ -24,6 +24,23 @@
         @test prod(v1) === 384
     end
 
+    @testset "reduce in dim" begin
+        a = @SArray rand(4,3,2)
+        @test maximum(a, Val{1}) == maximum(a, 1)
+        @test maximum(a, Val{2}) == maximum(a, 2)
+        @test maximum(a, Val{3}) == maximum(a, 3)
+        @test minimum(a, Val{1}) == minimum(a, 1)
+        @test minimum(a, Val{2}) == minimum(a, 2)
+        @test minimum(a, Val{3}) == minimum(a, 3)
+        @test diff(a) == diff(a, Val{1}) == a[2:end,:,:] - a[1:end-1,:,:]
+        @test diff(a, Val{2}) == a[:,2:end,:] - a[:,1:end-1,:]
+        @test diff(a, Val{3}) == a[:,:,2:end] - a[:,:,1:end-1]
+
+        a = @SArray rand(4,3)  # as of Julia v0.5, diff() for regular Array is defined only for vectors and matrices
+        @test diff(a) == diff(a, Val{1}) == diff(a, 1)
+        @test diff(a, Val{2}) == diff(a, 2)
+    end
+
     @testset "mapreduce" begin
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
