@@ -3,12 +3,12 @@ __precompile__()
 module StaticArrays
 
 import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
-             length, convert, promote_op, map, map!, reduce, mapreduce,
-             broadcast, broadcast!, conj, transpose, ctranspose, hcat, vcat,
-             ones, zeros, eye, one, cross, vecdot, reshape, fill, fill!, det,
-             inv, eig, eigvals, trace, vecnorm, norm, dot, diagm, sum, prod,
-             count, any, all, sumabs, sumabs2, minimum, maximum, extrema, mean,
-             copy, diff
+             length, convert, promote_op, map, map!, reduce, reducedim,
+             mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
+             hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
+             fill!, det, inv, eig, eigvals, trace, vecnorm, norm, dot, diagm,
+             sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
+             maximum, extrema, mean, copy
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

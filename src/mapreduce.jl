@@ -90,13 +90,13 @@ end
     end
 end
 
-@generated function reduce{D}(op, a::StaticArray, ::Type{Val{D}})
+@generated function reducedim{D}(op, a::StaticArray, ::Type{Val{D}})
     S = size(a)
     if S[D] == 1
         return :(return a)
     else
         N = ndims(a)
-        Snew = ([n==D ? 1:S[n] for n = 1:N]...)
+        Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
         newtype = similar_type(a, Snew)
 
         exprs = Array{Expr}(Snew)
@@ -131,8 +131,8 @@ end
 @inline sumabs2{T}(a::StaticArray{T}) = mapreduce(abs2, +, zero(T), a)
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
-@inline minimum{D}(a::StaticArray, dim::Type{Val{D}}) = reduce(min, a, dim)
-@inline maximum{D}(a::StaticArray, dim::Type{Val{D}}) = reduce(max, a, dim)
+@inline minimum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(min, a, dim)
+@inline maximum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(max, a, dim)
 
 @generated function diff{D}(a::StaticArray, ::Type{Val{D}}=Val{1})
     S = size(a)
