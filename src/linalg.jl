@@ -353,6 +353,8 @@ end
     end
 end
 
+_norm_p0(x) = x == 0 ? zero(x) : one(x)
+
 @generated function vecnorm(a::StaticArray, p::Real)
     if length(a) == 0
         return zero(real(eltype(a)))
@@ -377,7 +379,7 @@ end
         elseif p == 2
             return vecnorm(a)
         elseif p == 0
-            return mapreduce(x -> (x== 0 ? $(zero(real(eltype(a)))) : $(one(real(eltype(a))))), +, $(zero(real(eltype(a)))), a)
+            return mapreduce(_norm_p0, +, $(zero(real(eltype(a)))), a)
         else
             @inbounds return ($expr)^(inv(p))
         end
