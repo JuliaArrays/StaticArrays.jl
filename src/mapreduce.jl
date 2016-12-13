@@ -137,7 +137,7 @@ end
 @generated function diff{D}(a::StaticArray, ::Type{Val{D}}=Val{1})
     S = size(a)
     N = ndims(a)
-    Snew = ([n==D ? S[n]-1:S[n] for n = 1:N]...)
+    Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
     newtype = similar_type(a, Snew)
 
     exprs = Array{Expr}(Snew)
