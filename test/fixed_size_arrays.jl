@@ -180,19 +180,19 @@ for N = (1, 10)
             end
 
             # from single
-            # r  = rand(rand_range)
-            # r2 = rand(rand_range2)
-            # v1 = VT{N, ET}(r)
-            # v2 = VT{N, ET2}(r)
-            # v3 = VT{N, ET}(r2)
-            # v4 = VT{N, ET2}(r2)
-            #
-            # for i=1:N
-            #     @test v1[i] == r
-            #     @test v2[i] == ET2(r)
-            #     @test v3[i] == r2
-            #     @test v4[i] == ET2(r2)
-            # end
+            r  = rand(rand_range)
+            r2 = rand(rand_range2)
+            v1 = VT{N, ET}(r)
+            v2 = VT{N, ET2}(r)
+            v3 = VT{N, ET}(r2)
+            v4 = VT{N, ET2}(r2)
+
+            for i=1:N
+                @test v1[i] == r
+                @test v2[i] == ET2(r)
+                @test v3[i] == r2
+                @test v4[i] == ET2(r2)
+            end
             x = VT{N, ET}[VT{N, ET}(ntuple(x-> 1, N)) for i=1:10]
             x1 = VT2{N, ET}[VT{N, ET}(ntuple(x-> 1, N)) for i=1:10]
             x2 = map(VT2, x)
