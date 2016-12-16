@@ -2,11 +2,14 @@
 typealias TupleN{T,N} NTuple{N,T}
 
 # Cast any Tuple to an TupleN{T}
-convert_ntuple{T}(::Type{T},d::T) = T # For zero-dimensional arrays
-convert_ntuple{N,T}(::Type{T},d::NTuple{N,T}) = d
-@generated function convert_ntuple{N,T}(::Type{T},d::NTuple{N})
+@inline convert_ntuple{T}(::Type{T},d::T) = T # For zero-dimensional arrays
+@inline convert_ntuple{N,T}(::Type{T},d::NTuple{N,T}) = d
+@generated function convert_ntuple{N,T}(::Type{T}, d::NTuple{N})
     exprs = ntuple(i -> :(convert(T, d[$i])), Val{N})
-    return Expr(:tuple, exprs...)
+    return quote
+        $(Expr(:meta, :inline))
+        $(Expr(:tuple, exprs...))
+    end
 end
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
