@@ -414,3 +414,12 @@ end
 
 @inline Size{T,SA<:StaticArray}(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) = Size(SA)
 @inline Size{T,SA<:StaticArray}(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) = Size(SA)
+
+# some micro-optimizations
+@inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::SM) = _checksquare(Size(SM))
+@pure Base.LinAlg.checksquare{SM<:StaticMatrix}(::Type{SM}) = _checksquare(Size(SM))
+
+@pure _checksquare{S}(::Size{S}) = (S[1] == S[2] || error("marix must be square"); S[1])
+
+@inline Base.LinAlg.Symmetric(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
+@inline Base.LinAlg.Hermitian(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))
