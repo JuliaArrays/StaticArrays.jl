@@ -216,6 +216,9 @@ end
 @inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
     hcat(hcat(a,b), c...)
 
+@inline Base.zero{SA <: StaticArray}(a::SA) = zeros(SA)
+@inline Base.zero{SA <: StaticArray}(a::Type{SA}) = zeros(SA)
+
 @generated function one{SM <: StaticArray}(::Type{SM})
     s = size(SM)
     if (length(s) != 2) || (s[1] != s[2])

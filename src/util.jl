@@ -43,14 +43,16 @@ end
     @inbounds return ntuple(i -> convert(T1,a[i]), Val{N})
 end
 
-# TODO try and make this generate fast code
-@inline convert(::Type{Tuple}, g::Base.Generator) = (g...)
-@inline function convert{N}(::Type{NTuple{N}}, g::Base.Generator)
-    @boundscheck if length(g.iter) != N
-        error("Array of length $(length(a)) cannot be converted to a $N-tuple")
-    end
+if VERSION < v"0.5+"
+    # TODO try and make this generate fast code
+    @inline convert(::Type{Tuple}, g::Base.Generator) = (g...)
+    @inline function convert{N}(::Type{NTuple{N}}, g::Base.Generator)
+        @boundscheck if length(g.iter) != N
+            error("Array of length $(length(a)) cannot be converted to a $N-tuple")
+        end
 
-    @inbounds return ntuple(i -> g.f(g.iter[i]), Val{N})
+        @inbounds return ntuple(i -> g.f(g.iter[i]), Val{N})
+    end
 end
 
 #=

@@ -1,11 +1,14 @@
 typealias StaticScalar{T} StaticArray{T,0}
 
-@pure length{T<:StaticArray}(a::Union{T,Type{T}}) = prod(size(a))
-@pure length{T<:StaticScalar}(a::Union{T,Type{T}}) = 1
+@pure length{T<:StaticArray}(a::T) = prod(size(a))
+@pure length{T<:StaticArray}(a::Type{T}) = prod(size(a))
+@pure length{T<:StaticScalar}(a::T) = 1
+@pure length{T<:StaticScalar}(a::Type{T}) = 1
 
-@pure function size{T<:StaticArray}(a::Union{T,Type{T}}, d::Integer)
+@pure size{T<:StaticArray}(::T, d::Integer) = size(T, d)
+@pure function size{T<:StaticArray}(a::Type{T}, d::Integer)
     s = size(a)
-    return (d <= length(s) ? s[d] : 1)
+    return d <= length(s) ? s[d] : 1
 end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
@@ -14,7 +17,8 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-Base.linearindexing{T<:StaticArray}(::Union{T,Type{T}}) = Base.LinearFast()
+Base.linearindexing(::StaticArray) = Base.LinearFast()
+Base.linearindexing{T<:StaticArray}(::Type{T}) = Base.LinearFast()
 
 # Default type search for similar_type
 """

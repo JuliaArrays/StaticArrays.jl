@@ -69,8 +69,8 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
 @inline (|){T}(a1::Number, a2::StaticArray{T}) = broadcast(|, a1, a2)
 @inline ($){T}(a1::Number, a2::StaticArray{T}) = broadcast($, a1, a2)
 
-
-@generated function Base.zeros{SA <: StaticArray}(::Union{SA,Type{SA}})
+@inline zeros{SA <: StaticArray}(::SA) = zeros(SA)
+@generated function Base.zeros{SA <: StaticArray}(::Type{SA})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -82,9 +82,9 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
         $(Expr(:call, SA, Expr(:tuple, v...)))
     end
 end
-@inline Base.zero{SA <: StaticArray}(a::Union{SA,Type{SA}}) = zeros(a)
 
-@generated function Base.ones{SA <: StaticArray}(::Union{SA,Type{SA}})
+@inline Base.ones{SA <: StaticArray}(::SA) = ones(SA)
+@generated function Base.ones{SA <: StaticArray}(::Type{SA})
     s = size(SA)
     T = eltype(SA)
     if T == Any
@@ -97,7 +97,8 @@ end
     end
 end
 
-@generated function Base.fill{SA <: StaticArray}(val, ::Union{SA,Type{SA}})
+@inline Base.fill{SA <: StaticArray}(val, ::SA) = fill(val, SA)
+@generated function Base.fill{SA <: StaticArray}(val, ::Type{SA})
     l = length(SA)
     T = eltype(SA)
     expr = [:valT for i = 1:l]

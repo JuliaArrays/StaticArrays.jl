@@ -58,7 +58,9 @@ immutable Point{S, T} <: StaticVector{T}
     data::NTuple{S, T}
 end
 
-@inline (::Type{Point}){S}(x::NTuple{S}) = Point{S}(x)
+if VERSION < v"0.5+"
+    @inline (::Type{Point}){S}(x::NTuple{S}) = Point{S}(x)
+end
 @inline (::Type{Point{S}}){S, T}(x::NTuple{S,T}) = Point{S,T}(x)
 @inline (::Type{Point{S}}){S, T <: Tuple}(x::T) = Point{S,promote_tuple_eltype(T)}(x)
 
