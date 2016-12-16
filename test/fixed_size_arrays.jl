@@ -1,7 +1,12 @@
-
 using StaticArrays
 using StaticArrays.FixedSizeArrays
 using Base.Test
+
+import StaticArrays.FixedSizeArrays: @fixed_vector
+
+@fixed_vector Vec StaticVector
+
+@fixed_vector Point StaticVector
 
 typealias Vec1d Vec{1, Float64}
 typealias Vec2d Vec{2, Float64}
@@ -38,22 +43,6 @@ RGB{T}(x::T) = RGB{T}(x, x, x)
 
 # methods I needed to define:
 
-# This is basically type pirating. I think it's hard to get the 1 valued constructor
-# otherwise (at least last time I tried). I love it though, so maybe still do it?
-Base.convert{N, T}(::Type{NTuple{N}}, x::T) = ntuple(i-> T(x), Val{N})
-Base.convert{N, T}(::Type{NTuple{N, T}}, x::Real) = ntuple(i-> T(x), Val{N})
-
-function Base.extrema{T <: StaticVector}(a::AbstractVector{T})
-    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), a)
-end
-function Base.minimum{T <: StaticVector}(a::AbstractVector{T})
-    reduce((x, v)-> min.(x[1], v), a)
-end
-function Base.maximum{T <: StaticVector}(a::AbstractVector{T})
-    reduce((x, v)-> max.(x[1], v), a)
-end
-
-# not passing, will port later, don't really care right now
 
 #=
 
@@ -138,13 +127,9 @@ rand(Mat{4,2, Int})
 @test typeof(rand(Mat{4,2, Int})) == Mat{4,2, Int, 8}
 @test typeof(rand(Vec{7, Int})) == Vec{7, Int}
 
-@test typeof(rand(Mat4d, -20f0:0.192f0:230f0)) == Mat4d
-@test typeof(rand(Mat{4,21,Float32}, -20f0:0.192f0:230f0)) == Mat{4,21,Float32}
+@test typeof(rand(-20f0:0.192f0:230f0, Mat4d)) == Mat4d
+@test typeof(rand(-20f0:0.192f0:230f0, Mat{4,21,Float32})) == Mat{4,21,Float32, 4*21}
 
-x = rand(D3{4,4,4, Float32})
-@test typeof(x) == D3{4,4,4, Float32}
-@test eltype(x) == Float32
-@test size(x) == (4,4,4)
 @test typeof(rand(Vec4d, 5,5)) == Matrix{Vec4d}
 #end
 # @testset "Randn" begin
@@ -231,43 +216,144 @@ v1 = Vec3d(1,2,3)
 @test @inferred(v1 ./ v1) == Vec3d(1.0,1.0,1.0)
 @test (<).(Vec(1,3), Vec(2,2)) === Vec{2,Bool}(true, false)
 
-
-
-
-# cross product
-@testset "cross" begin
-    @test cross(v1,v2) == Vec3d(-7.0,14.0,-7.0)
-    @test isa(cross(v1,v2), Vec3d)  == true
-
-    @test cross(vi,v2) == Vec3d(-7.0,14.0,-7.0)
-    @test isa(cross(vi,v2),Vec3d)  == true
-end
-
-@testset "norm/normalize" begin
-    @test norm(Vec3d(1.0,2.0,2.0)) == 3.0
-
-    a = Vec(3,4)
-    @test normalize(a) ≈ Vec(0.6, 0.8)
-end
-
-
-@testset "reduce" begin
-    a = rand(Vec{7, Float32})
-    x = reduce(+, a)
-    y = 0f0
-    for elem in a
-        y += elem
+v1 = Vec(1.0,2.0,3.0)
+v2 = Vec(6.0,5.0,4.0)
+vi = Vec(1,2,3)
+v2 = Vec(6.0,5.0,4.0)
+v1c = Vec(6.0+3.0im,5.0-2im,4.0+0.0im)
+v2c = v1 + v2*im
+v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
+@testset "Ops" begin
+    @testset "revers" begin
+        @test reverse(Vec(1,2,3,4,5)) == Vec(5,4,3,2,1)
     end
-    @test y == x
-
-    a = rand(Mat{7, 9, Cuint})
-    x2 = reduce(+, a)
-    y2 = Cuint(0)
-    for elem in a
-        y2 += elem
+    @testset "Negation" begin
+        @test @inferred(-v1) == Vec(-1.0,-2.0,-3.0)
+        @test isa(-v1, Vec3d) == true
     end
-    @test y2 == x2
+
+    @testset "Addition" begin
+        @test @inferred(v1+v2) == Vec3d(7.0,7.0,7.0)
+        @test @inferred(RGB(1,2,3) + RGB(2,2,2)) == RGB{Int}(3,4,5)
+    end
+    @testset "Subtraction" begin
+        @test @inferred(v2-v1) == Vec3d(5.0,3.0,1.0)
+        @test @inferred(RGB(1,2,3) - RGB(2,2,2)) == RGB{Int}(-1,0,1)
+    end
+    @testset "Multiplication" begin
+        @test @inferred(v1.*v2) == Vec3d(6.0,10.0,12.0)
+    end
+    @testset "Mixed Type Multiplication" begin
+        @test @inferred(vi.*v2) == Vec3d(6.0,10.0,12.0)
+    end
+    @testset "Division" begin
+        @test @inferred(v1 ./ v1) == Vec3d(1.0,1.0,1.0)
+    end
+
+    @testset "Relational" begin
+        @test (Vec(1,3) .< Vec(2,2)) == Vec{2,Bool}(true,false)
+        @test (RGB(1,2,3) .< RGB(2,2,2)) == RGB{Bool}(true,false,false)
+    end
+
+    @testset "Scalar" begin
+        @test @inferred(1.0 + v1) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(1.0 .+ v1) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(v1 + 1.0) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(v1 .+ 1.0) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(1 + v1) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(1 .+ v1) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(v1 + 1) == Vec3d(2.0,3.0,4.0)
+        @test @inferred(v1 .+ 1) == Vec3d(2.0,3.0,4.0)
+
+        @test @inferred(v1 - 1.0) == Vec3d(0.0,1.0,2.0)
+        @test @inferred(v1 .- 1.0) == Vec3d(0.0,1.0,2.0)
+        @test @inferred(1.0 - v1) == Vec3d(0.0,-1.0,-2.0)
+        @test @inferred(1.0 .- v1) == Vec3d(0.0,-1.0,-2.0)
+        @test @inferred(v1 - 1) == Vec3d(0.0,1.0,2.0)
+        @test @inferred(v1 .- 1) == Vec3d(0.0,1.0,2.0)
+        @test @inferred(1 - v1) == Vec3d(0.0,-1.0,-2.0)
+        @test @inferred(1 .- v1) == Vec3d(0.0,-1.0,-2.0)
+
+        @test @inferred(2.0 * v1) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(2.0 .* v1) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(v1 * 2.0) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(v1 .* 2.0) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(2 * v1) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(2 .* v1) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(v1 * 2) == Vec3d(2.0,4.0,6.0)
+        @test @inferred(v1 .* 2) == Vec3d(2.0,4.0,6.0)
+
+        @test @inferred(v1 / 2.0) == Vec3d(0.5,1.0,1.5)
+        @test @inferred(v1 ./ 2.0) == Vec3d(0.5,1.0,1.5)
+        @test @inferred(v1 / 2) == Vec3d(0.5,1.0,1.5)
+        @test @inferred(v1 ./ 2) == Vec3d(0.5,1.0,1.5)
+
+        @test @inferred(12.0 ./ v1) == Vec3d(12.0,6.0,4.0)
+        @test @inferred(12 ./ v1) == Vec3d(12.0,6.0,4.0)
+
+        @test @inferred((v1 .^ 2)) == Vec3d(1.0,4.0,9.0)
+        @test @inferred((v1 .^ 2.0)) == Vec3d(1.0,4.0,9.0)
+        @test @inferred((2.0 .^ v1)) == Vec3d(2.0,4.0,8.0)
+        @test @inferred((2 .^ v1)) == Vec3d(2.0,4.0,8.0)
+
+        a = Vec(3.2f0)
+        @test @inferred(a+0.2) == Vec1d(3.2f0+0.2)
+        @test @inferred(0.2+a) == Vec1d(3.2f0+0.2)
+        @test @inferred(a*0.2) == Vec1d(3.2f0*0.2)
+        @test @inferred(0.2*a) == Vec1d(3.2f0*0.2)
+        @test @inferred(a+0.2f0) == Vec{1,Float32}(3.4f0)
+        @test @inferred(0.2f0+a) == Vec{1,Float32}(3.4f0)
+        @test @inferred(a*0.2f0) == Vec{1,Float32}(3.2f0*0.2f0)
+        @test @inferred(0.2f0*a) == Vec{1,Float32}(3.2f0*0.2f0)
+    end
+    @testset "vector norm+cross product" begin
+
+        @test norm(Vec3d(1.0,2.0,2.0)) == 3.0
+        @test norm(Vec3d(1.0,2.0,2.0),2) == 3.0
+        @test norm(Vec3d(1.0,2.0,2.0),Inf) == 2.0
+        @test norm(Vec3d(1.0,2.0,2.0),1) == 5.0
+
+        # cross product
+        @test cross(v1,v2) == Vec3d(-7.0,14.0,-7.0)
+        @test isa(cross(v1,v2), Vec3d)  == true
+
+        @test cross(vi,v2) == Vec3d(-7.0,14.0,-7.0)
+        @test isa(cross(vi,v2),Vec3d)  == true
+
+        a,b = Vec2d(0,1), Vec2d(1,0)
+        @test cross(a,b) == -1.0
+        @test isa(cross(a,b), Float64) == true
+    end
+
+    @testset "normalize" begin
+        a = Vec(3,4)
+        b = Vec(3.,4.)
+        @test normalize(a) ≈ Vec(0.6,0.8)
+        @test normalize(b) ≈ Vec(0.6,0.8)
+    end
+
+    @testset "reduce" begin
+        a = rand(Vec{7, Float32})
+        x = reduce(+, a)
+        y = 0f0
+        for elem in a
+            y += elem
+        end
+        @test y == x
+
+        a = rand(Mat{7, 9, Cuint})
+        x2 = reduce(+, a)
+        y2 = Cuint(0)
+        for elem in a
+            y2 += elem
+        end
+        @test y2 == x2
+    end
 end
+
+
+
+
 
 @test sum(eye(Mat4d)) == 4.0
 

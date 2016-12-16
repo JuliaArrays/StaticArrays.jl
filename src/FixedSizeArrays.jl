@@ -13,7 +13,7 @@ using ..StaticArrays
 export FixedArray
 export FixedVector
 export FixedMatrix
-export Mat, Vec, Point
+export Mat
 export @fsa
 export FixedVectorNoTuple
 
@@ -80,5 +80,96 @@ end
 function Base.maximum{T <: StaticVector}(a::AbstractVector{T})
     reduce((x, v)-> max.(x[1], v), a)
 end
+
+
+
+macro fixed_vector(name, parent)
+    esc(quote
+        immutable $(name){S, T} <: $(parent){T}
+            data::NTuple{S, T}
+
+            function $(name)(x::NTuple{S,T})
+                new(x)
+            end
+            function $(name)(x::NTuple{S})
+                new(StaticArrays.convert_ntuple(T, x))
+            end
+        end
+        # Array constructor
+        @inline function (::Type{$(name){S}}){S, T}(x::AbstractVector{T})
+            @assert S <= length(x)
+            $(name){S, T}(ntuple(i-> x[i], Val{S}))
+        end
+        @inline function (::Type{$(name){S, T1}}){S, T1, T2}(x::AbstractVector{T2})
+            @assert S <= length(x)
+            $(name){S, T1}(ntuple(i-> T1(x[i]), Val{S}))
+        end
+
+        @inline function (::Type{$(name){S, T}}){S, T}(x)
+            $(name){S, T}(ntuple(i-> T(x), Val{S}))
+        end
+
+
+        @inline function (::Type{$(name){S}}){S, T}(x::T)
+            $(name){S, T}(ntuple(i-> x, Val{S}))
+        end
+        @inline function (::Type{$(name){1, T}}){T}(x::T)
+            $(name){1, T}((x,))
+        end
+        @inline (::Type{$(name)}){S}(x::NTuple{S}) = $(name){S}(x)
+        @inline function (::Type{$(name){S}}){S, T <: Tuple}(x::T)
+            $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
+        end
+        @generated function (::Type{SV}){SV <: $(name)}(x::StaticVector)
+            len = size_or(SV, size(x))[1]
+            if length(x) == len
+                :(SV(Tuple(x)))
+            elseif length(x) > len
+                elems = [:(x[$i]) for i = 1:len]
+                :(SV($(Expr(:tuple, elems...))))
+            else
+                error("Static Vector too short: $x, target type: $SV")
+            end
+        end
+
+        Base.@pure Base.size{S}(::Union{$(name){S}, Type{$(name){S}}}) = (S, )
+        Base.@pure Base.size{S,T}(::Type{$(name){S, T}}) = (S,)
+
+        Base.@propagate_inbounds function Base.getindex(v::$(name), i::Integer)
+            v.data[i]
+        end
+        @inline Base.Tuple(v::$(name)) = v.data
+        @inline Base.convert{S, T}(::Type{$(name){S, T}}, x::NTuple{S, T}) = $(name){S, T}(x)
+        @inline Base.convert{SV <: $(name)}(::Type{SV}, x::StaticVector) = SV(x)
+        @inline function Base.convert{S, T}(::Type{$(name){S, T}}, x::Tuple)
+            $(name){S, T}(convert(NTuple{S, T}, x))
+        end
+        # StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}) = $(name)
+        # function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T})
+        #     $(name){length(SV), T}
+        # end
+        # function StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}, s::Tuple{Int})
+        #     $(name){s[1], eltype(SV)}
+        # end
+        function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T}, s::Tuple{Int})
+            $(name){s[1], T}
+        end
+        function StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}, s::Tuple{Int})
+            $(name){s[1], eltype(SV)}
+        end
+        eltype_or(::Type{$(name)}, or) = or
+        eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
+        eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or
+        eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
+
+        size_or(::Type{$(name)}, or) = or
+        size_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = or
+        size_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = (S,)
+        size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
+    end)
+end
+
+
+
 
 end

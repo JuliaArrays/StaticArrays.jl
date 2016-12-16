@@ -66,6 +66,14 @@ end
         SMatrix{S1, S2, $T, L}(x)
     end
 end
+typealias SMatrixNoType{S1, S2, L, T} SMatrix{S1, S2, T, L}
+@generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L})
+    T = promote_tuple_eltype(x)
+    return quote
+        $(Expr(:meta, :inline))
+        SMatrix{S1, S2, $T, L}(x)
+    end
+end
 
 @generated function (::Type{SMatrix{S1,S2,T}}){S1,S2,T,L}(x::NTuple{L})
     return quote
