@@ -81,7 +81,6 @@ macro SVector(ex)
         exprs = [:($f($j)) for j in rng]
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :SVector, length(rng)), Expr(:tuple, exprs...))))
         end
@@ -101,7 +100,6 @@ macro SVector(ex)
         exprs = [:($f($j)) for j in rng]
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :SVector, length(rng), T), Expr(:tuple, exprs...))))
         end
@@ -109,12 +107,10 @@ macro SVector(ex)
         if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand ||ex.args[1] == :randn
             if length(ex.args) == 2
                 return quote
-                    $(Expr(:meta, :inline))
                     $(esc(ex.args[1]))(SVector{$(esc(ex.args[2]))})
                 end
             elseif length(ex.args) == 3
                 return quote
-                    $(Expr(:meta, :inline))
                     $(esc(ex.args[1]))(SVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
                 end
             else
@@ -123,7 +119,6 @@ macro SVector(ex)
         elseif ex.args[1] == :fill
             if length(ex.args) == 3
                 return quote
-                    $(Expr(:meta, :inline))
                     $(esc(ex.args[1]))($(esc(ex.args[2])), SVector{$(esc(ex.args[3]))})
                 end
             else

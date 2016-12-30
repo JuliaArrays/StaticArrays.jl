@@ -209,7 +209,6 @@ macro MArray(ex)
         end
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :MArray, (rng_lengths...)), Expr(:tuple, exprs...))))
         end
@@ -249,7 +248,6 @@ macro MArray(ex)
         end
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :MArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
         end
@@ -259,7 +257,6 @@ macro MArray(ex)
                 error("@MArray got bad expression: $(ex.args[1])()")
             else
                 return quote
-                    $(Expr(:meta, :inline))
                     if isa($(esc(ex.args[2])), DataType)
                         $(ex.args[1])($(esc(Expr(:curly, MArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
                     else
@@ -274,20 +271,17 @@ macro MArray(ex)
                 error("@MArray got bad expression: $(ex.args[1])($(ex.args[2]))")
             else
                 return quote
-                    $(Expr(:meta, :inline))
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:tuple, ex.args[3:end]...)))})
                 end
             end
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    $(Expr(:meta, :inline))
                     eye(MArray{($(esc(ex.args[2])), $(esc(ex.args[2])))})
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
-                    $(Expr(:meta, :inline))
                     if isa($(esc(ex.args[2])), DataType)
                         eye(MArray{($(esc(ex.args[3])), $(esc(ex.args[3]))), $(esc(ex.args[2]))})
                     else
@@ -296,7 +290,6 @@ macro MArray(ex)
                 end
             elseif length(ex.args) == 4
                 return quote
-                    $(Expr(:meta, :inline))
                     eye(MArray{($(esc(ex.args[3])), $(esc(ex.args[4]))), $(esc(ex.args[2]))})
                 end
             else
