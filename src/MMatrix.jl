@@ -206,7 +206,6 @@ macro MMatrix(ex)
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :MMatrix, length(rng1), length(rng2)), Expr(:tuple, exprs...))))
         end
@@ -227,7 +226,6 @@ macro MMatrix(ex)
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
 
         return quote
-            $(Expr(:meta, :inline))
             $(esc(f_expr))
             $(esc(Expr(:call, Expr(:curly, :MMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
         end
@@ -235,12 +233,10 @@ macro MMatrix(ex)
         if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
             if length(ex.args) == 3
                 return quote
-                    $(Expr(:meta, :inline))
                     $(ex.args[1])(MMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
                 end
             elseif length(ex.args) == 4
                 return quote
-                    $(Expr(:meta, :inline))
                     $(ex.args[1])(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
                 end
             else
@@ -249,7 +245,6 @@ macro MMatrix(ex)
         elseif ex.args[1] == :fill
             if length(ex.args) == 4
                 return quote
-                    $(Expr(:meta, :inline))
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4]))})
                 end
             else
@@ -258,13 +253,11 @@ macro MMatrix(ex)
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    $(Expr(:meta, :inline))
                     eye(MMatrix{$(esc(ex.args[2]))})
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
-                    $(Expr(:meta, :inline))
                     if isa($(esc(ex.args[2])), DataType)
                         eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))})
                     else
@@ -273,7 +266,6 @@ macro MMatrix(ex)
                 end
             elseif length(ex.args) == 4
                 return quote
-                    $(Expr(:meta, :inline))
                     eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
                 end
             else
