@@ -3,7 +3,7 @@
         sv = SVector{4}(4,5,6,7)
 
         # Tuple
-        @test (@inferred getindex(sv, (4,3,2,1))) === SVector((7,6,5,4))
+        @test (@inferred getindex(sv, SVector(4,3,2,1))) === SVector((7,6,5,4))
 
         # Colon
         @test (@inferred getindex(sv,:)) === sv
@@ -21,14 +21,14 @@
         @test (mv[:] = vec; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
     end
 
-    @testset "Linear getindex()/setindex!() with a tuple on an Array" begin
+    @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
         v = [11,12,13]
         m = [1.0 2.0; 3.0 4.0]
 
-        @test v[(2,3)] === SVector(12, 13)
-        @test m[(2,3)] === SVector(3.0, 2.0)
+        @test v[(2,3)] === (12, 13)
+        @test m[(2,3)] === (3.0, 2.0)
 
-        @test (v[(2,3)] = [22,23]; (v[2] == 22) & (v[3] == 23))
+        @test (v[SVector(2,3)] = [22,23]; (v[2] == 22) & (v[3] == 23))
 
     end
 
@@ -74,8 +74,8 @@
         m = [1.0 2.0; 3.0 4.0]
 
         @test m[(1,2), (1,2)] === @SMatrix [1.0 2.0; 3.0 4.0]
-        @test m[1, (1,2)] === @SVector [1.0, 2.0]
-        @test m[(1,2), 1] === @SVector [1.0, 3.0]
+        @test m[1, (1,2)] ===  (1.0, 2.0)
+        @test m[(1,2), 1] ===  (1.0, 3.0)
     end
 
     @testset "3D scalar indexing" begin
