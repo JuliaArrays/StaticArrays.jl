@@ -131,6 +131,11 @@ end
 @inline sumabs2{T}(a::StaticArray{T}) = mapreduce(abs2, +, zero(T), a)
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
+# Reductions along a dimension
+@inline sum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(+, a, dim)
+@inline prod{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(*, a, dim)
+@inline all{D}(a::StaticArray{Bool}, dim::Type{Val{D}}) = reducedim(&, a, dim)
+@inline any{D}(a::StaticArray{Bool}, dim::Type{Val{D}}) = reducedim(|, a, dim)
 @inline minimum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(min, a, dim)
 @inline maximum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(max, a, dim)
 

@@ -26,12 +26,26 @@
 
     @testset "reduce in dim" begin
         a = @SArray rand(4,3,2)
-        @test maximum(a, Val{1}) == maximum(a, 1)
-        @test maximum(a, Val{2}) == maximum(a, 2)
-        @test maximum(a, Val{3}) == maximum(a, 3)
-        @test minimum(a, Val{1}) == minimum(a, 1)
-        @test minimum(a, Val{2}) == minimum(a, 2)
-        @test minimum(a, Val{3}) == minimum(a, 3)
+        b = @SArray rand(Bool,4,3,2)
+        @test sum(a, Val{1}) == sum(Array(a), 1)
+        @test sum(a, Val{2}) == sum(Array(a), 2)
+        @test sum(a, Val{3}) == sum(Array(a), 3)
+        @test prod(a, Val{1}) == prod(Array(a), 1)
+        @test prod(a, Val{2}) == prod(Array(a), 2)
+        @test prod(a, Val{3}) == prod(Array(a), 3)
+        @test any(b, Val{1}) == any(Array(b), 1)
+        @test any(b, Val{2}) == any(Array(b), 2)
+        @test any(b, Val{3}) == any(Array(b), 3)
+        @test all(b, Val{1}) == all(Array(b), 1)
+        @test all(b, Val{2}) == all(Array(b), 2)
+        @test all(b, Val{3}) == all(Array(b), 3)
+        @test maximum(a, Val{1}) == maximum(Array(a), 1)
+        @test maximum(a, Val{2}) == maximum(Array(a), 2)
+        @test maximum(a, Val{3}) == maximum(Array(a), 3)
+        @test minimum(a, Val{1}) == minimum(Array(a), 1)
+        @test minimum(a, Val{2}) == minimum(Array(a), 2)
+        @test minimum(a, Val{3}) == minimum(Array(a), 3)
+
         @test diff(a) == diff(a, Val{1}) == a[2:end,:,:] - a[1:end-1,:,:]
         @test diff(a, Val{2}) == a[:,2:end,:] - a[:,1:end-1,:]
         @test diff(a, Val{3}) == a[:,:,2:end] - a[:,:,1:end-1]
