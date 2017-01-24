@@ -20,7 +20,7 @@ immutable SVector{S, T} <: StaticVector{T}
         new(x)
     end
 
-    function SVector(x::NTuple{S})
+    function SVector(x::NTuple{S,Any})
         new(convert_ntuple(T, x))
     end
 end
@@ -39,6 +39,8 @@ end
 #####################
 ## SVector methods ##
 #####################
+
+similar_type{T,N,S}(::Type{SVector{N,T}}, ::Type{S}) = SVector{N,S}
 
 @pure size{S}(::Type{SVector{S}}) = (S, )
 @pure size{S,T}(::Type{SVector{S,T}}) = (S,)

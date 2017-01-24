@@ -22,7 +22,7 @@ immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
         new(d)
     end
 
-    function SMatrix(d::NTuple{L})
+    function SMatrix(d::NTuple{L,Any})
         check_smatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(convert_ntuple(T, d))
     end
@@ -45,7 +45,7 @@ end
     end
 end
 
-@generated function (::Type{SMatrix{S1}}){S1,L}(x::NTuple{L})
+@generated function (::Type{SMatrix{S1}}){S1,L}(x::NTuple{L,Any})
     S2 = div(L, S1)
     if S1*S2 != L
         error("Incorrect matrix sizes. $S1 does not divide $L elements")
@@ -58,7 +58,7 @@ end
     end
 end
 
-@generated function (::Type{SMatrix{S1,S2}}){S1,S2,L}(x::NTuple{L})
+@generated function (::Type{SMatrix{S1,S2}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
 
     return quote
@@ -67,7 +67,7 @@ end
     end
 end
 typealias SMatrixNoType{S1, S2, L, T} SMatrix{S1, S2, T, L}
-@generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L})
+@generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
     return quote
         $(Expr(:meta, :inline))
@@ -75,7 +75,7 @@ typealias SMatrixNoType{S1, S2, L, T} SMatrix{S1, S2, T, L}
     end
 end
 
-@generated function (::Type{SMatrix{S1,S2,T}}){S1,S2,T,L}(x::NTuple{L})
+@generated function (::Type{SMatrix{S1,S2,T}}){S1,S2,T,L}(x::NTuple{L,Any})
     return quote
         $(Expr(:meta, :inline))
         SMatrix{S1, S2, T, L}(x)
@@ -115,6 +115,9 @@ end
 #####################
 ## SMatrix methods ##
 #####################
+
+similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S})                   = SMatrix{M,N,S,L}
+similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S}, Size::Tuple{Int}) = SVector{Size[1],S}
 
 @pure size{S1,S2}(::Type{SMatrix{S1,S2}}) = (S1, S2)
 @pure size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = (S1, S2)

@@ -11,6 +11,21 @@ typealias StaticScalar{T} StaticArray{T,0}
     return d <= length(s) ? s[d] : 1
 end
 
+# This has to be defined after length and size because it is generated
+@generated function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
+    L = length(SA)
+    exprs = [:(a[$i]) for i = 1:L]
+
+    return quote
+        $(Expr(:meta, :inline))
+        if length(a) != $L
+            L = $L
+            error("Dimension mismatch. Expected input array of length $L, got length $(length(a))")
+        end
+        @inbounds return SA($(Expr(:tuple, exprs...)))
+    end
+end
+
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
     ii = sub2ind(size(a), i...)
@@ -48,36 +63,8 @@ end
 @pure function similar_type{SA<:StaticArray,T,S}(::Union{SA,Type{SA}}, ::Type{T}, size::Size{S})
     similar_type(similar_type(SA, T), size)
 end
-@generated function similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T})
-    # This function has a strange error (on tests) regarding double-inference, if it is marked @pure
-    if T == eltype(SA)
-        return SA
-    end
 
-    primary_type = (SA.name.primary)
-    eltype_param_number = super_eltype_param(primary_type)
-    if isnull(eltype_param_number)
-        if ndims(SA) == 1
-            return SVector{length(SA), T}
-        elseif ndims(SA) == 2
-            sizes = size(SA)
-            return SMatrix{sizes[1], sizes[2], T, prod(sizes)}
-        else
-            sizes = size(SA)
-            return SArray{sizes, T, length(sizes), prod(sizes)}
-        end
-    end
-
-    T_out = primary_type
-    for i = 1:length(T_out.parameters)
-        if i == get(eltype_param_number)
-            T_out = T_out{T}
-        else
-            T_out = T_out{SA.parameters[i]}
-        end
-    end
-    return T_out
-end
+similar_type{T}(sa::StaticArray, ::Type{T}) = similar_type(typeof(sa), T)
 
 @pure function super_eltype_param(T)
     T_super = supertype(T)

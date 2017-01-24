@@ -21,7 +21,7 @@ type MVector{S, T} <: StaticVector{T}
         new(in)
     end
 
-    function MVector(in::NTuple{S})
+    function MVector(in::NTuple{S, Any})
         new(convert_ntuple(T,in))
     end
 
@@ -34,7 +34,7 @@ type MVector{S, T} <: StaticVector{T}
     end
 end
 
-@inline (::Type{MVector}){S}(x::NTuple{S}) = MVector{S}(x)
+@inline (::Type{MVector}){S}(x::NTuple{S,Any}) = MVector{S}(x)
 @inline (::Type{MVector{S}}){S, T}(x::NTuple{S,T}) = MVector{S,T}(x)
 @inline (::Type{MVector{S}}){S, T <: Tuple}(x::T) = MVector{S,promote_tuple_eltype(T)}(x)
 
@@ -45,6 +45,8 @@ end
 #####################
 ## MVector methods ##
 #####################
+
+similar_type{T,N,S}(::Type{MVector{N,T}}, ::Type{S}) = MVector{N,S}
 
 @pure size{S}(::Type{MVector{S}}) = (S, )
 @pure size{S,T}(::Type{MVector{S,T}}) = (S,)
