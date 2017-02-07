@@ -37,8 +37,8 @@ include("MMatrix.jl")
 include("MArray.jl")
 include("SizedArray.jl")
 
-include("indexing.jl")
 include("abstractarray.jl")
+include("indexing.jl")
 include("mapreduce.jl")
 include("arraymath.jl")
 include("linalg.jl")
@@ -50,7 +50,9 @@ include("inv.jl")
 include("eigen.jl")
 include("cholesky.jl")
 
-include("FixedSizeArrays.jl")
+if VERSION < v"0.6.0-dev.1671"
+    include("FixedSizeArrays.jl")
+end
 include("ImmutableArrays.jl")
 
 # TODO list

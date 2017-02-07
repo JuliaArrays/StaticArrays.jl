@@ -4,7 +4,7 @@ typealias TupleN{T,N} NTuple{N,T}
 # Cast any Tuple to an TupleN{T}
 @inline convert_ntuple{T}(::Type{T},d::T) = T # For zero-dimensional arrays
 @inline convert_ntuple{N,T}(::Type{T},d::NTuple{N,T}) = d
-@generated function convert_ntuple{N,T}(::Type{T}, d::NTuple{N})
+@generated function convert_ntuple{N,T}(::Type{T}, d::NTuple{N,Any})
     exprs = ntuple(i -> :(convert(T, d[$i])), Val{N})
     return quote
         $(Expr(:meta, :inline))
@@ -30,7 +30,7 @@ end
 
 # some convenience functions for non-static arrays, generators, etc...
 @inline convert{T}(::Type{Tuple}, a::AbstractArray{T}) = (a...)::Tuple{Vararg{T}}
-@inline function convert{N,T}(::Type{NTuple{N}}, a::AbstractArray{T})
+@inline function convert{N,T}(::Type{NTuple{N,Any}}, a::AbstractArray{T})
     @boundscheck if length(a) != N
         error("Array of length $(length(a)) cannot be converted to a $N-tuple")
     end
@@ -49,7 +49,7 @@ end
 if VERSION < v"0.5+"
     # TODO try and make this generate fast code
     @inline convert(::Type{Tuple}, g::Base.Generator) = (g...)
-    @inline function convert{N}(::Type{NTuple{N}}, g::Base.Generator)
+    @inline function convert{N}(::Type{NTuple{N,Any}}, g::Base.Generator)
         @boundscheck if length(g.iter) != N
             error("Array of length $(length(a)) cannot be converted to a $N-tuple")
         end
@@ -59,7 +59,7 @@ if VERSION < v"0.5+"
 end
 
 #=
-@generated function convert{N}(::Type{NTuple{N}}, g::Base.Generator)
+@generated function convert{N}(::Type{NTuple{N,Any}}, g::Base.Generator)
     exprs = [:(g.f(g.iter[$j])) for j=1:N]
     return quote
         @boundscheck if length(g.iter) != N

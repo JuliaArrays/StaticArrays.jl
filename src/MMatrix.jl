@@ -23,7 +23,7 @@ type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
         new(d)
     end
 
-    function MMatrix(d::NTuple{L})
+    function MMatrix(d::NTuple{L,Any})
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(convert_ntuple(T, d))
     end
@@ -101,6 +101,9 @@ end
 #####################
 ## MMatrix methods ##
 #####################
+
+similar_type{T,N,M,L,S}(::Type{MMatrix{N,M,T,L}}, ::Type{S})                   = MMatrix{M,N,S,L}
+similar_type{T,N,M,L,S}(::Type{MMatrix{N,M,T,L}}, ::Type{S}, Size::Tuple{Int}) = MVector{Size[1],S}
 
 @pure size{S1,S2}(::Type{MMatrix{S1,S2}}) = (S1, S2)
 @pure size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = (S1, S2)

@@ -31,7 +31,7 @@ end
 @inline (::Type{SizedArray{S,T,N}}){S,T,N}() = SizedArray{S,T,N,N}()
 @inline (::Type{SizedArray{S,T}}){S,T}() = SizedArray{S,T,_ndims(S),_ndims(S)}()
 
-@generated function (::Type{SizedArray{S,T,N,M}}){S,T,N,M,L}(x::NTuple{L})
+@generated function (::Type{SizedArray{S,T,N,M}}){S,T,N,M,L}(x::NTuple{L,Any})
     if L != prod(S)
         error("Dimension mismatch")
     end
@@ -48,8 +48,11 @@ end
 @inline (::Type{SizedArray{S,T}}){S,T}(x::Tuple) = SizedArray{S,T,_dims(S),_dims(S)}(x)
 @inline (::Type{SizedArray{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,_dims(S),_dims(S)}(x)
 
+similar_type{S,T,N,M,R}(::Type{SizedArray{S,T,N,M}}, ::Type{R}) = SizedArray{S,R,N,M}
+
 # Overide some problematic default behaviour
 @inline convert{SA<:SizedArray}(::Type{SA}, sa::SizedArray) = SA(sa.data)
+@inline convert{SA<:SizedArray}(::Type{SA}, sa::SA) = sa
 
 # Back to Array (unfortunately need both convert and construct to overide other methods)
 @inline (::Type{Array})(sa::SizedArray) = sa.data

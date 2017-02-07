@@ -157,6 +157,9 @@ macro fixed_vector(name, parent)
         function StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}, s::Tuple{Int})
             $(name){s[1], eltype(SV)}
         end
+        function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T})
+            $(name){length(SV), T}
+        end
         eltype_or(::Type{$(name)}, or) = or
         eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
         eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or

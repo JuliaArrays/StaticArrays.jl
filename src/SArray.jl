@@ -23,7 +23,7 @@ immutable SArray{Size, T, N, L} <: StaticArray{T, N}
         new(x)
     end
 
-    function SArray(x::NTuple{L})
+    function SArray(x::NTuple{L,Any})
         check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
         new(convert_ntuple(T, x))
     end
@@ -73,6 +73,8 @@ end
 ####################
 ## SArray methods ##
 ####################
+
+similar_type{M,T,N,L,S}(::Type{SArray{M,T,N,L}}, ::Type{S}) = SArray{M,S,N,L}
 
 @pure size{Size}(::Type{SArray{Size}}) = Size
 @pure size{Size,T}(::Type{SArray{Size,T}}) = Size

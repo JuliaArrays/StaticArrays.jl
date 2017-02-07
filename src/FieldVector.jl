@@ -21,10 +21,10 @@ abstract FieldVector{T} <: StaticVector{T}
 # Is this a good idea?? Should people just define constructors that accept tuples?
 @inline (::Type{FV}){FV<:FieldVector}(x::Tuple) = FV(x...)
 
-@pure size{FV<:FieldVector}(::FV) = (length(FV.types),)
-@pure size{FV<:FieldVector}(::Type{FV}) = (length(FV.types),)
-@pure length{FV<:FieldVector}(::FV) = size(FV)[1]
-@pure length{FV<:FieldVector}(::Type{FV}) = size(FV)[1]
+@pure length{FV<:FieldVector}(::FV) = nfields(FV)
+@pure length{FV<:FieldVector}(::Type{FV}) = nfields(FV)
+@pure size{FV<:FieldVector}(::FV) = (length(FV),)
+@pure size{FV<:FieldVector}(::Type{FV}) = (length(FV),)
 
 @inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
 @inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)

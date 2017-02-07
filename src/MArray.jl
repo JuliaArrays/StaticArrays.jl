@@ -24,7 +24,7 @@ type MArray{Size, T, N, L} <: StaticArray{T, N}
         new(x)
     end
 
-    function MArray(x::NTuple{L})
+    function MArray(x::NTuple{L,Any})
         check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
         new(convert_ntuple(T, x))
     end
@@ -93,6 +93,8 @@ end
 ####################
 ## MArray methods ##
 ####################
+
+similar_type{M,T,N,L,S}(::Type{MArray{M,T,N,L}}, ::Type{S}) = MArray{M,S,N,L}
 
 @pure size{Size}(::Type{MArray{Size}}) = Size
 @pure size{Size,T}(::Type{MArray{Size,T}}) = Size
