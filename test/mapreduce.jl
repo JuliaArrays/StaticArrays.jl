@@ -73,4 +73,18 @@
         broadcast!(+, mm, v1, M)
         @test mm == @MMatrix [3 4; 7 8; 11 12; 15 16]
     end
+
+    @testset "colwise" begin
+        v = @SVector [2, 4, 6]
+        M = @SMatrix [1 2 3; 4 5 6; 7 8 9]
+        T = eltype(v)
+        vcross = @SMatrix [zero(T) -v[3] v[2];
+                       v[3] zero(T) -v[1];
+                      -v[2] v[1] zero(T)]
+        @test vcross * M == colwise(cross, v, M)
+        @test colwise(cross, M, v) == -colwise(cross, v, M)
+        @test colwise(+, M, v) == broadcast(+, M, v)
+        v2 = @SVector [1, 2, 3, 4]
+        @test_throws DimensionMismatch colwise(+, M, v2)
+    end
 end

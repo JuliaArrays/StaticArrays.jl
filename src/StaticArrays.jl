@@ -22,6 +22,7 @@ export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
 export similar_type, setindex
+export colwise
 
 include("util.jl")
 

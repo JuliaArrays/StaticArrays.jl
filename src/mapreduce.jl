@@ -428,3 +428,24 @@ end
         end
     end
 end
+
+#############
+## colwise ##
+#############
+@generated function colwise(f, vec::StaticVector, mat::StaticArray)
+    length(vec) == size(mat, 1) || throw(DimensionMismatch())
+    exprs = [:(f(vec, mat[:, $j])) for j = 1:size(mat, 2)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, hcat, exprs...))
+    end
+end
+
+@generated function colwise(f, mat::StaticArray, vec::StaticVector)
+    length(vec) == size(mat, 1) || throw(DimensionMismatch())
+    exprs = [:(f(mat[:, $j], vec)) for j = 1:size(mat, 2)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, hcat, exprs...))
+    end
+end
