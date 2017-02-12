@@ -1,6 +1,6 @@
 # StaticArrays
 
-*Statically sized arrays for Julia 0.5*
+*Statically sized arrays for Julia*
 
 [![StaticArrays](http://pkg.julialang.org/badges/StaticArrays_0.5.svg)](http://pkg.julialang.org/?pkg=StaticArrays)
 [![Build Status](https://travis-ci.org/JuliaArrays/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/StaticArrays.jl)
