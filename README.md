@@ -24,7 +24,7 @@ out of any uniform Julia "struct".
 
 ## Speed
 
-The speed of small `SVector`s, `SMatrix`s and `SArray`s is often > 10 × faster
+The speed of *small* `SVector`s, `SMatrix`s and `SArray`s is often > 10 × faster
 than `Base.Array`. See this simplified benchmark (or see the full results [here](https://github.com/andyferris/StaticArrays.jl/blob/master/perf/bench10.txt)):
 
 ```
@@ -42,7 +42,16 @@ Matrix symmetric eigendecomposition -> 82x speedup
 Matrix Cholesky decomposition       -> 23.6x speedup
 ```
 
-(Run with `julia -O3` for even faster SIMD code with immutable static arrays!)
+These results improve significantly when using `julia -O3` with immutable static
+arrays, as the extra optimization results in surprisingly good SIMD code.
+
+Note that in the current implementation, working with large `StaticArray`s puts a
+lot of stress on the compiler, and becomes slower than `Base.Array` as the size
+increases.  A very rough rule of thumb is that you should consider using a
+normal `Array` for arrays larger than 100 elements. For example, the performance
+crossover point for a matrix multiply microbenchmark seems to be about 11x11 in
+julia 0.5 with default optimizations.
+
 
 ## Quick start
 
