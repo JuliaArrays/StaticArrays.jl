@@ -116,7 +116,7 @@ end
 ## SMatrix methods ##
 #####################
 
-similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S})                   = SMatrix{M,N,S,L}
+similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S}) = SMatrix{N, M, S, L}
 similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S}, Size::Tuple{Int}) = SVector{Size[1],S}
 
 @pure size{S1,S2}(::Type{SMatrix{S1,S2}}) = (S1, S2)
