@@ -13,31 +13,6 @@
     end
 end
 
-# Tuple indexing into AbstractArray. TODO, move into base
-@generated function getindex{S}(a::AbstractArray, inds::NTuple{S,Integer})
-    exprs = [:(a[inds[$i]]) for i = 1:S]
-    return quote
-        $(Expr(:meta, :inline, :propagate_inbounds))
-        return $(Expr(:tuple, exprs...))
-    end
-end
-# Convert to StaticArrays using tuples
-# TODO think about bounds checks here.
-@generated function getindex{S,T}(m::AbstractArray{T}, inds1::NTuple{S, Integer}, i2::Integer)
-    exprs = [:(m[inds1[$j], i2]) for j = 1:S]
-    return Expr(:tuple, exprs...)
-end
-
-@generated function getindex{S,T}(m::AbstractArray{T}, i1::Integer, inds2::NTuple{S, Integer})
-    exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
-    return Expr(:tuple, exprs...)
-end
-
-@generated function getindex{S1,S2,T}(m::AbstractArray{T}, inds1::NTuple{S1, Integer}, inds2::NTuple{S2, Integer})
-    exprs = [:(m[inds1[$j1], inds2[$j2]]) for j1 = 1:S1, j2 = 1:S2]
-    return Expr(:call, SMatrix{S1,S2,T}, Expr(:tuple, exprs...)) # TODO decision: return tuple? Leave it?
-end
-
 # Static Vector indexing into AbstractArrays
 @generated function getindex{T, I <: Integer}(
         a::AbstractArray{T}, inds::StaticVector{I}

@@ -23,13 +23,8 @@
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
         v = [11,12,13]
-        m = [1.0 2.0; 3.0 4.0]
-
-        @test v[(2,3)] === (12, 13)
-        @test m[(2,3)] === (3.0, 2.0)
 
         @test (v[SVector(2,3)] = [22,23]; (v[2] == 22) & (v[3] == 23))
-
     end
 
     @testset "2D getindex() on SMatrix" begin
@@ -68,14 +63,6 @@
         @test (mm = MMatrix{2,2,Int}(); mm[:,(2,1)] = sm[:,(2,1)]; (@inferred getindex(mm, :, (2,1)))::MMatrix == @MMatrix [3 1; 4 2])
         @test (mm = MMatrix{2,2,Int}(); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::MVector == @MVector [1,3])
         @test (mm = MMatrix{2,2,Int}(); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::MVector == @MVector [1,2])
-    end
-
-    @testset "2D getindex() with tuples on an Array" begin
-        m = [1.0 2.0; 3.0 4.0]
-
-        @test m[(1,2), (1,2)] === @SMatrix [1.0 2.0; 3.0 4.0]
-        @test m[1, (1,2)] ===  (1.0, 2.0)
-        @test m[(1,2), 1] ===  (1.0, 3.0)
     end
 
     @testset "3D scalar indexing" begin
