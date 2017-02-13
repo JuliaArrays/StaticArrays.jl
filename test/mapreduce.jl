@@ -72,5 +72,7 @@
 
         broadcast!(+, mm, v1, M)
         @test mm == @MMatrix [3 4; 7 8; 11 12; 15 16]
+        # issue #103
+        @test map(+, M, M) == @SMatrix [2 4; 6 8; 10 12; 14 16]
     end
 end
