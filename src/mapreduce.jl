@@ -428,3 +428,34 @@ end
         end
     end
 end
+
+#############
+## colwise ##
+#############
+"""
+    colwise(f, vec, mat)
+
+Return a matrix `A` such that `A[:, i] == f(vec, mat[:, i])`.
+"""
+@generated function colwise(f, vec::StaticVector, mat::StaticArray)
+    length(vec) == size(mat, 1) || throw(DimensionMismatch())
+    exprs = [:(f(vec, mat[:, $j])) for j = 1:size(mat, 2)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, hcat, exprs...))
+    end
+end
+
+"""
+    colwise(f, mat, vec)
+
+Return a matrix `A` such that `A[:, i] == f(mat[:, i], vec)`.
+"""
+@generated function colwise(f, mat::StaticArray, vec::StaticVector)
+    length(vec) == size(mat, 1) || throw(DimensionMismatch())
+    exprs = [:(f(mat[:, $j], vec)) for j = 1:size(mat, 2)]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:call, hcat, exprs...))
+    end
+end
