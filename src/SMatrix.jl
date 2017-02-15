@@ -116,12 +116,9 @@ end
 ## SMatrix methods ##
 #####################
 
-similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S}) = SMatrix{N, M, S, L}
-similar_type{T,N,M,L,S}(::Type{SMatrix{N,M,T,L}}, ::Type{S}, Size::Tuple{Int}) = SVector{Size[1],S}
-
-@pure size{S1,S2}(::Type{SMatrix{S1,S2}}) = (S1, S2)
-@pure size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = (S1, S2)
-@pure size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = (S1, S2)
+@pure Size{S1,S2}(::Type{SMatrix{S1,S2}}) = Size(S1, S2)
+@pure Size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = Size(S1, S2)
+@pure Size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
 function getindex(v::SMatrix, i::Integer)
     Base.@_inline_meta

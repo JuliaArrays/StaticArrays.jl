@@ -8,6 +8,8 @@
             end
 
             @inline Point3D(xyz::NTuple{3,Float64}) = Point3D(xyz[1], xyz[2], xyz[3])
+
+            StaticArrays.similar_type(::Type{Point3D}, ::Type{Float64}, s::Size{(3,)}) = Point3D
         end)
 
         p = Point3D(1.0, 2.0, 3.0)
@@ -24,13 +26,13 @@
                       0.0 2.0 0.0;
                       0.0 0.0 2.0]
 
-        @test m*p === Point3D(2.0, 4.0, 6.0)
+        @test @inferred(m*p) === Point3D(2.0, 4.0, 6.0)
 
-        @test similar_type(Point3D) == Point3D
-        # @test similar_type(Point3D, Float64) == Point3D
-        # @test similar_type(Point3D, Float32) == SVector{3,Float32}
-        # @test similar_type(Point3D, (4,)) == SVector{4,Float64}
-        # @test similar_type(Point3D, Float32, (4,)) == SVector{4,Float32}
+        @test @inferred(similar_type(Point3D)) == Point3D
+        @test @inferred(similar_type(Point3D, Float64)) == Point3D
+        @test @inferred(similar_type(Point3D, Float32)) == SVector{3,Float32}
+        @test @inferred(similar_type(Point3D, Size(4))) == SVector{4,Float64}
+        @test @inferred(similar_type(Point3D, Float32, Size(4))) == SVector{4,Float32}
     end
 
     @testset "Mutable Point2D" begin
@@ -41,6 +43,8 @@
             end
 
             @inline Point2D(xy::NTuple{2,Any}) = Point2D(xy[1], xy[2])
+
+            StaticArrays.similar_type{P2D<:Point2D,T}(::Type{P2D}, ::Type{T}, s::Size{(2,)}) = Point2D{T}
         end)
 
         p = Point2D(0.0, 0.0)
@@ -57,11 +61,11 @@
         m = @SMatrix [2.0 0.0;
                       0.0 2.0]
 
-        @test (m*p)::Point2D == Point2D(2.0, 4.0)
+        @test @inferred(m*p)::Point2D == Point2D(2.0, 4.0)
 
-        @test similar_type(Point2D{Float64}) == Point2D{Float64}
-        # @test similar_type(Point2D{Float64}, Float32) == Point2D{Float32}
-        # @test similar_type(Point2D{Float64}, (4,)) == SVector{4,Float64}
-        # @test similar_type(Point2D{Float64}, Float32, (4,)) == SVector{4,Float32}
+        @test @inferred(similar_type(Point2D{Float64})) == Point2D{Float64}
+        @test @inferred(similar_type(Point2D{Float64}, Float32)) == Point2D{Float32}
+        @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
+        @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
     end
 end

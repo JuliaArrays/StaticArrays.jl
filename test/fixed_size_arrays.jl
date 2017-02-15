@@ -26,7 +26,7 @@ end
 RGB{T}(x::T) = RGB{T}(x, x, x)
 (::RGB{T}){T}(r, g, b) = RGB{T}(T(r), T(g), T(b))
 (::RGB{T}){T}(r::Real) = RGB(T(r), T(r), T(r))
-StaticArrays.similar_type{SV <: RGB, T}(::Union{SV, Type{SV}}, ::Type{T}) = RGB{T}
+StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = RGB{T}
 
 # TODO find equivalent in StaticArrays
 # testset "scalar nan" begin

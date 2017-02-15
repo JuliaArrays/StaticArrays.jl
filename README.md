@@ -141,37 +141,6 @@ the methods in Base, we seek to provide a comprehensive support for statically
 sized arrays, large or small, that hopefully "just works".
 
 ## API Details
-### Indexing
-
-Statically sized indexing can be realized by indexing each dimension by a
-scalar, an `NTuple{N, Integer}` or `:` (on statically sized arrays only).
-Indexing in this way will result a statically sized array (even if the input was
-dynamically sized) of the closest type (as defined by `similar_type`).
-
-Conversely, indexing a statically sized array with a dynamically sized index
-(such as a `Vector{Integer}` or `UnitRange{Integer}`) will result in a standard
-(dynamically sized) `Array`.
-
-### `similar_type()`
-
-Since immutable arrays need to be constructed "all-at-once", we need a way of
-obtaining an appropriate constructor if the element type or dimensions of the
-output array differs from the input. To this end, `similar_type` is introduced,
-behaving just like `similar`, except that it returns a type. Relevant methods
-are:
-
-```julia
-similar_type{A <: StaticArray}(::Type{A}) # defaults to A
-similar_type{A <: StaticArray, ElType}(::Type{A}, ::Type{ElType}) # Change element type
-similar_type{A <: StaticArray}(::Type{A}, size::Tuple{Int...}) # Change size
-similar_type{A <: StaticArray, ElType}(::Type{A}, ::Type{ElType}, size::Tuple{Int...}) # Change both
-```
-
-These setting will affect everything, from indexing, to matrix multiplication
-and `broadcast`.
-
-Use of `similar` will fall back to a mutable container, such as a `MVector`
-(see below).
 
 ### The `Size` trait
 
@@ -202,6 +171,44 @@ Examples of using `Size` as a compile-time constant include
 reshape(svector, Size(2,2))  # Convert SVector{4} to SMatrix{2,2}
 Size(3,3)(rand(3,3))         # Construct a random 3×3 SizedArray (see below)
 ```
+
+Users that introduce a new subtype of `StaticArray` should define a (`@pure`)
+method for `Size(::Type{NewArrayType})`.
+
+### Indexing
+
+Statically sized indexing can be realized by indexing each dimension by a
+scalar, a `StaticVector` or `:`. Indexing in this way will result a statically
+sized array (even if the input was dynamically sized, in the case of
+`StaticVector` indices) of the closest type (as defined by `similar_type`).
+
+Conversely, indexing a statically sized array with a dynamically sized index
+(such as a `Vector{Integer}` or `UnitRange{Integer}`) will result in a standard
+(dynamically sized) `Array`.
+
+### `similar_type()`
+
+Since immutable arrays need to be constructed "all-at-once", we need a way of
+obtaining an appropriate constructor if the element type or dimensions of the
+output array differs from the input. To this end, `similar_type` is introduced,
+behaving just like `similar`, except that it returns a type. Relevant methods
+are:
+
+```julia
+similar_type{A <: StaticArray}(::Type{A}) # defaults to A
+similar_type{A <: StaticArray, ElType}(::Type{A}, ::Type{ElType}) # Change element type
+similar_type{A <: AbstractArray}(::Type{A}, size::Size) # Change size
+similar_type{A <: AbstractArray, ElType}(::Type{A}, ::Type{ElType}, size::Size) # Change both
+```
+
+These setting will affect everything, from indexing, to matrix multiplication
+and `broadcast`. Users wanting introduce a new array type should *only* overload
+the last method in the above.
+
+Use of `similar` will fall back to a mutable container, such as a `MVector`
+(see below), and it requires use of the `Size` trait if you wish to set a new
+static size (or else a dynamically sized `Array` will be generated when
+specifying the size as plain integers).
 
 ### `SVector`
 

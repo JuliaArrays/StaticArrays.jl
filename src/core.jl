@@ -1,5 +1,5 @@
 """
-    abstract StaticArray{T, N} <: DenseArray{T, N}
+    abstract StaticArray{T, N} <: AbstractArray{T, N}
     typealias StaticVector{T} StaticArray{T, 1}
     typealias StaticMatrix{T} StaticArray{T, 2}
 
@@ -9,30 +9,23 @@
 
 They must define the following methods:
  - Constructors that accept a flat tuple of data.
- - `size()` on the *type*, as well as the instances, returning a tuple of `Int`s
- - `getindex()` with an integer (linear indexing)
+ - `Size()` on the *type*, returning an *instance* of `Size{(dim1, dim2, ...)}` (preferably `@pure`).
+ - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
  - `Tuple()`, returning the data in a flat Tuple.
 
-It is strongly recommended to implement:
+It may be useful to implement:
 
-- `similar_type()` returns a type (or type constructor) that accepts a flat
-  tuple of data. Element type can be automatically switched, but if that is not
-  possible or if the size is changed the built-in `SArray`, `SVector` and
-  `SMatrix` types will be used by default.
+- `similar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`, returning a
+  type (or type constructor) that accepts a flat tuple of data.
 
-For mutable containers you may need to define the following:
+For mutable containers you may also need to define the following:
 
- - `similar()` returns a *mutable* container of similar type, defaults to using
-   a `MVector`, `MMatrix` or `MArray`. You will benefit from overloading this if
-   your container is already mutable!
- - `setindex!` on mutable arrays (e.g. those returned by `similar`)
+ - `setindex!` for a single elmenent (linear indexing).
+ - `similar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`.
+ - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
+   is assumed to exist.
 
-Finally, if you define `unsafe_convert(Ptr, ...)` it is assumed by default that
-your memory is laid out in a dense format, like `Array`. This conversion may
-be used to call C libraries like LAPACK. If your `StaticArray` subtype contains
-additional fields, make sure the array data appears first.
-
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray` and `FieldVector`)
+(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
 """
 abstract StaticArray{T, N} <: AbstractArray{T, N}
 
@@ -118,21 +111,4 @@ end
         $(Expr(:meta, :inline))
         @inbounds return $(Expr(:tuple, exprs...))
     end
-end
-
-@inline size(x::StaticArray) = size(typeof(x))
-
-function size{SA <: StaticArray}(::Type{SA})
-    error("""
-        The size of type `$SA` is not known.
-
-        If you were trying to construct (or `convert` to) a `StaticArray` you
-        may need to add the size explicitly as a type parameter so its size is
-        inferrable to the Julia compiler (or performance would be terrible). For
-        example, you might try
-
-            m = zeros(3,3)
-            SMatrix(m)      # this error
-            SMatrix{3,3}(m) # correct - size is inferrable
-        """)
 end

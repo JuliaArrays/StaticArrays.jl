@@ -132,8 +132,8 @@ macro fixed_vector(name, parent)
             end
         end
 
-        Base.@pure Base.size{S}(::Union{$(name){S}, Type{$(name){S}}}) = (S, )
-        Base.@pure Base.size{S,T}(::Type{$(name){S, T}}) = (S,)
+        Base.@pure StaticArrays.Size{S}(::Type{$(name){S}}) = Size(S)
+        Base.@pure StaticArrays.Size{S,T}(::Type{$(name){S, T}}) = Size(S)
 
         Base.@propagate_inbounds function Base.getindex(v::$(name), i::Integer)
             v.data[i]
@@ -144,22 +144,16 @@ macro fixed_vector(name, parent)
         @inline function Base.convert{S, T}(::Type{$(name){S, T}}, x::Tuple)
             $(name){S, T}(convert(NTuple{S, T}, x))
         end
-        # StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}) = $(name)
-        # function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T})
-        #     $(name){length(SV), T}
-        # end
-        # function StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}, s::Tuple{Int})
-        #     $(name){s[1], eltype(SV)}
-        # end
-        function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T}, s::Tuple{Int})
-            $(name){s[1], T}
+
+        @generated function StaticArrays.similar_type{SV <: $(name), T,S}(::Type{SV}, ::Type{T}, s::Size{S})
+            if length(S) === 1
+                $(name){S[1], T}
+            else
+                StaticArrays.default_similar_type(T,s(),Val{length(S)})
+            end
         end
-        function StaticArrays.similar_type{SV <: $(name)}(::Union{SV, Type{SV}}, s::Tuple{Int})
-            $(name){s[1], eltype(SV)}
-        end
-        function StaticArrays.similar_type{SV <: $(name), T}(::Union{SV, Type{SV}}, ::Type{T})
-            $(name){length(SV), T}
-        end
+
+
         eltype_or(::Type{$(name)}, or) = or
         eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
         eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or

@@ -92,7 +92,7 @@ end
     sA = size(A)
     sb = size(b)
 
-    s = (sA[1],)
+    s = Size(sA[1])
     T = promote_matprod(TA, Tb)
     #println(T)
 
@@ -131,7 +131,7 @@ end
     sA = size(A)
     sb = size(b)
 
-    s = (sA[1],)
+    s = Size(sA[1])
     T = promote_matprod(TA, Tb)
     #println(T)
 
@@ -170,7 +170,7 @@ end
     sA = size(A)
     #sb = size(b)
 
-    s = (sA[1],)
+    s = Size(sA[1])
     T = promote_matprod(TA, Tb)
 
     if T == TA
@@ -198,7 +198,7 @@ end
 @generated function *{TA <: Base.LinAlg.BlasFloat, Tb}(A::StaticMatrix{TA}, b::StridedVector{Tb})
     sA = size(A)
 
-    s = (sA[1],)
+    s = Size(sA[1])
     T = promote_matprod(TA, Tb)
 
     if T == TA
@@ -228,7 +228,7 @@ end
     sa = size(a)
     sB = size(B)
 
-    s = (sa[1],sB[2])
+    s = Size(sa[1],sB[2])
     T = promote_matprod(Ta, TB)
 
     if sB[1] != 1
@@ -271,7 +271,7 @@ end
     if can_mutate
         sA = size(A)
         sB = size(B)
-        s = (sA[1], sB[2])
+        s = Size(sA[1], sB[2])
 
         # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
         if can_blas && size(A,1)*size(A,2)*size(B,2) >= 14*14*14
@@ -324,7 +324,7 @@ end
     TA = eltype(A)
     TB = eltype(B)
 
-    s = (sA[1], sB[2])
+    s = Size(sA[1], sB[2])
     T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
@@ -365,7 +365,7 @@ end
     TA = eltype(A)
     TB = eltype(B)
 
-    s = (sA[1], sB[2])
+    s = Size(sA[1], sB[2])
     T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
@@ -410,7 +410,7 @@ end
     TA = eltype(A)
     TB = eltype(B)
 
-    s = (sA[1], sB[2])
+    s = Size(sA[1], sB[2])
     T = promote_matprod(TA, TB)
 
     if sB[1] != sA[2]
@@ -454,7 +454,7 @@ end
     sA = size(A)
     sb = size(b)
 
-    s = (sA[1],)
+    s = Size(sA[1])
     T = promote_matprod(TA, Tb)
 
     if sb[1] != sA[2]

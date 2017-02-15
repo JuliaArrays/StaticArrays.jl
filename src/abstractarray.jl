@@ -1,15 +1,13 @@
 typealias StaticScalar{T} StaticArray{T,0}
 
-@pure length{T<:StaticArray}(a::T) = prod(size(a))
-@pure length{T<:StaticArray}(a::Type{T}) = prod(size(a))
-@pure length{T<:StaticScalar}(a::T) = 1
-@pure length{T<:StaticScalar}(a::Type{T}) = 1
+length{T<:StaticArray}(a::T) = prod(Size(T))
+length{T<:StaticArray}(a::Type{T}) = prod(Size(T))
 
-@pure size{T<:StaticArray}(::T, d::Integer) = size(T, d)
-@pure function size{T<:StaticArray}(a::Type{T}, d::Integer)
-    s = size(a)
-    return d <= length(s) ? s[d] : 1
-end
+size{T<:StaticArray}(::T) = get(Size(T))
+size{T<:StaticArray}(::Type{T}) = get(Size(T))
+
+size{T<:StaticArray}(::T, d::Integer) = Size(T)[d]
+size{T<:StaticArray}(::Type{T}, d::Integer) = Size(T)[d]
 
 # This has to be defined after length and size because it is generated
 @generated function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
@@ -39,169 +37,88 @@ Base.linearindexing{T<:StaticArray}(::Type{T}) = Base.LinearFast()
 """
     similar_type(static_array)
     similar_type(static_array, T)
-    similar_type(static_array, Size)
-    similar_type(static_array, T, Size)
+    similar_type(array, ::Size)
+    similar_type(array, T, ::Size)
 
 Returns a constructor for a statically-sized array similar to the input array
-(or type) `static_array`, optionally with different element type `T` or size
-`Size`.
+(or type) `static_array`/`array`, optionally with different element type `T` or size
+`Size`. If the input `array` is not a `StaticArray` then the `Size` is mandatory.
 
 This differs from `similar()` in that the resulting array type may not be
-mutable (or define `setindex()`)  and therefore the returned type may need to
+mutable (or define `setindex!()`), and therefore the returned type may need to
 be *constructed* with its data.
 
-Note that `Size` will need to be a compile-time constant in order for the result
-to be inferrable by the compiler.
+Note that the (optional) size *must* be specified as a static `Size` object (so the compiler
+can infer the result statically).
+
+New types should define the signature `similar_type{A<:MyType,T,S}(::Type{A},::Type{T},::Size{S})`
+if they wish to overload the default behavior.
 """
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}) = SA
-@pure function similar_type{SA<:StaticArray,N,T}(::Union{SA,Type{SA}}, ::Type{T}, sizes::NTuple{N,Int})
-    similar_type(similar_type(SA, T), sizes)
-end
-@pure function similar_type{SA<:StaticArray,T}(::Union{SA,Type{SA}}, ::Type{T}, size::Int)
-    similar_type(similar_type(SA, T), size)
-end
-@pure function similar_type{SA<:StaticArray,T,S}(::Union{SA,Type{SA}}, ::Type{T}, size::Size{S})
-    similar_type(similar_type(SA, T), size)
-end
+function similar_type end
 
-similar_type{T}(sa::StaticArray, ::Type{T}) = similar_type(typeof(sa), T)
+similar_type{SA<:StaticArray}(::SA) = similar_type(SA,eltype(SA))
+similar_type{SA<:StaticArray}(::Type{SA}) = similar_type(SA,eltype(SA))
 
-@pure function super_eltype_param(T)
-    T_super = supertype(T)
-    if T_super == Any
-        error("Unknown error")
-    end
+similar_type{SA<:StaticArray,T}(::SA,::Type{T}) = similar_type(SA,T,Size(SA))
+similar_type{SA<:StaticArray,T}(::Type{SA},::Type{T}) = similar_type(SA,T,Size(SA))
 
-    if T_super.name.name == :StaticArray
-        if isa(T_super.parameters[1], TypeVar)
-            tv = T_super.parameters[1]
-            for i = 1:length(T.parameters)
-                if tv == T.parameters[i]
-                    return Nullable{Int}(i)
-                end
-            end
-            error("Unknown error")
-        end
-        return Nullable{Int}()
-    else
-        param_number = super_eltype_param(T_super)
-        if isnull(param_number)
-            return Nullable{Int}()
-        else
-            tv = T_super.parameters[get(param_number)]
-            for i = 1:length(T.parameters)
-                if tv == T.parameters[i]
-                    return Nullable{Int}(i)
-                end
-            end
-            error("Unknown error")
-        end
-    end
-end
+similar_type{A<:AbstractArray,S}(::A,s::Size{S}) = similar_type(A,eltype(A),s)
+similar_type{A<:AbstractArray,S}(::Type{A},s::Size{S}) = similar_type(A,eltype(A),s)
 
-# Some fallbacks
+similar_type{A<:AbstractArray,T,S}(::A,::Type{T},s::Size{S}) = similar_type(A,T,s)
 
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Tuple{}) = Scalar{eltype(SA)} # No mutable fallback here...
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, size::Int) = SVector{size, eltype(SA)}
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int}) = SVector{sizes[1], eltype(SA)}
+# Default types
+# Generally, use SVector, etc
+similar_type{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = default_similar_type(T,s,length_val(s))
 
-@pure similar_type{SA<:StaticArray}(::Union{SA,Type{SA}}, sizes::Tuple{Int,Int}) = SMatrix{sizes[1], sizes[2], eltype(SA), sizes[1]*sizes[2]}
+default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = Scalar{T}
+@generated default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = SVector{S[1],T}
+@generated default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = SMatrix{S[1],S[2],T,prod(S)}
+@generated default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{S,T,D,prod(S)}
 
-@pure similar_type{SA<:StaticArray,N}(::Union{SA,Type{SA}}, sizes::Tuple{Vararg{Int,N}}) = SArray{sizes, eltype(SA), N, prod(sizes)}
+# mutable things stay mutable
+similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
 
-@generated function similar_type{SA <: StaticArray,S}(::Union{SA,Type{SA}}, ::Size{S})
-    if length(S) == 1
-        return quote
-            $(Expr(:meta, :inline))
-            SVector{$(S[1]), $(eltype(SA))}
-        end
-    elseif length(S) == 2
-        return quote
-            $(Expr(:meta, :inline))
-            SMatrix{$(S[1]), $(S[2]), $(eltype(SA))}
-        end
-    else
-        return quote
-            $(Expr(:meta, :inline))
-            SArray{S, $(eltype(SA)), $(length(S)), $(prod(S))}
-        end
-    end
-end
+mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = SizedArray{(),T,0,0}
+@generated mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = MVector{S[1],T}
+@generated mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = MMatrix{S[1],S[2],T,prod(S)}
+@generated mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{S,T,D,prod(S)}
 
-# Some specializations for the mutable case
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray,SizedArray}}(::Union{MA,Type{MA}}, size::Int) = MVector{size, eltype(MA)}
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray,SizedArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int}) = MVector{sizes[1], eltype(MA)}
+# `SizedArray` stays the same, and also takes over an `Array`.
+similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
+similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray,SizedArray}}(::Union{MA,Type{MA}}, sizes::Tuple{Int,Int}) = MMatrix{sizes[1], sizes[2], eltype(MA), sizes[1]*sizes[2]}
+sizedarray_similar_type{T,S,D}(::Type{T},s::Size{S},::Type{Val{D}}) = SizedArray{S,T,D,D}
 
-@pure similar_type{MA<:Union{MVector,MMatrix,MArray,SizedArray},N}(::Union{MA,Type{MA}}, sizes::Tuple{Vararg{Int,N}}) = MArray{sizes, eltype(MA), N, prod(sizes)}
+# Field vectors are user controlled, and default to SVector, etc
 
-@generated function similar_type{MA<:Union{MVector,MMatrix,MArray,SizedArray},S}(::Union{MA,Type{MA}}, ::Size{S})
-    if length(S) == 1
-        return quote
-            $(Expr(:meta, :inline))
-            MVector{$(S[1]), $(eltype(MA))}
-        end
-    elseif length(S) == 2
-        return quote
-            $(Expr(:meta, :inline))
-            MMatrix{$(S[1]), $(S[2]), $(eltype(MA))}
-        end
-    else
-        return quote
-            $(Expr(:meta, :inline))
-            MArray{S, $(eltype(MA)), $(length(S)), $(prod(S))}
-        end
-    end
-end
+"""
+    similar(static_array)
+    similar(static_array, T)
+    similar(array, ::Size)
+    similar(array, T, ::Size)
 
-# And also similar() returning mutable StaticArrays
-@inline similar{SV <: StaticVector}(::SV) = MVector{length(SV),eltype(SV)}()
-@inline similar{SV <: StaticVector, T}(::SV, ::Type{T}) = MVector{length(SV),T}()
+Constructs and returns a mutable but statically-sized array (i.e. a `StaticArray`). If the
+input `array` is not a `StaticArray`, then the `Size` is required to determine the output
+size (or else a dynamically sized array will be returned).
+"""
+similar{SA<:StaticArray}(::SA) = similar(SA,eltype(SA))
+similar{SA<:StaticArray}(::Type{SA}) = similar(SA,eltype(SA))
 
-@inline similar{SM <: StaticMatrix}(m::SM) = MMatrix{size(SM,1),size(SM,2),eltype(SM),length(SM)}()
-@inline similar{SM <: StaticMatrix, T}(::SM, ::Type{T}) = MMatrix{size(SM,1),size(SM,2),T,length(SM)}()
+similar{SA<:StaticArray,T}(::SA,::Type{T}) = similar(SA,T,Size(SA))
+similar{SA<:StaticArray,T}(::Type{SA},::Type{T}) = similar(SA,T,Size(SA))
 
-@inline similar{SA <: StaticArray}(m::SA) = MArray{size(SA),eltype(SA),ndims(SA),length(SA)}()
-@inline similar{SA <: StaticArray,T}(m::SA, ::Type{T}) = MArray{size(SA),T,ndims(SA),length(SA)}()
+similar{A<:AbstractArray,S}(::A,s::Size{S}) = similar(A,eltype(A),s)
+similar{A<:AbstractArray,S}(::Type{A},s::Size{S}) = similar(A,eltype(A),s)
 
-@generated function similar{SA <: StaticArray,S}(::SA, ::Size{S})
-    if length(S) == 1
-        return quote
-            $(Expr(:meta, :inline))
-            MVector{$(S[1]), $(eltype(SA))}()
-        end
-    elseif length(S) == 2
-        return quote
-            $(Expr(:meta, :inline))
-            MMatrix{$(S[1]), $(S[2]), $(eltype(SA))}()
-        end
-    else
-        return quote
-            $(Expr(:meta, :inline))
-            MArray{S, $(eltype(SA))}()
-        end
-    end
-end
+similar{A<:AbstractArray,T,S}(::A,::Type{T},s::Size{S}) = similar(A,T,s)
 
-@generated function similar{SA <: StaticArray, T, S}(::SA, ::Type{T}, ::Size{S})
-    if length(S) == 1
-        return quote
-            $(Expr(:meta, :inline))
-            MVector{$(S[1]), T}()
-        end
-    elseif length(S) == 2
-        return quote
-            $(Expr(:meta, :inline))
-            MMatrix{$(S[1]), $(S[2]), T}()
-        end
-    else
-        return quote
-            $(Expr(:meta, :inline))
-            MArray{S, T}()
-        end
-    end
-end
+# defaults to built-in mutable types
+similar{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))()
+
+# both SizedArray and Array return SizedArray
+similar{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))()
+similar{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))()
 
 
 # This is used in Base.LinAlg quite a lot, and it impacts type stability
@@ -269,7 +186,7 @@ end
         error("Static array of size $(size(a)) cannot be reshaped to size $S")
     end
 
-    newtype = similar_type(a, S)
+    newtype = similar_type(a, Size(S))
 
     return quote
         $(Expr(:meta, :inline))
