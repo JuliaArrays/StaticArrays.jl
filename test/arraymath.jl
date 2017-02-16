@@ -63,4 +63,10 @@
         @test all(@inferred(fill(3., SMatrix{4, 16, Float64})) .== 3.)
         @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
     end
+
+    @testset "fill!()" begin
+        m = MMatrix{4,16,Float64}()
+        fill!(m, 3)
+        @test all(m .== 3.)
+    end
 end

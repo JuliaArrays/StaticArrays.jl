@@ -54,7 +54,7 @@ end
         error("Dimension mismatch")
     end
 
-    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(a), i, j))]) : :(b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(b), i, j))]) : :(b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
 
     return quote
         $(Expr(:meta, :inline))
@@ -86,7 +86,7 @@ end
         error("Dimension mismatch")
     end
 
-    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(a), i, j))]) : :(-b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(b), i, j))]) : :(-b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
 
     return quote
         $(Expr(:meta, :inline))
@@ -220,6 +220,7 @@ end
 @inline Base.zero{SA <: StaticArray}(a::SA) = zeros(SA)
 @inline Base.zero{SA <: StaticArray}(a::Type{SA}) = zeros(SA)
 
+@inline one{SM <: StaticMatrix}(::SM) = one(SM)
 @generated function one{SM <: StaticArray}(::Type{SM})
     s = size(SM)
     if (length(s) != 2) || (s[1] != s[2])
@@ -236,19 +237,7 @@ end
     end
 end
 
-@generated function one{SM <: StaticMatrix}(::SM)
-    s = size(SM)
-    if s[1] != s[2]
-        error("multiplicative identity defined only for square matrices")
-    end
-    T = eltype(SM)
-    e = eye(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
-    end
-end
-
+@inline eye{SM <: StaticMatrix}(::SM) = eye(SM)
 @generated function eye{SM <: StaticArray}(::Type{SM})
     s = size(SM)
     if length(s) != 2
@@ -258,16 +247,6 @@ end
     if T == Any
         T = Float64
     end
-    e = eye(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
-    end
-end
-
-@generated function eye{SM <: StaticMatrix}(::SM)
-    s = size(SM)
-    T = eltype(SM)
     e = eye(T, s...)
     return quote
         $(Expr(:meta, :inline))

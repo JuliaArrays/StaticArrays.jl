@@ -1,5 +1,5 @@
 @generated function push(vec::StaticVector, x)
-    newtype = similar_type(vec, Size(length(vec) + 1 ,))
+    newtype = similar_type(vec, Size(length(vec) + 1))
     exprs = vcat([:(vec[$i]) for i = 1:length(vec)], :x)
     return quote
         $(Expr(:meta, :inline))
@@ -8,7 +8,7 @@
 end
 
 @generated function unshift(vec::StaticVector, x)
-    newtype = similar_type(vec, Size(length(vec) + 1 ,))
+    newtype = similar_type(vec, Size(length(vec) + 1))
     exprs = vcat(:x, [:(vec[$i]) for i = 1:length(vec)])
     return quote
         $(Expr(:meta, :inline))
@@ -17,7 +17,7 @@ end
 end
 
 @generated function insert(vec::StaticVector, index, x)
-    newtype = similar_type(vec, Size(length(vec) + 1 ,))
+    newtype = similar_type(vec, Size(length(vec) + 1))
     exprs = [(i == 1 ? :(ifelse($i < index, vec[$i], x)) :
               i == length(vec)+1 ? :(ifelse($i == index, x, vec[$i-1])) :
               :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:length(vec) + 1]
@@ -31,7 +31,7 @@ end
 end
 
 @generated function pop(vec::StaticVector)
-    newtype = similar_type(vec, Size(length(vec) - 1 ,))
+    newtype = similar_type(vec, Size(length(vec) - 1))
     exprs = [:(vec[$i]) for i = 1:length(vec)-1]
     return quote
         $(Expr(:meta, :inline))
@@ -40,7 +40,7 @@ end
 end
 
 @generated function shift(vec::StaticVector)
-    newtype = similar_type(vec, Size(length(vec) - 1 ,))
+    newtype = similar_type(vec, Size(length(vec) - 1))
     exprs = [:(vec[$i]) for i = 2:length(vec)]
     return quote
         $(Expr(:meta, :inline))
@@ -49,7 +49,7 @@ end
 end
 
 @generated function deleteat(vec::StaticVector, index)
-    newtype = similar_type(vec, Size(length(vec) - 1 ,))
+    newtype = similar_type(vec, Size(length(vec) - 1))
     exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) - 1]
     return quote
         $(Expr(:meta, :inline))
