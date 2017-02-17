@@ -16,11 +16,11 @@ compiler (the element type may optionally also be specified).
 immutable SVector{S, T} <: StaticVector{T}
     data::NTuple{S, T}
 
-    function SVector(x::NTuple{S,T})
+    function SVector{S, T}(x::NTuple{S,T}) where {S, T}
         new(x)
     end
 
-    function SVector(x::NTuple{S,Any})
+    function SVector{S, T}(x::NTuple{S,Any}) where {S, T}
         new(convert_ntuple(T, x))
     end
 end

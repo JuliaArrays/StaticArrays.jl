@@ -15,7 +15,7 @@ For example:
         z::Float64
     end
 """
-abstract FieldVector{T} <: StaticVector{T}
+abstract type FieldVector{T} <: StaticVector{T} end
 
 # Is this a good idea?? Should people just define constructors that accept tuples?
 @inline (::Type{FV}){FV<:FieldVector}(x::Tuple) = FV(x...)

@@ -1,4 +1,4 @@
-typealias StaticScalar{T} StaticArray{T,0}
+StaticScalar{T} = StaticArray{T,0}
 
 length{T<:StaticArray}(a::T) = prod(Size(T))
 length{T<:StaticArray}(a::Type{T}) = prod(Size(T))

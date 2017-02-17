@@ -21,7 +21,7 @@ _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 ```
 """
 immutable Size{S}
-    function Size()
+    function Size{S}() where S
         check_size(S)
         new()
     end

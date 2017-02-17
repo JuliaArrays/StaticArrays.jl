@@ -1,8 +1,6 @@
 import Base: *,        Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
 import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
 
-typealias BlasEltypes Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
-
 # Idea inspired by https://github.com/JuliaLang/julia/pull/18218
 promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
 

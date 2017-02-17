@@ -17,19 +17,19 @@ compiler (the element type may optionally also be specified).
 type MVector{S, T} <: StaticVector{T}
     data::NTuple{S, T}
 
-    function MVector(in::NTuple{S, T})
+    function MVector{S,T}(in::NTuple{S, T}) where {S,T}
         new(in)
     end
 
-    function MVector(in::NTuple{S, Any})
+    function MVector{S,T}(in::NTuple{S, Any}) where {S,T}
         new(convert_ntuple(T,in))
     end
 
-    function MVector(in::T)
+    function MVector{S,T}(in::T) where {S,T}
         new((in,))
     end
 
-    function MVector()
+    function MVector{S,T}() where {S,T}
         new()
     end
 end

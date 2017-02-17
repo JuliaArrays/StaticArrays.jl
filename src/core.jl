@@ -1,7 +1,7 @@
 """
     abstract StaticArray{T, N} <: AbstractArray{T, N}
-    typealias StaticVector{T} StaticArray{T, 1}
-    typealias StaticMatrix{T} StaticArray{T, 2}
+    StaticVector{T} = StaticArray{T, 1}
+    StaticMatrix{T} = StaticArray{T, 2}
 
 `StaticArray`s are Julia arrays with fixed, known size.
 
@@ -27,10 +27,10 @@ For mutable containers you may also need to define the following:
 
 (see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
 """
-abstract StaticArray{T, N} <: AbstractArray{T, N}
+abstract type StaticArray{T, N} <: AbstractArray{T, N} end
 
-typealias StaticVector{T} StaticArray{T, 1}
-typealias StaticMatrix{T} StaticArray{T, 2}
+StaticVector{T} = StaticArray{T, 1}
+StaticMatrix{T} = StaticArray{T, 2}
 
 # People might not want to use Tuple for everything (TODO: check this with FieldVector...)
 # Generic case, with least 2 inputs

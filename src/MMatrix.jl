@@ -18,17 +18,17 @@ unknown to the compiler (the element type may optionally also be specified).
 type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
     data::NTuple{L, T}
 
-    function MMatrix(d::NTuple{L,T})
+    function MMatrix{S1,S2,T,L}(d::NTuple{L,T}) where {S1,S2,T,L}
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(d)
     end
 
-    function MMatrix(d::NTuple{L,Any})
+    function MMatrix{S1,S2,T,L}(d::NTuple{L,Any}) where {S1,S2,T,L}
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new(convert_ntuple(T, d))
     end
 
-    function MMatrix()
+    function MMatrix{S1,S2,T,L}() where {S1,S2,T,L}
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
         new()
     end
