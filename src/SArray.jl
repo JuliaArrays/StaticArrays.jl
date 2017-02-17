@@ -18,14 +18,14 @@ compiler (the element type may optionally also be specified).
 immutable SArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
-    function SArray{Size,T,N,L}(x::NTuple{L,T}) where {Size,T,N,L}
+    function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
         check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new(x)
+        new{Size,T,N,L}(x)
     end
 
-    function SArray{Size,T,N,L}(x::NTuple{L,Any}) where {Size,T,N,L}
+    function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
         check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new(convert_ntuple(T, x))
+        new{Size,T,N,L}(convert_ntuple(T, x))
     end
 end
 

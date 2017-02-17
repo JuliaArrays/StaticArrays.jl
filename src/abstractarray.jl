@@ -1,4 +1,4 @@
-StaticScalar{T} = StaticArray{T,0}
+@compat StaticScalar{T} = StaticArray{T,0}
 
 length{T<:StaticArray}(a::T) = prod(Size(T))
 length{T<:StaticArray}(a::Type{T}) = prod(Size(T))
@@ -30,8 +30,7 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-Base.linearindexing(::StaticArray) = Base.LinearFast()
-Base.linearindexing{T<:StaticArray}(::Type{T}) = Base.LinearFast()
+@compat Base.IndexStyle{T<:StaticArray}(::Type{T}) = Base.IndexLinear()
 
 # Default type search for similar_type
 """

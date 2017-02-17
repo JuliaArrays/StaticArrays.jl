@@ -27,10 +27,10 @@ For mutable containers you may also need to define the following:
 
 (see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
 """
-abstract type StaticArray{T, N} <: AbstractArray{T, N} end
+@compat abstract type StaticArray{T, N} <: AbstractArray{T, N} end
 
-StaticVector{T} = StaticArray{T, 1}
-StaticMatrix{T} = StaticArray{T, 2}
+@compat StaticVector{T} = StaticArray{T, 1}
+@compat StaticMatrix{T} = StaticArray{T, 2}
 
 # People might not want to use Tuple for everything (TODO: check this with FieldVector...)
 # Generic case, with least 2 inputs

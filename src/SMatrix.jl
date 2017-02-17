@@ -17,14 +17,14 @@ unknown to the compiler (the element type may optionally also be specified).
 immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
     data::NTuple{L, T}
 
-    function SMatrix{S1,S2,T,L}(d::NTuple{L,T}) where {S1,S2,T,L}
+    function (::Type{SMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,T})
         check_smatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new(d)
+        new{S1,S2,T,L}(d)
     end
 
-    function SMatrix{S1,S2,T,L}(d::NTuple{L,Any}) where {S1,S2,T,L}
+    function (::Type{SMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,Any})
         check_smatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new(convert_ntuple(T, d))
+        new{S1,S2,T,L}(convert_ntuple(T, d))
     end
 end
 

@@ -19,19 +19,19 @@ compiler (the element type may optionally also be specified).
 type MArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
-    function MArray{Size,T,N,L}(x::NTuple{L,T}) where {Size,T,N,L}
+    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
         check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new(x)
+        new{Size,T,N,L}(x)
     end
 
-    function MArray{Size,T,N,L}(x::NTuple{L,Any}) where {Size,T,N,L}
+    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
         check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new(convert_ntuple(T, x))
+        new{Size,T,N,L}(convert_ntuple(T, x))
     end
 
-    function MArray{Size,T,N,L}() where {Size,T,N,L}
+    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}()
         check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
-        new()
+        new{Size,T,N,L}()
     end
 end
 

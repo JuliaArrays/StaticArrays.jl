@@ -10,6 +10,8 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
              maximum, extrema, mean, copy
 
+using Compat
+
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix

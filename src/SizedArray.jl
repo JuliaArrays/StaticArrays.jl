@@ -12,15 +12,15 @@ array may be reshaped.
 immutable SizedArray{S,T,N,M} <: StaticArray{T,N}
     data::Array{T,M}
 
-    function SizedArray{S,T,N,M}(a::Array) where {S,T,N,M}
+    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}(a::Array)
         if length(a) != prod(S)
             error("Dimensions $(size(a)) don't match static size $S")
         end
-        new(a)
+        new{S,T,N,M}(a)
     end
 
-    function SizedArray{S,T,N,M}() where {S,T,N,M}
-        new(Array{T,M}(S))
+    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}()
+        new{S,T,N,M}(Array{T,M}(S))
     end
 end
 
