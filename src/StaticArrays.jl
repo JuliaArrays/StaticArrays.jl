@@ -21,7 +21,8 @@ export Size
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
-export similar_type, setindex
+export similar_type
+export push, pop, shift, unshift, insert, deleteat, setindex
 
 include("util.jl")
 
@@ -54,18 +55,6 @@ if VERSION < v"0.6.0-dev.1671"
     include("FixedSizeArrays.jl")
 end
 include("ImmutableArrays.jl")
-
-# TODO list
-# ---------
-#
-# * more tests
-#
-# * reshape() - accept Val? Currently uses `ReshapedArray`. Cool :)
-#
-# * permutedims() - accept Val? Or wait for `PermutedDimsArray` ?
-#
-# * Linear algebra - matrix functions (det, inv, eig, svd, qr, etc...)
-#                    (currently, we use pointers to interact with LAPACK, etc)
 
 
 end # module

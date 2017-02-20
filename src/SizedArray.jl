@@ -48,8 +48,6 @@ end
 @inline (::Type{SizedArray{S,T}}){S,T}(x::Tuple) = SizedArray{S,T,_dims(S),_dims(S)}(x)
 @inline (::Type{SizedArray{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,_dims(S),_dims(S)}(x)
 
-similar_type{S,T,N,M,R}(::Type{SizedArray{S,T,N,M}}, ::Type{R}) = SizedArray{S,R,N,M}
-
 # Overide some problematic default behaviour
 @inline convert{SA<:SizedArray}(::Type{SA}, sa::SizedArray) = SA(sa.data)
 @inline convert{SA<:SizedArray}(::Type{SA}, sa::SA) = sa
@@ -65,23 +63,23 @@ similar_type{S,T,N,M,R}(::Type{SizedArray{S,T,N,M}}, ::Type{R}) = SizedArray{S,R
 
 @pure _ndims{N}(::NTuple{N,Int}) = N
 
-@pure size{S}(::Type{SizedArray{S}}) = S
-@pure size{S,T}(::Type{SizedArray{S,T}}) = S
-@pure size{S,T,N}(::Type{SizedArray{S,T,N}}) = S
-@pure size{S,T,N,M}(::Type{SizedArray{S,T,N,M}}) = S
+@pure Size{S}(::Type{SizedArray{S}}) = Size(S)
+@pure Size{S,T}(::Type{SizedArray{S,T}}) = Size(S)
+@pure Size{S,T,N}(::Type{SizedArray{S,T,N}}) = Size(S)
+@pure Size{S,T,N,M}(::Type{SizedArray{S,T,N,M}}) = Size(S)
 
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
 typealias SizedVector{S,T,M} SizedArray{S,T,1,M}
-@pure size{S}(::Type{SizedVector{S}}) = S
+@pure Size{S}(::Type{SizedVector{S}}) = Size(S)
 @inline (::Type{SizedVector{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,1,M}(a)
 @inline (::Type{SizedVector{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,1,1}(x)
 @inline (::Type{Vector})(sa::SizedVector) = sa.data
 @inline convert(::Type{Vector}, sa::SizedVector) = sa.data
 
 typealias SizedMatrix{S,T,M} SizedArray{S,T,2,M}
-@pure size{S}(::Type{SizedMatrix{S}}) = S
+@pure Size{S}(::Type{SizedMatrix{S}}) = Size(S)
 @inline (::Type{SizedMatrix{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,2,M}(a)
 @inline (::Type{SizedMatrix{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,2,2}(x)
 @inline (::Type{Matrix})(sa::SizedMatrix) = sa.data

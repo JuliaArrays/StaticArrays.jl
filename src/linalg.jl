@@ -54,7 +54,7 @@ end
         error("Dimension mismatch")
     end
 
-    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(a), i, j))]) : :(b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(b), i, j))]) : :(b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
 
     return quote
         $(Expr(:meta, :inline))
@@ -86,7 +86,7 @@ end
         error("Dimension mismatch")
     end
 
-    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(a), i, j))]) : :(-b[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(b), i, j))]) : :(-b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
 
     return quote
         $(Expr(:meta, :inline))
@@ -101,11 +101,12 @@ end
 
 
 # Transpose, conjugate, etc
+# TODO different methods for v0.5, v0.6 (due to `RowVector`)
 @inline conj(a::StaticArray) = map(conj, a)
 
 @generated function transpose(v::StaticVector)
     n = length(v)
-    newtype = similar_type(v, (1,n))
+    newtype = similar_type(v, Size(1,n))
     exprs = [:(v[$j]) for j = 1:n]
 
     return quote
@@ -116,7 +117,7 @@ end
 
 @generated function ctranspose(v::StaticVector)
     n = length(v)
-    newtype = similar_type(v, (1,n))
+    newtype = similar_type(v, Size(1,n))
     exprs = [:(conj(v[$j])) for j = 1:n]
 
     return quote
@@ -130,7 +131,7 @@ end
     if s1 == s2
         newtype = m
     else
-        newtype = similar_type(m, (s2,s1))
+        newtype = similar_type(m, Size(s2,s1))
     end
 
     exprs = [:(m[$j1, $j2]) for j2 = 1:s2, j1 = 1:s1]
@@ -146,7 +147,7 @@ end
     if s1 == s2
         newtype = m
     else
-        newtype = similar_type(m, (s2,s1))
+        newtype = similar_type(m, Size(s2,s1))
     end
 
     exprs = [:(conj(m[$j1, $j2])) for j2 = 1:s2, j1 = 1:s1]
@@ -165,11 +166,11 @@ end
     end
 
     if a <: StaticVector && b <: StaticVector
-        newtype = similar_type(a, (length(a) + length(b),))
+        newtype = similar_type(a, Size(length(a) + length(b)))
         exprs = vcat([:(a[$i]) for i = 1:length(a)],
                      [:(b[$i]) for i = 1:length(b)])
     else
-        newtype = similar_type(a, (size(a,1) + size(b,1), size(a,2)))
+        newtype = similar_type(a, Size(size(a,1) + size(b,1), size(a,2)))
         exprs = [((i <= size(a,1)) ? ((a <: StaticVector) ? :(a[$i]) : :(a[$i,$j]))
                                    : ((b <: StaticVector) ? :(b[$(i-size(a,1))]) : :(b[$(i-size(a,1)),$j])))
                                    for i = 1:(size(a,1)+size(b,1)), j = 1:size(a,2)]
@@ -187,7 +188,7 @@ end
     vcat(vcat(a,b), c...)
 
 @generated function hcat(a::StaticVector)
-    newtype = similar_type(a, (length(a),1))
+    newtype = similar_type(a, Size(length(a),1))
     exprs = [:(a[$i]) for i = 1:length(a)]
     return quote
         $(Expr(:meta, :inline))
@@ -203,7 +204,7 @@ end
     exprs1 = [:(a[$i]) for i = 1:length(a)]
     exprs2 = [:(b[$i]) for i = 1:length(b)]
 
-    newtype = similar_type(a, (size(a,1), size(a,2) + size(b,2)))
+    newtype = similar_type(a, Size(size(a,1), size(a,2) + size(b,2)))
 
     return quote
         $(Expr(:meta, :inline))
@@ -219,6 +220,7 @@ end
 @inline Base.zero{SA <: StaticArray}(a::SA) = zeros(SA)
 @inline Base.zero{SA <: StaticArray}(a::Type{SA}) = zeros(SA)
 
+@inline one{SM <: StaticMatrix}(::SM) = one(SM)
 @generated function one{SM <: StaticArray}(::Type{SM})
     s = size(SM)
     if (length(s) != 2) || (s[1] != s[2])
@@ -235,19 +237,7 @@ end
     end
 end
 
-@generated function one{SM <: StaticMatrix}(::SM)
-    s = size(SM)
-    if s[1] != s[2]
-        error("multiplicative identity defined only for square matrices")
-    end
-    T = eltype(SM)
-    e = eye(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
-    end
-end
-
+@inline eye{SM <: StaticMatrix}(::SM) = eye(SM)
 @generated function eye{SM <: StaticArray}(::Type{SM})
     s = size(SM)
     if length(s) != 2
@@ -264,20 +254,10 @@ end
     end
 end
 
-@generated function eye{SM <: StaticMatrix}(::SM)
-    s = size(SM)
-    T = eltype(SM)
-    e = eye(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
-    end
-end
-
 @generated function diagm(v::StaticVector)
     T = eltype(v)
     exprs = [i == j ? :(v[$i]) : zero(T) for i = 1:length(v), j = 1:length(v)]
-    newtype = similar_type(v, (length(v), length(v)))
+    newtype = similar_type(v, Size(length(v), length(v)))
     return quote
         $(Expr(:meta, :inline))
         @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
@@ -430,7 +410,7 @@ end
 
 # some micro-optimizations
 @inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::SM) = _checksquare(Size(SM))
-@pure Base.LinAlg.checksquare{SM<:StaticMatrix}(::Type{SM}) = _checksquare(Size(SM))
+@inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::Type{SM}) = _checksquare(Size(SM))
 
 @pure _checksquare{S}(::Size{S}) = (S[1] == S[2] || error("marix must be square"); S[1])
 

@@ -97,7 +97,7 @@ end
     else
         N = ndims(a)
         Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
-        newtype = similar_type(a, Snew)
+        newtype = similar_type(a, Size(Snew))
 
         exprs = Array{Expr}(Snew)
         itr = [1:n for n = Snew]
@@ -138,7 +138,7 @@ end
     S = size(a)
     N = ndims(a)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
-    newtype = similar_type(a, Snew)
+    newtype = similar_type(a, Size(Snew))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
@@ -276,7 +276,7 @@ end
         if s == s1
             newtype = :( similar_type($a1, promote_op(f, $(eltype(a1)), $(eltype(a2)))) )
         else
-            newtype = :( similar_type($a1, promote_op(f, $(eltype(a1)), $(eltype(a2))), $s) )
+            newtype = :( similar_type($a1, promote_op(f, $(eltype(a1)), $(eltype(a2))), $(Size(s))) )
         end
 
         exprs = Vector{Expr}(L)

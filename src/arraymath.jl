@@ -57,6 +57,7 @@ Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = sim
 end
 
 # The remaining auto-vectorized boolean operators
+# TODO Julia v0.6 changes this
 @inline !(a::StaticArray{Bool}) = broadcast(!, a)
 
 @inline (&){T1,T2}(a1::StaticArray{T1}, a2::StaticArray{T2}) = broadcast(&, a1, a2)

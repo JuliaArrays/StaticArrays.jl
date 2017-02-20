@@ -1,4 +1,4 @@
-@testset "Matrix multiplication" begin 
+@testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
         v = @SVector [1, 2]
@@ -37,7 +37,7 @@
     @testset "Vector-matrix" begin
         m = @SMatrix [1 2 3 4]
         v = @SVector [1, 2]
-        @test v*m === @SMatrix [1 2 3 4; 2 4 6 8]
+        @test @inferred(v*m) === @SMatrix [1 2 3 4; 2 4 6 8]
     end
 
     @testset "Matrix-matrix" begin
@@ -45,7 +45,7 @@
         n = @SMatrix [2 3; 4 5]
         nc = @SMatrix [CartesianIndex((2,2)) CartesianIndex((3,3));
                        CartesianIndex((4,4)) CartesianIndex((5,5))]
-        @test m*n  === @SMatrix [10 13; 22 29]
+        @test @inferred(m*n)  === @SMatrix [10 13; 22 29]
         @test m*nc === @SMatrix [CartesianIndex((10,10)) CartesianIndex((13,13));
                                  CartesianIndex((22,22)) CartesianIndex((29,29))]
 

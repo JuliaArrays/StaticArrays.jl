@@ -40,10 +40,8 @@ end
 ## SVector methods ##
 #####################
 
-similar_type{T,N,S}(::Type{SVector{N,T}}, ::Type{S}) = SVector{N,S}
-
-@pure size{S}(::Type{SVector{S}}) = (S, )
-@pure size{S,T}(::Type{SVector{S,T}}) = (S,)
+@pure Size{S}(::Type{SVector{S}}) = Size(S)
+@pure Size{S,T}(::Type{SVector{S,T}}) = Size(S)
 
 @propagate_inbounds function getindex(v::SVector, i::Integer)
     v.data[i]

@@ -102,12 +102,9 @@ end
 ## MMatrix methods ##
 #####################
 
-similar_type{T,N,M,L,S}(::Type{MMatrix{N,M,T,L}}, ::Type{S})                   = MMatrix{M,N,S,L}
-similar_type{T,N,M,L,S}(::Type{MMatrix{N,M,T,L}}, ::Type{S}, Size::Tuple{Int}) = MVector{Size[1],S}
-
-@pure size{S1,S2}(::Type{MMatrix{S1,S2}}) = (S1, S2)
-@pure size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = (S1, S2)
-@pure size{S1,S2,T,L}(::Type{MMatrix{S1,S2,T,L}}) = (S1, S2)
+@pure Size{S1,S2}(::Type{MMatrix{S1,S2}}) = Size(S1, S2)
+@pure Size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = Size(S1, S2)
+@pure Size{S1,S2,T,L}(::Type{MMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
 @propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Integer)
     #@boundscheck if i < 1 || i > length(m)

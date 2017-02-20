@@ -94,12 +94,10 @@ end
 ## MArray methods ##
 ####################
 
-similar_type{M,T,N,L,S}(::Type{MArray{M,T,N,L}}, ::Type{S}) = MArray{M,S,N,L}
-
-@pure size{Size}(::Type{MArray{Size}}) = Size
-@pure size{Size,T}(::Type{MArray{Size,T}}) = Size
-@pure size{Size,T,N}(::Type{MArray{Size,T,N}}) = Size
-@pure size{Size,T,N,L}(::Type{MArray{Size,T,N,L}}) = Size
+@pure Size{S}(::Type{MArray{S}}) = Size(S)
+@pure Size{S,T}(::Type{MArray{S,T}}) = Size(S)
+@pure Size{S,T,N}(::Type{MArray{S,T,N}}) = Size(S)
+@pure Size{S,T,N,L}(::Type{MArray{S,T,N,L}}) = Size(S)
 
 function getindex(v::MArray, i::Integer)
     Base.@_inline_meta

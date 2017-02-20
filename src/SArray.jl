@@ -74,12 +74,10 @@ end
 ## SArray methods ##
 ####################
 
-similar_type{M,T,N,L,S}(::Type{SArray{M,T,N,L}}, ::Type{S}) = SArray{M,S,N,L}
-
-@pure size{Size}(::Type{SArray{Size}}) = Size
-@pure size{Size,T}(::Type{SArray{Size,T}}) = Size
-@pure size{Size,T,N}(::Type{SArray{Size,T,N}}) = Size
-@pure size{Size,T,N,L}(::Type{SArray{Size,T,N,L}}) = Size
+@pure Size{S}(::Type{SArray{S}}) = Size(S)
+@pure Size{S,T}(::Type{SArray{S,T}}) = Size(S)
+@pure Size{S,T,N}(::Type{SArray{S,T,N}}) = Size(S)
+@pure Size{S,T,N,L}(::Type{SArray{S,T,N,L}}) = Size(S)
 
 function getindex(v::SArray, i::Integer)
     Base.@_inline_meta

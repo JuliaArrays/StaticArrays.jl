@@ -4,7 +4,7 @@
 
 # What to do about @boundscheck and @inbounds? It's worse sometimes than @inline, for tuples...
 @generated function getindex{SA<:StaticArray, S}(a::SA, inds::NTuple{S,Integer})
-    newtype = similar_type(SA, (S,))
+    newtype = similar_type(SA, Size(S))
     exprs = [:(a[inds[$i]]) for i = 1:S]
 
     return quote
@@ -18,7 +18,7 @@ end
         a::AbstractArray{T}, inds::StaticVector{I}
     )
     S = length(inds)
-    newtype = similar_type(inds, T, (S,))
+    newtype = similar_type(inds, T, Size(S))
     exprs = [:(a[inds[$i]]) for i = 1:S]
     return quote
         $(Expr(:meta, :inline, :propagate_inbounds))
@@ -31,7 +31,7 @@ end
         m::AbstractArray{T}, inds1::StaticVector{I}, i2::Integer
     )
     S = length(inds1)
-    newtype = similar_type(inds1, T, (S,)) # drop singular dimension like in base
+    newtype = similar_type(inds1, T, Size(S)) # drop singular dimension like in base
     exprs = [:(m[inds1[$j], i2]) for j = 1:S]
     return Expr(:call, newtype, Expr(:tuple, exprs...))
 end
@@ -40,7 +40,7 @@ end
         m::AbstractArray{T}, i1::Integer, inds2::StaticVector{I}
     )
     S = length(inds2)
-    newtype = similar_type(inds2, T, (S,))
+    newtype = similar_type(inds2, T, Size(S))
     exprs = [:(m[i1, inds2[$j]]) for j = 1:S]
     return Expr(:call, newtype, Expr(:tuple, exprs...))
 end
@@ -183,7 +183,7 @@ end
 
 # TODO put bounds checks here, as they should have less overhead here
 @generated function getindex{SM<:StaticMatrix, S1, S2}(m::SM, inds1::NTuple{S1,Integer}, inds2::NTuple{S2,Integer})
-    newtype = similar_type(SM, (S1, S2))
+    newtype = similar_type(SM, Size(S1, S2))
     exprs = [:(m[inds1[$i1], inds2[$i2]]) for i1 = 1:S1, i2 = 1:S2]
 
     return quote
@@ -193,7 +193,7 @@ end
 end
 
 @generated function getindex{SM<:StaticMatrix, S2}(m::SM, i1::Integer, inds2::NTuple{S2,Integer})
-    newtype = similar_type(SM, (S2,))
+    newtype = similar_type(SM, Size(S2))
     exprs = [:(m[i1, inds2[$i2]]) for i2 = 1:S2]
 
     return quote
@@ -203,7 +203,7 @@ end
 end
 
 @generated function getindex{SM<:StaticMatrix, S1}(m::SM, inds1::NTuple{S1,Integer}, i2::Integer)
-    newtype = similar_type(SM, (S1,))
+    newtype = similar_type(SM, Size(S1))
     exprs = [:(m[inds1[$i1], i2]) for i1 = 1:S1]
 
     return quote
@@ -258,7 +258,7 @@ end
 
 
 @generated function setindex!{SM<:StaticMatrix, S2}(m::SM, val, i1::Integer, inds2::NTuple{S2,Integer})
-    newtype = similar_type(SM, (S2,))
+    newtype = similar_type(SM, Size(S2))
     exprs = [:(m[i1, inds2[$i2]] = val[$i2]) for i2 = 1:S2]
 
     return quote
@@ -284,7 +284,7 @@ end
 
 
 @generated function setindex!{SM<:StaticMatrix, S1}(m::SM, val, inds1::NTuple{S1,Integer}, i2::Integer)
-    newtype = similar_type(SM, (S1,))
+    newtype = similar_type(SM, Size(S1))
     exprs = [:(m[inds1[$i1], i2] = val[$i1]) for i1 = 1:S1]
 
     return quote

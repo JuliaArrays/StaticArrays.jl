@@ -10,10 +10,8 @@ end
 
 @inline (::Type{Scalar{T}}){T}(x::Tuple{T}) = Scalar{T}(x[1])
 
-similar_type{T,S}(::Type{Scalar{T}}, ::Type{S}) = Scalar{S}
-
-@pure size(::Type{Scalar}) = ()
-@pure size{T}(::Type{Scalar{T}}) = ()
+@pure Size(::Type{Scalar}) = Size()
+@pure Size{T}(::Type{Scalar{T}}) = Size()
 
 getindex(v::Scalar) = v.data
 @inline function getindex(v::Scalar, i::Int)

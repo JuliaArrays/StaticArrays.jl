@@ -1,12 +1,11 @@
 """
     abstract FieldVector{T} <: StaticVector{T}
 
-Inheriting from this type will make it easy to create your own vector types.
-A `FieldVector` will automatically determine its size from the number of fields
-(or it can be overriden by `size()`), and define `getindex` and `setindex!`
-appropriately. An immutable `FieldVector` will be as performant as an `SVector`
-of similar length and element type, while a mutable `FieldVector` will behave
-similarly to an `MVector`.
+Inheriting from this type will make it easy to create your own vector types. A `FieldVector`
+will automatically determine its size from the number of fields, and define `getindex` and
+`setindex!` appropriately. An immutable `FieldVector` will be as performant as an `SVector`
+of similar length and element type, while a mutable `FieldVector` will behave similarly to
+an `MVector`.
 
 For example:
 
@@ -21,10 +20,7 @@ abstract FieldVector{T} <: StaticVector{T}
 # Is this a good idea?? Should people just define constructors that accept tuples?
 @inline (::Type{FV}){FV<:FieldVector}(x::Tuple) = FV(x...)
 
-@pure length{FV<:FieldVector}(::FV) = nfields(FV)
-@pure length{FV<:FieldVector}(::Type{FV}) = nfields(FV)
-@pure size{FV<:FieldVector}(::FV) = (length(FV),)
-@pure size{FV<:FieldVector}(::Type{FV}) = (length(FV),)
+@pure Size{FV<:FieldVector}(::Type{FV}) = Size(nfields(FV))
 
 @inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
 @inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)
