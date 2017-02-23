@@ -17,14 +17,14 @@ unknown to the compiler (the element type may optionally also be specified).
 immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
     data::NTuple{L, T}
 
-    function SMatrix(d::NTuple{L,T})
+    function (::Type{SMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,T})
         check_smatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new(d)
+        new{S1,S2,T,L}(d)
     end
 
-    function SMatrix(d::NTuple{L,Any})
+    function (::Type{SMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,Any})
         check_smatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new(convert_ntuple(T, d))
+        new{S1,S2,T,L}(convert_ntuple(T, d))
     end
 end
 
@@ -66,7 +66,7 @@ end
         SMatrix{S1, S2, $T, L}(x)
     end
 end
-typealias SMatrixNoType{S1, S2, L, T} SMatrix{S1, S2, T, L}
+@compat SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
 @generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
     return quote

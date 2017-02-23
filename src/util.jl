@@ -1,5 +1,5 @@
 # For convenience
-typealias TupleN{T,N} NTuple{N,T}
+@compat TupleN{T,N} = NTuple{N,T}
 
 # Cast any Tuple to an TupleN{T}
 @inline convert_ntuple{T}(::Type{T},d::T) = T # For zero-dimensional arrays

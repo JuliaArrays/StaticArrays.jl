@@ -12,15 +12,15 @@ array may be reshaped.
 immutable SizedArray{S,T,N,M} <: StaticArray{T,N}
     data::Array{T,M}
 
-    function SizedArray(a::Array)
+    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}(a::Array)
         if length(a) != prod(S)
             error("Dimensions $(size(a)) don't match static size $S")
         end
-        new(a)
+        new{S,T,N,M}(a)
     end
 
-    function SizedArray()
-        new(Array{T,M}(S))
+    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}()
+        new{S,T,N,M}(Array{T,M}(S))
     end
 end
 
@@ -71,14 +71,14 @@ end
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
-typealias SizedVector{S,T,M} SizedArray{S,T,1,M}
+@compat SizedVector{S,T,M} = SizedArray{S,T,1,M}
 @pure Size{S}(::Type{SizedVector{S}}) = Size(S)
 @inline (::Type{SizedVector{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,1,M}(a)
 @inline (::Type{SizedVector{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,1,1}(x)
 @inline (::Type{Vector})(sa::SizedVector) = sa.data
 @inline convert(::Type{Vector}, sa::SizedVector) = sa.data
 
-typealias SizedMatrix{S,T,M} SizedArray{S,T,2,M}
+@compat SizedMatrix{S,T,M} = SizedArray{S,T,2,M}
 @pure Size{S}(::Type{SizedMatrix{S}}) = Size(S)
 @inline (::Type{SizedMatrix{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,2,M}(a)
 @inline (::Type{SizedMatrix{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,2,2}(x)

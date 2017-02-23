@@ -8,15 +8,15 @@ import StaticArrays.FixedSizeArrays: @fixed_vector
 
 @fixed_vector Point StaticVector
 
-typealias Vec1d Vec{1, Float64}
-typealias Vec2d Vec{2, Float64}
-typealias Vec3d Vec{3, Float64}
-typealias Vec4d Vec{4, Float64}
-typealias Vec3f Vec{3, Float32}
+@compat const Vec1d = Vec{1, Float64}
+@compat const Vec2d = Vec{2, Float64}
+@compat const Vec3d = Vec{3, Float64}
+@compat const Vec4d = Vec{4, Float64}
+@compat const Vec3f = Vec{3, Float32}
 
-typealias Mat2d Mat{2,2, Float64, 4}
-typealias Mat3d Mat{3,3, Float64, 9}
-typealias Mat4d Mat{4,4, Float64, 16}
+@compat const Mat2d = Mat{2,2, Float64, 4}
+@compat const Mat3d = Mat{3,3, Float64, 9}
+@compat const Mat4d = Mat{4,4, Float64, 16}
 
 immutable RGB{T} <: FieldVector{T}
     x::T

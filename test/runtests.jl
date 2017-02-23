@@ -1,5 +1,6 @@
 using StaticArrays
 using Base.Test
+using Compat
 
 @testset "StaticArrays" begin
     include("SVector.jl")

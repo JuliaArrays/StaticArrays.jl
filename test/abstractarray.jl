@@ -3,7 +3,7 @@
         m = @SMatrix [1 2 3; 4 5 6; 7 8 9; 10 11 12]
 
         @test length(m) == 12
-        @test Base.linearindexing(m) == Base.LinearFast()
+        @test IndexStyle(m) == IndexLinear()
         @test Base.isassigned(m, 2, 2) == true
     end
 
