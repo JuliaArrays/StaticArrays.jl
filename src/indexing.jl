@@ -2,18 +2,15 @@
 ## Linear Indexing  ##
 ######################
 
-# What to do about @boundscheck and @inbounds? It's worse sometimes than @inline, for tuples...
-@generated function getindex{SA<:StaticArray, S}(a::SA, inds::NTuple{S,Integer})
-    newtype = similar_type(SA, Size(S))
-    exprs = [:(a[inds[$i]]) for i = 1:S]
-
-    return quote
-        $(Expr(:meta, :inline, :propagate_inbounds))
-        return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
+# Static Vector indexing into AbstractArrays
+@propagate_inbounds function getindex(a::AbstractArray{T}, inds::StaticVector{<:Integer}) where {T}
+    similar_type(a, T, Size(inds))(unroll_tuple(Length(inds)) do i
+        @_propagate_inbounds_meta
+        a[inds[i]]
+    end)
 end
 
-# Static Vector indexing into AbstractArrays
+#=
 @generated function getindex{T, I <: Integer}(
         a::AbstractArray{T}, inds::StaticVector{I}
     )
@@ -25,6 +22,8 @@ end
         return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
     end
 end
+
+
 # Convert to StaticArrays using tuples
 # TODO think about bounds checks here.
 @generated function getindex{T, I <: Integer}(
@@ -434,6 +433,8 @@ end
         @inbounds return a[$ind_expr] = val
     end
 end
+=#
+
 
 # TODO higher dimensional versions with tuples and :
 

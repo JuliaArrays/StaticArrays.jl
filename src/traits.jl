@@ -21,11 +21,12 @@ _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 ```
 """
 immutable Size{S}
-    function (::Type{Size{S}}){S}()
+    function Size{S}() where S
         check_size(S)
         new{S}()
     end
 end
+
 
 check_size(S::Tuple{Vararg{Int}}) = nothing
 check_size(S) = error("Size was expected to be a tuple of `Int`s")
@@ -33,7 +34,7 @@ check_size(S) = error("Size was expected to be a tuple of `Int`s")
 @pure Size(s::Tuple{Vararg{Int}}) = Size{s}()
 @pure Size(s::Int...) = Size{s}()
 
-@inline Size(a::StaticArray) = Size(typeof(a))
+Size(a::StaticArray) = Size(typeof(a))
 
 Base.show{S}(io::IO, ::Size{S}) = print(io, "Size", S)
 
@@ -53,13 +54,32 @@ function Size{SA <: StaticArray}(::Type{SA})
         """)
 end
 
-# Some @pure convenience functions.
 
-@pure get{S}(::Size{S}) = S
-@pure getindex{S}(::Size{S}, i::Int) = i <= length(S) ? S[i] : 1
+struct Length{L}
+    function Length{L}() where L
+        check_length(L)
+        new{L}()
+    end
+end
 
-@pure length{S}(::Size{S}) = length(S)
-@generated length_val{S}(::Size{S}) = Val{length(S)}
+check_length(L::Int) = nothing
+check_length(L) = error("Length was expected to be an `Int`")
+
+Base.show(io::IO, ::Length{L}) where {L} = print(io, "Length(", L, ")")
+
+Length(a::StaticArray) = Length(Size(a))
+Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
+@pure Length(::Size{S}) where {S} = Length{prod(S)}()
+@pure Length(L::Int) = Length{L}()
+
+
+# Some @pure convenience functions for `Size`
+@pure get(::Size{S}) where {S} = S
+
+@pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
+
+@pure length(::Size{S}) where {S} = length(S)
+@pure length_val{S}(::Size{S}) = Val{length(S)}
 
 @pure Base.:(==){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S == s
 @pure Base.:(==){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s == S
@@ -70,3 +90,16 @@ end
 @pure Base.prod{S}(::Size{S}) = prod(S)
 
 @pure @inline Base.sub2ind{S}(::Size{S}, x::Int...) = sub2ind(S, x...)
+
+# Some @pure convenience functions for `Length`
+@pure get(::Length{L}) where {L} = L
+
+@pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
+@pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
+
+@pure Base.:(!=)(::Length{L}, l::Int) where {L} = L != l
+@pure Base.:(!=)(l::Int, ::Length{L}) where {L} = l != L
+
+
+# The generated functions work with length, etc...
+@propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})

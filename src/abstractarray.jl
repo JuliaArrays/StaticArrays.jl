@@ -1,7 +1,8 @@
-@compat StaticScalar{T} = StaticArray{T,0}
+length(a::T) where {T <: StaticArray} = prod(Size(T))
+length(a::Type{T}) where {T<:StaticArray} = prod(Size(T))
 
-length{T<:StaticArray}(a::T) = prod(Size(T))
-length{T<:StaticArray}(a::Type{T}) = prod(Size(T))
+length_val(a::T) where {T <: StaticArray} = length_val(Size(T))
+length_val(a::Type{T}) where {T<:StaticArray} = length_val(Size(T))
 
 size{T<:StaticArray}(::T) = get(Size(T))
 size{T<:StaticArray}(::Type{T}) = get(Size(T))
@@ -9,20 +10,6 @@ size{T<:StaticArray}(::Type{T}) = get(Size(T))
 size{T<:StaticArray}(::T, d::Integer) = Size(T)[d]
 size{T<:StaticArray}(::Type{T}, d::Integer) = Size(T)[d]
 
-# This has to be defined after length and size because it is generated
-@generated function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
-    L = length(SA)
-    exprs = [:(a[$i]) for i = 1:L]
-
-    return quote
-        $(Expr(:meta, :inline))
-        if length(a) != $L
-            L = $L
-            error("Dimension mismatch. Expected input array of length $L, got length $(length(a))")
-        end
-        @inbounds return SA($(Expr(:tuple, exprs...)))
-    end
-end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
@@ -30,7 +17,7 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-@compat Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
+Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
 
 # Default type search for similar_type
 """

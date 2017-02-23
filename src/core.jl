@@ -1,5 +1,6 @@
 """
-    abstract StaticArray{T, N} <: AbstractArray{T, N}
+    abstract type StaticArray{T, N} <: AbstractArray{T, N} end
+    StaticScalar{T} = StaticArray{T, 0}
     StaticVector{T} = StaticArray{T, 1}
     StaticMatrix{T} = StaticArray{T, 2}
 
@@ -27,42 +28,53 @@ For mutable containers you may also need to define the following:
 
 (see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
 """
-@compat abstract type StaticArray{T, N} <: AbstractArray{T, N} end
+abstract type StaticArray{T, N} <: AbstractArray{T, N} end
 
-@compat StaticVector{T} = StaticArray{T, 1}
-@compat StaticMatrix{T} = StaticArray{T, 2}
+StaticScalar{T} = StaticArray{T, 1}
+StaticVector{T} = StaticArray{T, 1}
+StaticMatrix{T} = StaticArray{T, 2}
+
+(::Type{SA})(x::Tuple) where {SA <: StaticArray} = error("No precise constructor for $SA found. Length of input was $(length(x)).")
+
+@inline convert(::Type{SA}, x...) where {SA <: StaticArray} = SA(x)
+
+# this covers most conversions and "statically-sized reshapes"
+@inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
+@inline convert(::Type{SA}, sa::SA) where {SA<:StaticArray} = sa
+
+# A general way of going back to a tuple
+@inline function convert(::Type{Tuple}, a::StaticArray)
+    unroll_tuple((i -> @inbounds return a[i]), length_val(a))
+end
+
+@inline function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
+    if length(a) != length(SA)
+        error("Dimension mismatch. Expected input array of length $(length(SA)), got length $(length(a))")
+    end
+
+    return SA(unroll_tuple((i -> @inbounds return a[i]), length_val(SA)))
+end
+
+
+#=
+@generated function convert(::Type{Tuple}, a::StaticArray)
+    n = length(a)
+    exprs = [:(a[$j]) for j = 1:n]
+    quote
+        $(Expr(:meta, :inline))
+        @inbounds return $(Expr(:tuple, exprs...))
+    end
+end
+=#
+
+
 
 # People might not want to use Tuple for everything (TODO: check this with FieldVector...)
 # Generic case, with least 2 inputs
-@inline (::Type{SA}){SA<:StaticArray}(x1,x2,xs...) = SA((x1,x2,xs...))
+#@inline (::Type{SA}){SA<:StaticArray}(x1,x2,xs...) = SA((x1,x2,xs...))
 
-@inline convert{SA<:StaticArray}(::Type{SA}, x::Tuple) = error("No precise constructor found. Length of input was $(length(x)) while length of $SA is $(length(SA)).")
 
-# Avoiding splatting penalties. Being here, implementations of StaticArray will not have to deal with these. TODO check these are necessary or not
-#@inline (::Type{SA}){SA<:StaticArray}(x1) = SA((x1,)) # see convert below (lesser precedence than other constructors?)
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2) = SA((x1,x2))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3) = SA((x1,x2,x3))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4) = SA((x1,x2,x3,x4))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5) = SA((x1,x2,x3,x4,x5))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6) = SA((x1,x2,x3,x4,x5,x6))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7) = SA((x1,x2,x3,x4,x5,x6,x7))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8) = SA((x1,x2,x3,x4,x5,x6,x7,x8))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15))
-@inline convert{SA<:StaticArray}(::Type{SA},x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16) = SA((x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,x16))
-
-@inline convert{SA<:StaticArray}(::Type{SA}, x1) = SA((x1,))
-
-# this covers most conversions and "statically-sized reshapes"
-@inline convert{SA<:StaticArray}(::Type{SA}, sa::StaticArray) = SA(Tuple(sa))
-
-@inline convert{SA<:StaticArray}(::Type{SA}, sa::SA) = sa
-
+#=
 function convert{T,N}(::Type{Array}, sa::StaticArray{T,N})
     out = Array{T,N}(size(sa))
     @inbounds for i = 1:length(sa)
@@ -102,13 +114,4 @@ function convert{T}(::Type{Vector}, sa::StaticVector{T})
     end
     return out
 end
-
-# A general way of going back to a tuple, etc
-@generated function convert(::Type{Tuple}, a::StaticArray)
-    n = length(a)
-    exprs = [:(a[$j]) for j = 1:n]
-    quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:tuple, exprs...))
-    end
-end
+=#
