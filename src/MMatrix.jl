@@ -28,9 +28,9 @@ type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
         new{S1,S2,T,L}(convert_ntuple(T, d))
     end
 
-    function MMatrix{S1,S2,T,L}() where {S1,S2,T,L}
+    function (::Type{MMatrix{S1,S2,T,L}}){S1,S2,T,L}()
         check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new()
+        new{S1,S2,T,L}()
     end
 end
 

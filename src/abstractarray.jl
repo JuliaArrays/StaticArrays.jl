@@ -30,7 +30,7 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-@compat Base.IndexStyle{T<:StaticArray}(::Type{T}) = Base.IndexLinear()
+@compat Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
 
 # Default type search for similar_type
 """

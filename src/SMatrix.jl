@@ -66,7 +66,7 @@ end
         SMatrix{S1, S2, $T, L}(x)
     end
 end
-SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
+@compat SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
 @generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
     return quote
