@@ -348,9 +348,10 @@ you may want to define a default constructor (no inputs) that can be called by
 
 ### Implementing your own types
 
-You can easily create your own `StaticArray` type, by defining both `size` on
-the type, and linear `getindex` (and optionally `setindex!` for mutable types
-- see `setindex(::SVector, val, i)` in *MVector.jl* for an example of how to
+You can easily create your own `StaticArray` type, by defining both `Size` (on the 
+*type*, e.g. `StaticArrays.Size(::Type{Point3D}) = Size(3)`), and linear 
+`getindex` (and optionally `setindex!` for mutable types - see 
+`setindex(::SVector, val, i)` in *MVector.jl* for an example of how to
 achieve this through pointer manipulation). Your type should define a constructor
 that takes a tuple of the data (and mutable containers may want to define a
 default constructor).
