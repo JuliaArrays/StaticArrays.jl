@@ -71,14 +71,14 @@ end
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
-@compat SizedVector{S,T,M} = SizedArray{S,T,1,M}
+SizedVector{S,T,M} = SizedArray{S,T,1,M}
 @pure Size{S}(::Type{SizedVector{S}}) = Size(S)
 @inline (::Type{SizedVector{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,1,M}(a)
 @inline (::Type{SizedVector{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,1,1}(x)
 @inline (::Type{Vector})(sa::SizedVector) = sa.data
 @inline convert(::Type{Vector}, sa::SizedVector) = sa.data
 
-@compat SizedMatrix{S,T,M} = SizedArray{S,T,2,M}
+SizedMatrix{S,T,M} = SizedArray{S,T,2,M}
 @pure Size{S}(::Type{SizedMatrix{S}}) = Size(S)
 @inline (::Type{SizedMatrix{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,2,M}(a)
 @inline (::Type{SizedMatrix{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,2,2}(x)

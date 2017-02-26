@@ -1,6 +1,5 @@
 using StaticArrays
 using Base.Test
-using Compat
 
 @testset "StaticArrays" begin
     include("SVector.jl")
@@ -18,13 +17,11 @@ using Compat
     include("mapreduce.jl")
     include("arraymath.jl")
     include("linalg.jl")
-    include("matrix_multiply.jl")
+    include("matrix_multiply.jl") #=
     include("det.jl")
     include("inv.jl")
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
-    if VERSION < v"0.6.0-dev.1671"
-        include("fixed_size_arrays.jl")
-    end
+    #include("fixed_size_arrays.jl") =#
 end

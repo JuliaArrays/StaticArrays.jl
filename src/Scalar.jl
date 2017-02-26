@@ -6,9 +6,15 @@ Construct a statically-sized 0-dimensional array that contains a single element,
 """
 immutable Scalar{T} <: StaticArray{T,0}
     data::T
+
+    Scalar{T}(x::AbstractArray) where {T} = new{T}(convert(T,x))
+    Scalar{T}(x::Tuple{T2}) where {T, T2} = new{T}(convert(T,x[1]))
+    Scalar{T}(x) where {T} = new{T}(convert(T, x))
 end
 
-@inline (::Type{Scalar{T}}){T}(x::Tuple{T}) = Scalar{T}(x[1])
+@inline Scalar(x::Tuple{T}) where {T} = Scalar{T}(x[1])
+@inline Scalar(a::AbstractArray) = Scalar{typeof(a)}(a)
+@inline Scalar(a::AbstractScalar) = Scalar{eltype(a)}(a[]) # Do we want this to convert or wrap?
 
 @pure Size(::Type{Scalar}) = Size()
 @pure Size{T}(::Type{Scalar{T}}) = Size()
@@ -24,4 +30,4 @@ end
 @inline Tuple(v::Scalar) = (v.data,)
 
 # A lot more compact than the default array show
-Base.show{T}(io::IO, ::MIME"text/plain", x::Scalar{T}) = print(io, "Scalar{$T}(", x.data, ")")
+Base.show(io::IO, ::MIME"text/plain", x::Scalar{T}) where {T} = print(io, "Scalar{$T}(", x.data, ")")

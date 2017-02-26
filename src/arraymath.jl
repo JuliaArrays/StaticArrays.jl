@@ -1,232 +1,149 @@
-import Base: .+, .-, .*, ./, .//, .\, .%, .^, .<<, .>>, .==, .<, .>, .<=, .>=, !, &, |, $
-
 # Support for elementwise ops on AbstractArray{S<:StaticArray} with Number
-Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = similar_type(A, promote_op(op, eltype(A), T))
-Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = similar_type(A, promote_op(op, T, eltype(A)))
+#Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = similar_type(A, promote_op(op, eltype(A), T))
+#Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = similar_type(A, promote_op(op, T, eltype(A)))
 
-@static if VERSION < v"0.6.0-dev.1632"
-    @inline .-(a1::StaticArray) = broadcast(-, a1)
-
-    @inline .+(a1::StaticArray, a2::StaticArray) = broadcast(+, a1, a2)
-    @inline .-(a1::StaticArray, a2::StaticArray) = broadcast(-, a1, a2)
-    @inline .*(a1::StaticArray, a2::StaticArray) = broadcast(*, a1, a2)
-    @inline ./(a1::StaticArray, a2::StaticArray) = broadcast(/, a1, a2)
-    @inline .//(a1::StaticArray, a2::StaticArray) = broadcast(//, a1, a2)
-    @inline .\(a1::StaticArray, a2::StaticArray) = broadcast(\, a1, a2)
-    @inline .%(a1::StaticArray, a2::StaticArray) = broadcast(%, a1, a2)
-    @inline .^(a1::StaticArray, a2::StaticArray) = broadcast(^, a1, a2)
-    @inline .<<(a1::StaticArray, a2::StaticArray) = broadcast(<<, a1, a2)
-    @inline .>>(a1::StaticArray, a2::StaticArray) = broadcast(>>, a1, a2)
-    @inline .==(a1::StaticArray, a2::StaticArray) = broadcast(==, a1, a2)
-    @inline .<(a1::StaticArray, a2::StaticArray) = broadcast(<, a1, a2)
-    @inline .>(a1::StaticArray, a2::StaticArray) = broadcast(>, a1, a2)
-    @inline .<=(a1::StaticArray, a2::StaticArray) = broadcast(<=, a1, a2)
-    @inline .>=(a1::StaticArray, a2::StaticArray) = broadcast(>=, a1, a2)
-
-    @inline .+(a1::StaticArray, a2::Number) = broadcast(+, a1, a2)
-    @inline .-(a1::StaticArray, a2::Number) = broadcast(-, a1, a2)
-    @inline .*(a1::StaticArray, a2::Number) = broadcast(*, a1, a2)
-    @inline ./(a1::StaticArray, a2::Number) = broadcast(/, a1, a2)
-    @inline .//(a1::StaticArray, a2::Number) = broadcast(//, a1, a2)
-    @inline .\(a1::StaticArray, a2::Number) = broadcast(\, a1, a2)
-    @inline .%(a1::StaticArray, a2::Number) = broadcast(%, a1, a2)
-    @inline .^(a1::StaticArray, a2::Number) = broadcast(^, a1, a2)
-    @inline .<<(a1::StaticArray, a2::Number) = broadcast(<<, a1, a2)
-    @inline .>>(a1::StaticArray, a2::Number) = broadcast(>>, a1, a2)
-    @inline .==(a1::StaticArray, a2) = broadcast(==, a1, a2)
-    @inline .<(a1::StaticArray, a2) = broadcast(<, a1, a2)
-    @inline .>(a1::StaticArray, a2) = broadcast(>, a1, a2)
-    @inline .<=(a1::StaticArray, a2) = broadcast(<=, a1, a2)
-    @inline .>=(a1::StaticArray, a2) = broadcast(>=, a1, a2)
-
-    @inline .+(a1::Number, a2::StaticArray) = broadcast(+, a1, a2)
-    @inline .-(a1::Number, a2::StaticArray) = broadcast(-, a1, a2)
-    @inline .*(a1::Number, a2::StaticArray) = broadcast(*, a1, a2)
-    @inline ./(a1::Number, a2::StaticArray) = broadcast(/, a1, a2)
-    @inline .//(a1::Number, a2::StaticArray) = broadcast(//, a1, a2)
-    @inline .\(a1::Number, a2::StaticArray) = broadcast(\, a1, a2)
-    @inline .%(a1::Number, a2::StaticArray) = broadcast(%, a1, a2)
-    @inline .^(a1::Number, a2::StaticArray) = broadcast(^, a1, a2)
-    @inline .<<(a1::Number, a2::StaticArray) = broadcast(<<, a1, a2)
-    @inline .>>(a1::Number, a2::StaticArray) = broadcast(>>, a1, a2)
-    @inline .==(a1, a2::StaticArray) = broadcast(==, a1, a2)
-    @inline .<(a1, a2::StaticArray) = broadcast(<, a1, a2)
-    @inline .>(a1, a2::StaticArray) = broadcast(>, a1, a2)
-    @inline .<=(a1, a2::StaticArray) = broadcast(<=, a1, a2)
-    @inline .>=(a1, a2::StaticArray) = broadcast(>=, a1, a2)
-end
-
-# The remaining auto-vectorized boolean operators
-# TODO Julia v0.6 changes this
-@inline !(a::StaticArray{Bool}) = broadcast(!, a)
-
-@inline (&){T1,T2}(a1::StaticArray{T1}, a2::StaticArray{T2}) = broadcast(&, a1, a2)
-@inline (|){T1,T2}(a1::StaticArray{T1}, a2::StaticArray{T2}) = broadcast(|, a1, a2)
-@inline ($){T1,T2}(a1::StaticArray{T1}, a2::StaticArray{T2}) = broadcast($, a1, a2)
-
-@inline (&){T}(a1::StaticArray{T}, a2::Number) = broadcast(&, a1, a2)
-@inline (|){T}(a1::StaticArray{T}, a2::Number) = broadcast(|, a1, a2)
-@inline ($){T}(a1::StaticArray{T}, a2::Number) = broadcast($, a1, a2)
-
-@inline (&){T}(a1::Number, a2::StaticArray{T}) = broadcast(&, a1, a2)
-@inline (|){T}(a1::Number, a2::StaticArray{T}) = broadcast(|, a1, a2)
-@inline ($){T}(a1::Number, a2::StaticArray{T}) = broadcast($, a1, a2)
-
-@inline zeros{SA <: StaticArray}(::SA) = zeros(SA)
-@generated function Base.zeros{SA <: StaticArray}(::Type{SA})
-    s = size(SA)
+@inline zeros(::SA) where {SA <: StaticArray} = zeros(SA)
+@generated function zeros(::Type{SA}) where {SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
-    v = zeros(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+    if T === Any
+        return quote
+            @_inline_meta
+            _fill(zero(Float64), Size(SA), SA)
+        end
+    else
+        return quote
+            @_inline_meta
+            _fill(zero($T), Size(SA), SA)
+        end
     end
 end
 
-@inline Base.ones{SA <: StaticArray}(::SA) = ones(SA)
-@generated function Base.ones{SA <: StaticArray}(::Type{SA})
-    s = size(SA)
+@inline ones(::SA) where {SA <: StaticArray} = ones(SA)
+@generated function ones(::Type{SA}) where {SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
-    v = ones(T, s...)
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+    if T === Any
+        return quote
+            @_inline_meta
+            _fill(one(Float64), Size(SA), SA)
+        end
+    else
+        return quote
+            @_inline_meta
+            _fill(one($T), Size(SA), SA)
+        end
     end
 end
 
-@inline Base.fill{SA <: StaticArray}(val, ::SA) = fill(val, SA)
-@generated function Base.fill{SA <: StaticArray}(val, ::Type{SA})
-    l = length(SA)
-    T = eltype(SA)
-    expr = [:valT for i = 1:l]
+@inline fill(val, ::SA) where {SA <: StaticArray} = ones(val, SA)
+@inline fill(val, ::Type{SA}) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
+@generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
+    v = [:val for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        valT = convert($T, val)
-        $(Expr(:call, SA, Expr(:tuple, expr...)))
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
 # Also consider randcycle, randperm? Also faster rand!(staticarray, collection)
-@generated function Base.rand{SA <: StaticArray}(rng::AbstractRNG, ::Type{SA})
-    s = size(SA)
+
+@inline rand(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = rand(rng, SA)
+@inline rand(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
+@generated function _rand(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
     if T == Any
         T = Float64
     end
     v = [:(rand(rng, $T)) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
-@generated function Base.rand{SA <: StaticArray}(rng::AbstractRNG, range::AbstractArray, ::Type{SA})
-    s = size(SA)
-    T = eltype(range)
+@inline rand(rng::AbstractRNG, range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(rng, range, SA)
+@inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
+@generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, range)) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
-@generated function Base.rand{SA <: StaticArray}(range::AbstractArray, ::Type{SA})
-    s = size(SA)
-    T = eltype(range)
-    v = [:(rand(range)) for i = 1:prod(s)]
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
-    end
-end
-
-@generated function Base.randn{SA <: StaticArray}(rng::AbstractRNG, ::Type{SA})
-    s = size(SA)
+@inline randn(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = randn(rng, SA)
+@inline randn(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _randn(rng, Size(SA), SA)
+@generated function _randn(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
     if T == Any
         T = Float64
     end
     v = [:(randn(rng, $T)) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
-@generated function Base.randexp{SA <: StaticArray}(rng::AbstractRNG, ::Type{SA})
-    s = size(SA)
+@inline randexp(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = randexp(rng, SA)
+@inline randexp(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _randexp(rng, Size(SA), SA)
+@generated function _randexp(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
     if T == Any
         T = Float64
     end
     v = [:(randexp(rng, $T)) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:call, SA, Expr(:tuple, v...)))
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
+
+# Mutable versions
 
 # Why don't these two exist in Base?
 # @generated function Base.zeros!{SA <: StaticArray}(a::SA)
 # @generated function Base.ones!{SA <: StaticArray}(a::SA)
 
-@generated function Base.fill!{SA <: StaticArray}(a::SA, val)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = valT) for i = 1:l]
+@inline fill!(a::SA, val) where {SA <: StaticArray} = _fill!(Size(SA), a, val)
+@generated function _fill!(::Size{s}, a::SA, val) where {s, SA <: StaticArray}
+    exprs = [:(a[$i] = valT) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        valT = convert($T, val)
-        $(Expr(:block, exprs...))
+        @_inline_meta
+        valT = convert(eltype(SA), val)
+        @inbounds $(Expr(:block, exprs...))
         return a
     end
 end
 
-@generated function Base.rand!{SA <: StaticArray}(rng::AbstractRNG, a::SA)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = rand(rng, $T)) for i = 1:l]
+@inline rand!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _rand!(rng, Size(SA), a)
+@generated function _rand!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
+    exprs = [:(a[$i] = rand(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:block, exprs...))
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
         return a
     end
 end
 
-@generated function Base.rand!{N}(rng::MersenneTwister, a::StaticArray{Float64,N}) # ambiguity with AbstractRNG and non-Float64... possibly an optimized form in Base?
-    l = length(a)
-    exprs = [:(@inbounds a[$i] = rand(rng, Float64)) for i = 1:l]
+# ambiguity with AbstractRNG and non-Float64... possibly an optimized form in Base?
+@inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{Float64}} = _rand!(rng, Size(SA), a)
+
+@inline randn!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _randn!(rng, Size(SA), a)
+@generated function _randn!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
+    exprs = [:(a[$i] = randn(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:block, exprs...))
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
         return a
     end
 end
 
-@generated function Base.randn!{SA <: StaticArray}(rng::AbstractRNG, a::SA)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = randn(rng, $T)) for i = 1:l]
+@inline randexp!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _randexp!(rng, Size(SA), a)
+@generated function _randexp!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
+    exprs = [:(a[$i] = randexp(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:block, exprs...))
-        return a
-    end
-end
-
-@generated function Base.randexp!{SA <: StaticArray}(rng::AbstractRNG, a::SA)
-    l = length(SA)
-    T = eltype(SA)
-    exprs = [:(@inbounds a[$i] = randexp(rng, $T)) for i = 1:l]
-    return quote
-        $(Expr(:meta, :inline))
-        $(Expr(:block, exprs...))
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
         return a
     end
 end

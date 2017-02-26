@@ -1,42 +1,7 @@
-"""
-    abstract type StaticArray{T, N} <: AbstractArray{T, N} end
-    StaticScalar{T} = StaticArray{T, 0}
-    StaticVector{T} = StaticArray{T, 1}
-    StaticMatrix{T} = StaticArray{T, 2}
-
-`StaticArray`s are Julia arrays with fixed, known size.
-
-## Dev docs
-
-They must define the following methods:
- - Constructors that accept a flat tuple of data.
- - `Size()` on the *type*, returning an *instance* of `Size{(dim1, dim2, ...)}` (preferably `@pure`).
- - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
- - `Tuple()`, returning the data in a flat Tuple.
-
-It may be useful to implement:
-
-- `similar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`, returning a
-  type (or type constructor) that accepts a flat tuple of data.
-
-For mutable containers you may also need to define the following:
-
- - `setindex!` for a single element (linear indexing).
- - `similar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`.
- - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
-   is assumed to exist.
-
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
-"""
-abstract type StaticArray{T, N} <: AbstractArray{T, N} end
-
-StaticScalar{T} = StaticArray{T, 1}
-StaticVector{T} = StaticArray{T, 1}
-StaticMatrix{T} = StaticArray{T, 2}
-
 (::Type{SA})(x::Tuple) where {SA <: StaticArray} = error("No precise constructor for $SA found. Length of input was $(length(x)).")
 
-@inline convert(::Type{SA}, x...) where {SA <: StaticArray} = SA(x)
+@inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
+@inline (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a) # Is this a good idea?
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
@@ -44,7 +9,7 @@ StaticMatrix{T} = StaticArray{T, 2}
 
 # A general way of going back to a tuple
 @inline function convert(::Type{Tuple}, a::StaticArray)
-    unroll_tuple((i -> @inbounds return a[i]), length_val(a))
+    unroll_tuple(a, Length(a))
 end
 
 @inline function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
@@ -52,9 +17,19 @@ end
         error("Dimension mismatch. Expected input array of length $(length(SA)), got length $(length(a))")
     end
 
-    return SA(unroll_tuple((i -> @inbounds return a[i]), length_val(SA)))
+    return SA(unroll_tuple(a, Length(SA)))
 end
 
+length_val(a::T) where {T <: StaticArray} = length_val(Size(T))
+length_val(a::Type{T}) where {T<:StaticArray} = length_val(Size(T))
+
+@generated function unroll_tuple(a::AbstractArray, ::Length{L}) where {L}
+    exprs = [:(a[$j]) for j = 1:L]
+    quote
+        @_inline_meta
+        @inbounds return $(Expr(:tuple, exprs...))
+    end
+end
 
 #=
 @generated function convert(::Type{Tuple}, a::StaticArray)

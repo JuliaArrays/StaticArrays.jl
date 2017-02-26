@@ -15,15 +15,15 @@ For example:
         z::Float64
     end
 """
-@compat abstract type FieldVector{T} <: StaticVector{T} end
+abstract type FieldVector{T} <: StaticVector{T} end
 
 # Is this a good idea?? Should people just define constructors that accept tuples?
 @inline (::Type{FV}){FV<:FieldVector}(x::Tuple) = FV(x...)
 
 @pure Size{FV<:FieldVector}(::Type{FV}) = Size(nfields(FV))
 
-@inline getindex(v::FieldVector, i::Integer) = getfield(v, i)
-@inline setindex!(v::FieldVector, x, i::Integer) = setfield!(v, i, x)
+@inline getindex(v::FieldVector, i::Int) = getfield(v, i)
+@inline setindex!(v::FieldVector, x, i::Int) = setfield!(v, i, x)
 
 # See #53
 Base.cconvert{T}(::Type{Ptr{T}}, v::FieldVector) = Ref(v)

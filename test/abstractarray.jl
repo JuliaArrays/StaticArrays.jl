@@ -25,18 +25,18 @@
         @test @inferred(similar_type(SVector{2,Int}, Float64, Size(3,3,3))) == SArray{(3,3,3), Float64, 3, 27}
 
         # Some specializations for the mutable case
-        @test @inferred(similar_type(MVector{3,Int}, Float64)) == MVector{3,Float64}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Size(2))) == MVector{2, Int}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == MVector{2, Float64}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == MVector{2, Float64}
+        @test @inferred(similar_type(MVector{3,Int}, Float64)) == SVector{3,Float64}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Size(2))) == SVector{2, Int}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == SVector{2, Float64}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == SVector{2, Float64}
 
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64)) == MMatrix{3, 3, Float64, 9}
-        @test @inferred(similar_type(MVector{2,Int}, Size(3,3))) == MMatrix{3, 3, Int, 9}
-        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3))) == MMatrix{3, 3, Float64, 9}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64)) == SMatrix{3, 3, Float64, 9}
+        @test @inferred(similar_type(MVector{2,Int}, Size(3,3))) == SMatrix{3, 3, Int, 9}
+        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3))) == SMatrix{3, 3, Float64, 9}
 
-        @test @inferred(similar_type(MArray{(4,4,4),Int,3,64}, Float64)) == MArray{(4,4,4), Float64, 3, 64}
-        @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == MArray{(3,3,3), Int, 3, 27}
-        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == MArray{(3,3,3), Float64, 3, 27}
+        @test @inferred(similar_type(MArray{(4,4,4),Int,3,64}, Float64)) == SArray{(4,4,4), Float64, 3, 64}
+        @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == SArray{(3,3,3), Int, 3, 27}
+        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == SArray{(3,3,3), Float64, 3, 27}
     end
 
     @testset "similar" begin

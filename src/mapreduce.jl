@@ -1,144 +1,201 @@
-#########
-## map ##
-#########
-
-# Single input
-@generated function map{T}(f, a1::StaticArray{T})
-    exprs = [:(f(a1[$j])) for j = 1:length(a1)]
-    return quote
-        $(Expr(:meta, :inline))
-        newtype = similar_type(typeof(a1), promote_op(f, T))
-        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
+# Returns the common Size of the inputs (or else throws a DimensionMismatch)
+@inline same_size(a1::StaticArray, as::StaticArray...) = _same_size(Size(a1), as...)
+@inline _same_size(s::Size) = s
+@inline function _same_size(s::Size, a1::StaticArray, as::StaticArray...)
+    if s === Size(a1)
+        return _same_size(s, as...)
+    else
+        throw(DimensionMismatch("Dimensions must match. Got inputs with $s and $(Size(a1))."))
     end
 end
 
-# Two inputs
-@generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::StaticArray{T2})
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
-    end
+@inline _first(a1, as...) = a1
 
-    exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
+################
+## map / map! ##
+################
+
+@inline function map(f, a::StaticArray...)
+    _map(f, same_size(a...), a...)
+end
+
+@generated function _map(f, ::Size{S}, a::StaticArray...) where {S}
+    exprs = Vector{Expr}(prod(S))
+    for i ∈ 1:prod(S)
+        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        exprs[i] = :(f($(tmp...)))
+    end
+    eltypes = [eltype(a[j]) for j ∈ 1:length(a)] # presumably, `eltype` is "hyperpure"?
+    newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
     return quote
-        $(Expr(:meta, :inline))
-        newtype = similar_type(typeof(a1), promote_op(f, T1, T2))
-        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(typeof(_first(a...)), $newT)(tuple($(exprs...)))
     end
 end
 
-# TODO these assume linear fast...
-@generated function map{T1,T2}(f, a1::StaticArray{T1}, a2::AbstractArray{T2})
-    exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a1)]
-    return quote
-        $(Expr(:meta, :inline))
+@inline function map!(f, dest::StaticArray, a::StaticArray...)
+    _map!(f, dest, same_size(dest, a...), a...)
+end
 
-        if size(a1) != size(a2)
-            error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
+# Ambiguities with Base:
+@inline function map!(f, dest::StaticArray, a::StaticArray)
+    _map!(f, dest, same_size(dest, a), a)
+end
+@inline function map!(f, dest::StaticArray, a::StaticArray, b::StaticArray)
+    _map!(f, dest, same_size(dest, a, b), a, b)
+end
+
+
+@generated function _map!(f, dest, ::Size{S}, a::StaticArray...) where {S}
+    exprs = Vector{Expr}(prod(S))
+    for i ∈ 1:prod(S)
+        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        exprs[i] = :(dest[$i] = f($(tmp...)))
+    end
+    return quote
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+###############
+## mapreduce ##
+###############
+
+@inline function mapreduce(f, op, a::StaticArray...)
+    _mapreduce(f, op, same_size(a...), a...)
+end
+
+@inline function mapreduce(f, op, v0, a::StaticArray...)
+    _mapreduce(f, op, v0, same_size(a...), a...)
+end
+
+@generated function _mapreduce(f, op, ::Size{S}, a::StaticArray...) where {S}
+    tmp = [:(a[$j][1]) for j ∈ 1:length(a)]
+    expr = :(f($(tmp...)))
+    for i ∈ 2:prod(S)
+        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        expr = :(op($expr, f($(tmp...))))
+    end
+    return quote
+        @_inline_meta
+        @inbounds return $expr
+    end
+end
+
+@generated function _mapreduce(f, op, v0, ::Size{S}, a::StaticArray...) where {S}
+    expr = :v0
+    for i ∈ 1:prod(S)
+        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        expr = :(op($expr, f($(tmp...))))
+    end
+    return quote
+        @_inline_meta
+        @inbounds return $expr
+    end
+end
+
+##################
+## mapreducedim ##
+##################
+
+# I'm not sure why the signature for this from Base precludes multiple arrays?
+# (also, why now mutating `mapreducedim!` and `reducedim!`?)
+# (similarly, `broadcastreduce` and `broadcastreducedim` sounds useful)
+@inline function mapreducedim(f, op, a::StaticArray, ::Type{Val{D}}) where {D}
+    _mapreducedim(f, op, Size(a), a, Val{D})
+end
+
+@inline function mapreducedim(f, op, a::StaticArray, ::Type{Val{D}}, v0) where {D}
+    _mapreducedim(f, op, Size(a), a, Val{D}, v0)
+end
+
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S, D}
+    N = length(S)
+    Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
+
+    exprs = Array{Expr}(Snew)
+    itr = [1:n for n ∈ Snew]
+    for i ∈ Base.product(itr...)
+        expr = :(f(a[$(i...)]))
+        for k = 2:S[D]
+            ik = collect(i)
+            ik[D] = k
+            expr = :(op($expr, f(a[$(ik...)])))
         end
 
-        newtype = similar_type(typeof(a1), promote_op(f, T1, T2))
-        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
+        exprs[i...] = expr
+    end
+
+    # TODO element type might change
+    return quote
+        @_inline_meta
+        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
     end
 end
 
-@generated function map{T1,T2}(f, a1::AbstractArray{T1}, a2::StaticArray{T2})
-    exprs = [:(f(a1[$j], a2[$j])) for j = 1:length(a2)]
-    return quote
-        $(Expr(:meta, :inline))
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0) where {S, D}
+    N = ndims(a)
+    Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
 
-        @boundscheck if size(a1) != size(a2)
-            error("Dimensions must match. Got sizes $(size(a1)) and $(size(a2))")
+    exprs = Array{Expr}(Snew)
+    itr = [1:n for n = Snew]
+    for i ∈ Base.product(itr...)
+        expr = :v0
+        for k = 1:S[D]
+            ik[D] = k
+            expr = :(op($expr, f(a[$(ik...)])))
         end
 
-        newtype = similar_type(typeof(a2), promote_op(f, T1, T2))
-        @inbounds return $(Expr(:call, :newtype, Expr(:tuple, exprs...)))
+        exprs[i...] = expr
+    end
+
+    # TODO element type might change
+    return quote
+        @_inline_meta
+        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
     end
 end
-
-# TODO General case involving arbitrary many inputs?
 
 ############
 ## reduce ##
 ############
-@generated function reduce(op, a::StaticArray)
-    if length(a) == 1
-        return :(@inbounds return a[1])
-    else
-        expr = :(op(a[1], a[2]))
-        for j = 3:length(a)
-            expr = :(op($expr, a[$j]))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
 
-@generated function reduce(op, v0, a::StaticArray)
-    if length(a) == 0
-        return :(v0)
-    else
-        expr = :(op(v0, a[1]))
-        for j = 2:length(a)
-            expr = :(op($expr, a[$j]))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
+@inline reduce(op, a::StaticArray) = mapreduce(identity, op, a)
+@inline reduce(op, v0, a::StaticArray) = mapreduce(identity, op, v0, a)
 
-@generated function reducedim{D}(op, a::StaticArray, ::Type{Val{D}})
-    S = size(a)
-    if S[D] == 1
-        return :(return a)
-    else
-        N = ndims(a)
-        Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
-        newtype = similar_type(a, Size(Snew))
+###############
+## reducedim ##
+###############
 
-        exprs = Array{Expr}(Snew)
-        itr = [1:n for n = Snew]
-        for i = Base.product(itr...)
-            ik = copy([i...])
-            ik[D] = 2
-            expr = :(op(a[$(i...)], a[$(ik...)]))
-            for k = 3:S[D]
-                ik[D] = k
-                expr = :(op($expr, a[$(ik...)]))
-            end
+@inline reducedim(op, a::StaticArray, ::Val{D}) where {D} = mapreducedim(identity, op, a, Val{D})
+@inline reducedim(op, a::StaticArray, ::Val{D}, v0) where {D} = mapreducedim(identity, op, a, Val{D}, v0)
 
-            exprs[i...] = expr
-        end
-
-        return quote
-            $(Expr(:meta,:inline))
-            @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-        end
-    end
-end
+#######################
+## related functions ##
+#######################
 
 # These are all similar in Base but not @inline'd
-@inline sum{T}(a::StaticArray{T}) = reduce(+, zero(T), a)
-@inline prod{T}(a::StaticArray{T}) = reduce(*, one(T), a)
+@inline sum(a::StaticArray{T}) where {T} = reduce(+, zero(T), a)
+@inline prod(a::StaticArray{T}) where {T} = reduce(*, one(T), a)
 @inline count(a::StaticArray{Bool}) = reduce(+, 0, a)
 @inline all(a::StaticArray{Bool}) = reduce(&, true, a)  # non-branching versions
 @inline any(a::StaticArray{Bool}) = reduce(|, false, a) # (benchmarking needed)
 @inline mean(a::StaticArray) = sum(a) / length(a)
-@inline sumabs{T}(a::StaticArray{T}) = mapreduce(abs, +, zero(T), a)
-@inline sumabs2{T}(a::StaticArray{T}) = mapreduce(abs2, +, zero(T), a)
+@inline sumabs(a::StaticArray{T}) where {T} = mapreduce(abs, +, zero(T), a)
+@inline sumabs2(a::StaticArray{T}) where {T} = mapreduce(abs2, +, zero(T), a)
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
-@inline minimum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(min, a, dim)
-@inline maximum{D}(a::StaticArray, dim::Type{Val{D}}) = reducedim(max, a, dim)
+@inline minimum(a::StaticArray, dim::Type{Val{D}}) where {D} = reducedim(min, a, dim)
+@inline maximum(a::StaticArray, dim::Type{Val{D}}) where {D} = reducedim(max, a, dim)
 
-@generated function diff{D}(a::StaticArray, ::Type{Val{D}}=Val{1})
-    S = size(a)
-    N = ndims(a)
+# Diff is slightly different
+@inline diff(a::StaticArray) = diff(a, Val{1})
+@inline diff(a::StaticArray, ::Type{Val{D}}) where {D} = _diff(Size(a), a, Val{D})
+
+@generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S, D}
+    N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
-    newtype = similar_type(a, Size(Snew))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
@@ -149,282 +206,9 @@ end
         exprs[i1...] = :(a[$(i2...)] - a[$(i1...)])
     end
 
+    # TODO element type might change
     return quote
-        $(Expr(:meta,:inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-###############
-## mapreduce ##
-###############
-
-# Single array
-@generated function mapreduce(f, op, a1::StaticArray)
-    if length(a1) == 1
-        return :(f(a1[1]))
-    else
-        expr = :(op(f(a1[1]), f(a1[2])))
-        for j = 3:length(a1)
-            expr = :(op($expr, f(a1[$j])))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
-
-@generated function mapreduce(f, op, v0, a1::StaticArray)
-    if length(a1) == 0
-        return :(v0)
-    else
-        expr = :(op(v0, f(a1[1])))
-        for j = 2:length(a1)
-            expr = :(op($expr, f(a1[$j])))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
-
-# Two arrays (e.g. dot has f(a,b) = a' * b, op = +)
-@generated function mapreduce(f, op, a1::StaticArray, a2::StaticArray)
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
-    end
-
-    if length(a1) == 1
-        return :(f(a1[1], a2[1]))
-    else
-        expr = :(op(f(a1[1], a2[1]), f(a1[2], a2[2])))
-        for j = 3:length(a1)
-            expr = :(op($expr, f(a1[$j], a2[$j])))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
-
-@generated function mapreduce(f, op, v0, a1::StaticArray, a2::StaticArray)
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
-    end
-
-    if length(a1) == 0
-        return :(v0)
-    else
-        expr = :(op(v0, f(a1[1], a2[1])))
-        for j = 2:length(a1)
-            expr = :(op($expr, f(a1[$j], a2[$j])))
-        end
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    end
-end
-
-# TODO General case involving arbitrary many inputs?
-
-###############
-## broadcast ##
-###############
-# Single input version
-@inline broadcast(f, a::StaticArray) = map(f, a)
-
-
-# Two input versions
-@generated function broadcast(f, a1::StaticArray, a2::StaticArray)
-    if size(a1) == size(a2)
-        return quote
-            $(Expr(:meta, :inline))
-            map(f, a1, a2)
-        end
-    else
-        s1 = size(a1)
-        s2 = size(a2)
-        ndims = max(length(s1), length(s2))
-
-        s = Vector{Int}(ndims)
-        expands1 = Vector{Bool}(ndims)
-        expands2 = Vector{Bool}(ndims)
-        for i = 1:ndims
-            if length(s1) < i
-                s[i] = s2[i]
-                expands1[i] = false
-                expands2[i] = s2[i] > 1
-            elseif length(s2) < i
-                s[i] = s1[i]
-                expands1[i] = s1[i] > 1
-                expands2[i] = false
-            else
-                s[i] = max(s1[i], s1[i])
-                @assert s1[i] == 1 || s1[i] == s[i]
-                @assert s2[i] == 1 || s2[i] == s[i]
-                expands1[i] = s1[i] > 1
-                expands2[i] = s2[i] > 1
-            end
-        end
-        s = (s...)
-        L = prod(s)
-
-        if s == s1
-            newtype = :( similar_type($a1, promote_op(f, $(eltype(a1)), $(eltype(a2)))) )
-        else
-            newtype = :( similar_type($a1, promote_op(f, $(eltype(a1)), $(eltype(a2))), $(Size(s))) )
-        end
-
-        exprs = Vector{Expr}(L)
-
-        i = 1
-        ind = ones(Int, ndims)
-        while i <= L
-            ind1 = [expands1[j] ? ind[j] : 1 for j = 1:length(s1)]
-            ind2 = [expands2[j] ? ind[j] : 1 for j = 1:length(s2)]
-
-            exprs[i] = Expr(:call, :f, Expr(:ref, :a1, ind1...), Expr(:ref, :a2, ind2...))
-
-            i += 1
-
-            ind[1] += 1
-            j = 1
-            while j < length(s)
-                if ind[j] > s[j]
-                    ind[j] = 1
-                    ind[j+1] += 1
-                else
-                    break
-                end
-
-                j += 1
-            end
-        end
-
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-        end
-    end
-end
-
-@inline broadcast(f, a::StaticArray, n::Number) = map(x -> f(x, n), a)
-@inline broadcast(f, n::Number, a::StaticArray) = map(x -> f(n, x), a)
-
-# Other two-input versions with AbstractArray
-
-##########
-## map! ##
-##########
-
-# Single input
-@generated function map!{F}(f::F, out::StaticArray, a1::StaticArray)
-    exprs = [:(out[$j] = f(a1[$j])) for j = 1:length(a1)]
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-
-# Two inputs
-@generated function map!{F}(f::F, out::StaticArray, a1::StaticArray, a2::StaticArray)
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(a)) and $(size(a2))")
-    end
-
-    if size(a1) != size(a2)
-        error("Dimensions must match. Got sizes $(size(out)) and $(size(a1))")
-    end
-
-    exprs = [:(out[$j] = f(a1[$j], a2[$j])) for j = 1:length(a1)]
-    return quote
-        #$(Expr(:meta, :inline))
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-
-
-################
-## broadcast! ##
-################
-
-@inline broadcast!{F}(f::F, out::StaticArray, a::StaticArray) = map!(f, out, a)
-@inline broadcast!(f::typeof(identity), out::StaticArray, a::StaticArray) = map!(f, out, a)
-
-# Two input versions
-@generated function broadcast!{F}(f::F, out::StaticArray, a1::StaticArray, a2::StaticArray)
-    if size(a1) == size(a2) && size(out) == size(a1)
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds map!(f, out, a1, a2)
-        end
-    else
-        s1 = size(a1)
-        s2 = size(a2)
-        ndims = max(length(s1), length(s2))
-
-        s = Vector{Int}(ndims)
-        expands1 = Vector{Bool}(ndims)
-        expands2 = Vector{Bool}(ndims)
-        for i = 1:ndims
-            if length(s1) < i
-                s[i] = s2[i]
-                expands1[i] = false
-                expands2[i] = s2[i] > 1
-            elseif length(s2) < i
-                s[i] = s1[i]
-                expands1[i] = s1[i] > 1
-                expands2[i] = false
-            else
-                s[i] = max(s1[i], s1[i])
-                @assert s1[i] == 1 || s1[i] == s[i]
-                @assert s2[i] == 1 || s2[i] == s[i]
-                expands1[i] = s1[i] > 1
-                expands2[i] = s2[i] > 1
-            end
-        end
-        s = (s...)
-        L = prod(s)
-
-        if s != size(out)
-            error("Dimension mismatch")
-        end
-
-        exprs = Vector{Expr}(L)
-
-        i = 1
-        ind = ones(Int, ndims)
-        while i <= L
-            ind1 = [expands1[j] ? ind[j] : 1 for j = 1:length(s1)]
-            ind2 = [expands2[j] ? ind[j] : 1 for j = 1:length(s2)]
-            index1 = sub2ind(s1, ind1...)
-            index2 = sub2ind(s2, ind2...)
-
-            exprs[i] = :(out[$i] = $(Expr(:call, :f, Expr(:ref, :a1, index1), Expr(:ref, :a2, index2))))
-
-            i += 1
-
-            ind[1] += 1
-            j = 1
-            while j < length(s)
-                if ind[j] > s[j]
-                    ind[j] = 1
-                    ind[j+1] += 1
-                else
-                    break
-                end
-
-                j += 1
-            end
-        end
-
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds $(Expr(:block, exprs...))
-        end
+        @_inline_meta
+        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
     end
 end

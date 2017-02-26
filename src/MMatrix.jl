@@ -94,9 +94,9 @@ end
 # Some more advanced constructor-like functions
 @inline one{N}(::Type{MMatrix{N}}) = one(MMatrix{N,N})
 @inline eye{N}(::Type{MMatrix{N}}) = eye(MMatrix{N,N})
-@inline eye{N,M}(::Type{MMatrix{N,M}}) = eye(MMatrix{N,M,Float64})
-@inline zeros{N,M}(::Type{MMatrix{N,M}}) = zeros(MMatrix{N,M,Float64})
-@inline ones{N,M}(::Type{MMatrix{N,M}}) = ones(MMatrix{N,M,Float64})
+#@inline eye{N,M}(::Type{MMatrix{N,M}}) = eye(MMatrix{N,M,Float64})
+#@inline zeros{N,M}(::Type{MMatrix{N,M}}) = zeros(MMatrix{N,M,Float64})
+#@inline ones{N,M}(::Type{MMatrix{N,M}}) = ones(MMatrix{N,M,Float64})
 
 #####################
 ## MMatrix methods ##
@@ -106,7 +106,7 @@ end
 @pure Size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = Size(S1, S2)
 @pure Size{S1,S2,T,L}(::Type{MMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
-@propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Integer)
+@propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Int)
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end
@@ -121,8 +121,8 @@ end
     end
 end
 
-@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Integer) = setindex!(m, convert(T, val), i)
-@propagate_inbounds function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Integer)
+@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Int) = setindex!(m, convert(T, val), i)
+@propagate_inbounds function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Int)
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end

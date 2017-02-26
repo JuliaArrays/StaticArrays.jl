@@ -65,10 +65,10 @@ end
 @inline SArray(a::StaticArray) = SArray{size(typeof(a))}(Tuple(a))
 
 # Some more advanced constructor-like functions
-@inline eye{Size}(::Type{SArray{Size}}) = eye(SArray{Size,Float64})
-@inline zeros{Size}(::Type{SArray{Size}}) = zeros(SArray{Size,Float64})
-@inline ones{Size}(::Type{SArray{Size}}) = ones(SArray{Size,Float64})
-
+@inline one(::Type{SArray{S}}) where {S} = one(SArray{S,Float64,length(S)})
+@inline eye(::Type{SArray{S}}) where {S} = eye(SArray{S,Float64,length(S)})
+@inline one(::Type{SArray{S,T}}) where {S,T} = one(SArray{S,T,length(S)})
+@inline eye(::Type{SArray{S,T}}) where {S,T} = eye(SArray{S,T,length(S)})
 
 ####################
 ## SArray methods ##
@@ -79,7 +79,7 @@ end
 @pure Size{S,T,N}(::Type{SArray{S,T,N}}) = Size(S)
 @pure Size{S,T,N,L}(::Type{SArray{S,T,N,L}}) = Size(S)
 
-function getindex(v::SArray, i::Integer)
+function getindex(v::SArray, i::Int)
     Base.@_inline_meta
     v.data[i]
 end

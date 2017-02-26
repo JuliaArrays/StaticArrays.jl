@@ -25,8 +25,6 @@
         m1 = @SMatrix [1 2; 3 4]
         m2 = @SMatrix [4 3; 2 1]
 
-        @test @inferred(.-(m1)) === @SMatrix [-1 -2; -3 -4]
-
         @test @inferred(m1 .+ m2) === @SMatrix [5 5; 5 5]
         @test @inferred(m1 .* m2) === @SMatrix [4 6; 6 4]
         @test @inferred(m1 .- m2) === @SMatrix [-3 -1; 1 3]

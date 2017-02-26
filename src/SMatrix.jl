@@ -66,7 +66,7 @@ end
         SMatrix{S1, S2, $T, L}(x)
     end
 end
-@compat SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
+SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
 @generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
     return quote
@@ -108,9 +108,9 @@ end
 # Some more advanced constructor-like functions
 @inline one{N}(::Type{SMatrix{N}}) = one(SMatrix{N,N})
 @inline eye{N}(::Type{SMatrix{N}}) = eye(SMatrix{N,N})
-@inline eye{N,M}(::Type{SMatrix{N,M}}) = eye(SMatrix{N,M,Float64})
-@inline zeros{N,M}(::Type{SMatrix{N,M}}) = zeros(SMatrix{N,M,Float64})
-@inline ones{N,M}(::Type{SMatrix{N,M}}) = ones(SMatrix{N,M,Float64})
+#@inline eye{N,M}(::Type{SMatrix{N,M}}) = eye(SMatrix{N,M,Float64})
+#@inline zeros{N,M}(::Type{SMatrix{N,M}}) = zeros(SMatrix{N,M,Float64})
+#@inline ones{N,M}(::Type{SMatrix{N,M}}) = ones(SMatrix{N,M,Float64})
 
 #####################
 ## SMatrix methods ##
@@ -120,7 +120,7 @@ end
 @pure Size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = Size(S1, S2)
 @pure Size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
-function getindex(v::SMatrix, i::Integer)
+function getindex(v::SMatrix, i::Int)
     Base.@_inline_meta
     v.data[i]
 end

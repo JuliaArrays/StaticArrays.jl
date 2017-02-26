@@ -43,7 +43,7 @@ end
 @pure Size{S}(::Type{SVector{S}}) = Size(S)
 @pure Size{S,T}(::Type{SVector{S,T}}) = Size(S)
 
-@propagate_inbounds function getindex(v::SVector, i::Integer)
+@propagate_inbounds function getindex(v::SVector, i::Int)
     v.data[i]
 end
 

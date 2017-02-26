@@ -1,676 +1,274 @@
 import Base: *,        Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
 import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
 
+import Base.LinAlg: BlasFloat
+
+const StaticVecOrMat{T} = Union{StaticVector{T}, StaticMatrix{T}}
+
 # Idea inspired by https://github.com/JuliaLang/julia/pull/18218
 promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
 
 # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
 
+# Deal with A_mul_Bc, etc...
 # TODO make faster versions of A*_mul_B*
-@generated function A_mul_Bc(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A * ctranspose(B)
-    end
-end
-@generated function Ac_mul_B(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        ctranspose(A) * B
-    end
-end
-@generated function Ac_mul_Bc(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        ctranspose(B*A) # is this always safe?
-    end
-end
+@inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * ctranspose(B)
+@inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = ctranspose(A) * ctranspose(B)
+@inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = ctranspose(A) * B
 
-@generated function A_mul_Bt(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A * transpose(B)
-    end
-end
-@generated function At_mul_B(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        transpose(A) * B
-    end
-end
-@generated function At_mul_Bt(A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        transpose(B*A) # is this always safe?
-    end
-end
+@inline A_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = A * transpose(B)
+@inline At_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * transpose(B)
+@inline At_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * B
 
-# mutating
+@inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, ctranspose(B))
+@inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, ctranspose(A), ctranspose(B))
+@inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, ctranspose(A), B)
 
-@generated function A_mul_Bc!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, A, ctranspose(B))
-    end
-end
-@generated function Ac_mul_B!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, ctranspose(A), B)
-    end
-end
-@generated function Ac_mul_Bc!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, ctranspose(A), ctranspose(B))
-    end
-end
+@inline A_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, transpose(B))
+@inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, transpose(A), transpose(B))
+@inline At_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, transpose(A), B)
 
-@generated function A_mul_Bt!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, A, transpose(B))
-    end
-end
-@generated function At_mul_B!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, transpose(A), B)
-    end
-end
-@generated function At_mul_Bt!(C::Union{StaticMatrix, StaticVector}, A::Union{StaticMatrix, StaticVector}, B::Union{StaticMatrix, StaticVector})
-    return quote
-        $(Expr(:meta, :inline))
-        A_mul_B!(C, transpose(A), transpose(B))
-    end
-end
+# Manage dispatch of * and A_mul_B!
+# TODO RowVector? (Inner product?)
 
+@inline *(A::StaticMatrix, B::StaticVector) = _A_mul_B(Size(A), Size(B), A, B)
+@inline *(A::StaticMatrix, B::StaticMatrix) = _A_mul_B(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
 
-@generated function *{TA,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
-    sA = size(A)
-    sb = size(b)
+@inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = A_mul_B!(dest, reshape(A, Size(Size(A)[1], 1)), B)
 
-    s = Size(sA[1])
-    T = promote_matprod(TA, Tb)
-    #println(T)
+#@inline *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
-    if sb[1] != sA[2]
-        error("Dimension mismatch")
+# Implementations
+
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
-    if s == sb
-        if T == Tb
-            newtype = b
-        else
-            newtype = similar_type(b, T)
-        end
+    if sa[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
-        if T == Tb
-            newtype = similar_type(b, s)
-        else
-            newtype = similar_type(b, T, s)
-        end
-    end
-
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
-    else
-        exprs = [zero(T) for k = 1:sA[1]]
+        exprs = [:(zero(T)) for k = 1:sa[1]]
     end
 
     return quote
-        $(Expr(:meta,:inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        T = promote_matprod(Ta, Tb)
+        @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
 
-# For an ambiguity relating to the below two functions
-@generated function *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
-    sA = size(A)
-    sb = size(b)
+# TODO: I removed StaticMatrix * AbstractVector. Reinstate?
 
-    s = Size(sA[1])
-    T = promote_matprod(TA, Tb)
-    #println(T)
-
-    if sb[1] != sA[2]
-        error("Dimension mismatch")
-    end
-
-    if s == sb
-        if T == Tb
-            newtype = b
-        else
-            newtype = similar_type(b, T)
-        end
-    else
-        if T == Tb
-            newtype = similar_type(b, s)
-        else
-            newtype = similar_type(b, T, s)
-        end
-    end
-
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
-    else
-        exprs = [zero(T) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-# This happens to be size-inferrable from A
-@generated function *{TA,Tb}(A::StaticMatrix{TA}, b::AbstractVector{Tb})
-    sA = size(A)
-    #sb = size(b)
-
-    s = Size(sA[1])
-    T = promote_matprod(TA, Tb)
-
-    if T == TA
-        newtype = similar_type(A, s)
-    else
-        newtype = similar_type(A, T, s)
-    end
-
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
-    else
-        exprs = [zero(T) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        if length(b) != $(sA[2])
-            error("Dimension mismatch")
-        end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-# Ambiguity with BLAS function
-@generated function *{TA <: Base.LinAlg.BlasFloat, Tb}(A::StaticMatrix{TA}, b::StridedVector{Tb})
-    sA = size(A)
-
-    s = Size(sA[1])
-    T = promote_matprod(TA, Tb)
-
-    if T == TA
-        newtype = similar_type(A, s)
-    else
-        newtype = similar_type(A, T, s)
-    end
-
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
-    else
-        exprs = [zero(T) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        if length(b) != $(sA[2])
-            error("Dimension mismatch")
-        end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function *(a::StaticVector, B::StaticMatrix)
-    Ta = eltype(a)
-    TB = eltype(B)
-    sa = size(a)
-    sB = size(B)
-
-    s = Size(sa[1],sB[2])
-    T = promote_matprod(Ta, TB)
-
-    if sB[1] != 1
-        error("Dimension mismatch")
-    end
-
-    if s == sB
-        if T == TB
-            newtype = B
-        else
-            newtype = similar_type(B, T)
-        end
-    else
-        if T == TB
-            newtype = similar_type(B, s)
-        else
-            newtype = similar_type(B, T, s)
-        end
-    end
-
-    exprs = [:(a[$j] * B[$k]) for j = 1:s[1], k = 1:s[2]]
-
-    return quote
-        $(Expr(:meta,:inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-#@inline *{S1,S2,S3}(A::MMatrix{S1,S2}, B::MMatrix{S2,S3}) = MMatrix{S1,S3}(SMatrix{S1,S2}(A)*SMatrix{S2,S3}(B))
-
-@generated function *(A::StaticMatrix, B::StaticMatrix)
-    TA = eltype(A)
-    TB = eltype(B)
-
-    T = promote_matprod(TA, TB)
-
-    can_mutate = !isbits(A) || !isbits(B) # !isbits implies can get a persistent pointer (to pass to BLAS). Probably will change to !isimmutable in a future version of Julia.
-    can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
+@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+    can_mutate = a.mutable && b.mutable # TODO this probably isn't safe. Maybe a trait??
+    can_blas = Ta == Tb && Ta <: BlasFloat
 
     if can_mutate
-        sA = size(A)
-        sB = size(B)
-        s = Size(sA[1], sB[2])
+        S = Size(sa[1], sb[2])
 
         # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
-        if can_blas && size(A,1)*size(A,2)*size(B,2) >= 14*14*14
+        if can_blas && sa[1]*sa[2]*sb[2] >= 14*14*14
             return quote
-                $(Expr(:meta, :inline))
-                C = similar(A, $T, $(Size(s)))
-                A_mul_B_blas!(C, A, B)
+                @_inline_meta
+                T = promote_matprod(Ta, Tb)
+                C = similar(a, T, $S)
+                A_mul_B_blas!($S, C, Sa, Sb, a, b)
                 return C
             end
-        elseif size(A,1)*size(A,2)*size(B,2) < 8*8*8
+        elseif sa[1]*sa[2]*sb[2] < 8*8*8
             return quote
-                $(Expr(:meta, :inline))
-                return A_mul_B_unrolled(A, B)
+                @_inline_meta
+                return A_mul_B_unrolled(Sa, Sb, a, b)
             end
-        elseif size(A,1) <= 14 && size(A,2) <= 14 && size(B,2) <= 14
+        elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
             return quote
-                $(Expr(:meta, :inline))
-                return $(similar_type(A, T, s))(A_mul_B_unrolled_chunks(A, B))
+                @_inline_meta
+                T = promote_matprod(Ta, Tb)
+                return similar_type(a, T, $S)(A_mul_B_unrolled_chunks(Sa, Sb, a, b))
             end
         else
             return quote
-                $(Expr(:meta, :inline))
-                return A_mul_B_loop(A, B)
+                @_inline_meta
+                return A_mul_B_loop(Sa, Sb, a, b)
             end
         end
     else # both are isbits type...
         # Heuristic choice for amount of codegen
-        if size(A,1)*size(A,2)*size(B,2) <= 8*8*8
+        if sa[1]*sa[2]*sb[2] <= 8*8*8
             return quote
-                $(Expr(:meta, :inline))
-                return A_mul_B_unrolled(A, B)
+                @_inline_meta
+                return A_mul_B_unrolled(Sa, Sb, a, b)
             end
-        elseif size(A,1) <= 14 && size(A,2) <= 14 && size(B,2) <= 14
+        elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
             return quote
-                $(Expr(:meta, :inline))
-                return A_mul_B_unrolled_chunks(A, B)
+                @_inline_meta
+                return A_mul_B_unrolled_chunks(Sa, Sb, a, b)
             end
         else
             return quote
-                $(Expr(:meta, :inline))
-                return A_mul_B_loop(A, B)
+                @_inline_meta
+                return A_mul_B_loop(Sa, Sb, a, b)
             end
         end
     end
 end
 
-@generated function A_mul_B_unrolled(A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
-
-    s = Size(sA[1], sB[2])
-    T = promote_matprod(TA, TB)
-
-    if sB[1] != sA[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
-    # TODO think about which to be similar to
-    if s == sB
-        if T == TB
-            newtype = B
-        else
-            newtype = similar_type(B, T)
-        end
-    else
-        if T == TB
-            newtype = similar_type(B, s)
-        else
-            newtype = similar_type(B, T, s)
-        end
-    end
+    S = Size(sa[1], sb[2])
 
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    if sa[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k1, j))]*b[$(sub2ind(sb, j, k2))]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
     else
-        exprs = [zero(T) for k1 = 1:sA[1], k2 = 1:sB[2]]
+        exprs = [:(zero(T)) for k1 = 1:sa[1], k2 = 1:sb[2]]
     end
 
     return quote
-        $(Expr(:meta,:inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        T = promote_matprod(Ta, Tb)
+        @inbounds return similar_type(a, T, $S)(tuple($(exprs...)))
     end
 end
 
 
-@generated function A_mul_B_loop(A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
-
-    s = Size(sA[1], sB[2])
-    T = promote_matprod(TA, TB)
-
-    if sB[1] != sA[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, b::StaticMatrix{Ta}, a::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
-    # TODO think about which to be similar to
-    if s == sB
-        if T == TB
-            newtype = B
-        else
-            newtype = similar_type(B, T)
-        end
-    else
-        if T == TB
-            newtype = similar_type(B, s)
-        else
-            newtype = similar_type(B, T, s)
-        end
-    end
+    S = Size(sa[1], sb[2])
 
-    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:sA[1], k2 = 1:sB[2]]
-    exprs_init = [:($(tmps[k1,k2])  = A[$k1] * B[1 + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
-    exprs_loop = [:($(tmps[k1,k2]) += A[$(k1-sA[1]) + $(sA[1])*j] * B[j + $((k2-1) * sB[1])]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:sa[1], k2 = 1:sb[2]]
+    exprs_init = [:($(tmps[k1,k2])  = a[$k1] * b[1 + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    exprs_loop = [:($(tmps[k1,k2]) += a[$(k1-sa[1]) + $(sa[1])*j] * b[j + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
     return quote
-        $(Expr(:meta,:inline))
+        @_inline_meta
+        T = promote_matprod(Ta, Tb)
 
         @inbounds $(Expr(:block, exprs_init...))
-        for j = 2:$(sA[2])
+        for j = 2:$(sa[2])
             @inbounds $(Expr(:block, exprs_loop...))
         end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, tmps...)))
+        @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
     end
 end
 
 # Concatenate a series of matrix-vector multiplications
 # Each function is N^2 not N^3 - aids in compile time.
-@generated function A_mul_B_unrolled_chunks(A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
-
-    s = Size(sA[1], sB[2])
-    T = promote_matprod(TA, TB)
-
-    if sB[1] != sA[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
-    # TODO think about which to be similar to
-    if s == sB
-        if T == TB
-            newtype = B
-        else
-            newtype = similar_type(B, T)
-        end
-    else
-        if T == TB
-            newtype = similar_type(B, s)
-        else
-            newtype = similar_type(B, T, s)
-        end
+    S = Size(sa[1], sb[2])
+
+    # Do a custom b[:, k2] to return a SVector (an isbits type) rather than (possibly) a mutable type. Avoids allocation == faster
+    tmp_type_in = :(SVector{$(sa[1]), T})
+    tmp_type_out = :(SVector{$(sb[1]), T})
+    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(Size(a), Size($(sa[1])), a, $(Expr(:call, tmp_type_in, [Expr(:ref, :b, sub2ind(S, i, k2)) for i = 1:sb[1]]...)))::$tmp_type_out) for k2 = 1:sb[2]]
+
+    exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+
+    return quote
+        @_inline_meta
+        T = promote_matprod(Ta, Tb)
+        $(Expr(:block,
+            vect_exprs...,
+            :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
+        ))
     end
-
-    #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
-
-    # Do a custom B[:, k2] to return a SVector (an isbits type) rather than (possibly) a mutable type. Avoids allocation == faster
-    tmp_type_in = SVector{sB[1], T}
-    tmp_type_out = SVector{sA[1], T}
-    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(A, $(Expr(:call, tmp_type_in, [Expr(:ref, :B, sub2ind(s, i, k2)) for i = 1:sB[1]]...)))::$tmp_type_out) for k2 = 1:sB[2]]
-
-    exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sA[1], k2 = 1:sB[2]]
-
-    return Expr(:block,
-        Expr(:meta,:inline),
-        vect_exprs...,
-        :(@inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...))))
-    )
 end
 
-@generated function partly_unrolled_multiply(A::StaticMatrix, b::StaticVector)
-    TA = eltype(A)
-    Tb = eltype(b)
-    sA = size(A)
-    sb = size(b)
-
-    s = Size(sA[1])
-    T = promote_matprod(TA, Tb)
-
-    if sb[1] != sA[2]
-        error("Dimension mismatch")
+@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {sa, sb, Ta, Tb}
+    if sa[2] != sb[1]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
-    if s == sb
-        if T == Tb
-            newtype = b
-        else
-            newtype = similar_type(b, T)
-        end
+    if sa[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
-        if T == Tb
-            newtype = similar_type(b, s)
-        else
-            newtype = similar_type(b, T, s)
-        end
-    end
-
-    if sA[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]) for k = 1:sA[1]]
-    else
-        exprs = [zero(T) for k = 1:sA[1]]
+        exprs = [:(zero(promote_matprod(Ta,Tb))) for k = 1:sa[1]]
     end
 
     return quote
         $(Expr(:meta,:noinline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return SVector(tuple($(exprs...)))
     end
 end
-
 
 # TODO aliasing problems if c === b?
-@generated function A_mul_B!{T1,T2,T3}(c::StaticVector{T1}, A::StaticMatrix{T2}, b::StaticVector{T3})
-    sA = size(A)
-    sb = size(b)
-    s = size(c)
-
-    if sb[1] != sA[2] || s[1] != sA[1]
-        error("Dimension mismatch")
+@generated function _A_mul_B!(::Size{sc}, c::StaticVector, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticVector) where {sa, sb, sc}
+    if sb[1] != sa[2] || sc[1] != sa[1]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
+    if sa[2] != 0
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]))) for k = 1:sa[1]]
     else
-        exprs = [:(c[$k] = $(zero(T1))) for k = 1:sA[1]]
+        exprs = [:(c[$k] = zero(eltype(c))) for k = 1:sa[1]]
     end
 
     return quote
-        $(Expr(:meta,:inline))
+        @_inline_meta
         @inbounds $(Expr(:block, exprs...))
     end
 end
 
-# These two for ambiguity with a BLAS calling function
-@generated function A_mul_B!{T<:Union{Float32, Float64}}(c::StaticVector{T}, A::StaticMatrix{T}, b::StaticVector{T})
-    sA = size(A)
-    sb = size(b)
-    s = size(c)
-
-    if sb[1] != sA[2] || s[1] != sA[1]
-        error("Dimension mismatch")
-    end
-
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
-    else
-        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-@generated function A_mul_B!{T<:Union{Complex{Float32}, Complex{Float64}}}(c::StaticVector{T}, A::StaticMatrix{T}, b::StaticVector{T})
-    sA = size(A)
-    sb = size(b)
-    s = size(c)
-
-    if sb[1] != sA[2] || s[1] != sA[1]
-        error("Dimension mismatch")
-    end
-
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
-    else
-        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-
-# The unrolled code is inferrable from the size of A
-@generated function A_mul_B!{T1,T2,T3}(c::AbstractVector{T1}, A::StaticMatrix{T2}, b::AbstractVector{T3})
-    sA = size(A)
-    T = eltype(c)
-
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
-    else
-        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        if length(b) != $(sA[2]) || length(c) != $(sA[1])
-            error("Dimension mismatch")
-        end
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-
-# Ambiguity with a BLAS specialized function
-# Also possible bug makes this harder to resolve (see https://github.com/JuliaLang/julia/issues/19124)
-# (problem being that I can't use T<:BlasFloat)
-@generated function A_mul_B!{T<:Union{Float64,Float32}}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
-    sA = size(A)
-
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
-    else
-        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        if length(b) != $(sA[2]) || length(c) != $(sA[1])
-            error("Dimension mismatch")
-        end
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-@generated function A_mul_B!{T<:Union{Complex{Float64},Complex{Float32}}}(c::StridedVector{T}, A::StaticMatrix{T}, b::StridedVector{T})
-    sA = size(A)
-
-    if sA[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k, j))]*b[$j]) for j = 1:sA[2]]))) for k = 1:sA[1]]
-    else
-        exprs = [:(c[$k] = $(zero(T))) for k = 1:sA[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:inline))
-        if length(b) != $(sA[2]) || length(c) != $(sA[1])
-            error("Dimension mismatch")
-        end
-        @inbounds $(Expr(:block, exprs...))
-    end
-end
-
-
-@generated function A_mul_B!(C::StaticMatrix, A::StaticMatrix, B::StaticMatrix)
-    if isbits(C)
-        error("Cannot mutate $C")
-    end
-
-    TA = eltype(A)
-    TB = eltype(B)
-    T = promote_matprod(TA, TB)
-
-    can_blas = T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
+@generated function _A_mul_B!(::Size{sc}, c::StaticMatrix{Tc}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, sc, Ta, Tb, Tc}
+    can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat
 
     if can_blas
-        if size(A,1) * size(A,2) * size(A,3) < 4*4*4
+        if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
-                $(Expr(:meta, :inline))
-                A_mul_B_unrolled!(C, A, B)
-                return C
+                @_inline_meta
+                A_mul_B_unrolled!(c, a, b)
+                return c
             end
-        elseif size(A,1) * size(A,2) * size(A,3) < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
+        elseif sa[1] * sa[2] * sb[2] < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
             return quote
-                $(Expr(:meta, :inline))
-                A_mul_B_unrolled_chunks!(C, A, B)
-                return C
+                @_inline_meta
+                A_mul_B_unrolled_chunks!(c, a, b)
+                return c
             end
         else
             return quote
-                $(Expr(:meta, :inline))
-                A_mul_B_blas!(C, A, B)
-                return C
+                @_inline_meta
+                A_mul_B_blas!(c, a, b)
+                return c
             end
         end
     else
-        if size(A,1) * size(A,2) * size(A,3) < 4*4*4
+        if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
-                $(Expr(:meta, :inline))
-                A_mul_B_unrolled!(C, A, B)
-                return C
+                @_inline_meta
+                A_mul_B_unrolled!(c, a, b)
+                return c
             end
         else
             return quote
-                $(Expr(:meta, :inline))
-                A_mul_B_unrolled_chunks!(C, A, B)
-                return C
+                @_inline_meta
+                A_mul_B_unrolled_chunks!(c, a, b)
+                return c
             end
         end
     end
 end
 
-@generated function A_mul_B_blas!(C::StaticMatrix, A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
 
-    s = size(C)
-    T = eltype(C)
-
-    if sB[1] != sA[2] || sA[1] != s[1] || sB[2] != s[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_blas!(::Size{s}, c::StaticMatrix{T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{T}, b::StaticMatrix{T}) where {s,sa,sb, T <: BlasFloat}
+    if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != s[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $s"))
     end
 
-    if sA[1] > 0 && sA[2] > 0 && sB[2] > 0 && T == TA && T == TB && T <: Union{Float64, Float32, Complex{Float64}, Complex{Float32}}
+    if sa[1] > 0 && sa[2] > 0 && sb[2] > 0
         # This code adapted from `gemm!()` in base/linalg/blas.jl
 
         if T == Float64
@@ -684,16 +282,16 @@ end
         end
 
         return quote
-            alpha = $(one(T))
-            beta = $(zero(T))
+            alpha = one(T)
+            beta = zero(T)
             transA = 'N'
             transB = 'N'
-            m = $(sA[1])
-            ka = $(sA[2])
-            kb = $(sB[1])
-            n = $(sB[2])
-            strideA = $(sA[1])
-            strideB = $(sB[1])
+            m = $(sa[1])
+            ka = $(sa[2])
+            kb = $(sb[1])
+            n = $(sb[2])
+            strideA = $(sa[1])
+            strideB = $(sb[1])
             strideC = $(s[1])
 
             ccall((Base.BLAS.@blasfunc($gemm), Base.BLAS.libblas), Void,
@@ -702,68 +300,49 @@ end
                  Ptr{$T}, Ptr{Base.BLAS.BlasInt}, Ptr{$T}, Ptr{$T},
                  Ptr{Base.BLAS.BlasInt}),
                  &transA, &transB, &m, &n,
-                 &ka, &alpha, A, &strideA,
-                 B, &strideB, &beta, C,
+                 &ka, &alpha, a, &strideA,
+                 b, &strideB, &beta, c,
                  &strideC)
-            return C
+            return c
         end
     else
-        error("Cannot call BLAS gemm with $C = $A * $B")
+        throw(DimensionMismatch("Cannot call BLAS gemm with zero-dimension arrays, attempted $sa * $sb -> $s."))
     end
 end
 
-@generated function A_mul_B_unrolled!(C::StaticMatrix, A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
-    T = eltype(C)
 
-    s = (sA[1], sB[2])
-
-    if sB[1] != sA[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_unrolled!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
+    if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != sc[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
-    if s != size(C)
-        error("Dimension mismatch")
-    end
-
-    if sA[2] != 0
-        exprs = [:(C[$(sub2ind(s, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(A[$(sub2ind(sA, k1, j))]*B[$(sub2ind(sB, j, k2))]) for j = 1:sA[2]]))) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    if sa[2] != 0
+        exprs = [:(c[$(sub2ind(sc, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k1, j))]*b[$(sub2ind(sb, j, k2))]) for j = 1:sa[2]]))) for k1 = 1:sa[1], k2 = 1:sb[2]]
     else
-        exprs = [:(C[$(sub2ind(s, k1, k2))] = $(zero(T))) for k1 = 1:sA[1], k2 = 1:sB[2]]
+        exprs = [:(c[$(sub2ind(sc, k1, k2))] = zero(eltype(c))) for k1 = 1:sa[1], k2 = 1:sb[2]]
     end
 
     return quote
-        $(Expr(:meta,:inline))
+        @_inline_meta
         @inbounds $(Expr(:block, exprs...))
     end
 end
 
-@generated function A_mul_B_unrolled_chunks!(C::StaticMatrix, A::StaticMatrix, B::StaticMatrix)
-    sA = size(A)
-    sB = size(B)
-    TA = eltype(A)
-    TB = eltype(B)
-
-    s = size(C)
-    T = eltype(C)
-
-    if sB[1] != sA[2] || sA[1] != s[1] || sB[2] != s[2]
-        error("Dimension mismatch")
+@generated function A_mul_B_unrolled_chunks!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
+    if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != sc[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
     #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
 
-    # Do a custom B[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
-    tmp_type = SVector{sB[1], T}
-    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, $(Expr(:call, tmp_type, [Expr(:ref, :B, sub2ind(s, i, k2)) for i = 1:sB[1]]...)))) for k2 = 1:sB[2]]
+    # Do a custom b[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
+    tmp_type = SVector{sb[1], eltype(c)}
+    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(s, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 
-    exprs = [:(C[$(sub2ind(s, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sA[1], k2 = 1:sB[2]]
+    exprs = [:(c[$(sub2ind(s, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
     return quote
-        Expr(:meta,:inline)
+        @_inline_meta
         @inbounds $(Expr(:block, vect_exprs...))
         @inbounds $(Expr(:block, exprs...))
     end

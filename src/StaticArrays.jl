@@ -5,19 +5,18 @@ module StaticArrays
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar,
-             length, convert, promote_op, map, map!, reduce, reducedim,
+             length, convert, promote_op, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, inv, eig, eigvals, trace, vecnorm, norm, dot, diagm,
              sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
-             maximum, extrema, mean, copy
-
-using Compat
+             maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
+             randexp!, normalize, normalize!
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector, MutableFieldVector
+export FieldVector
 export SizedArray, SizedVector, SizedMatrix
 
 export Size, Length
@@ -28,11 +27,48 @@ export @MVector, @MMatrix, @MArray
 export similar_type
 export push, pop, shift, unshift, insert, deleteat, setindex
 
-include("util.jl")
-include("generated.jl")
+"""
+    abstract type StaticArray{T, N} <: AbstractArray{T, N} end
+    StaticScalar{T} = StaticArray{T, 0}
+    StaticVector{T} = StaticArray{T, 1}
+    StaticMatrix{T} = StaticArray{T, 2}
 
-include("core.jl")
+`StaticArray`s are Julia arrays with fixed, known size.
+
+## Dev docs
+
+They must define the following methods:
+ - Constructors that accept a flat tuple of data.
+ - `Size()` on the *type*, returning an *instance* of `Size{(dim1, dim2, ...)}` (preferably `@pure`).
+ - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
+ - `Tuple()`, returning the data in a flat Tuple.
+
+It may be useful to implement:
+
+- `similar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`, returning a
+  type (or type constructor) that accepts a flat tuple of data.
+
+For mutable containers you may also need to define the following:
+
+ - `setindex!` for a single element (linear indexing).
+ - `similar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`.
+ - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
+   is assumed to exist.
+
+(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
+"""
+abstract type StaticArray{T, N} <: AbstractArray{T, N} end
+const StaticScalar{T} = StaticArray{T, 0}
+const StaticVector{T} = StaticArray{T, 1}
+const StaticMatrix{T} = StaticArray{T, 2}
+
+const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
+
+include("util.jl")
 include("traits.jl")
+include("convert.jl")
+
+include("SUnitRange.jl")
 include("Scalar.jl")
 include("SVector.jl")
 include("FieldVector.jl")
@@ -43,25 +79,22 @@ include("MMatrix.jl")
 include("MArray.jl")
 include("SizedArray.jl")
 
-
 include("abstractarray.jl")
-include("indexing.jl") #=
+include("indexing.jl")
+include("broadcast.jl")
 include("mapreduce.jl")
 include("arraymath.jl")
 include("linalg.jl")
 include("matrix_multiply.jl")
-include("solve.jl")
-include("deque.jl")
-include("det.jl")
-include("inv.jl")
-include("eigen.jl")
-include("cholesky.jl")
-=#
+#include("solve.jl")
+#include("deque.jl")
+#include("det.jl")
+#include("inv.jl")
+#include("eigen.jl")
+#include("cholesky.jl")
 
 
-if VERSION < v"0.6.0-dev.1671"
-    include("FixedSizeArrays.jl")
-end
+#include("FixedSizeArrays.jl")  # Currently defunct
 include("ImmutableArrays.jl")
 
 
