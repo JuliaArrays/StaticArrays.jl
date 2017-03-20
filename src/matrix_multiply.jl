@@ -138,7 +138,7 @@ end
 end
 
 
-@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, b::StaticMatrix{Ta}, a::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
