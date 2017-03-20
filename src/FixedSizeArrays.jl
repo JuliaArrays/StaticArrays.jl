@@ -14,6 +14,8 @@ export FixedArray
 export FixedVector
 export FixedMatrix
 export Mat
+export Vec
+export Point
 export @fsa
 export FixedVectorNoTuple
 
@@ -167,6 +169,7 @@ macro fixed_vector(name, parent)
 end
 
 
-
+@fixed_vector Vec StaticVector
+@fixed_vector Point StaticVector
 
 end

@@ -4,9 +4,6 @@ using Base.Test
 
 import StaticArrays.FixedSizeArrays: @fixed_vector
 
-@fixed_vector Vec StaticVector
-
-@fixed_vector Point StaticVector
 
 @compat const Vec1d = Vec{1, Float64}
 @compat const Vec2d = Vec{2, Float64}
