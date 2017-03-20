@@ -4,7 +4,6 @@ using Base.Test
 
 import StaticArrays.FixedSizeArrays: @fixed_vector
 
-@fixed_vector Vec StaticVector
 
 @fixed_vector Point StaticVector
 
