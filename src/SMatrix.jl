@@ -29,10 +29,6 @@ immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
 end
 
 @generated function check_smatrix_params{S1,S2,L}(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}})
-    if !(T <: DataType) # I think the way types are handled in generated fnctions might have changed in 0.5?
-        return :(error("SMatrix: Parameter T must be a DataType. Got $T"))
-    end
-
     if !isa(S1, Int) || !isa(S2, Int) || !isa(L, Int) || S1 < 0 || S2 < 0 || L < 0
         return :(error("SMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
     end
