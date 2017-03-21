@@ -17,6 +17,6 @@ notifications:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("StaticArrays"); Pkg.test("StaticArrays"; coverage=true)'
 after_success:
-  - if [ $TRAVIS_JULIA_VERSION = "0.5" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
+  - if [ $TRAVIS_JULIA_VERSION = "0.6" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
       julia -e 'cd(Pkg.dir("StaticArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
     fi
