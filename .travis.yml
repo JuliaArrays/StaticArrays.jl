@@ -4,14 +4,14 @@ os:
   - linux
   - osx
 julia:
-  - 0.5
+  - 0.6
   - nightly
 notifications:
   email: false
-matrix:
-  allow_failures:
+# matrix:
+  # allow_failures:
     # - julia: nightly
-    - os: osx
+    # - os: osx
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
