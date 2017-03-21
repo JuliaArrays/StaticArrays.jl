@@ -34,10 +34,12 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
 @inline *(A::StaticMatrix, B::StaticVector) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
+@inline *(A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B(Size(A), Size(B), A, B)
 
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = A_mul_B!(dest, reshape(A, Size(Size(A)[1], 1)), B)
+@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 
 #@inline *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
@@ -58,6 +60,18 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
         @_inline_meta
         T = promote_matprod(Ta, Tb)
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
+    end
+end
+
+# outer product
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
+    newsize = (sa[1], sb[2])
+    exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
+
+    return quote
+        @_inline_meta
+        T = promote_op(*, Ta, Tb)
+        @inbounds return similar_type(b, T, Size($newsize))(tuple($(exprs...)))
     end
 end
 
@@ -219,29 +233,44 @@ end
     return quote
         @_inline_meta
         @inbounds $(Expr(:block, exprs...))
+        return c
     end
 end
 
-@generated function _A_mul_B!(::Size{sc}, c::StaticMatrix{Tc}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, sc, Ta, Tb, Tc}
+@generated function _A_mul_B!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector, b::RowVector{<:Any, <:StaticVector}) where {sa, sb, sc}
+    if sa[1] != sc[1] || sb[2] != sc[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
+    end
+
+    exprs = [:(c[$(sub2ind(sc, i, j))] = a[$i] * b[$j]) for i = 1:sa[1], j = 1:sb[2]]
+
+    return quote
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
+        return c
+    end
+end
+
+@generated function _A_mul_B!(Sc::Size{sc}, c::StaticMatrix{Tc}, Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, sc, Ta, Tb, Tc}
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat
 
     if can_blas
         if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
                 @_inline_meta
-                A_mul_B_unrolled!(c, a, b)
+                A_mul_B_unrolled!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         elseif sa[1] * sa[2] * sb[2] < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
             return quote
                 @_inline_meta
-                A_mul_B_unrolled_chunks!(c, a, b)
+                A_mul_B_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         else
             return quote
                 @_inline_meta
-                A_mul_B_blas!(c, a, b)
+                A_mul_B_blas!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         end
@@ -249,13 +278,13 @@ end
         if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
                 @_inline_meta
-                A_mul_B_unrolled!(c, a, b)
+                A_mul_B_unrolled!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         else
             return quote
                 @_inline_meta
-                A_mul_B_unrolled_chunks!(c, a, b)
+                A_mul_B_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         end
@@ -312,7 +341,7 @@ end
 
 
 @generated function A_mul_B_unrolled!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
-    if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != sc[2]
+    if sb[1] != sa[2] || sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
@@ -329,7 +358,7 @@ end
 end
 
 @generated function A_mul_B_unrolled_chunks!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
-    if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != sc[2]
+    if sb[1] != sa[2] || sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
@@ -337,9 +366,9 @@ end
 
     # Do a custom b[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
     tmp_type = SVector{sb[1], eltype(c)}
-    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(s, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
+    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(sc, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 
-    exprs = [:(c[$(sub2ind(s, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    exprs = [:(c[$(sub2ind(sc, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
     return quote
         @_inline_meta

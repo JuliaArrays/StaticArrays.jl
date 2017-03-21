@@ -1,5 +1,8 @@
 
-@inline eigvals{T<:Real,SA<:StaticArray}(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) = _eigvals(Size(SA), a, permute, scale)
+@inline function eigvals(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) where {T <: Real, SA <: StaticArray}
+    _eigvals(Size(SA), a, permute, scale)
+end
+
 @inline function eigvals(a::StaticArray; permute::Bool=true, scale::Bool=true)
     if ishermitian(a)
         _eigvals(Size(a), Hermitian(a), permute, scale)
@@ -10,7 +13,7 @@ end
 
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(real(a.data[1]))
 
-@inline function _eigvals{T<:Real}(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
     if A.uplo == 'U'
@@ -30,7 +33,7 @@ end
     end
 end
 
-@inline function _eigvals{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eigvals(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     S = typeof((one(T)*zero(T) + zero(T))/one(T))
     Sreal = real(S)
 
@@ -106,7 +109,7 @@ end
     _eig(Size(A), A, permute, scale)
 end
 
-@inline function eig{T, SM <: StaticMatrix}(A::Base.LinAlg.HermOrSym{T,SM}; permute::Bool=true, scale::Bool=true)
+@inline function eig(A::Base.LinAlg.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
     _eig(Size(SM), A, permute, scale)
 end
 
@@ -120,18 +123,18 @@ end
     end
 end
 
-@inline function _eig{T<:Real}(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eig(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     eigen = eigfact(Hermitian(Array(parent(A))); permute=permute, scale=scale)
     return (s(eigen.values), s(eigen.vectors)) # Return a SizedArray
 end
 
 
-@inline function _eig{T<:Real}(::Size{(1,1)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eig(::Size{(1,1)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
 end
 
 # TODO adapt the below to be complex-safe?
-@inline function _eig{T<:Real}(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eig(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
     if A.uplo == 'U'
@@ -190,7 +193,7 @@ end
 # A small part of the code in the following method was inspired by works of David
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
-@inline function _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+@inline function _eig(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     S = typeof((one(T)*zero(T) + zero(T))/one(T))
     Sreal = real(S)
 

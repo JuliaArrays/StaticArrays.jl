@@ -17,11 +17,11 @@ using Base.Test
     include("mapreduce.jl")
     include("arraymath.jl")
     include("linalg.jl")
-    include("matrix_multiply.jl") #=
+    include("matrix_multiply.jl")
     include("det.jl")
     include("inv.jl")
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
-    #include("fixed_size_arrays.jl") =#
+    #include("fixed_size_arrays.jl")
 end

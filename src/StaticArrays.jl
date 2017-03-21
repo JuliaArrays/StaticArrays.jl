@@ -4,7 +4,7 @@ module StaticArrays
 
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
-import Base: getindex, setindex!, size, similar,
+import Base: getindex, setindex!, size, similar, vec,
              length, convert, promote_op, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
@@ -86,16 +86,14 @@ include("mapreduce.jl")
 include("arraymath.jl")
 include("linalg.jl")
 include("matrix_multiply.jl")
-#include("solve.jl")
-#include("deque.jl")
-#include("det.jl")
-#include("inv.jl")
-#include("eigen.jl")
-#include("cholesky.jl")
-
+include("det.jl")
+include("inv.jl")
+include("solve.jl")
+include("eigen.jl")
+include("cholesky.jl")
+include("deque.jl")
 
 #include("FixedSizeArrays.jl")  # Currently defunct
 include("ImmutableArrays.jl")
-
 
 end # module

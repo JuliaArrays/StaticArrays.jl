@@ -9,6 +9,12 @@
         @test isa(x, SVector{2,CartesianIndex{2}})
         @test x == @SVector [CartesianIndex((7,5)), CartesianIndex((15,13))]
 
+        # inner product
+        @test @inferred(v'*v) === 5
+
+        # outer product
+        @test @inferred(v*v') === @SMatrix [1 2; 2 4]
+
         v3 = [1, 2]
         @test_broken m*v3 === @SVector [5, 11]
 
@@ -128,7 +134,6 @@
         @test m*n::MMatrix ≈ a_array
     end
 
-#=
     @testset "A_mul_B!" begin
         v = @SVector [2, 4]
         v2 = [2, 4]
@@ -216,5 +221,5 @@
         outvec2f = Vector{Float64}(2)
         A_mul_B!(outvec2f, mf, vf2)
         @test outvec2f ≈ [10.0, 22.0]
-    end =#
+    end
 end

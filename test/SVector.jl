@@ -17,6 +17,7 @@
         @test SVector((1.0,)).data === (1.0,)
 
         @test SVector(1).data === (1,)
+        @test SVector(1,1.0).data === (1.0,1.0)
 
         @test ((@SVector [1.0])::SVector{1}).data === (1.0,)
         @test ((@SVector [1, 2, 3])::SVector{3}).data === (1, 2, 3)
