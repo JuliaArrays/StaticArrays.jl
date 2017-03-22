@@ -11,9 +11,9 @@
 
         # Bad parameters
         @test_throws Exception SMatrix{1,1,Int,2}((1,))
-        @test_throws Exception SMatrix{1,1,1,1}((1,))
-        @test_throws Exception SMatrix{1,2,Int,1}((1,))
-        @test_throws Exception SMatrix{2,1,Int,1}((1,))
+        @test_throws ArgumentError SMatrix{1,1,1,1}((1,))
+        @test_throws ArgumentError SMatrix{1,2,Int,1}((1,))
+        @test_throws ArgumentError SMatrix{2,1,Int,1}((1,))
     end
 
     @testset "Outer constructors and macro" begin

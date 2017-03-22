@@ -105,8 +105,9 @@ similar{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(
 
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
-@generated function reshape(a::AbstractArray, s::Size{S}) where {S}
-    if IndexStyle(a) == IndexLinear() # TODO this isn't "hyperpure"
+@inline reshape(a::AbstractArray, s::Size) = _reshape(s, IndexStyle(a), a)
+@generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
+    if indexstyle == IndexLinear
         exprs = [:(a[$i]) for i = 1:prod(S)]
     else
         exprs = [:(a[$(inds...)]) for inds ∈ CartesianRange(S)]

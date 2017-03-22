@@ -60,7 +60,7 @@ end
         exprs_vals = [(a[i] <: Number ? :(a[$i]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(f($(exprs_vals...)))
 
-        # increment current_ind
+        # increment current_ind (maybe use CartesianRange?)
         current_ind[1] += 1
         for i ∈ 1:length(newsize)
             if current_ind[i] > newsize[i]
@@ -122,7 +122,7 @@ end
         exprs_vals = [(a[i] <: Number ? :(a[$i]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
-        # increment current_ind
+        # increment current_ind (maybe use CartesianRange?)
         current_ind[1] += 1
         for i ∈ 1:length(newsize)
             if current_ind[i] > newsize[i]

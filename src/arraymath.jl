@@ -1,7 +1,3 @@
-# Support for elementwise ops on AbstractArray{S<:StaticArray} with Number
-#Base.promote_op{Op,A<:StaticArray,T<:Number}(op::Op, ::Type{A}, ::Type{T}) = similar_type(A, promote_op(op, eltype(A), T))
-#Base.promote_op{Op,T<:Number,A<:StaticArray}(op::Op, ::Type{T}, ::Type{A}) = similar_type(A, promote_op(op, T, eltype(A)))
-
 @inline zeros(::SA) where {SA <: StaticArray} = zeros(SA)
 @generated function zeros(::Type{SA}) where {SA <: StaticArray}
     T = eltype(SA)
@@ -34,7 +30,7 @@ end
     end
 end
 
-@inline fill(val, ::SA) where {SA <: StaticArray} = ones(val, SA)
+@inline fill(val, ::SA) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
 @inline fill(val, ::Type{SA}) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
 @generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:val for i = 1:prod(s)]

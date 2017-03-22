@@ -13,8 +13,8 @@
         # Bad parameters
         @test_throws Exception MMatrix{1,1,Int,2}((1,))
         @test_throws Exception MMatrix{1,1,1,1}((1,))
-        @test_throws Exception MMatrix{1,2,Int,1}((1,))
-        @test_throws Exception MMatrix{2,1,Int,1}((1,))
+        @test_throws ArgumentError MMatrix{1,2,Int,1}((1,))
+        @test_throws ArgumentError MMatrix{2,1,Int,1}((1,))
     end
 
     @testset "Outer constructors and macro" begin
