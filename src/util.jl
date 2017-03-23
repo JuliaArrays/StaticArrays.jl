@@ -11,6 +11,7 @@
         $(Expr(:tuple, exprs...))
     end
 end
+convert_ntuple(T,_) = error("StaticArray type parameter must be a Type, not '$T'")
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
 @generated function promote_tuple_eltype{T <: Tuple}(::Union{T,Type{T}})
