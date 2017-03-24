@@ -1,40 +1,28 @@
-@generated function (\){T}(A::StaticMatrix{T}, b::StaticVector{T})
-    S = typeof((one(T)*zero(T) + zero(T))/one(T))
-    newtype = similar_type(b, S)
+@inline (\)(a::StaticMatrix{T}, b::StaticVector{T}) where {T} = solve(Size(a), Size(b), a, b)
 
-    if size(A) == (1,1) && length(b) == 1
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $newtype( b[1] / A[1,1] )
-        end
-    elseif size(A) == (2,2) && length(b) == 2
-        return quote
-            $(Expr(:meta, :inline))
-            d = det(A)
-            @inbounds return $newtype(
-                A[2,2]*b[1] - A[1,2]*b[2],
-                A[1,1]*b[2] - A[2,1]*b[1] ) / d
-        end
-    elseif size(A) == (3,3) && length(b) == 3
-        return quote
-            $(Expr(:meta, :inline))
-            d = det(A)
-            @inbounds return $newtype(
-                (A[2,2]*A[3,3] - A[2,3]*A[3,2])*b[1] +
-                    (A[1,3]*A[3,2] - A[1,2]*A[3,3])*b[2] +
-                        (A[1,2]*A[2,3] - A[1,3]*A[2,2])*b[3],
-                (A[2,3]*A[3,1] - A[2,1]*A[3,3])*b[1] +
-                    (A[1,1]*A[3,3] - A[1,3]*A[3,1])*b[2] +
-                        (A[1,3]*A[2,1] - A[1,1]*A[2,3])*b[3],
-                (A[2,1]*A[3,2] - A[2,2]*A[3,1])*b[1] +
-                    (A[1,2]*A[3,1] - A[1,1]*A[3,2])*b[2] +
-                        (A[1,1]*A[2,2] - A[1,2]*A[2,1])*b[3] ) / d
-        end
-    else
-        # FixMe! Unsatisfactory ineffective but requires some infrastructure
-        # to make efficient so we fall back on inv for now
-        quote
-            inv(A)*b
-        end
-    end
+# TODO: Ineffective but requires some infrastructure (e.g. LU or QR) to make efficient so we fall back on inv for now
+@inline solve(::Size, ::Size, a, b) = inv(a) * b
+
+@inline solve(::Size{(1,1)}, ::Size{(1,)}, a, b) = similar_type(b, typeof(b[1] \ a[1]))(b[1] \ a[1])
+
+@inline function solve(::Size{(2,2)}, ::Size{(2,)}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {Ta, Tb}
+    d = det(a)
+    T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/d)
+    @inbounds return similar_type(b, T)((a[2,2]*b[1] - a[1,2]*b[2])/d,
+                                        (a[1,1]*b[2] - a[2,1]*b[1])/d)
+end
+
+@inline function solve(::Size{(3,3)}, ::Size{(3,)}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {Ta, Tb}
+    d = det(a)
+    T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/d)
+    @inbounds return similar_type(b, T)(
+        ((a[2,2]*a[3,3] - a[2,3]*a[3,2])*b[1] +
+            (a[1,3]*a[3,2] - a[1,2]*a[3,3])*b[2] +
+            (a[1,2]*a[2,3] - a[1,3]*a[2,2])*b[3]) / d,
+        ((a[2,3]*a[3,1] - a[2,1]*a[3,3])*b[1] +
+            (a[1,1]*a[3,3] - a[1,3]*a[3,1])*b[2] +
+            (a[1,3]*a[2,1] - a[1,1]*a[2,3])*b[3]) / d,
+        ((a[2,1]*a[3,2] - a[2,2]*a[3,1])*b[1] +
+            (a[1,2]*a[3,1] - a[1,1]*a[3,2])*b[2] +
+            (a[1,1]*a[2,2] - a[1,2]*a[2,1])*b[3]) / d )
 end

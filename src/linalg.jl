@@ -30,67 +30,20 @@ import Base: +, -, *, /, \
 
 
 # With UniformScaling
-@generated function +(a::StaticMatrix, b::UniformScaling)
-    n = size(a,1)
-    newtype = similar_type(a, promote_type(eltype(a), eltype(b)))
+@inline +(a::StaticMatrix, b::UniformScaling) = _plus_uniform(Size(a), a, b.λ)
+@inline +(a::UniformScaling, b::StaticMatrix) = _plus_uniform(Size(b), b, a.λ)
+@inline -(a::StaticMatrix, b::UniformScaling) = _plus_uniform(Size(a), a, -b.λ)
+@inline -(a::UniformScaling, b::StaticMatrix) = _plus_uniform(Size(b), -b, a.λ)
 
-    if size(a,2) != n
-        error("Dimension mismatch")
+@generated function _plus_uniform(::Size{S}, a::StaticMatrix, λ) where {S}
+    if S[1] != S[2]
+        throw(DimensionMismatch("matrix is not square: dimensions are $S"))
     end
-
-    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] + b.λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
-
+    n = S[1]
+    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] + λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function +(a::UniformScaling, b::StaticMatrix)
-    n = size(b,1)
-    newtype = similar_type(b, promote_type(eltype(a), eltype(b)))
-
-    if size(b,2) != n
-        error("Dimension mismatch")
-    end
-
-    exprs = [i == j ? :(a.λ + b[$(sub2ind(size(b), i, j))]) : :(b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function -(a::StaticMatrix, b::UniformScaling)
-    n = size(a,1)
-    newtype = similar_type(a, promote_type(eltype(a), eltype(b)))
-
-    if size(a,2) != n
-        error("Dimension mismatch")
-    end
-
-    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] - b.λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function -(a::UniformScaling, b::StaticMatrix)
-    n = size(b,1)
-    newtype = similar_type(b, promote_type(eltype(a), eltype(b)))
-
-    if size(b,2) != n
-        error("Dimension mismatch")
-    end
-
-    exprs = [i == j ? :(a.λ - b[$(sub2ind(size(b), i, j))]) : :(-b[$(sub2ind(size(b), i, j))]) for i = 1:n, j = 1:n]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type(a, promote_type(eltype(a), typeof(λ)))(tuple($(exprs...)))
     end
 end
 
@@ -101,84 +54,56 @@ end
 
 
 # Transpose, conjugate, etc
-# TODO different methods for v0.5, v0.6 (due to `RowVector`)
 @inline conj(a::StaticArray) = map(conj, a)
+@inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
+# note: transpose of StaticVector is a RowVector, handled by Base
 
-@generated function transpose(v::StaticVector)
-    n = length(v)
-    newtype = similar_type(v, Size(1,n))
-    exprs = [:(v[$j]) for j = 1:n]
+@generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
+    Snew = (S[2], S[1])
 
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function ctranspose(v::StaticVector)
-    n = length(v)
-    newtype = similar_type(v, Size(1,n))
-    exprs = [:(conj(v[$j])) for j = 1:n]
+    exprs = [:(m[$(sub2ind(S, j1, j2))]) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type($m, Size($Snew))(tuple($(exprs...)))
     end
 end
 
-@generated function transpose(m::StaticMatrix)
-    (s1,s2) = size(m)
-    if s1 == s2
-        newtype = m
-    else
-        newtype = similar_type(m, Size(s2,s1))
-    end
+@inline ctranspose(m::StaticMatrix) = _transpose(Size(m), m)
 
-    exprs = [:(m[$j1, $j2]) for j2 = 1:s2, j1 = 1:s1]
+@generated function _ctranspose(::Size{S}, m::StaticMatrix) where {S}
+    Snew = (S[2], S[1])
+
+    exprs = [:(conj(m[$(sub2ind(S, j1, j2))])) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type($m, Size($Snew))(tuple($(exprs...)))
     end
 end
-
-@generated function ctranspose(m::StaticMatrix)
-    (s1,s2) = size(m)
-    if s1 == s2
-        newtype = m
-    else
-        newtype = similar_type(m, Size(s2,s1))
-    end
-
-    exprs = [:(conj(m[$j1, $j2])) for j2 = 1:s2, j1 = 1:s1]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
 
 @inline vcat(a::Union{StaticVector,StaticMatrix}) = a
-@generated function vcat(a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix})
-    if size(a,2) != size(b,2)
-        error("Dimension mismatch")
+@inline vcat(a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix}) = _vcat(Size(a), Size(b), a, b)
+@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix}) where {Sa, Sb}
+    if Size(Sa)[2] != Size(Sb)[2]
+        throw(DimensionMismatch("Tried to vcat arrays of size $Sa and $Sb"))
     end
 
+    # TODO cleanup?
     if a <: StaticVector && b <: StaticVector
-        newtype = similar_type(a, Size(length(a) + length(b)))
-        exprs = vcat([:(a[$i]) for i = 1:length(a)],
-                     [:(b[$i]) for i = 1:length(b)])
+        Snew = (Sa[1] + Sb[1],)
+        exprs = vcat([:(a[$i]) for i = 1:Sa[1]],
+                     [:(b[$i]) for i = 1:Sb[1]])
     else
-        newtype = similar_type(a, Size(size(a,1) + size(b,1), size(a,2)))
+        Snew = (Sa[1] + Sb[1], Size(Sa)[2])
         exprs = [((i <= size(a,1)) ? ((a <: StaticVector) ? :(a[$i]) : :(a[$i,$j]))
                                    : ((b <: StaticVector) ? :(b[$(i-size(a,1))]) : :(b[$(i-size(a,1)),$j])))
-                                   for i = 1:(size(a,1)+size(b,1)), j = 1:size(a,2)]
+                                   for i = 1:(Sa[1]+Sb[1]), j = 1:Size(Sa)[2]]
     end
 
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
     end
 end
 # TODO make these more efficient
@@ -187,28 +112,24 @@ end
 @inline vcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
     vcat(vcat(a,b), c...)
 
-@generated function hcat(a::StaticVector)
-    newtype = similar_type(a, Size(length(a),1))
-    exprs = [:(a[$i]) for i = 1:length(a)]
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
+
+@inline hcat(a::StaticVector) = similar_type(a, Size(Size(a)[1],1))(a)
 @inline hcat(a::StaticMatrix) = a
-@generated function hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix})
-    if size(a,1) != size(b,1)
+@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}) = _hcat(Size(a), Size(b), a, b)
+
+@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}) where {Sa, Sb}
+    if Sa[1] != Sb[1]
         error("Dimension mismatch")
     end
 
-    exprs1 = [:(a[$i]) for i = 1:length(a)]
-    exprs2 = [:(b[$i]) for i = 1:length(b)]
+    exprs = vcat([:(a[$i]) for i = 1:prod(Sa)],
+                 [:(b[$i]) for i = 1:prod(Sb)])
 
-    newtype = similar_type(a, Size(size(a,1), size(a,2) + size(b,2)))
+    Snew = (Sa[1], Size(Sa)[2] + Size(Sb)[2])
 
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs1..., exprs2...)))
+        @_inline_meta
+        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
     end
 end
 # TODO make these more efficient
@@ -220,108 +141,78 @@ end
 @inline Base.zero{SA <: StaticArray}(a::SA) = zeros(SA)
 @inline Base.zero{SA <: StaticArray}(a::Type{SA}) = zeros(SA)
 
-@inline one{SM <: StaticMatrix}(::SM) = one(SM)
-@generated function one{SM <: StaticArray}(::Type{SM})
-    s = size(SM)
-    if (length(s) != 2) || (s[1] != s[2])
+@inline one(::SM) where {SM <: StaticMatrix} = _one(Size(SM), SM)
+@inline one(::Type{SM}) where {SM <: StaticMatrix} = _one(Size(SM), SM)
+@generated function _one(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
+    if (length(S) != 2) || (S[1] != S[2])
         error("multiplicative identity defined only for square matrices")
     end
-    T = eltype(SM)
+    T = eltype(SM) # should be "hyperpure"
     if T == Any
         T = Float64
     end
-    e = eye(T, s...)
+    exprs = [i == j ? :(one($T)) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
+        SM(tuple($(exprs...)))
     end
 end
 
-@inline eye{SM <: StaticMatrix}(::SM) = eye(SM)
-@generated function eye{SM <: StaticArray}(::Type{SM})
-    s = size(SM)
-    if length(s) != 2
-        error("`eye` is only defined for matrices")
-    end
-    T = eltype(SM)
+@inline eye(::SM) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
+@inline eye(::Type{SM}) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
+@generated function _eye(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
+    T = eltype(SM) # should be "hyperpure"
     if T == Any
         T = Float64
     end
-    e = eye(T, s...)
+    exprs = [i == j ? :(one($T)) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
     return quote
         $(Expr(:meta, :inline))
-        $(Expr(:call, SM, Expr(:tuple, e...)))
+        SM(tuple($(exprs...)))
     end
 end
 
-@generated function diagm(v::StaticVector)
+@inline diagm(v::StaticVector) = _diagm(Size(v), v)
+@generated function _diagm(::Size{S}, v::StaticVector) where {S}
+    Snew = (S[1], S[1])
     T = eltype(v)
-    exprs = [i == j ? :(v[$i]) : zero(T) for i = 1:length(v), j = 1:length(v)]
-    newtype = similar_type(v, Size(length(v), length(v)))
+    exprs = [i == j ? :(v[$i]) : zero(T) for i = 1:S[1], j = 1:S[1]]
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type($v, Size($Snew))(tuple($(exprs...)))
     end
 end
 
-@generated function cross(a::StaticVector, b::StaticVector)
-    S = typeof(zero(eltype(a))*zero(eltype(b)))
-    if length(a) === 3 && length(b) === 3
-        if S <: Unsigned
-            return quote
-                $(Expr(:meta, :inline))
-                similar_type(a, $(typeof(Signed(zero(eltype(a))*zero(eltype(b))))))((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1])))
-            end
-        else
-            return quote
-                $(Expr(:meta, :inline))
-                similar_type(a, $S)((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
-            end
-        end
-    elseif length(a) === 2 && length(b) === 2
-        return quote
-            $(Expr(:meta, :inline))
-            promote_type(eltype(a), eltype(b))(a[1]*b[2]-a[2]*b[1])
-        end
-    elseif length(a) === 2 && length(b) === 2
-        return quote
-            $(Expr(:meta, :inline))
-            promote_type(eltype(a), eltype(b))(a[1]*b[2]-a[2]*b[1])
-        end
-    else
-        error("Cross product only defined for 3-vectors")
-    end
+@inline cross(a::StaticVector, b::StaticVector) = _cross(same_size(a, b), a, b)
+_cross(::Size{S}, a::StaticVector, b::StaticVector) where {S} = error("Cross product not defined for $(S[1])-vectors")
+@inline function _cross(::Size{(2,)}, a::StaticVector, b::StaticVector)
+    @inbounds return a[1]*b[2] - a[2]*b[1]
+end
+@inline function _cross(::Size{(3,)}, a::StaticVector, b::StaticVector)
+    @inbounds return similar_type(a, typeof(a[2]*b[3]-a[3]*b[2]))((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
+end
+@inline function _cross(::Size{(2,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
+    @inbounds return Signed(a[1]*b[2]) - Signed(a[2]*b[1])
+end
+@inline function _cross(::Size{(3,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
+    @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@generated function dot(a::StaticVector, b::StaticVector)
-    if length(a) == length(b)
-        expr = :(conj(a[1]) * b[1])
-        for j = 2:length(a)
-            expr = :($expr + conj(a[$j]) * b[$j])
-        end
-
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    else
-        error("dot() expects vectors of same length. Got lengths $(length(a)) and $(length(b)).")
+@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
+@inline vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b)
+@generated function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
+    if prod(S) == 0
+        return :(zero(promote_op(*, eltype(a), eltype(b))))
     end
-end
 
-@generated function vecdot(a::StaticArray, b::StaticArray)
-    if length(a) == length(b)
-        expr = :(conj(a[1]) * b[1])
-        for j = 2:length(a)
-            expr = :($expr + conj(a[$j]) * b[$j])
-        end
+    expr = :(conj(a[1]) * b[1])
+    for j = 2:prod(S)
+        expr = :($expr + conj(a[$j]) * b[$j])
+    end
 
-        return quote
-            $(Expr(:meta, :inline))
-            @inbounds return $expr
-        end
-    else
-        error("vecdot() expects arrays of same length. Got sizes $(size(a)) and $(size(b)).")
+    return quote
+        @_inline_meta
+        @inbounds return $expr
     end
 end
 
@@ -330,14 +221,15 @@ end
 
 @inline Base.LinAlg.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
 
-@generated function vecnorm(a::StaticArray)
-    if length(a) == 0
+@inline vecnorm(a::StaticArray) = _vecnorm(Size(a), a)
+@generated function _vecnorm(::Size{S}, a::StaticArray) where {S}
+    if prod(S) == 0
         return zero(real(eltype(a)))
     end
 
-    expr = :(real(conj(a[1]) * a[1]))
-    for j = 2:length(a)
-        expr = :($expr + real(conj(a[$j]) * a[$j]))
+    expr = :(abs2(a[1]))
+    for j = 2:prod(S)
+        expr = :($expr + abs2(a[$j]))
     end
 
     return quote
@@ -348,18 +240,19 @@ end
 
 _norm_p0(x) = x == 0 ? zero(x) : one(x)
 
-@generated function vecnorm(a::StaticArray, p::Real)
-    if length(a) == 0
+@inline vecnorm(a::StaticArray, p::Real) = _vecnorm(Size(a), a, p)
+@generated function _vecnorm(::Size{S}, a::StaticArray, p::Real) where {S}
+    if prod(S) == 0
         return zero(real(eltype(a)))
     end
 
     expr = :(abs(a[1])^p)
-    for j = 2:length(a)
+    for j = 2:prod(S)
         expr = :($expr + abs(a[$j])^p)
     end
 
     expr_p1 = :(abs(a[1]))
-    for j = 2:length(a)
+    for j = 2:prod(S)
         expr_p1 = :($expr_p1 + abs(a[$j]))
     end
 
@@ -379,36 +272,37 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
     end
 end
 
-@inline Base.normalize(a::StaticVector) = inv(vecnorm(a))*a
-@inline Base.normalize(a::StaticVector, p::Real) = inv(vecnorm(a, p))*a
+@inline normalize(a::StaticVector) = inv(vecnorm(a))*a
+@inline normalize(a::StaticVector, p::Real) = inv(vecnorm(a, p))*a
 
-@inline Base.normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)))
-@inline Base.normalize!(a::StaticVector, p::Real) = (a.*= inv(vecnorm(a, p)))
+@inline normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)))
+@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(vecnorm(a, p)))
 
-
-@generated function trace(a::StaticMatrix)
-    s = size(a)
-    if s[1] != s[2]
-        error("matrix is not square")
+@inline trace(a::StaticMatrix) = _trace(Size(a), a)
+@generated function _trace(::Size{S}, a::StaticMatrix) where {S}
+    if S[1] != S[2]
+        throw(DimensionMismatch("matrix is not square"))
     end
 
-    if s[1] == 0
+    if S[1] == 0
         return zero(eltype(a))
     end
 
-    exprs = [:(a[$(sub2ind(s, i, i))]) for i = 1:s[1]]
+    exprs = [:(a[$(sub2ind(S, i, i))]) for i = 1:S[1]]
     total = reduce((ex1, ex2) -> :($ex1 + $ex2), exprs)
 
     return quote
-        $(Expr(:meta, :inline))
+        @_inline_meta
         @inbounds return $total
     end
 end
 
-@inline Size{T,SA<:StaticArray}(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) = Size(SA)
-@inline Size{T,SA<:StaticArray}(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) = Size(SA)
+# TODO same for `RowVector`?
+@inline Size(::Union{RowVector{T, SA}, Type{RowVector{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
+@inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+@inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
 
-# some micro-optimizations
+# some micro-optimizations (TODO check these make sense for v0.6)
 @inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::SM) = _checksquare(Size(SM))
 @inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::Type{SM}) = _checksquare(Size(SM))
 

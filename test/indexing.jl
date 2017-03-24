@@ -2,7 +2,7 @@
     @testset "Linear getindex() on SVector" begin
         sv = SVector{4}(4,5,6,7)
 
-        # Tuple
+        # SVector
         @test (@inferred getindex(sv, SVector(4,3,2,1))) === SVector((7,6,5,4))
 
         # Colon
@@ -12,13 +12,13 @@
     @testset "Linear getindex()/setindex!() on MVector" begin
         vec = @SVector [4,5,6,7]
 
-        # Tuple
+        # SVector
         mv = MVector{4,Int}()
-        @test (mv[(1,2,3,4)] = vec; (@inferred getindex(mv, (4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
+        @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
 
         # Colon
         mv = MVector{4,Int}()
-        @test (mv[:] = vec; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
+        @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
@@ -36,15 +36,15 @@
         @test sm[1,2] === 3
         @test sm[2,2] === 4
 
-        # Tuple, scalar
-        @test (@inferred getindex(sm, (2,1), (2,1))) === @SMatrix [4 2; 3 1]
-        @test (@inferred getindex(sm, 1, (1,2))) === @SVector [1,3]
-        @test (@inferred getindex(sm, (1,2), 1)) === @SVector [1,2]
+        # SVector, scalar
+        @test (@inferred getindex(sm, SVector(2,1), SVector(2,1))) === @SMatrix [4 2; 3 1]
+        @test (@inferred getindex(sm, 1, SVector(1,2))) === @SVector [1,3]
+        @test (@inferred getindex(sm, SVector(1,2), 1)) === @SVector [1,2]
 
         # Colon
         @test (@inferred getindex(sm, :, :)) === @SMatrix [1 3; 2 4]
-        @test (@inferred getindex(sm, (2,1), :)) === @SMatrix [2 4; 1 3]
-        @test (@inferred getindex(sm, :, (2,1))) === @SMatrix [3 1; 4 2]
+        @test (@inferred getindex(sm, SVector(2,1), :)) === @SMatrix [2 4; 1 3]
+        @test (@inferred getindex(sm, :, SVector(2,1))) === @SMatrix [3 1; 4 2]
         @test (@inferred getindex(sm, 1, :)) === @SVector [1,3]
         @test (@inferred getindex(sm, :, 1)) === @SVector [1,2]
     end
@@ -53,16 +53,16 @@
         sm = @MMatrix [1 3; 2 4]
 
         # Tuple, scalar
-        @test (mm = MMatrix{2,2,Int}(); mm[(2,1),(2,1)] = sm[(2,1),(2,1)]; (@inferred getindex(mm, (2,1), (2,1)))::MMatrix == @MMatrix [4 2; 3 1])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,(1,2)] = sm[1,(1,2)]; (@inferred getindex(mm, 1, (1,2)))::MVector == @MVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[(1,2),1] = sm[(1,2),1]; (@inferred getindex(mm, (1,2), 1))::MVector == @MVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),SVector(2,1)] = sm[SVector(2,1),SVector(2,1)]; (@inferred getindex(mm, SVector(2,1), SVector(2,1)))::SMatrix == @SMatrix [4 2; 3 1])
+        @test (mm = MMatrix{2,2,Int}(); mm[1,SVector(1,2)] = sm[1,SVector(1,2)]; (@inferred getindex(mm, 1, SVector(1,2)))::SVector == @SVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(); mm[SVector(1,2),1] = sm[SVector(1,2),1]; (@inferred getindex(mm, SVector(1,2), 1))::SVector == @SVector [1,2])
 
         # Colon
-        @test (mm = MMatrix{2,2,Int}(); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::MMatrix == @MMatrix [1 3; 2 4])
-        @test (mm = MMatrix{2,2,Int}(); mm[(2,1),:] = sm[(2,1),:]; (@inferred getindex(mm, (2,1), :))::MMatrix == @MMatrix [2 4; 1 3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,(2,1)] = sm[:,(2,1)]; (@inferred getindex(mm, :, (2,1)))::MMatrix == @MMatrix [3 1; 4 2])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::MVector == @MVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::MVector == @MVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::SMatrix == @MMatrix [1 3; 2 4])
+        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),:] = sm[SVector(2,1),:]; (@inferred getindex(mm, SVector(2,1), :))::SMatrix == @SMatrix [2 4; 1 3])
+        @test (mm = MMatrix{2,2,Int}(); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::SMatrix == @SMatrix [3 1; 4 2])
+        @test (mm = MMatrix{2,2,Int}(); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::SVector == @SVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::SVector == @SVector [1,2])
     end
 
     @testset "3D scalar indexing" begin

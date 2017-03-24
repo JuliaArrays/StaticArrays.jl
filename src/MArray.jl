@@ -85,10 +85,10 @@ end
 @inline MArray(a::StaticArray) = MArray{size(typeof(a))}(Tuple(a))
 
 # Some more advanced constructor-like functions
-@inline eye{Size}(::Type{MArray{Size}}) = eye(MArray{Size,Float64})
-@inline zeros{Size}(::Type{MArray{Size}}) = zeros(MArray{Size,Float64})
-@inline ones{Size}(::Type{MArray{Size}}) = ones(MArray{Size,Float64})
-
+@inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,length(S)})
+@inline eye(::Type{MArray{S}}) where {S} = eye(MArray{S,Float64,length(S)})
+@inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,length(S)})
+@inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,length(S)})
 
 ####################
 ## MArray methods ##
@@ -99,13 +99,13 @@ end
 @pure Size{S,T,N}(::Type{MArray{S,T,N}}) = Size(S)
 @pure Size{S,T,N,L}(::Type{MArray{S,T,N,L}}) = Size(S)
 
-function getindex(v::MArray, i::Integer)
+function getindex(v::MArray, i::Int)
     Base.@_inline_meta
     v.data[i]
 end
 
-@propagate_inbounds setindex!{S,T}(v::MArray{S,T}, val, i::Integer) = setindex!(v, convert(T, val), i)
-@inline function setindex!{S,T}(v::MArray{S,T}, val::T, i::Integer)
+@propagate_inbounds setindex!{S,T}(v::MArray{S,T}, val, i::Int) = setindex!(v, convert(T, val), i)
+@inline function setindex!{S,T}(v::MArray{S,T}, val::T, i::Int)
     @boundscheck if i < 1 || i > length(v)
         throw(BoundsError())
     end

@@ -49,13 +49,13 @@ end
 @pure Size{S}(::Type{MVector{S}}) = Size(S)
 @pure Size{S,T}(::Type{MVector{S,T}}) = Size(S)
 
-@propagate_inbounds function getindex(v::MVector, i::Integer)
+@propagate_inbounds function getindex(v::MVector, i::Int)
     v.data[i]
 end
 
 # Mutating setindex!
-@propagate_inbounds setindex!{S,T}(v::MVector{S,T}, val, i::Integer) = setindex!(v, convert(T, val), i)
-@inline function setindex!{S,T}(v::MVector{S,T}, val::T, i::Integer)
+@propagate_inbounds setindex!{S,T}(v::MVector{S,T}, val, i::Int) = setindex!(v, convert(T, val), i)
+@inline function setindex!{S,T}(v::MVector{S,T}, val::T, i::Int)
     @boundscheck if i < 1 || i > length(v)
         throw(BoundsError())
     end

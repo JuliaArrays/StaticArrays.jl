@@ -25,7 +25,7 @@ immutable SVector{S, T} <: StaticVector{T}
     end
 end
 
-@inline (::Type{SVector}){S}(x::NTuple{S}) = SVector{S}(x)
+@inline (::Type{SVector}){S}(x::NTuple{S,Any}) = SVector{S}(x)
 @inline (::Type{SVector{S}}){S, T}(x::NTuple{S,T}) = SVector{S,T}(x)
 @inline (::Type{SVector{S}}){S, T <: Tuple}(x::T) = SVector{S,promote_tuple_eltype(T)}(x)
 
@@ -43,7 +43,7 @@ end
 @pure Size{S}(::Type{SVector{S}}) = Size(S)
 @pure Size{S,T}(::Type{SVector{S,T}}) = Size(S)
 
-@propagate_inbounds function getindex(v::SVector, i::Integer)
+@propagate_inbounds function getindex(v::SVector, i::Int)
     v.data[i]
 end
 

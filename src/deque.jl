@@ -1,62 +1,68 @@
-@generated function push(vec::StaticVector, x)
-    newtype = similar_type(vec, Size(length(vec) + 1))
-    exprs = vcat([:(vec[$i]) for i = 1:length(vec)], :x)
+@inline push(vec::StaticVector, x) = _push(Size(vec), vec, x)
+@generated function _push(::Size{s}, vec::StaticVector, x) where {s}
+    newlen = s[1] + 1
+    exprs = vcat([:(vec[$i]) for i = 1:s[1]], :x)
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
-@generated function unshift(vec::StaticVector, x)
-    newtype = similar_type(vec, Size(length(vec) + 1))
-    exprs = vcat(:x, [:(vec[$i]) for i = 1:length(vec)])
+@inline unshift(vec::StaticVector, x) = _unshift(Size(vec), vec, x)
+@generated function _unshift(::Size{s}, vec::StaticVector, x) where {s}
+    newlen = s[1] + 1
+    exprs = vcat(:x, [:(vec[$i]) for i = 1:s[1]])
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
-@generated function insert(vec::StaticVector, index, x)
-    newtype = similar_type(vec, Size(length(vec) + 1))
+@propagate_inbounds insert(vec::StaticVector, index, x) = _insert(Size(vec), vec, index, x)
+@generated function _insert(::Size{s}, vec::StaticVector, index, x) where {s}
+    newlen = s[1] + 1
     exprs = [(i == 1 ? :(ifelse($i < index, vec[$i], x)) :
-              i == length(vec)+1 ? :(ifelse($i == index, x, vec[$i-1])) :
-              :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:length(vec) + 1]
+              i == newlen ? :(ifelse($i == index, x, vec[$i-1])) :
+              :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:newlen]
     return quote
-        $(Expr(:meta, :inline))
-        @boundscheck if (index < 1 || index > $(length(vec)+1))
+        @_inline_meta
+        @boundscheck if (index < 1 || index > $newlen)
             throw(BoundsError(vec, index))
         end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
-@generated function pop(vec::StaticVector)
-    newtype = similar_type(vec, Size(length(vec) - 1))
-    exprs = [:(vec[$i]) for i = 1:length(vec)-1]
+@inline pop(vec::StaticVector) = _pop(Size(vec), vec)
+@generated function _pop(::Size{s}, vec::StaticVector) where {s}
+    newlen = s[1] - 1
+    exprs = [:(vec[$i]) for i = 1:s[1]-1]
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
-@generated function shift(vec::StaticVector)
-    newtype = similar_type(vec, Size(length(vec) - 1))
-    exprs = [:(vec[$i]) for i = 2:length(vec)]
+@inline shift(vec::StaticVector) = _shift(Size(vec), vec)
+@generated function _shift(::Size{s}, vec::StaticVector) where {s}
+    newlen = s[1] - 1
+    exprs = [:(vec[$i]) for i = 2:s[1]]
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @_inline_meta
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
-@generated function deleteat(vec::StaticVector, index)
-    newtype = similar_type(vec, Size(length(vec) - 1))
-    exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:length(vec) - 1]
+@propagate_inbounds deleteat(vec::StaticVector, index) = _deleteat(Size(vec), vec, index)
+@generated function _deleteat(::Size{s}, vec::StaticVector, index) where {s}
+    newlen = s[1] - 1
+    exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:newlen]
     return quote
-        $(Expr(:meta, :inline))
-        @boundscheck if (index < 1 || index > $(length(vec)+1))
+        @_inline_meta
+        @boundscheck if (index < 1 || index > $(s[1]))
             throw(BoundsError(vec, index))
         end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
 
@@ -66,15 +72,15 @@ end
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
 # could also be justified to live in src/indexing.jl
-@generated function setindex{T}(a::StaticArray{T}, x::T, index::Int)
-    newtype = a
-    exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:length(a)]
+@inline setindex(a::StaticArray{T}, x::T, index::Int) where {T} = _setindex(Size(a), a, x, index)
+@generated function _setindex(::Size{s}, a::StaticArray{T}, x::T, index::Int) where {s, T}
+    exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
     return quote
-        $(Expr(:meta, :inline))
-        @boundscheck if (index < 1 || index > $(length(a)))
+        @_inline_meta
+        @boundscheck if (index < 1 || index > $(s[1]))
             throw(BoundsError(a, index))
         end
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
+        @inbounds return typeof(a)(tuple($(exprs...)))
     end
 end
 

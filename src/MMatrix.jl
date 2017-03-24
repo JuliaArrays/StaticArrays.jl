@@ -34,27 +34,26 @@ type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
     end
 end
 
-@generated function check_MMatrix_params{S1,S2,L}(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}})
-    if !(T <: DataType) # I think the way types are handled in generated fnctions might have changed in 0.5?
-        return :(error("MMatrix: Parameter T must be a DataType. Got $T"))
-    end
+function check_MMatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}}) where {S1,S2,L}
+    throw(ArgumentError("MMatrix: Parameter T must be a Type. Got $T"))
+end
 
+@generated function check_MMatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, ::Type{T}, ::Type{Val{L}}) where {S1,S2,L,T}
     if !isa(S1, Int) || !isa(S2, Int) || !isa(L, Int) || S1 < 0 || S2 < 0 || L < 0
-        return :(error("MMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
+        throw(ArgumentError("MMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
     end
 
     if S1*S2 == L
         return nothing
     else
-        str = "Size mismatch in MMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"
-        return :(error($str))
+        throw(ArgumentError("Size mismatch in MMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"))
     end
 end
 
 @generated function (::Type{MMatrix{S1}}){S1,L}(x::NTuple{L})
     S2 = div(L, S1)
     if S1*S2 != L
-        error("Incorrect matrix sizes. $S1 does not divide $L elements")
+        throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
     end
     T = promote_tuple_eltype(x)
 
@@ -90,13 +89,9 @@ end
 @inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::StaticArray{T}) = MMatrix{S1,S2,T}(Tuple(a))
 @inline MMatrix(a::StaticMatrix) = MMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
-
 # Some more advanced constructor-like functions
 @inline one{N}(::Type{MMatrix{N}}) = one(MMatrix{N,N})
 @inline eye{N}(::Type{MMatrix{N}}) = eye(MMatrix{N,N})
-@inline eye{N,M}(::Type{MMatrix{N,M}}) = eye(MMatrix{N,M,Float64})
-@inline zeros{N,M}(::Type{MMatrix{N,M}}) = zeros(MMatrix{N,M,Float64})
-@inline ones{N,M}(::Type{MMatrix{N,M}}) = ones(MMatrix{N,M,Float64})
 
 #####################
 ## MMatrix methods ##
@@ -106,7 +101,7 @@ end
 @pure Size{S1,S2,T}(::Type{MMatrix{S1,S2,T}}) = Size(S1, S2)
 @pure Size{S1,S2,T,L}(::Type{MMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
-@propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Integer)
+@propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Int)
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end
@@ -121,8 +116,8 @@ end
     end
 end
 
-@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Integer) = setindex!(m, convert(T, val), i)
-@propagate_inbounds function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Integer)
+@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Int) = setindex!(m, convert(T, val), i)
+@propagate_inbounds function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Int)
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end

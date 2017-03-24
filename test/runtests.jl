@@ -1,6 +1,5 @@
 using StaticArrays
 using Base.Test
-using Compat
 
 @testset "StaticArrays" begin
     include("SVector.jl")
@@ -11,6 +10,7 @@ using Compat
     include("MArray.jl")
     include("FieldVector.jl")
     include("Scalar.jl")
+    include("custom_types.jl")
 
     include("core.jl")
     include("abstractarray.jl")
@@ -24,7 +24,5 @@ using Compat
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
-    if VERSION < v"0.6.0-dev.1671"
-        include("fixed_size_arrays.jl")
-    end
+    #include("fixed_size_arrays.jl")
 end

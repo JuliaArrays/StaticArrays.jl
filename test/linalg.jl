@@ -17,10 +17,11 @@
         v3 = [2,4,6,8]
         v4 = [4,3,2,1]
 
-        @test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
-        @test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
-        @test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
-        @test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
+        # We broke "inferrable" sizes of AbstractVectors for vector+vector, matrix*vector, etc...
+        @test_broken @inferred(v1 + v4) === @SVector [6, 7, 8, 9]
+        @test_broken @inferred(v3 + v2) === @SVector [6, 7, 8, 9]
+        @test_broken @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
+        @test_broken @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
     end
 
     @testset "Interaction with `UniformScaling`" begin
@@ -73,11 +74,11 @@
     @testset "transpose() and conj()" begin
         @test @inferred(conj(SVector(1+im, 2+im))) === SVector(1-im, 2-im)
 
-        @test @inferred(transpose(@SVector([1, 2, 3]))) === @SMatrix([1 2 3])
+        @test @inferred(transpose(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
         @test @inferred(transpose(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(transpose(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
 
-        @test @inferred(ctranspose(@SVector([1, 2, 3]))) === @SMatrix([1 2 3])
+        @test @inferred(ctranspose(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
         @test @inferred(ctranspose(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(ctranspose(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
     end

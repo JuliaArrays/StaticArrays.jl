@@ -28,27 +28,26 @@ immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
     end
 end
 
-@generated function check_smatrix_params{S1,S2,L}(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}})
-    if !(T <: DataType) # I think the way types are handled in generated fnctions might have changed in 0.5?
-        return :(error("SMatrix: Parameter T must be a DataType. Got $T"))
-    end
+function check_smatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}}) where {S1,S2,L}
+    throw(ArgumentError("SMatrix: Parameter T must be a Type. Got $T"))
+end
 
+@generated function check_smatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, ::Type{T}, ::Type{Val{L}}) where {S1,S2,L,T}
     if !isa(S1, Int) || !isa(S2, Int) || !isa(L, Int) || S1 < 0 || S2 < 0 || L < 0
-        return :(error("SMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
+        throw(ArgumentError("SMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
     end
 
     if S1*S2 == L
         return nothing
     else
-        str = "Size mismatch in SMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"
-        return :(error($str))
+        throw(ArgumentError("Size mismatch in SMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"))
     end
 end
 
 @generated function (::Type{SMatrix{S1}}){S1,L}(x::NTuple{L,Any})
     S2 = div(L, S1)
     if S1*S2 != L
-        error("Incorrect matrix sizes. $S1 does not divide $L elements")
+        throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
     end
     T = promote_tuple_eltype(x)
 
@@ -66,7 +65,7 @@ end
         SMatrix{S1, S2, $T, L}(x)
     end
 end
-@compat SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
+SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
 @generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
     T = promote_tuple_eltype(x)
     return quote
@@ -85,32 +84,9 @@ end
 @inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::StaticArray{T}) = SMatrix{S1,S2,T}(Tuple(a))
 @inline SMatrix(a::StaticMatrix) = SMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
-#=
-@inline (::Type{SMatrix{S1}}){S1}(x1) = SMatrix{S1}((x1,))
-@inline (::Type{SMatrix{S1}}){S1}(x1,x2) = SMatrix{S1}((x1,x2))
-@inline (::Type{SMatrix{S1}}){S1}(x1,x2,x3) = SMatrix{S1}((x1,x2,x3))
-@inline (::Type{SMatrix{S1}}){S1}(x1,x2,x3,x4) = SMatrix{S1}((x1,x2,x3,x4))
-@inline (::Type{SMatrix{S1}}){S1}(x...) = SMatrix{S1}(x)
-
-@inline (::Type{SMatrix{S1,S2}}){S1,S2}(x1) = SMatrix{S1,S2}((x1,))
-@inline (::Type{SMatrix{S1,S2}}){S1,S2}(x1,x2) = SMatrix{S1,S2}((x1,x2))
-@inline (::Type{SMatrix{S1,S2}}){S1,S2}(x1,x2,x3) = SMatrix{S1,S2}((x1,x2,x3))
-@inline (::Type{SMatrix{S1,S2}}){S1,S2}(x1,x2,x3,x4) = SMatrix{S1,S2}((x1,x2,x3,x4))
-@inline (::Type{SMatrix{S1,S2}}){S1,S2}(x...) = SMatrix{S1,S2}(x)
-
-@inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x1) = SMatrix{S1,S2,T}((x1,))
-@inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x1,x2) = SMatrix{S1,S2,T}((x1,x2))
-@inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x1,x2,x3) = SMatrix{S1,S2,T}((x1,x2,x3))
-@inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x1,x2,x3,x4) = SMatrix{S1,S2,T}((x1,x2,x3,x4))
-@inline (::Type{SMatrix{S1,S2,T}}){S1,S2,T}(x...) = SMatrix{S1,S2,T}(x)
-=#
-
 # Some more advanced constructor-like functions
 @inline one{N}(::Type{SMatrix{N}}) = one(SMatrix{N,N})
 @inline eye{N}(::Type{SMatrix{N}}) = eye(SMatrix{N,N})
-@inline eye{N,M}(::Type{SMatrix{N,M}}) = eye(SMatrix{N,M,Float64})
-@inline zeros{N,M}(::Type{SMatrix{N,M}}) = zeros(SMatrix{N,M,Float64})
-@inline ones{N,M}(::Type{SMatrix{N,M}}) = ones(SMatrix{N,M,Float64})
 
 #####################
 ## SMatrix methods ##
@@ -120,7 +96,7 @@ end
 @pure Size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = Size(S1, S2)
 @pure Size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
-function getindex(v::SMatrix, i::Integer)
+function getindex(v::SMatrix, i::Int)
     Base.@_inline_meta
     v.data[i]
 end

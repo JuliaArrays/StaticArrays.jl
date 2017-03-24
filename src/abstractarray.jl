@@ -1,28 +1,12 @@
-@compat StaticScalar{T} = StaticArray{T,0}
-
-length{T<:StaticArray}(a::T) = prod(Size(T))
-length{T<:StaticArray}(a::Type{T}) = prod(Size(T))
+length(a::T) where {T <: StaticArray} = prod(Size(T))
+length(a::Type{T}) where {T<:StaticArray} = prod(Size(T))
 
 size{T<:StaticArray}(::T) = get(Size(T))
 size{T<:StaticArray}(::Type{T}) = get(Size(T))
 
-size{T<:StaticArray}(::T, d::Integer) = Size(T)[d]
-size{T<:StaticArray}(::Type{T}, d::Integer) = Size(T)[d]
+size{T<:StaticArray}(::T, d::Int) = Size(T)[d]
+size{T<:StaticArray}(::Type{T}, d::Int) = Size(T)[d]
 
-# This has to be defined after length and size because it is generated
-@generated function convert{SA<:StaticArray}(::Type{SA}, a::AbstractArray)
-    L = length(SA)
-    exprs = [:(a[$i]) for i = 1:L]
-
-    return quote
-        $(Expr(:meta, :inline))
-        if length(a) != $L
-            L = $L
-            error("Dimension mismatch. Expected input array of length $L, got length $(length(a))")
-        end
-        @inbounds return SA($(Expr(:tuple, exprs...)))
-    end
-end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
@@ -30,7 +14,7 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-@compat Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
+Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
 
 # Default type search for similar_type
 """
@@ -71,25 +55,25 @@ similar_type{A<:AbstractArray,T,S}(::A,::Type{T},s::Size{S}) = similar_type(A,T,
 similar_type{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = default_similar_type(T,s,length_val(s))
 
 default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = Scalar{T}
-@generated default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = SVector{S[1],T}
-@generated default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = SMatrix{S[1],S[2],T,prod(S)}
-@generated default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{S,T,D,prod(S)}
+default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = SVector{S[1],T}
+default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = SMatrix{S[1],S[2],T,prod(s)}
+default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{S,T,D,prod(s)}
 
-# mutable things stay mutable
-similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
+# should mutable things stay mutable?
+#similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
 
 mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = SizedArray{(),T,0,0}
-@generated mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = MVector{S[1],T}
-@generated mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = MMatrix{S[1],S[2],T,prod(S)}
-@generated mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{S,T,D,prod(S)}
+mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = MVector{S[1],T}
+mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = MMatrix{S[1],S[2],T,prod(s)}
+mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{S,T,D,prod(s)}
 
-# `SizedArray` stays the same, and also takes over an `Array`.
-similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
-similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
+# Should `SizedArray` stay the same, and also take over an `Array`?
+#similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
+#similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 
 sizedarray_similar_type{T,S,D}(::Type{T},s::Size{S},::Type{Val{D}}) = SizedArray{S,T,D,D}
 
-# Field vectors are user controlled, and default to SVector, etc
+# Field vectors are user controlled, and currently default to SVector, etc
 
 """
     similar(static_array)
@@ -120,103 +104,68 @@ similar{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_simila
 similar{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))()
 
 
+@inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
+@inline reshape(a::AbstractArray, s::Size) = _reshape(s, IndexStyle(a), a)
+@generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
+    if indexstyle == IndexLinear
+        exprs = [:(a[$i]) for i = 1:prod(S)]
+    else
+        exprs = [:(a[$(inds...)]) for inds ∈ CartesianRange(S)]
+    end
+
+    return quote
+        @_inline_meta
+        if length(a) != prod(s)
+            throw(DimensionMismatch("Tried to resize dynamic object of size $(size(a)) to $s"))
+        end
+        return similar_type(a, s)(tuple($(exprs...)))
+    end
+end
+
+reshape(a::Array, s::Size{S}) where {S} = s(a)
+
+@inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
+
+@inline copy(a::StaticArray) = similar_type(a)(Tuple(a))
+
+# TODO permutedims?
+
+# TODO perhaps could move `Symmetric`, etc into seperate files.
+
 # This is used in Base.LinAlg quite a lot, and it impacts type stability
 # since some functions like expm() branch on a check for Hermitian or Symmetric
 # TODO much more work on type stability. Base functions are using similar() with
 # size, which poses difficulties!!
-@generated function Base.full{T,SM<:StaticMatrix}(sym::Symmetric{T,SM})
-    exprs_up = [i <= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(m[$(sub2ind(size(SM), j, i))]) for i = 1:size(SM,1), j=1:size(SM,2)]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(m[$(sub2ind(size(SM), j, i))]) for i = 1:size(SM,1), j=1:size(SM,2)]
+@inline Base.full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), sym)
+
+@generated function _full(::Size{S}, sym::Symmetric{T,SM}) where {S, T, SM <: StaticMatrix}
+    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
+    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
 
     return quote
-        $(Expr(:meta, :inline))
+        @_inline_meta
         m = sym.data
         if sym.uplo == 'U'
-            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_up...))))
+            @inbounds return SM(tuple($(exprs_up...)))
         else
-            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_lo...))))
+            @inbounds return SM(tuple($(exprs_lo...)))
         end
     end
 end
 
-@generated function Base.full{T,SM<:StaticMatrix}(sym::Hermitian{T,SM})
-    exprs_up = [i <= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(conj(m[$(sub2ind(size(SM), j, i))])) for i = 1:size(SM,1), j=1:size(SM,2)]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(size(SM), i, j))]) : :(conj(m[$(sub2ind(size(SM), j, i))])) for i = 1:size(SM,1), j=1:size(SM,2)]
+@inline Base.full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), herm)
+
+@generated function _full(::Size{S}, herm::Hermitian{T,SM}) where {S, T, SM <: StaticMatrix}
+    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
+    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
 
     return quote
-        $(Expr(:meta, :inline))
-        m = sym.data
-        if sym.uplo == 'U'
-            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_up...))))
+        @_inline_meta
+        m = herm.data
+        if herm.uplo == 'U'
+            @inbounds return SM(tuple($(exprs_up...)))
         else
-            @inbounds return SM($(Expr(:call, SM, Expr(:tuple, exprs_lo...))))
-        end
-    end
-end
-
-# Reshape used types to specify size (and also conveniently, the output type)
-@generated function reshape{SA<:StaticArray}(a::StaticArray, ::Type{SA})
-    if !(SA <: StaticVector) && length(a) != length(SA)
-        error("Static array of size $(size(a)) cannot be reshaped to size $(size(SA))")
-    end
-
-    Base.depwarn("Use reshape(array, Size(dims...)) rather than reshape(array, StaticArrayType)", :reshape)
-
-    return quote
-        $(Expr(:meta, :inline))
-        return SA(Tuple(a))
-    end
-end
-
-function reshape{SA<:StaticArray}(a::AbstractArray, ::Type{SA})
-    if !(SA <: StaticVector) && length(a) != length(SA)
-        error("Static array of size $(size(a)) cannot be reshaped to size $(size(SA))")
-    end
-
-    Base.depwarn("Use reshape(array, Size(dims...)) rather than reshape(array, StaticArrayType)", :reshape)
-
-    return SA((a...))
-end
-
-
-# Versions using Size{}
-@generated function reshape{S}(a::StaticArray, ::Size{S})
-    if length(a) != prod(S)
-        error("Static array of size $(size(a)) cannot be reshaped to size $S")
-    end
-
-    newtype = similar_type(a, Size(S))
-
-    return quote
-        $(Expr(:meta, :inline))
-        return $newtype(a)
-    end
-end
-
-@generated function reshape{S}(a::Array, ::Size{S})
-    newtype = SizedArray{S, eltype(a), length(S)}
-
-    return quote
-        $(Expr(:meta, :inline))
-        return $newtype(a)
-    end
-end
-
-# Clever ruse to determine if a type is "mutable"
-# Definitely *not* a deep copy.
-@generated function copy(a::StaticArray)
-    try
-        out = a()
-        return quote
-            $(Expr(:meta, :inline))
-            out = $(a)()
-            out .= a
-            return out
-        end
-    catch
-        return quote
-            $(Expr(:meta, :inline))
-            a
+            @inbounds return SM(tuple($(exprs_lo...)))
         end
     end
 end

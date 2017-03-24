@@ -4,19 +4,19 @@ os:
   - linux
   - osx
 julia:
-  - 0.5
+  - 0.6
   - nightly
 notifications:
   email: false
-matrix:
-  allow_failures:
+# matrix:
+  # allow_failures:
     # - julia: nightly
-    - os: osx
+    # - os: osx
 # uncomment the following lines to override the default test script
 #script:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("StaticArrays"); Pkg.test("StaticArrays"; coverage=true)'
 after_success:
-  - if [ $TRAVIS_JULIA_VERSION = "0.5" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
+  - if [ $TRAVIS_JULIA_VERSION = "0.6" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
       julia -e 'cd(Pkg.dir("StaticArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())';
     fi
