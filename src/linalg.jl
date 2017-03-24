@@ -54,34 +54,9 @@ end
 
 
 # Transpose, conjugate, etc
-# TODO different methods for v0.5, v0.6 (due to `RowVector`)
 @inline conj(a::StaticArray) = map(conj, a)
-
-#=
-@generated function transpose(v::StaticVector)
-    n = length(v)
-    newtype = similar_type(v, Size(1,n))
-    exprs = [:(v[$j]) for j = 1:n]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-
-@generated function ctranspose(v::StaticVector)
-    n = length(v)
-    newtype = similar_type(v, Size(1,n))
-    exprs = [:(conj(v[$j])) for j = 1:n]
-
-    return quote
-        $(Expr(:meta, :inline))
-        @inbounds return $(Expr(:call, newtype, Expr(:tuple, exprs...)))
-    end
-end
-=#
-
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
+# note: transpose of StaticVector is a RowVector, handled by Base
 
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
@@ -214,34 +189,16 @@ _cross(::Size{S}, a::StaticVector, b::StaticVector) where {S} = error("Cross pro
     @inbounds return a[1]*b[2] - a[2]*b[1]
 end
 @inline function _cross(::Size{(3,)}, a::StaticVector, b::StaticVector)
-    T = typeof(a[2]*b[3]-a[3]*b[2])
     @inbounds return similar_type(a, typeof(a[2]*b[3]-a[3]*b[2]))((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
 end
 @inline function _cross(::Size{(2,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
     @inbounds return Signed(a[1]*b[2]) - Signed(a[2]*b[1])
 end
 @inline function _cross(::Size{(3,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
-    T = typeof(a[2]*b[3]-a[3]*b[2])
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@inline dot(a::StaticVector, b::StaticVector) = _dot(same_size(a, b), a, b)
-@generated function _dot(::Size{S}, a::StaticVector, b::StaticVector) where {S}
-    if S[1] == 0
-        return :(zero(promote_op(*, eltype(a), eltype(b))))
-    end
-
-    expr = :(conj(a[1]) * b[1])
-    for j = 2:S[1]
-        expr = :($expr + conj(a[$j]) * b[$j])
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds return $expr
-    end
-end
-
+@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
 @inline vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b)
 @generated function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
     if prod(S) == 0
@@ -270,9 +227,9 @@ end
         return zero(real(eltype(a)))
     end
 
-    expr = :(real(conj(a[1]) * a[1]))
+    expr = :(abs2(a[1]))
     for j = 2:prod(S)
-        expr = :($expr + real(conj(a[$j]) * a[$j]))
+        expr = :($expr + abs2(a[$j]))
     end
 
     return quote

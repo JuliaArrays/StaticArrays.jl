@@ -17,6 +17,7 @@
         v3 = [2,4,6,8]
         v4 = [4,3,2,1]
 
+        # We broke "inferrable" sizes of AbstractVectors for vector+vector, matrix*vector, etc...
         @test_broken @inferred(v1 + v4) === @SVector [6, 7, 8, 9]
         @test_broken @inferred(v3 + v2) === @SVector [6, 7, 8, 9]
         @test_broken @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]

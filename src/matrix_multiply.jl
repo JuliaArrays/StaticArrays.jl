@@ -63,6 +63,8 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
     end
 end
 
+# TODO: I removed StaticMatrix * AbstractVector. Reinstate?
+
 # outer product
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
@@ -75,58 +77,51 @@ end
     end
 end
 
-# TODO: I removed StaticMatrix * AbstractVector. Reinstate?
-
 @generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
-    can_mutate = a.mutable && b.mutable # TODO this probably isn't safe. Maybe a trait??
-    can_blas = Ta == Tb && Ta <: BlasFloat
-
-    if can_mutate
-        S = Size(sa[1], sb[2])
-
-        # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
-        if can_blas && sa[1]*sa[2]*sb[2] >= 14*14*14
-            return quote
-                @_inline_meta
-                T = promote_matprod(Ta, Tb)
-                C = similar(a, T, $S)
-                A_mul_B_blas!($S, C, Sa, Sb, a, b)
-                return C
-            end
-        elseif sa[1]*sa[2]*sb[2] < 8*8*8
-            return quote
-                @_inline_meta
-                return A_mul_B_unrolled(Sa, Sb, a, b)
-            end
-        elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
-            return quote
-                @_inline_meta
-                T = promote_matprod(Ta, Tb)
-                return similar_type(a, T, $S)(A_mul_B_unrolled_chunks(Sa, Sb, a, b))
-            end
-        else
-            return quote
-                @_inline_meta
-                return A_mul_B_loop(Sa, Sb, a, b)
-            end
+    # Heuristic choice for amount of codegen
+    if sa[1]*sa[2]*sb[2] <= 8*8*8
+        return quote
+            @_inline_meta
+            return A_mul_B_unrolled(Sa, Sb, a, b)
         end
-    else # both are isbits type...
-        # Heuristic choice for amount of codegen
-        if sa[1]*sa[2]*sb[2] <= 8*8*8
-            return quote
-                @_inline_meta
-                return A_mul_B_unrolled(Sa, Sb, a, b)
-            end
-        elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
-            return quote
-                @_inline_meta
-                return A_mul_B_unrolled_chunks(Sa, Sb, a, b)
-            end
-        else
-            return quote
-                @_inline_meta
-                return A_mul_B_loop(Sa, Sb, a, b)
-            end
+    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+        return quote
+            @_inline_meta
+            return A_mul_B_unrolled_chunks(Sa, Sb, a, b)
+        end
+    else
+        return quote
+            @_inline_meta
+            return A_mul_B_loop(Sa, Sb, a, b)
+        end
+    end
+end
+
+@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}, b::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}) where {sa, sb, T <: BlasFloat}
+    S = Size(sa[1], sb[2])
+
+    # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
+    if sa[1]*sa[2]*sb[2] >= 14*14*14
+        return quote
+            @_inline_meta
+            C = similar(a, T, $S)
+            A_mul_B_blas!($S, C, Sa, Sb, a, b)
+            return C
+        end
+    elseif sa[1]*sa[2]*sb[2] < 8*8*8
+        return quote
+            @_inline_meta
+            return A_mul_B_unrolled(Sa, Sb, a, b)
+        end
+    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+        return quote
+            @_inline_meta
+            return similar_type(a, T, $S)(A_mul_B_unrolled_chunks(Sa, Sb, a, b))
+        end
+    else
+        return quote
+            @_inline_meta
+            return A_mul_B_loop(Sa, Sb, a, b)
         end
     end
 end
