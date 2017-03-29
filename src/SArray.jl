@@ -19,56 +19,82 @@ immutable SArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
     function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
-        check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_sarray_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(x)
     end
 
     function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
-        check_sarray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_sarray_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(convert_ntuple(T, x))
     end
 end
 
-@generated function check_sarray_parameters{Size,T,N,L}(::Type{Val{Size}}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
-    if !(isa(Size, Tuple{Vararg{Int}}))
-        error("SArray parameter Size must be a tuple of Ints (e.g. `SArray{(3,3)}`)")
+@pure tuple_length(T) = length(T.parameters)
+@pure tuple_prod(T) = *(T.parameters...)
+@pure tuple_minimum(T) = minimum(tuple(T.parameters...))
+
+# Something doesn't match up type wise
+function check_sarray_parameters(Size, T, N, L)
+    (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("SArray parameter Size must be a Tuple type, got $Size"))
+    !isa(T, Type) && throw(ArgumentError("SArray parameter T must be a type, got $T"))
+    !isa(N.parameters[1], Int) && throw(ArgumenError("SArray parameter N must be an integer, got $(N.parameters[1])"))
+    !isa(L.parameters[1], Int) && throw(ArgumentError("SArray parameter L must be an integer, got $(L.parameters[1])"))
+    # shouldn't reach here. Anything else should have made it to the function below
+    error("Internal error. Please file a bug")
+end
+
+@generated function check_sarray_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
+    if !all(x->isa(x, Int), Size.parameters)
+        throw(ArgumentError("SArray parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`)."))
     end
 
-    if L != prod(Size) || L < 0 || minimum(Size) < 0 || length(Size) != N
-        error("Size mismatch in SArray parameters. Got size $Size, dimension $N and length $L.")
+    if L != tuple_prod(Size) || L < 0 || tuple_minimum(Size) < 0 || tuple_length(Size) != N
+        throw(ArgumentError("Size mismatch in SArray parameters. Got size $Size, dimension $N and length $L."))
     end
 
     return nothing
 end
 
-@generated function (::Type{SArray{Size,T,N}}){Size,T,N}(x::Tuple)
+@generated function (::Type{SArray{Size,T,N}}){Size <: Tuple,T,N}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        SArray{Size,T,N,$(prod(Size))}(x)
+        SArray{Size,T,N,$(tuple_prod(Size))}(x)
     end
 end
 
-@generated function (::Type{SArray{Size,T}}){Size,T}(x::Tuple)
+@generated function (::Type{SArray{Size,T}}){Size <: Tuple,T}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        SArray{Size,T,$(length(Size)),$(prod(Size))}(x)
+        SArray{Size,T,$(tuple_length(Size)),$(tuple_prod(Size))}(x)
     end
 end
 
-@generated function (::Type{SArray{Size}}){Size, T <: Tuple}(x::T)
+function SArray{Size,T,N}(x::Tuple) where {Size, T, N}
+    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
+    SArray{Tuple{Size...},T,N}(x)
+end
+function SArray{Size,T}(x::Tuple) where {Size, T}
+    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
+    SArray{Tuple{Size...},T}(x)
+end
+function SArray{Size}(x::Tuple) where {Size}
+    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
+    SArray{Tuple{Size...}}(x)
+end
+@generated function (::Type{SArray{Size}}){Size <: Tuple, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
-        SArray{Size,$(promote_tuple_eltype(T)),$(length(Size)),$(prod(Size))}(x)
+        SArray{Size,$(promote_tuple_eltype(T)),$(tuple_length(Size)),$(tuple_prod(Size))}(x)
     end
 end
 
-@inline SArray(a::StaticArray) = SArray{size(typeof(a))}(Tuple(a))
+@inline SArray(a::StaticArray) = SArray{size_tuple(a)}(Tuple(a))
 
 # Some more advanced constructor-like functions
-@inline one(::Type{SArray{S}}) where {S} = one(SArray{S,Float64,length(S)})
-@inline eye(::Type{SArray{S}}) where {S} = eye(SArray{S,Float64,length(S)})
-@inline one(::Type{SArray{S,T}}) where {S,T} = one(SArray{S,T,length(S)})
-@inline eye(::Type{SArray{S,T}}) where {S,T} = eye(SArray{S,T,length(S)})
+@inline one(::Type{SArray{S}}) where {S} = one(SArray{S,Float64,tuple_length(S)})
+@inline eye(::Type{SArray{S}}) where {S} = eye(SArray{S,Float64,tuple_length(S)})
+@inline one(::Type{SArray{S,T}}) where {S,T} = one(SArray{S,T,tuple_length(S)})
+@inline eye(::Type{SArray{S,T}}) where {S,T} = eye(SArray{S,T,tuple_length(S)})
 
 ####################
 ## SArray methods ##
@@ -97,17 +123,17 @@ macro SArray(ex)
     end
 
     if ex.head == :vect  # vector
-        return esc(Expr(:call, SArray{(length(ex.args),)}, Expr(:tuple, ex.args...)))
+        return esc(Expr(:call, SArray{Tuple{length(ex.args)}}, Expr(:tuple, ex.args...)))
     elseif ex.head == :ref # typed, vector
-        return esc(Expr(:call, Expr(:curly, :SArray, ((length(ex.args)-1),), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+        return esc(Expr(:call, Expr(:curly, :SArray, Tuple{length(ex.args)-1}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif ex.head == :hcat # 1 x n
         s1 = 1
         s2 = length(ex.args)
-        return esc(Expr(:call, SArray{(s1, s2)}, Expr(:tuple, ex.args...)))
+        return esc(Expr(:call, SArray{Tuple{s1, s2}}, Expr(:tuple, ex.args...)))
     elseif ex.head == :typed_hcat # typed, 1 x n
         s1 = 1
         s2 = length(ex.args) - 1
-        return esc(Expr(:call, Expr(:curly, :SArray, (s1, s2), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+        return esc(Expr(:call, Expr(:curly, :SArray, Tuple{s1, s2}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif ex.head == :vcat
         if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
             # Validate
@@ -119,9 +145,9 @@ macro SArray(ex)
             end
 
             exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-            return esc(Expr(:call, SArray{(s1, s2)}, Expr(:tuple, exprs...)))
+            return esc(Expr(:call, SArray{Tuple{s1, s2}}, Expr(:tuple, exprs...)))
         else # n x 1
-            return esc(Expr(:call, SArray{(length(ex.args), 1)}, Expr(:tuple, ex.args...)))
+            return esc(Expr(:call, SArray{Tuple{length(ex.args), 1}}, Expr(:tuple, ex.args...)))
         end
     elseif ex.head == :typed_vcat
         if isa(ex.args[2], Expr) && ex.args[2].head == :row # typed, n x m
@@ -134,9 +160,9 @@ macro SArray(ex)
             end
 
             exprs = [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
-            return esc(Expr(:call, Expr(:curly, :SArray, (s1, s2), ex.args[1]), Expr(:tuple, exprs...)))
+            return esc(Expr(:call, Expr(:curly, :SArray, Tuple{s1, s2}, ex.args[1]), Expr(:tuple, exprs...)))
         else # typed, n x 1
-            return esc(Expr(:call, Expr(:curly, :SArray, (length(ex.args)-1, 1), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+            return esc(Expr(:call, Expr(:curly, :SArray, Tuple{length(ex.args)-1, 1}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
         end
     elseif isa(ex, Expr) && ex.head == :comprehension
         if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
@@ -174,7 +200,7 @@ macro SArray(ex)
 
         return quote
             $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...)), Expr(:tuple, exprs...))))
+            $(esc(Expr(:call, Expr(:curly, :SArray, Tuple{rng_lengths...}), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :typed_comprehension
         if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
@@ -213,7 +239,7 @@ macro SArray(ex)
 
         return quote
             $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :SArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
+            $(esc(Expr(:call, Expr(:curly, :SArray, Tuple{rng_lengths...}, T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
         if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
@@ -222,9 +248,9 @@ macro SArray(ex)
             else
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
+                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:curly, Tuple, ex.args[3:end]...), ex.args[2]))))
                     else
-                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:tuple, ex.args[2:end]...)))))
+                        $(ex.args[1])($(esc(Expr(:curly, SArray, Expr(:curly, Tuple, ex.args[2:end]...)))))
                     end
                 end
             end
@@ -235,26 +261,26 @@ macro SArray(ex)
                 error("@SArray got bad expression: $(ex.args[1])($(ex.args[2]))")
             else
                 return quote
-                    $(esc(ex.args[1]))($(esc(ex.args[2])), SArray{$(esc(Expr(:tuple, ex.args[3:end]...)))})
+                    $(esc(ex.args[1]))($(esc(ex.args[2])), SArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
             end
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    eye(SArray{($(esc(ex.args[2])), $(esc(ex.args[2])))})
+                    eye(SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))}})
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(SArray{($(esc(ex.args[3])), $(esc(ex.args[3]))), $(esc(ex.args[2]))})
+                        eye(SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))})
                     else
-                        eye(SArray{($(esc(ex.args[2])), $(esc(ex.args[3])))})
+                        eye(SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}})
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(SArray{($(esc(ex.args[3])), $(esc(ex.args[4]))), $(esc(ex.args[2]))})
+                    eye(SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))})
                 end
             else
                 error("Bad eye() expression for @SArray")

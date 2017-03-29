@@ -33,6 +33,7 @@ check_size(S) = error("Size was expected to be a tuple of `Int`s")
 
 @pure Size(s::Tuple{Vararg{Int}}) = Size{s}()
 @pure Size(s::Int...) = Size{s}()
+@pure Size(s::Type{<:Tuple}) = Size{tuple(s.parameters...)}()
 
 Size(a::StaticArray) = Size(typeof(a))
 

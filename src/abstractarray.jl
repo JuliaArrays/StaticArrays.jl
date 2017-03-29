@@ -57,7 +57,7 @@ similar_type{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = default_sim
 default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = Scalar{T}
 default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = SVector{S[1],T}
 default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = SMatrix{S[1],S[2],T,prod(s)}
-default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{S,T,D,prod(s)}
+default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{Tuple{S...},T,D,prod(s)}
 
 # should mutable things stay mutable?
 #similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
@@ -71,7 +71,7 @@ mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{S,T,
 #similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 #similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 
-sizedarray_similar_type{T,S,D}(::Type{T},s::Size{S},::Type{Val{D}}) = SizedArray{S,T,D,D}
+sizedarray_similar_type{T,S,D}(::Type{T},s::Size{S},::Type{Val{D}}) = SizedArray{Tuple{S...},T,D,D}
 
 # Field vectors are user controlled, and currently default to SVector, etc
 
