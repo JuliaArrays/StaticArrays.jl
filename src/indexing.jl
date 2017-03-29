@@ -133,7 +133,7 @@ end
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(linearsizes))
-    more = true
+    more = linearsizes[1] != 0
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(linearsizes)]
         exprs[current_ind...] = :(getindex(a, $(exprs_tmp...)))
@@ -203,6 +203,14 @@ end
 end
 
 # disambiguities from Base
+@propagate_inbounds function setindex!(a::Array, value, i1::StaticVector{Int})
+    _setindex!(a, value, index_sizes(i1), (i1,))
+end
+
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticVector{Int})
+    _setindex!(a, value, index_sizes(i1), (i1,))
+end
+
 @propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
     _setindex!(a, value, index_sizes(i1, inds...), (i1, inds...))
 end
@@ -227,7 +235,7 @@ end
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(ind_types))
-    more = true
+    more = linearsizes[1] != 0
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(ind_types)]
         exprs[current_ind...] = :(setindex!(a, value, $(exprs_tmp...)))

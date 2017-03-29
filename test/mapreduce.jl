@@ -74,5 +74,7 @@
         @test mm == @MMatrix [3 4; 7 8; 11 12; 15 16]
         # issue #103
         @test map(+, M, M) == [2 4; 6 8; 10 12; 14 16]
+        
+        @test ((@SVector Int64[]) + (@SVector Int64[])) == (@SVector Int64[])
     end
 end
