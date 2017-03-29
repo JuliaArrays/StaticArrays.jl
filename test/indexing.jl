@@ -93,4 +93,12 @@
         @test (ma[2,1,1,1] = 48; ma[2,1,1,1] === 48)
     end
 
+    @testset "Indexing with empty vectors" begin
+        a = randn(2,2)
+        @test a[SVector{0,Int}()] == SVector{0,Float64}(())
+        @test a[SVector{0,Int}(),SVector{0,Int}()] == SMatrix{0,0,Float64,0}(())
+        b = copy(a)
+        a[SVector{0,Int}()] = 5.0
+        @test b == a
+    end
 end
