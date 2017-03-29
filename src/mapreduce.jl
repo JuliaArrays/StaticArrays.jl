@@ -15,8 +15,8 @@ end
 ## map / map! ##
 ################
 
-@inline function map(f, a::StaticArray...)
-    _map(f, same_size(a...), a...)
+@inline function map(f, a::StaticArray, b::StaticArray...)
+    _map(f, same_size(a, b...), a, b...)
 end
 
 @generated function _map(f, ::Size{S}, a::StaticArray...) where {S}
@@ -62,12 +62,12 @@ end
 ## mapreduce ##
 ###############
 
-@inline function mapreduce(f, op, a::StaticArray...)
-    _mapreduce(f, op, same_size(a...), a...)
+@inline function mapreduce(f, op, a::StaticArray, b::StaticArray...)
+    _mapreduce(f, op, same_size(a, b...), a, b...)
 end
 
-@inline function mapreduce(f, op, v0, a::StaticArray...)
-    _mapreduce(f, op, v0, same_size(a...), a...)
+@inline function mapreduce(f, op, v0, a::StaticArray, b::StaticArray...)
+    _mapreduce(f, op, v0, same_size(a, b...), a, b...)
 end
 
 @generated function _mapreduce(f, op, ::Size{S}, a::StaticArray...) where {S}
