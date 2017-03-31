@@ -2,9 +2,9 @@
 getindex(a::StaticArray, i::Int) = error("getindex(::$typeof(a), ::Int) is not defined.")
 setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), value, ::Int) is not defined.")
 
-######################
-## Scalar Indexing  ##
-######################
+#######################################
+## Multidimensional scalar indexing  ##
+#######################################
 
 # Note: all indexing behavior defaults to dense, linear indexing
 
@@ -48,8 +48,6 @@ end
     end
 end
 
-
-
 #########################
 ## Indexing utilities  ##
 #########################
@@ -79,11 +77,109 @@ _ind(i::Int, ::Int, ::Type{Int}) = :(inds[$i])
 _ind(i::Int, j::Int, ::Type{<:StaticArray}) = :(inds[$i][$j])
 _ind(i::Int, j::Int, ::Type{Colon}) = j
 
+################################
+## Non-scalar linear indexing ##
+################################
 
+@inline function getindex(a::StaticArray, ::Colon)
+    _getindex(a::StaticArray, Length(a), :)
+end
 
-#####################
-## Array Indexing  ##
-#####################
+@generated function _getindex(a::StaticArray, ::Length{L}, ::Colon) where {L}
+    exprs = [:(a[$i]) for i = 1:L]
+    return quote
+        @_inline_meta
+        @inbounds return similar_type(a, Size(L))(tuple($(exprs...)))
+    end
+end
+
+@propagate_inbounds function getindex(a::StaticArray, inds::StaticArray{Int})
+    _getindex(a, Length(inds), inds)
+end
+
+@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+    exprs = [:(a[inds[$i]]) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        similar_type(a, Size(L))(tuple($(exprs...)))
+    end
+end
+
+@inline function setindex!(a::StaticArray, v, ::Colon)
+    _setindex!(a::StaticArray, v, Length(a), :)
+    return v
+end
+
+@generated function _setindex!(a::StaticArray, v, ::Length{L}, ::Colon) where {L}
+    exprs = [:(a[$i] = v) for i = 1:L]
+    return quote
+        @_inline_meta
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, ::Colon) where {L}
+    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        if length(v) != L
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        end
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, ::Colon) where {L}
+    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        if Length(typeof(v)) != L
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        end
+        $(Expr(:block, exprs...))
+    end
+end
+
+@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{Int})
+    _setindex!(a, v, Length(inds), inds)
+    return v
+end
+
+@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticArray{Int}) where {L}
+    exprs = [:(a[inds[$i]] = v) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        similar_type(a, Size(L))(tuple($(exprs...)))
+    end
+end
+
+@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        if length(v) != L
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        end
+        $(Expr(:block, exprs...))
+    end
+end
+
+@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    return quote
+        @_propagate_inbounds_meta
+        if Length(typeof(v)) != L
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        end
+        $(Expr(:block, exprs...))
+    end
+end
+
+###########################################
+## Multidimensional non-scalar indexing  ##
+###########################################
+
+# getindex
 
 @propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{Int}, Colon}...)
     _getindex(a, index_sizes(Size(a), inds...), inds)
@@ -124,7 +220,6 @@ end
     _getindex(a, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 
-
 @generated function _getindex(a::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)
     newsize = out_index_size(ind_sizes.parameters...)
     linearsizes = linear_index_size(ind_sizes.parameters...)
@@ -161,7 +256,7 @@ end
     end
 end
 
-
+# setindex!
 
 @propagate_inbounds function setindex!(a::StaticArray, value, inds::Union{Int, StaticArray{Int}, Colon}...)
     _setindex!(a, value, index_sizes(Size(a), inds...), inds)
@@ -263,7 +358,6 @@ end
         return value
     end
 end
-
 
 # setindex! from an array
 @generated function _setindex!(a::AbstractArray, v::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)

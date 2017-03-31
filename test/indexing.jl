@@ -9,6 +9,17 @@
         @test (@inferred getindex(sv,:)) === sv
     end
 
+    @testset "Linear getindex() on SMatrix" begin
+        sv = SVector{4}(4,5,6,7)
+        sm = SMatrix{2,2}(4,5,6,7)
+
+        # SVector
+        @test (@inferred getindex(sm, SVector(4,3,2,1))) === SVector((7,6,5,4))
+
+        # Colon
+        @test (@inferred getindex(sm,:)) === sv
+    end
+
     @testset "Linear getindex()/setindex!() on MVector" begin
         vec = @SVector [4,5,6,7]
 
@@ -19,6 +30,18 @@
         # Colon
         mv = MVector{4,Int}()
         @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
+    end
+
+    @testset "Linear getindex()/setindex!() on MMatrix" begin
+        vec = @SVector [4,5,6,7]
+
+        # SVector
+        mm = MMatrix{2,2,Int}()
+        @test (mm[SVector(1,2,3,4)] = vec; (@inferred getindex(mm, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+
+        # Colon
+        mm = MMatrix{2,2,Int}()
+        @test (mm[:] = vec; (@inferred getindex(mm, :))::SVector{4,Int} == SVector((4,5,6,7)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
