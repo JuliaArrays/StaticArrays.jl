@@ -20,75 +20,63 @@ type MArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
     function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
-        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_array_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(x)
     end
 
     function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
-        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_array_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(convert_ntuple(T, x))
     end
 
     function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}()
-        check_marray_parameters(Val{Size}, T, Val{N}, Val{L})
+        check_array_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}()
     end
-end
-
-@generated function check_marray_parameters{Size,T,N,L}(::Type{Val{Size}}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
-    if !(isa(Size, Tuple{Vararg{Int}}))
-        error("MArray parameter Size must be a tuple of Ints (e.g. `MArray{(3,3)}`)")
-    end
-
-    if L != prod(Size) || L < 0 || minimum(Size) < 0 || length(Size) != N
-        error("Size mismatch in MArray parameters. Got size $Size, dimension $N and length $L.")
-    end
-
-    return nothing
 end
 
 @generated function (::Type{MArray{Size,T,N}}){Size,T,N}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,T,N,$(prod(Size))}(x)
+        MArray{Size,T,N,$(tuple_prod(Size))}(x)
     end
 end
 
 @generated function (::Type{MArray{Size,T}}){Size,T}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,T,$(length(Size)),$(prod(Size))}(x)
+        MArray{Size,T,$(tuple_length(Size)),$(tuple_prod(Size))}(x)
     end
 end
 
 @generated function (::Type{MArray{Size}}){Size, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,$(promote_tuple_eltype(T)),$(length(Size)),$(prod(Size))}(x)
+        MArray{Size,$(promote_tuple_eltype(T)),$(tuple_length(Size)),$(tuple_prod(Size))}(x)
     end
 end
 
 @generated function (::Type{MArray{Size,T,N}}){Size,T,N}()
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size, T, N, $(prod(Size))}()
+        MArray{Size, T, N, $(tuple_prod(Size))}()
     end
 end
 
 @generated function (::Type{MArray{Size,T}}){Size,T}()
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size, T, $(length(Size)), $(prod(Size))}()
+        MArray{Size, T, $(tuple_length(Size)), $(tuple_prod(Size))}()
     end
 end
 
-@inline MArray(a::StaticArray) = MArray{size(typeof(a))}(Tuple(a))
+@inline MArray(a::StaticArray) = MArray{size_tuple(typeof(a))}(Tuple(a))
 
 # Some more advanced constructor-like functions
-@inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,length(S)})
-@inline eye(::Type{MArray{S}}) where {S} = eye(MArray{S,Float64,length(S)})
-@inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,length(S)})
-@inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,length(S)})
+@inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
+@inline eye(::Type{MArray{S}}) where {S} = eye(MArray{S,Float64,tuple_length(S)})
+@inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,tuple_length(S)})
+@inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,tuple_length(S)})
 
 ####################
 ## MArray methods ##
@@ -133,17 +121,17 @@ macro MArray(ex)
     end
 
     if ex.head == :vect  # vector
-        return esc(Expr(:call, MArray{(length(ex.args),)}, Expr(:tuple, ex.args...)))
+        return esc(Expr(:call, MArray{Tuple{length(ex.args)}}, Expr(:tuple, ex.args...)))
     elseif ex.head == :ref # typed, vector
-        return esc(Expr(:call, Expr(:curly, :MArray, ((length(ex.args)-1),), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+        return esc(Expr(:call, Expr(:curly, :MArray, Tuple{length(ex.args)-1}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif ex.head == :hcat # 1 x n
         s1 = 1
         s2 = length(ex.args)
-        return esc(Expr(:call, MArray{(s1, s2)}, Expr(:tuple, ex.args...)))
+        return esc(Expr(:call, MArray{Tuple{s1, s2}}, Expr(:tuple, ex.args...)))
     elseif ex.head == :typed_hcat # typed, 1 x n
         s1 = 1
         s2 = length(ex.args) - 1
-        return esc(Expr(:call, Expr(:curly, :MArray, (s1, s2), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+        return esc(Expr(:call, Expr(:curly, :MArray, Tuple{s1, s2}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif ex.head == :vcat
         if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
             # Validate
@@ -155,9 +143,9 @@ macro MArray(ex)
             end
 
             exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-            return esc(Expr(:call, MArray{(s1, s2)}, Expr(:tuple, exprs...)))
+            return esc(Expr(:call, MArray{Tuple{s1, s2}}, Expr(:tuple, exprs...)))
         else # n x 1
-            return esc(Expr(:call, MArray{(length(ex.args), 1)}, Expr(:tuple, ex.args...)))
+            return esc(Expr(:call, MArray{Tuple{length(ex.args), 1}}, Expr(:tuple, ex.args...)))
         end
     elseif ex.head == :typed_vcat
         if isa(ex.args[2], Expr) && ex.args[2].head == :row # typed, n x m
@@ -170,9 +158,9 @@ macro MArray(ex)
             end
 
             exprs = [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
-            return esc(Expr(:call, Expr(:curly, :MArray, (s1, s2), ex.args[1]), Expr(:tuple, exprs...)))
+            return esc(Expr(:call, Expr(:curly, :MArray, Tuple{s1, s2}, ex.args[1]), Expr(:tuple, exprs...)))
         else # typed, n x 1
-            return esc(Expr(:call, Expr(:curly, :MArray, (length(ex.args)-1, 1), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
+            return esc(Expr(:call, Expr(:curly, :MArray, Tuple{length(ex.args)-1, 1}, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
         end
     elseif isa(ex, Expr) && ex.head == :comprehension
         if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
@@ -210,7 +198,7 @@ macro MArray(ex)
 
         return quote
             $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :MArray, (rng_lengths...)), Expr(:tuple, exprs...))))
+            $(esc(Expr(:call, Expr(:curly, :MArray, Tuple{rng_lengths...}), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :typed_comprehension
         if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
@@ -249,7 +237,7 @@ macro MArray(ex)
 
         return quote
             $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :MArray, (rng_lengths...), T), Expr(:tuple, exprs...))))
+            $(esc(Expr(:call, Expr(:curly, :MArray, Tuple{rng_lengths...}, T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
         if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
@@ -258,9 +246,9 @@ macro MArray(ex)
             else
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        $(ex.args[1])($(esc(Expr(:curly, MArray, Expr(:tuple, ex.args[3:end]...), ex.args[2]))))
+                        $(ex.args[1])($(esc(Expr(:curly, MArray, Expr(:curly, Tuple, ex.args[3:end]...), ex.args[2]))))
                     else
-                        $(ex.args[1])($(esc(Expr(:curly, MArray, Expr(:tuple, ex.args[2:end]...)))))
+                        $(ex.args[1])($(esc(Expr(:curly, MArray, Expr(:curly, Tuple, ex.args[2:end]...)))))
                     end
                 end
             end
@@ -271,26 +259,26 @@ macro MArray(ex)
                 error("@MArray got bad expression: $(ex.args[1])($(ex.args[2]))")
             else
                 return quote
-                    $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:tuple, ex.args[3:end]...)))})
+                    $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
             end
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    eye(MArray{($(esc(ex.args[2])), $(esc(ex.args[2])))})
+                    eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))}})
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(MArray{($(esc(ex.args[3])), $(esc(ex.args[3]))), $(esc(ex.args[2]))})
+                        eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))})
                     else
-                        eye(MArray{($(esc(ex.args[2])), $(esc(ex.args[3])))})
+                        eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}})
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(MArray{($(esc(ex.args[3])), $(esc(ex.args[4]))), $(esc(ex.args[2]))})
+                    eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))})
                 end
             else
                 error("Bad eye() expression for @MArray")

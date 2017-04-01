@@ -65,7 +65,7 @@ default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{Tupl
 mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = SizedArray{(),T,0,0}
 mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = MVector{S[1],T}
 mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = MMatrix{S[1],S[2],T,prod(s)}
-mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{S,T,D,prod(s)}
+mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{Tuple{S...},T,D,prod(s)}
 
 # Should `SizedArray` stay the same, and also take over an `Array`?
 #similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))

@@ -15,40 +15,7 @@ Construct a statically-sized, mutable matrix of dimensions `S1 × S2` using the 
 `mat`. The parameters `S1` and `S2` are mandatory since the size of `mat` is
 unknown to the compiler (the element type may optionally also be specified).
 """
-type MMatrix{S1, S2, T, L} <: StaticMatrix{T}
-    data::NTuple{L, T}
-
-    function (::Type{MMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,T})
-        check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new{S1,S2,T,L}(d)
-    end
-
-    function (::Type{MMatrix{S1,S2,T,L}}){S1,S2,T,L}(d::NTuple{L,Any})
-        check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new{S1,S2,T,L}(convert_ntuple(T, d))
-    end
-
-    function (::Type{MMatrix{S1,S2,T,L}}){S1,S2,T,L}()
-        check_MMatrix_params(Val{S1}, Val{S2}, T, Val{L})
-        new{S1,S2,T,L}()
-    end
-end
-
-function check_MMatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, T, ::Type{Val{L}}) where {S1,S2,L}
-    throw(ArgumentError("MMatrix: Parameter T must be a Type. Got $T"))
-end
-
-@generated function check_MMatrix_params(::Type{Val{S1}}, ::Type{Val{S2}}, ::Type{T}, ::Type{Val{L}}) where {S1,S2,L,T}
-    if !isa(S1, Int) || !isa(S2, Int) || !isa(L, Int) || S1 < 0 || S2 < 0 || L < 0
-        throw(ArgumentError("MMatrix: Sizes must be positive integers. Got $S1 × $S2 ($L elements)"))
-    end
-
-    if S1*S2 == L
-        return nothing
-    else
-        throw(ArgumentError("Size mismatch in MMatrix. S1 = $S1, S2 = $S2, but recieved $L elements"))
-    end
-end
+const MMatrix{S1, S2, T, L} = MArray{Tuple{S1, S2}, T, 2, L}
 
 @generated function (::Type{MMatrix{S1}}){S1,L}(x::NTuple{L})
     S2 = div(L, S1)

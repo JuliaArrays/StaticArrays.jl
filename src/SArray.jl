@@ -19,40 +19,14 @@ immutable SArray{Size, T, N, L} <: StaticArray{T, N}
     data::NTuple{L,T}
 
     function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
-        check_sarray_parameters(Size, T, Val{N}, Val{L})
+        check_array_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(x)
     end
 
     function (::Type{SArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
-        check_sarray_parameters(Size, T, Val{N}, Val{L})
+        check_array_parameters(Size, T, Val{N}, Val{L})
         new{Size,T,N,L}(convert_ntuple(T, x))
     end
-end
-
-@pure tuple_length(T) = length(T.parameters)
-@pure tuple_prod(T) = *(T.parameters...)
-@pure tuple_minimum(T) = minimum(tuple(T.parameters...))
-
-# Something doesn't match up type wise
-function check_sarray_parameters(Size, T, N, L)
-    (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("SArray parameter Size must be a Tuple type, got $Size"))
-    !isa(T, Type) && throw(ArgumentError("SArray parameter T must be a type, got $T"))
-    !isa(N.parameters[1], Int) && throw(ArgumenError("SArray parameter N must be an integer, got $(N.parameters[1])"))
-    !isa(L.parameters[1], Int) && throw(ArgumentError("SArray parameter L must be an integer, got $(L.parameters[1])"))
-    # shouldn't reach here. Anything else should have made it to the function below
-    error("Internal error. Please file a bug")
-end
-
-@generated function check_sarray_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
-    if !all(x->isa(x, Int), Size.parameters)
-        throw(ArgumentError("SArray parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`)."))
-    end
-
-    if L != tuple_prod(Size) || L < 0 || tuple_minimum(Size) < 0 || tuple_length(Size) != N
-        throw(ArgumentError("Size mismatch in SArray parameters. Got size $Size, dimension $N and length $L."))
-    end
-
-    return nothing
 end
 
 @generated function (::Type{SArray{Size,T,N}}){Size <: Tuple,T,N}(x::Tuple)
@@ -69,18 +43,6 @@ end
     end
 end
 
-function SArray{Size,T,N}(x::Tuple) where {Size, T, N}
-    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
-    SArray{Tuple{Size...},T,N}(x)
-end
-function SArray{Size,T}(x::Tuple) where {Size, T}
-    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
-    SArray{Tuple{Size...},T}(x)
-end
-function SArray{Size}(x::Tuple) where {Size}
-    Base.depwarn("SArray{(dim1,dim2,...),...} is deprecated, use SArray{Tuple{dim1, dim2, ...}, ...}", :SArray)
-    SArray{Tuple{Size...}}(x)
-end
 @generated function (::Type{SArray{Size}}){Size <: Tuple, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
