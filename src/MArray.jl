@@ -1,76 +1,80 @@
 """
-    MArray{Size, T, L}()
-    MArray{Size, T, L}(x::NTuple{L, T})
-    MArray{Size, T, L}(x1, x2, x3, ...)
+    MArray{S, T, L}()
+    MArray{S, T, L}(x::NTuple{L, T})
+    MArray{S, T, L}(x1, x2, x3, ...)
+
 
 Construct a statically-sized, mutable array `MArray`. The data may optionally be
-provided upon construction and can be mutated later. The `Size` parameter is a
-Tuple specifying the dimensions of the array. The `L` parameter is the `length`
-of the array and is always equal to `prod(S)`. Constructors may drop the `L` and
-`T` parameters if they are inferrable from the input (e.g. `L` is always
-inferrable from `Size`).
+provided upon construction and cannot be mutated later. The `S` parameter is a Tuple-type
+specifying the dimensions, or size, of the array - such as `Tuple{3,4,5}` for a 3×4×5-sized
+array. The `L` parameter is the `length` of the array and is always equal to `prod(S)`.
+Constructors may drop the `L` and `T` parameters if they are inferrable from the input
+(e.g. `L` is always inferrable from `S`).
 
-    MArray{Size}(a::Array)
+    MArray{S}(a::Array)
 
-Construct a statically-sized, mutable array of dimensions `Size` using the data from
-`a`. The `Size` parameter is mandatory since the size of `a` is unknown to the
-compiler (the element type may optionally also be specified).
+Construct a statically-sized, mutable array of dimensions `S` (expressed as a `Tuple{...}`)
+using the data from `a`. The `S` parameter is mandatory since the size of `a` is unknown to
+the compiler (the element type may optionally also be specified).
 """
-type MArray{Size, T, N, L} <: StaticArray{T, N}
+type MArray{S, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
-    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,T})
-        check_array_parameters(Size, T, Val{N}, Val{L})
-        new{Size,T,N,L}(x)
+    function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,T})
+        check_array_parameters(S, T, Val{N}, Val{L})
+        new{S,T,N,L}(x)
     end
 
-    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}(x::NTuple{L,Any})
-        check_array_parameters(Size, T, Val{N}, Val{L})
-        new{Size,T,N,L}(convert_ntuple(T, x))
+    function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,Any})
+        check_array_parameters(S, T, Val{N}, Val{L})
+        new{S,T,N,L}(convert_ntuple(T, x))
     end
 
-    function (::Type{MArray{Size,T,N,L}}){Size,T,N,L}()
-        check_array_parameters(Size, T, Val{N}, Val{L})
-        new{Size,T,N,L}()
-    end
-end
-
-@generated function (::Type{MArray{Size,T,N}}){Size,T,N}(x::Tuple)
-    return quote
-        $(Expr(:meta, :inline))
-        MArray{Size,T,N,$(tuple_prod(Size))}(x)
+    function (::Type{MArray{S,T,N,L}}){S,T,N,L}()
+        check_array_parameters(S, T, Val{N}, Val{L})
+        new{S,T,N,L}()
     end
 end
 
-@generated function (::Type{MArray{Size,T}}){Size,T}(x::Tuple)
+@generated function (::Type{MArray{S,T,N}}){S,T,N}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,T,$(tuple_length(Size)),$(tuple_prod(Size))}(x)
+        MArray{S,T,N,$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{Size}}){Size, T <: Tuple}(x::T)
+@generated function (::Type{MArray{S,T}}){S,T}(x::Tuple)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size,$(promote_tuple_eltype(T)),$(tuple_length(Size)),$(tuple_prod(Size))}(x)
+        MArray{S,T,$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{Size,T,N}}){Size,T,N}()
+@generated function (::Type{MArray{S}}){S, T <: Tuple}(x::T)
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size, T, N, $(tuple_prod(Size))}()
+        MArray{S,$(promote_tuple_eltype(T)),$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{Size,T}}){Size,T}()
+@generated function (::Type{MArray{S,T,N}}){S,T,N}()
     return quote
         $(Expr(:meta, :inline))
-        MArray{Size, T, $(tuple_length(Size)), $(tuple_prod(Size))}()
+        MArray{S, T, N, $(tuple_prod(S))}()
+    end
+end
+
+@generated function (::Type{MArray{S,T}}){S,T}()
+    return quote
+        $(Expr(:meta, :inline))
+        MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}()
     end
 end
 
 @inline MArray(a::StaticArray) = MArray{size_tuple(typeof(a))}(Tuple(a))
+
+# Simplified show for the type
+show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
@@ -81,11 +85,6 @@ end
 ####################
 ## MArray methods ##
 ####################
-
-@pure Size{S}(::Type{MArray{S}}) = Size(S)
-@pure Size{S,T}(::Type{MArray{S,T}}) = Size(S)
-@pure Size{S,T,N}(::Type{MArray{S,T,N}}) = Size(S)
-@pure Size{S,T,N,L}(::Type{MArray{S,T,N,L}}) = Size(S)
 
 function getindex(v::MArray, i::Int)
     Base.@_inline_meta
@@ -111,7 +110,7 @@ end
 
 @inline Tuple(v::MArray) = v.data
 
-@inline function Base.unsafe_convert{Size,T}(::Type{Ptr{T}}, a::MArray{Size,T})
+@inline function Base.unsafe_convert{S,T}(::Type{Ptr{T}}, a::MArray{S,T})
     Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
 end
 

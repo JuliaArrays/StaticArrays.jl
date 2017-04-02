@@ -3,7 +3,7 @@ import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, A
 
 import Base.LinAlg: BlasFloat
 
-const StaticVecOrMat{T} = Union{StaticVector{T}, StaticMatrix{T}}
+const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
 # Idea inspired by https://github.com/JuliaLang/julia/pull/18218
 promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
@@ -46,7 +46,7 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
 
 # Implementations
 
-@generated function _A_mul_B(::Size{sa}, a::StaticMatrix{Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
+@generated function _A_mul_B(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
         exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
@@ -63,7 +63,7 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {sa, sb, Ta, Tb}
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -82,7 +82,7 @@ end
 end
 
 # outer product
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -93,7 +93,7 @@ end
     end
 end
 
-@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
     if sa[1]*sa[2]*sb[2] <= 8*8*8
         return quote
@@ -142,7 +142,7 @@ end
     end
 end
 
-@generated function A_mul_B_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+@generated function A_mul_B_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -163,7 +163,7 @@ end
 end
 
 
-@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -188,7 +188,7 @@ end
 
 # Concatenate a series of matrix-vector multiplications
 # Each function is N^2 not N^3 - aids in compile time.
-@generated function A_mul_B_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, Ta, Tb}
+@generated function A_mul_B_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -212,7 +212,7 @@ end
     end
 end
 
-@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {sa, sb, Ta, Tb}
+@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticArray{<:Any, Tb}) where {sa, sb, Ta, Tb}
     if sa[2] != sb[1]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -262,7 +262,7 @@ end
     end
 end
 
-@generated function _A_mul_B!(Sc::Size{sc}, c::StaticMatrix{Tc}, Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{Ta}, b::StaticMatrix{Tb}) where {sa, sb, sc, Ta, Tb, Tc}
+@generated function _A_mul_B!(Sc::Size{sc}, c::StaticMatrix{<:Any, <:Any, Tc}, Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, sc, Ta, Tb, Tc}
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat
 
     if can_blas
@@ -303,7 +303,7 @@ end
 end
 
 
-@generated function A_mul_B_blas!(::Size{s}, c::StaticMatrix{T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{T}, b::StaticMatrix{T}) where {s,sa,sb, T <: BlasFloat}
+@generated function A_mul_B_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, T}, b::StaticMatrix{<:Any, <:Any, T}) where {s,sa,sb, T <: BlasFloat}
     if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != s[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $s"))
     end

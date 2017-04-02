@@ -191,10 +191,10 @@ end
 @inline function _cross(::Size{(3,)}, a::StaticVector, b::StaticVector)
     @inbounds return similar_type(a, typeof(a[2]*b[3]-a[3]*b[2]))((a[2]*b[3]-a[3]*b[2], a[3]*b[1]-a[1]*b[3], a[1]*b[2]-a[2]*b[1]))
 end
-@inline function _cross(::Size{(2,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
+@inline function _cross(::Size{(2,)}, a::StaticVector{<:Any, <:Unsigned}, b::StaticArray{<:Any, <:Unsigned})
     @inbounds return Signed(a[1]*b[2]) - Signed(a[2]*b[1])
 end
-@inline function _cross(::Size{(3,)}, a::StaticVector{<:Unsigned}, b::StaticVector{<:Unsigned})
+@inline function _cross(::Size{(3,)}, a::StaticArray{<:Any, <:Unsigned}, b::StaticArray{<:Any, <:Unsigned})
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 

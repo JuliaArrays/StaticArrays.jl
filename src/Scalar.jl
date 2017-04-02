@@ -13,9 +13,6 @@ const Scalar{T} = SArray{Tuple{},T,0,1}
     return SA((a,))
 end
 
-@pure Size(::Type{Scalar}) = Size()
-@pure Size{T}(::Type{Scalar{T}}) = Size()
-
 getindex(v::Scalar) = v.data[1]
 @inline function getindex(v::Scalar, i::Int)
     @boundscheck if i != 1
@@ -28,3 +25,6 @@ end
 
 # A lot more compact than the default array show
 Base.show(io::IO, ::MIME"text/plain", x::Scalar{T}) where {T} = print(io, "Scalar{$T}(", x.data, ")")
+
+# Simplified show for the type
+show(io::IO, ::Type{Scalar{T}}) where {T} = print(io, "Scalar{T}")

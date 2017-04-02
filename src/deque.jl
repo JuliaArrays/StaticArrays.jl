@@ -72,8 +72,8 @@ end
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
 # could also be justified to live in src/indexing.jl
-@inline setindex(a::StaticArray{T}, x::T, index::Int) where {T} = _setindex(Size(a), a, x, index)
-@generated function _setindex(::Size{s}, a::StaticArray{T}, x::T, index::Int) where {s, T}
+@inline setindex(a::StaticArray{<:Any,T}, x::T, index::Int) where {T} = _setindex(Size(a), a, x, index)
+@generated function _setindex(::Size{s}, a::StaticArray{<:Any,T}, x::T, index::Int) where {s, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
     return quote
         @_inline_meta

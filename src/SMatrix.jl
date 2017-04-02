@@ -53,8 +53,11 @@ end
     end
 end
 
-@inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::StaticArray{T}) = SMatrix{S1,S2,T}(Tuple(a))
+@inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Any, T}) = SMatrix{S1,S2,T}(Tuple(a))
 @inline SMatrix(a::StaticMatrix) = SMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
+
+# Simplified show for the type
+show(io::IO, ::Type{SMatrix{N, M, T}}) where {N, M, T} = print(io, "SMatrix{$N,$M,$T}")
 
 # Some more advanced constructor-like functions
 @inline one{N}(::Type{SMatrix{N}}) = one(SMatrix{N,N})
@@ -63,10 +66,6 @@ end
 #####################
 ## SMatrix methods ##
 #####################
-
-@pure Size{S1,S2}(::Type{SMatrix{S1,S2}}) = Size(S1, S2)
-@pure Size{S1,S2,T}(::Type{SMatrix{S1,S2,T}}) = Size(S1, S2)
-@pure Size{S1,S2,T,L}(::Type{SMatrix{S1,S2,T,L}}) = Size(S1, S2)
 
 function getindex(v::SMatrix, i::Int)
     Base.@_inline_meta

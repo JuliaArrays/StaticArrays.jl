@@ -21,26 +21,19 @@ _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 ```
 """
 immutable Size{S}
-    function Size{S}() where S
-        check_size(S)
-        new{S}()
+    function Size{S}() where {S}
+        new{S::Tuple{Vararg{Int}}}()
     end
 end
-
-
-check_size(S::Tuple{Vararg{Int}}) = nothing
-check_size(S) = error("Size was expected to be a tuple of `Int`s")
 
 @pure Size(s::Tuple{Vararg{Int}}) = Size{s}()
 @pure Size(s::Int...) = Size{s}()
 @pure Size(s::Type{<:Tuple}) = Size{tuple(s.parameters...)}()
 
-Size(a::StaticArray) = Size(typeof(a))
+Base.show(io::IO, ::Size{S}) where {S} = print(io, "Size", S)
 
-Base.show{S}(io::IO, ::Size{S}) = print(io, "Size", S)
-
-# A nice, default error message
-function Size{SA <: StaticArray}(::Type{SA})
+#= There seems to be a subtyping/specialization bug...
+function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error message for when S not defined
     error("""
         The size of type `$SA` is not known.
 
@@ -53,8 +46,9 @@ function Size{SA <: StaticArray}(::Type{SA})
             SMatrix(m)      # this error
             SMatrix{3,3}(m) # correct - size is inferrable
         """)
-end
-
+end =#
+Size(a::StaticArray{S}) where {S} = Size(S)
+Size(a::Type{<:StaticArray{S}}) where {S} = Size(S)
 
 struct Length{L}
     function Length{L}() where L
@@ -72,7 +66,6 @@ Length(a::StaticArray) = Length(Size(a))
 Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 @pure Length(::Size{S}) where {S} = Length{prod(S)}()
 @pure Length(L::Int) = Length{L}()
-
 
 # Some @pure convenience functions for `Size`
 @pure get(::Size{S}) where {S} = S
@@ -102,8 +95,7 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 @pure Base.:(!=)(::Length{L}, l::Int) where {L} = L != l
 @pure Base.:(!=)(l::Int, ::Length{L}) where {L} = l != L
 
-
-# The generated functions work with length, etc...
+# unroll_tuple also works with `Length`
 @propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})
 
 
