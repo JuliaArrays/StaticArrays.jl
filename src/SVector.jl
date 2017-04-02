@@ -1,6 +1,6 @@
 """
-    SVector{S,T}(x::NTuple{S, T})
-    SVector{S,T}(x1, x2, x3, ...)
+    SVector{S, T}(x::NTuple{S, T})
+    SVector{S, T}(x1, x2, x3, ...)
 
 Construct a statically-sized vector `SVector`. Since this type is immutable,
 the data must be provided upon construction and cannot be mutated later.
@@ -13,17 +13,7 @@ Construct a statically-sized vector of length `S` using the data from `vec`.
 The parameter `S` is mandatory since the length of `vec` is unknown to the
 compiler (the element type may optionally also be specified).
 """
-immutable SVector{S, T} <: StaticVector{T}
-    data::NTuple{S, T}
-
-    function (::Type{SVector{S, T}}){S, T}(x::NTuple{S,T})
-        new{S, T}(x)
-    end
-
-    function (::Type{SVector{S, T}}){S, T}(x::NTuple{S,Any})
-        new{S, T}(convert_ntuple(T, x))
-    end
-end
+const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 
 @inline (::Type{SVector}){S}(x::NTuple{S,Any}) = SVector{S}(x)
 @inline (::Type{SVector{S}}){S, T}(x::NTuple{S,T}) = SVector{S,T}(x)
@@ -32,6 +22,9 @@ end
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))
 
+# Simplified show for the type
+show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}")
+
 # Some more advanced constructor-like functions
 @inline zeros{N}(::Type{SVector{N}}) = zeros(SVector{N,Float64})
 @inline ones{N}(::Type{SVector{N}}) = ones(SVector{N,Float64})
@@ -39,9 +32,6 @@ end
 #####################
 ## SVector methods ##
 #####################
-
-@pure Size{S}(::Type{SVector{S}}) = Size(S)
-@pure Size{S,T}(::Type{SVector{S,T}}) = Size(S)
 
 @propagate_inbounds function getindex(v::SVector, i::Int)
     v.data[i]

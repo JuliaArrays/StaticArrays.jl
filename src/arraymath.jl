@@ -122,7 +122,7 @@ end
 end
 
 # ambiguity with AbstractRNG and non-Float64... possibly an optimized form in Base?
-@inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{Float64}} = _rand!(rng, Size(SA), a)
+@inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{<:Any, Float64}} = _rand!(rng, Size(SA), a)
 
 @inline randn!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _randn!(rng, Size(SA), a)
 @generated function _randn!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}

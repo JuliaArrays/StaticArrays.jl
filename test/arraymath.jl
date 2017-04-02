@@ -39,17 +39,17 @@
 
         @test @inferred(zeros(SVector{3})) === @SVector [0.0, 0.0, 0.0]
         @test @inferred(zeros(SMatrix{2,2})) === @SMatrix [0.0 0.0; 0.0 0.0]
-        @test @inferred(zeros(SArray{(1,1,1)})) === SArray{(1,1,1)}((0.0,))
+        @test @inferred(zeros(SArray{Tuple{1,1,1}})) === SArray{Tuple{1,1,1}}((0.0,))
         @test @inferred(zeros(MVector{3}))::MVector == @MVector [0.0, 0.0, 0.0]
         @test @inferred(zeros(MMatrix{2,2}))::MMatrix == @MMatrix [0.0 0.0; 0.0 0.0]
-        @test @inferred(zeros(MArray{(1,1,1)}))::MArray == MArray{(1,1,1)}((0.0,))
+        @test @inferred(zeros(MArray{Tuple{1,1,1}}))::MArray == MArray{Tuple{1,1,1}}((0.0,))
 
         @test @inferred(ones(SVector{3})) === @SVector [1.0, 1.0, 1.0]
         @test @inferred(ones(SMatrix{2,2})) === @SMatrix [1.0 1.0; 1.0 1.0]
-        @test @inferred(ones(SArray{(1,1,1)})) === SArray{(1,1,1)}((1.0,))
+        @test @inferred(ones(SArray{Tuple{1,1,1}})) === SArray{Tuple{1,1,1}}((1.0,))
         @test @inferred(ones(MVector{3}))::MVector == @MVector [1.0, 1.0, 1.0]
         @test @inferred(ones(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 1.0; 1.0 1.0]
-        @test @inferred(ones(MArray{(1,1,1)}))::MArray == MArray{(1,1,1)}((1.0,))
+        @test @inferred(ones(MArray{Tuple{1,1,1}}))::MArray == MArray{Tuple{1,1,1}}((1.0,))
     end
 
     @testset "zero()" begin

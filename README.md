@@ -325,10 +325,10 @@ an `MArray` might be preferable.
 
 Sometimes it might be useful to imbue your own types, having multiple fields,
 with vector-like properties. *StaticArrays* can take care of this for you by
-allowing you to inherit from `FieldVector{T}`. For example, consider:
+allowing you to inherit from `FieldVector{N, T}`. For example, consider:
 
 ```julia
-immutable Point3D <: FieldVector{Float64}
+immutable Point3D <: FieldVector{3, Float64}
     x::Float64
     y::Float64
     z::Float64
@@ -337,21 +337,22 @@ end
 
 With this type, users can easily access fields to `p = Point3D(x,y,z)` using
 `p.x`, `p.y` or `p.z`, or alternatively via `p[1]`, `p[2]`, or `p[3]`. You may
-even permute the coordinates with `p[(3,2,1)]`). Furthermore, `Point3D` is a
-complete `AbstractVector` implementation where you can add, subtract or scale
-vectors, multiply them by matrices (and return the same type), etc.
+even permute the coordinates with `p[SVector(3,2,1)]`). Furthermore, `Point3D`
+is a complete `AbstractVector` implementation where you can add, subtract or
+scale vectors, multiply them by matrices, etc.
 
 It is also worth noting that `FieldVector`s may be mutable or immutable, and
-that `setindex!` is defined for use on mutable types. For mutable containers,
-you may want to define a default constructor (no inputs) that can be called by
-`similar`.
+that `setindex!` is defined for use on mutable types. For immutable containers,
+you may want to define a method for `similar_type` so that operations leave the
+type constant (otherwise they may fall back to `SVector`). For mutable
+containers, you may want to define a default constructor (no inputs) and an
+appropriate method for `similar`,
 
 ### Implementing your own types
 
-You can easily create your own `StaticArray` type, by defining both `Size` (on the
-*type*, e.g. `StaticArrays.Size(::Type{Point3D}) = Size(3)`), and linear
+You can easily create your own `StaticArray` type, by defining linear
 `getindex` (and optionally `setindex!` for mutable types - see
-`setindex(::SVector, val, i)` in *MVector.jl* for an example of how to
+`setindex(::MArray, val, i)` in *MArray.jl* for an example of how to
 achieve this through pointer manipulation). Your type should define a constructor
 that takes a tuple of the data (and mutable containers may want to define a
 default constructor).

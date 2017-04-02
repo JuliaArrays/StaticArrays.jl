@@ -14,29 +14,14 @@ Construct a statically-sized, mutable vector of length `S` using the data from
 `vec`. The parameter `S` is mandatory since the length of `vec` is unknown to the
 compiler (the element type may optionally also be specified).
 """
-type MVector{S, T} <: StaticVector{T}
-    data::NTuple{S, T}
+const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 
-    function (::Type{MVector{S,T}}){S,T}(in::NTuple{S, T})
-        new{S,T}(in)
-    end
+@inline MVector(x::NTuple{S,Any}) where {S} = MVector{S}(x)
+@inline MVector{S}(x::NTuple{S,T}) where {S, T} = MVector{S, T}(x)
+@inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)
 
-    function (::Type{MVector{S,T}}){S,T}(in::NTuple{S, Any})
-        new{S,T}(convert_ntuple(T,in))
-    end
-
-    function (::Type{MVector{S,T}}){S,T}(in::T)
-        new{S,T}((in,))
-    end
-
-    function (::Type{MVector{S,T}}){S,T}()
-        new{S,T}()
-    end
-end
-
-@inline (::Type{MVector}){S}(x::NTuple{S,Any}) = MVector{S}(x)
-@inline (::Type{MVector{S}}){S, T}(x::NTuple{S,T}) = MVector{S,T}(x)
-@inline (::Type{MVector{S}}){S, T <: Tuple}(x::T) = MVector{S,promote_tuple_eltype(T)}(x)
+# Simplified show for the type
+show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
 @inline zeros{N}(::Type{MVector{N}}) = zeros(MVector{N,Float64})
@@ -45,9 +30,6 @@ end
 #####################
 ## MVector methods ##
 #####################
-
-@pure Size{S}(::Type{MVector{S}}) = Size(S)
-@pure Size{S,T}(::Type{MVector{S,T}}) = Size(S)
 
 @propagate_inbounds function getindex(v::MVector, i::Int)
     v.data[i]

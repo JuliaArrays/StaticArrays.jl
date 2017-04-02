@@ -10,6 +10,7 @@ using Base.Test
     include("MArray.jl")
     include("FieldVector.jl")
     include("Scalar.jl")
+    include("SUnitRange.jl")
     include("custom_types.jl")
 
     include("core.jl")
@@ -21,7 +22,7 @@ using Base.Test
     include("matrix_multiply.jl")
     include("det.jl")
     include("inv.jl")
-    include("solve.jl")
+    include("solve.jl") # Strange inference / world-age error
     include("eigen.jl")
     include("deque.jl")
     #include("fixed_size_arrays.jl")
