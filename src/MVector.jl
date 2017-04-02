@@ -14,25 +14,7 @@ Construct a statically-sized, mutable vector of length `S` using the data from
 `vec`. The parameter `S` is mandatory since the length of `vec` is unknown to the
 compiler (the element type may optionally also be specified).
 """
-type MVector{S, T} <: StaticVector{T}
-    data::NTuple{S, T}
-
-    function (::Type{MVector{S,T}}){S,T}(in::NTuple{S, T})
-        new{S,T}(in)
-    end
-
-    function (::Type{MVector{S,T}}){S,T}(in::NTuple{S, Any})
-        new{S,T}(convert_ntuple(T,in))
-    end
-
-    function (::Type{MVector{S,T}}){S,T}(in::T)
-        new{S,T}((in,))
-    end
-
-    function (::Type{MVector{S,T}}){S,T}()
-        new{S,T}()
-    end
-end
+const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 
 @inline (::Type{MVector}){S}(x::NTuple{S,Any}) = MVector{S}(x)
 @inline (::Type{MVector{S}}){S, T}(x::NTuple{S,T}) = MVector{S,T}(x)

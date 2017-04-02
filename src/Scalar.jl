@@ -4,27 +4,24 @@
 Construct a statically-sized 0-dimensional array that contains a single element,
 `x`. This type is particularly useful for influencing broadcasting operations.
 """
-immutable Scalar{T} <: StaticArray{T,0}
-    data::T
-
-    Scalar{T}(x::AbstractArray) where {T} = new{T}(convert(T,x))
-    Scalar{T}(x::Tuple{T2}) where {T, T2} = new{T}(convert(T,x[1]))
-    Scalar{T}(x) where {T} = new{T}(convert(T, x))
-end
+const Scalar{T} = SArray{Tuple{},T,0,1}
 
 @inline Scalar(x::Tuple{T}) where {T} = Scalar{T}(x[1])
-@inline Scalar(a::AbstractArray) = Scalar{typeof(a)}(a)
-@inline Scalar(a::AbstractScalar) = Scalar{eltype(a)}(a[]) # Do we want this to convert or wrap?
+@inline Scalar(a::AbstractArray) = Scalar{typeof(a)}((a,))
+@inline Scalar(a::AbstractScalar) = Scalar{eltype(a)}((a[],)) # Do we want this to convert or wrap?
+@inline function convert(::Type{SA}, a::AbstractArray) where {SA <: Scalar}
+    return SA((a,))
+end
 
 @pure Size(::Type{Scalar}) = Size()
 @pure Size{T}(::Type{Scalar{T}}) = Size()
 
-getindex(v::Scalar) = v.data
+getindex(v::Scalar) = v.data[1]
 @inline function getindex(v::Scalar, i::Int)
     @boundscheck if i != 1
         error("Attempt to index Scalar at index $i")
     end
-    v.data
+    v.data[1]
 end
 
 @inline Tuple(v::Scalar) = (v.data,)

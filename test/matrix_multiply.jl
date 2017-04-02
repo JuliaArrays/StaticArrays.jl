@@ -164,9 +164,9 @@
         At_mul_Bt!(a, m, n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
 
-        a2 = MArray{(2,2),Int,2,4}()
+        a2 = MArray{Tuple{2,2},Int,2,4}()
         A_mul_B!(a2, m, n)
-        @test a2::MArray{(2,2),Int,2,4} == @MArray [10 13; 22 29]
+        @test a2::MArray{Tuple{2,2},Int,2,4} == @MArray [10 13; 22 29]
 
         # Alternative builtin method used for n > 8
         m_array_2 = rand(1:10, 10, 10)

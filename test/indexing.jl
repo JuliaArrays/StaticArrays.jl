@@ -89,27 +89,27 @@
     end
 
     @testset "3D scalar indexing" begin
-        sa = SArray{(2,2,2), Int}([i*j*k for i = 1:2, j = 2:3, k=3:4])
+        sa = SArray{Tuple{2,2,2}, Int}([i*j*k for i = 1:2, j = 2:3, k=3:4])
 
         @test sa[1,1,2] === 8
         @test sa[1,2,1] === 9
         @test sa[2,1,1] === 12
 
-        ma = MArray{(2,2,2), Int}()
+        ma = MArray{Tuple{2,2,2}, Int}()
         @test (ma[1,1,2] = 8; ma[1,1,2] === 8)
         @test (ma[1,2,1] = 9; ma[1,2,1] === 9)
         @test (ma[2,1,1] = 12; ma[2,1,1] === 12)
     end
 
     @testset "4D scalar indexing" begin
-        sa = SArray{(2,2,2,2), Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
+        sa = SArray{Tuple{2,2,2,2}, Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
 
         @test sa[1,1,1,2] === 30
         @test sa[1,1,2,1] === 32
         @test sa[1,2,1,1] === 36
         @test sa[2,1,1,1] === 48
 
-        ma = MArray{(2,2,2,2), Int}()
+        ma = MArray{Tuple{2,2,2,2}, Int}()
         @test (ma[1,1,1,2] = 30; ma[1,1,1,2] === 30)
         @test (ma[1,1,2,1] = 32; ma[1,1,2,1] === 32)
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)
