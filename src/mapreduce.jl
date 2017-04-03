@@ -1,25 +1,24 @@
-# Returns the common Size of the inputs (or else throws a DimensionMismatch)
-@inline same_size(a1::StaticArray, as::StaticArray...) = _same_size(Size(a1), as...)
-@inline _same_size(s::Size) = s
-@inline function _same_size(s::Size, a1::StaticArray, as::StaticArray...)
-    if s === Size(a1)
-        return _same_size(s, as...)
-    else
-        throw(DimensionMismatch("Dimensions must match. Got inputs with $s and $(Size(a1))."))
-    end
-end
-
 @inline _first(a1, as...) = a1
 
 ################
 ## map / map! ##
 ################
 
-@inline function map(f, a::StaticArray, b::StaticArray...)
-    _map(f, same_size(a, b...), a, b...)
-end
+@inline map(f, as::StaticArray...) =
+    _map(f, same_size(as...), as...)
+# Mixed StaticArray + AbstractArray; various versions to avoid ambiguities.
+# With the versions below, if a StaticArray isn't present in the first two
+# arguments, we'll end up in Base.map() instead.
+@inline map(f, a1::StaticArray, as::AbstractArray...) =
+    _map(f, same_size(a1, as...), a1, as...)
+@inline map(f, a1::AbstractArray, a2::StaticArray, as::AbstractArray...) =
+    _map(f, same_size(a1, a2, as...), a1, a2, as...)
+@inline map(f, a1::StaticArray, a2::AbstractArray, as::AbstractArray...) =
+    _map(f, same_size(a1, a2, as...), a1, a2, as...)
+@inline map(f, a1::StaticArray, a2::StaticArray, as::AbstractArray...) =
+    _map(f, same_size(a1, a2, as...), a1, a2, as...)
 
-@generated function _map(f, ::Size{S}, a::StaticArray...) where {S}
+@generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
     exprs = Vector{Expr}(prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
@@ -29,7 +28,7 @@ end
     newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
     return quote
         @_inline_meta
-        @inbounds return similar_type(typeof(_first(a...)), $newT)(tuple($(exprs...)))
+        @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
     end
 end
 
