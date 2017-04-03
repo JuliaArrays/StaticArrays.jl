@@ -23,6 +23,12 @@ immutable SizedArray{S,T,N,M} <: StaticArray{T,N}
         new{S,T,N,M}(Array{T,M}(S))
     end
 end
+@pure size(t::SizedArray{S}) where S = S
+@inline function size(t::Type{<:SizedArray},d::Int)
+    S = size(t)
+    d > length(S) ? 1 : S[d]
+end
+@inline size(t::SizedArray, d::Int) = size(typeof(t), d)
 
 @inline (::Type{SizedArray{S,T,N}}){S,T,N,M}(a::Array{T,M}) = SizedArray{S,T,N,M}(a)
 @inline (::Type{SizedArray{S,T}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,_ndims(S),M}(a)
