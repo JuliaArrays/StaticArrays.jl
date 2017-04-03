@@ -108,11 +108,6 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 
 
 """
-Static or runtime size of an array
-"""
-const SRSize = Union{Size,Tuple{Vararg{Int}}}
-
-"""
 Return either the statically known Size() or runtime size()
 """
 @inline _size(a) = size(a)
@@ -125,12 +120,12 @@ Return either the statically known Size() or runtime size()
 
 # Returns the common Size of the inputs (or else throws a DimensionMismatch)
 @inline same_size(as...) = _same_size(_first_static_size(as...), as...)
-@inline function _same_size(s::SRSize, a1, as...)
+@inline function _same_size(s::Size, a1, as...)
     if s == _size(a1)
         return _same_size(s, as...)
     else
         throw(DimensionMismatch("Dimensions must match. Got inputs with $s and $(_size(a1))."))
     end
 end
-@inline _same_size(s::SRSize) = s
+@inline _same_size(s::Size) = s
 
