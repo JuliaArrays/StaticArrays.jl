@@ -113,19 +113,21 @@ Return either the statically known Size() or runtime size()
 @inline _size(a) = size(a)
 @inline _size(a::StaticArray) = Size(a)
 
-# Return first static Size from a set of arrays
-@inline _first_static_size(a1::StaticArray, as...) = Size(a1)
-@inline _first_static_size(a1, as...) = _first_static_size(as...)
-@inline _first_static_size() = throw(ArgumentError("No StaticArray found in argument list"))
+# Return static array from a set of arrays
+@inline _first_static(a1::StaticArray, as...) = a1
+@inline _first_static(a1, as...) = _first_static(as...)
+@inline _first_static() = throw(ArgumentError("No StaticArray found in argument list"))
 
-# Returns the common Size of the inputs (or else throws a DimensionMismatch)
-@inline same_size(as...) = _same_size(_first_static_size(as...), as...)
-@inline function _same_size(s::Size, a1, as...)
-    if s == _size(a1)
-        return _same_size(s, as...)
-    else
-        throw(DimensionMismatch("Dimensions must match. Got inputs with $s and $(_size(a1))."))
-    end
+"""
+Returns the common Size of the inputs (or else throws a DimensionMismatch)
+"""
+@inline function same_size(as...)
+    s = Size(_first_static(as...))
+    _sizes_match(s, as...) || _throw_size_mismatch(as...)
+    s
 end
-@inline _same_size(s::Size) = s
-
+@inline _sizes_match(s::Size, a1, as...) = ((s == _size(a1)) ? _sizes_match(s, as...) : false)
+@inline _sizes_match(s::Size) = true
+@noinline function _throw_size_mismatch(as...)
+    throw(DimensionMismatch("Sizes $(map(_size, as)) of input arrays do not match"))
+end
