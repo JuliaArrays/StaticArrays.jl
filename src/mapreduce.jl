@@ -1,7 +1,11 @@
+@inline _first(a1, as...) = a1
+
 ################
 ## map / map! ##
 ################
 
+# The following type signature for map() matches any list of AbstractArrays,
+# provided at least one is a static array.
 @inline function map(f, as::Union{SA,AbstractArray}...) where {SA<:StaticArray}
     _map(f, same_size(as...), as...)
 end
@@ -16,7 +20,7 @@ end
     newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
     return quote
         @_inline_meta
-        @inbounds return similar_type(typeof(_first_static(a...)), $newT, Size(S))(tuple($(exprs...)))
+        @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
     end
 end
 
