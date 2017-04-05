@@ -15,7 +15,7 @@ Construct a statically-sized array of dimensions `S` (expressed as a `Tuple{...}
 the data from `a`. The `S` parameter is mandatory since the size of `a` is unknown to the
 compiler (the element type may optionally also be specified).
 """
-immutable SArray{S, T, N, L} <: StaticArray{S, T, N}
+immutable SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
     function (::Type{SArray{S, T, N, L}}){S, T, N, L}(x::NTuple{L,T})

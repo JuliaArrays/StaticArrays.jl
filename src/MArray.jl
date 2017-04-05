@@ -17,7 +17,7 @@ Construct a statically-sized, mutable array of dimensions `S` (expressed as a `T
 using the data from `a`. The `S` parameter is mandatory since the size of `a` is unknown to
 the compiler (the element type may optionally also be specified).
 """
-type MArray{S, T, N, L} <: StaticArray{S, T, N}
+type MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
     function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,T})
@@ -91,14 +91,14 @@ function getindex(v::MArray, i::Int)
     v.data[i]
 end
 
-@propagate_inbounds setindex!{S,T}(v::MArray{S,T}, val, i::Int) = setindex!(v, convert(T, val), i)
-@inline function setindex!{S,T}(v::MArray{S,T}, val::T, i::Int)
+@inline function setindex!(v::MArray, val, i::Int)
     @boundscheck if i < 1 || i > length(v)
         throw(BoundsError())
     end
 
+    T = eltype(v)
     if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), val, i)
+        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), convert(T, val), i)
     else
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)

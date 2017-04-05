@@ -9,18 +9,18 @@ array may be reshaped.
 
 (Also, `Size(dims...)(array)` acheives the same thing)
 """
-immutable SizedArray{S,T,N,M} <: StaticArray{S,T,N}
-    data::Array{T,M}
+immutable SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
+    data::Array{T, M}
 
-    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}(a::Array)
+    function (::Type{SizedArray{S, T, N, M}}){S, T, N, M}(a::Array)
         if length(a) != tuple_prod(S)
             error("Dimensions $(size(a)) don't match static size $S")
         end
         new{S,T,N,M}(a)
     end
 
-    function (::Type{SizedArray{S,T,N,M}}){S,T,N,M}()
-        new{S,T,N,M}(Array{T,M}(S))
+    function (::Type{SizedArray{S, T, N, M}}){S, T, N, M}()
+        new{S, T, N, M}(Array{T, M}(S))
     end
 end
 
