@@ -14,6 +14,7 @@ end
 
 @generated function _getindex_scalar(::Size{S}, a::StaticArray, inds::Int...) where S
     stride = 1
+    ind_expr = :()
     for i ∈ 1:length(inds)
         if i == 1
             ind_expr = :(inds[1])
@@ -34,6 +35,7 @@ end
 
 @generated function _setindex!_scalar(::Size{S}, a::StaticArray, value, inds::Int...) where S
     stride = 1
+    ind_expr = :()
     for i ∈ 1:length(inds)
         if i == 1
             ind_expr = :(inds[1])
