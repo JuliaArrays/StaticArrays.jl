@@ -90,11 +90,12 @@ macro fixed_vector(name, parent)
         immutable $(name){S, T} <: $(parent){T}
             data::NTuple{S, T}
 
-            function $(name)(x::NTuple{S,T})
-                new(x)
+            function (::Type{$(name){S, T}}){S, T}(x::NTuple{S,T})
+                new{S, T}(x)
             end
-            function $(name)(x::NTuple{S})
-                new(StaticArrays.convert_ntuple(T, x))
+
+            function (::Type{$(name){S, T}}){S, T}(x::NTuple{S,Any})
+                new{S, T}(StaticArrays.convert_ntuple(T, x))
             end
         end
         # Array constructor
@@ -122,6 +123,19 @@ macro fixed_vector(name, parent)
         @inline function (::Type{$(name){S}}){S, T <: Tuple}(x::T)
             $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         end
+        (::Type{$(name){S, T}}){S, T}(x::StaticVector) = $(name){S, T}(Tuple(x))
+        @generated function (::Type{$(name){S, T}}){S, T}(x::$(name))
+            idx = [:(x[$i]) for i = 1:S]
+            quote
+                $($(name)){S, T}($(idx...))
+            end
+        end
+        @generated function convert{S, T}(::Type{$(name){S, T}}, x::$(name))
+            idx = [:(x[$i]) for i = 1:S]
+            quote
+                $($(name)){S, T}($(idx...))
+            end
+        end
         @generated function (::Type{SV}){SV <: $(name)}(x::StaticVector)
             len = size_or(SV, size(x))[1]
             if length(x) == len
@@ -134,37 +148,46 @@ macro fixed_vector(name, parent)
             end
         end
 
-        Base.@pure StaticArrays.Size{S}(::Type{$(name){S}}) = Size(S)
+        Base.@pure StaticArrays.Size{S}(::Type{$(name){S, Any}}) = Size(S)
         Base.@pure StaticArrays.Size{S,T}(::Type{$(name){S, T}}) = Size(S)
 
-        Base.@propagate_inbounds function Base.getindex(v::$(name), i::Integer)
+        Base.@propagate_inbounds function Base.getindex{S, T}(v::$(name){S, T}, i::Int)
             v.data[i]
         end
         @inline Base.Tuple(v::$(name)) = v.data
         @inline Base.convert{S, T}(::Type{$(name){S, T}}, x::NTuple{S, T}) = $(name){S, T}(x)
-        @inline Base.convert{SV <: $(name)}(::Type{SV}, x::StaticVector) = SV(x)
+        @inline Base.convert(::Type{$(name)}, x::StaticVector) = SV(x)
         @inline function Base.convert{S, T}(::Type{$(name){S, T}}, x::Tuple)
             $(name){S, T}(convert(NTuple{S, T}, x))
         end
 
-        @generated function StaticArrays.similar_type{SV <: $(name), T,S}(::Type{SV}, ::Type{T}, s::Size{S})
+        @generated function StaticArrays.similar_type{SV <: $(name), T, S}(::Type{SV}, ::Type{T}, s::Size{S})
             if length(S) === 1
                 $(name){S[1], T}
             else
                 StaticArrays.default_similar_type(T,s(),Val{length(S)})
             end
         end
-
-
-        eltype_or(::Type{$(name)}, or) = or
-        eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
-        eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or
-        eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
-
         size_or(::Type{$(name)}, or) = or
-        size_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = or
-        size_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = (S,)
-        size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
+        eltype_or(::Type{$(name)}, or) = or
+
+        if VERSION < v"0.6.0-dev"
+            eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
+            eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or
+            eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
+
+            size_or{T}(::Type{$(name){S where S, T}}, or) = or
+            size_or{S}(::Type{$(name){S, T where T}}, or) = Size{(S,)}()
+            size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
+        else
+            eltype_or{T}(::Type{$(name){S, T} where S}, or) = T
+            eltype_or{S}(::Type{$(name){S, T} where T}, or) = or
+            eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
+
+            size_or{T}(::Type{$(name){S, T} where S}, or) = or
+            size_or{S}(::Type{$(name){S, T} where T}, or) = Size{(S,)}()
+            size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
+        end
     end)
 end
 
