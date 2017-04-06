@@ -9,6 +9,17 @@
         @test (@inferred getindex(sv,:)) === sv
     end
 
+    @testset "Linear getindex() on SMatrix" begin
+        sv = SVector{4}(4,5,6,7)
+        sm = SMatrix{2,2}(4,5,6,7)
+
+        # SVector
+        @test (@inferred getindex(sm, SVector(4,3,2,1))) === SVector((7,6,5,4))
+
+        # Colon
+        @test (@inferred getindex(sm,:)) === sv
+    end
+
     @testset "Linear getindex()/setindex!() on MVector" begin
         vec = @SVector [4,5,6,7]
 
@@ -19,6 +30,18 @@
         # Colon
         mv = MVector{4,Int}()
         @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
+    end
+
+    @testset "Linear getindex()/setindex!() on MMatrix" begin
+        vec = @SVector [4,5,6,7]
+
+        # SVector
+        mm = MMatrix{2,2,Int}()
+        @test (mm[SVector(1,2,3,4)] = vec; (@inferred getindex(mm, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+
+        # Colon
+        mm = MMatrix{2,2,Int}()
+        @test (mm[:] = vec; (@inferred getindex(mm, :))::SVector{4,Int} == SVector((4,5,6,7)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
@@ -66,27 +89,27 @@
     end
 
     @testset "3D scalar indexing" begin
-        sa = SArray{(2,2,2), Int}([i*j*k for i = 1:2, j = 2:3, k=3:4])
+        sa = SArray{Tuple{2,2,2}, Int}([i*j*k for i = 1:2, j = 2:3, k=3:4])
 
         @test sa[1,1,2] === 8
         @test sa[1,2,1] === 9
         @test sa[2,1,1] === 12
 
-        ma = MArray{(2,2,2), Int}()
+        ma = MArray{Tuple{2,2,2}, Int}()
         @test (ma[1,1,2] = 8; ma[1,1,2] === 8)
         @test (ma[1,2,1] = 9; ma[1,2,1] === 9)
         @test (ma[2,1,1] = 12; ma[2,1,1] === 12)
     end
 
     @testset "4D scalar indexing" begin
-        sa = SArray{(2,2,2,2), Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
+        sa = SArray{Tuple{2,2,2,2}, Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
 
         @test sa[1,1,1,2] === 30
         @test sa[1,1,2,1] === 32
         @test sa[1,2,1,1] === 36
         @test sa[2,1,1,1] === 48
 
-        ma = MArray{(2,2,2,2), Int}()
+        ma = MArray{Tuple{2,2,2,2}, Int}()
         @test (ma[1,1,1,2] = 30; ma[1,1,1,2] === 30)
         @test (ma[1,1,2,1] = 32; ma[1,1,2,1] === 32)
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)

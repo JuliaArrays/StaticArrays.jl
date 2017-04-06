@@ -4,8 +4,8 @@
 
 # TODO: bad codegen for `broadcast(-, SVector(1,2,3))`
 
-@propagate_inbounds function broadcast(f, a::Union{Number, StaticArray}, b::Union{Number, StaticArray}...)
-    _broadcast(f, broadcast_sizes(a, b...), a, b...)
+@propagate_inbounds function broadcast(f, a::Union{Number, StaticArray}...)
+    _broadcast(f, broadcast_sizes(a...), a...)
 end
 
 @inline broadcast_sizes(a...) = _broadcast_sizes((), a...)

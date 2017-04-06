@@ -13,17 +13,7 @@ Construct a statically-sized vector of length `S` using the data from `vec`.
 The parameter `S` is mandatory since the length of `vec` is unknown to the
 compiler (the element type may optionally also be specified).
 """
-immutable SVector{S, T} <: StaticVector{T}
-    data::NTuple{S, T}
-
-    function (::Type{SVector{S, T}}){S, T}(x::NTuple{S,T})
-        new{S, T}(x)
-    end
-
-    function (::Type{SVector{S, T}}){S, T}(x::NTuple{S,Any})
-        new{S, T}(convert_ntuple(T, x))
-    end
-end
+const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 
 @inline (::Type{SVector}){S}(x::NTuple{S,Any}) = SVector{S}(x)
 @inline (::Type{SVector{S}}){S, T}(x::NTuple{S,T}) = SVector{S,T}(x)

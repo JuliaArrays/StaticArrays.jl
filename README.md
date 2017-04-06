@@ -56,7 +56,7 @@ julia 0.5 with default optimizations.
 ## Quick start
 
 ```julia
-Pkg.add("StaticArrays")  # or Pkg.clone("https://github.com/andyferris/StaticArrays.jl")
+Pkg.add("StaticArrays")  # or Pkg.clone("https://github.com/JuliaArrays/StaticArrays.jl")
 using StaticArrays
 
 # Create an SVector using various forms, using constructors, functions or macros
@@ -90,9 +90,9 @@ v8 = sin.(v3)
 v3 == m3 * v3 # recall that m3 = eye(SMatrix{3,3})
 # map, reduce, broadcast, map!, broadcast!, etc...
 
-# Indexing also supports tuples
+# Indexing can also be done using static arrays of integers
 v1[1] === 1
-v1[(3,2,1)] === @SVector [3, 2, 1]
+v1[SVector(3,2,1)] === @SVector [3, 2, 1]
 v1[:] === v1
 typeof(v1[[1,2,3]]) <: Vector # Can't determine size from the type of [1,2,3]
 
@@ -101,7 +101,7 @@ rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS
 eig(m3) # eig(), etc uses specialized algorithms up to 3×3, or else LAPACK
 
 # Static arrays stay statically sized, even when used by Base functions, etc:
-typeof(eig(m3)) == Tuple{MVector{3,Float64}, MMatrix{3,3,Float64,9}}
+typeof(eig(m3)) == Tuple{SVector{3,Float64}, SMatrix{3,3,Float64,9}}
 
 # similar() returns a mutable container, while similar_type() returns a constructor:
 typeof(similar(m3)) == MMatrix{3,3,Float64,9} # (final parameter is length = 9)
@@ -110,15 +110,15 @@ similar_type(m3) == SMatrix{3,3,Float64,9}
 # The Size trait is a compile-time constant representing the size
 Size(m3) === Size(3,3)
 
-# reshape() uses Size() or types to specify size:
-reshape([1,2,3,4], Size(2,2)) === @SMatrix [ 1  3 ;
-                                             2  4 ]
-reshape([1,2,3,4], SMatrix{2,2}) === @SMatrix [ 1  3 ;
-                                                2  4 ]
-
 # A standard Array can be wrapped into a SizedArray
 m4 = Size(3,3)(rand(3,3))
 inv(m4) # Take advantage of specialized fast methods
+
+# reshape() uses Size() or types to specify size:
+reshape([1,2,3,4], Size(2,2)) == @SMatrix [ 1  3 ;
+                                            2  4 ]
+typeof(reshape([1,2,3,4], Size(2,2))) === SizedArray{(2, 2),Int64,2,1}
+
 ```
 
 ## Approach
@@ -348,9 +348,9 @@ you may want to define a default constructor (no inputs) that can be called by
 
 ### Implementing your own types
 
-You can easily create your own `StaticArray` type, by defining both `Size` (on the 
-*type*, e.g. `StaticArrays.Size(::Type{Point3D}) = Size(3)`), and linear 
-`getindex` (and optionally `setindex!` for mutable types - see 
+You can easily create your own `StaticArray` type, by defining both `Size` (on the
+*type*, e.g. `StaticArrays.Size(::Type{Point3D}) = Size(3)`), and linear
+`getindex` (and optionally `setindex!` for mutable types - see
 `setindex(::SVector, val, i)` in *MVector.jl* for an example of how to
 achieve this through pointer manipulation). Your type should define a constructor
 that takes a tuple of the data (and mutable containers may want to define a
