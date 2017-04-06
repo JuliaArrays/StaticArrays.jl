@@ -380,10 +380,9 @@ const unaryOps = (
 # vec-vec and vec-scalar
 const binaryOps = (
 
-    .+, .-, .*, ./, .\,
-    .==, .!=, .<, .<=, .>, .>=, +, -,
+    +, -, *, /, \,
+    ==, !=, <, <=, >, >=,
     min, max,
-
     atan2, besselj, bessely, hankelh1, hankelh2,
     besseli, besselk, beta, lbeta
 )
@@ -401,7 +400,7 @@ const binaryOps = (
                 @testset "$op with $v1 and $v2" begin
                     try # really bad tests, but better than nothing...
                         if applicable(op, v1[1], v2[1]) && typeof(op(v1[1], v2[1])) == eltype(v1)
-                            r = op(v1, v2)
+                            r = op.(v1, v2)
                             for j=1:length(v1)
                                 @test r[j] == op(v1[j], v2[j])
                             end
@@ -418,7 +417,7 @@ const binaryOps = (
                 @testset "$op with $t" begin
                     try
                         if applicable(op, t[1]) && typeof(op(t[1])) == eltype(t)
-                            v = op(t)
+                            v = op.(t)
                             for i=1:length(v)
                                 @test v[i] == op(t[i])
                             end
