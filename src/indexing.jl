@@ -52,18 +52,17 @@ end
 ## Indexing utilities  ##
 #########################
 
-@pure increment(::Type{Val{N}}) where {N} = Val{N+1}
+@pure tail(::Type{Size{S}}) where {S} = Size{Base.tail(S)}
+@inline tail(::S) where {S<:Size} = tail(S)()
 
-@inline index_sizes(s::Size, inds...) = _index_sizes(s, Val{1}, (), inds...)
-@inline _index_sizes(s::Size, ::Type{Val{N}}, x::Tuple) where {N} = x
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, ::Int, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size()), inds...)
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, a::StaticArray, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size(a)), inds...)
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, a::Colon, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size(s[N])), inds...)
+@inline index_sizes(s::Size) = ()
+@inline index_sizes(s::Size, ::Int, inds...) = (Size(), index_sizes(tail(s), inds...)...)
+@inline index_sizes(s::Size, a::StaticArray, inds...) = (Size(a), index_sizes(tail(s), inds...)...)
+@inline index_sizes(s::Size, ::Colon, inds...) = (Size(s[1]), index_sizes(tail(s), inds...)...)
 
-@inline index_sizes(inds...) = _index_sizes(Val{1}, (), inds...)
-@inline _index_sizes(::Type{Val{N}}, x::Tuple) where {N} = x
-@inline _index_sizes(v::Type{Val{N}}, x::Tuple, ::Int, inds...) where {N} = _index_sizes(increment(v), (x..., Size()), inds...)
-@inline _index_sizes(v::Type{Val{N}}, x::Tuple, a::StaticArray, inds...) where {N} = _index_sizes(increment(v), (x..., Size(a)), inds...)
+@inline index_sizes() = ()
+@inline index_sizes(::Int, inds...) = (Size(), index_sizes(inds...)...)
+@inline index_sizes(a::StaticArray, inds...) = (Size(a), index_sizes(inds...)...)
 
 out_index_size(ind_sizes::Type{<:Size}...) = Size(_out_index_size((), ind_sizes...))
 @inline _out_index_size(t::Tuple) = t
