@@ -93,7 +93,7 @@ include("eigen.jl")
 include("cholesky.jl")
 include("deque.jl")
 
-include("FixedSizeArrays.jl")  # Currently defunct
+include("FixedSizeArrays.jl")
 include("ImmutableArrays.jl")
 
 end # module

@@ -170,24 +170,13 @@ macro fixed_vector(name, parent)
         end
         size_or(::Type{$(name)}, or) = or
         eltype_or(::Type{$(name)}, or) = or
+        eltype_or{T}(::Type{$(name){S, T} where S}, or) = T
+        eltype_or{S}(::Type{$(name){S, T} where T}, or) = or
+        eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
 
-        if VERSION < v"0.6.0-dev"
-            eltype_or{T}(::Type{$(name){TypeVar(:S), T}}, or) = T
-            eltype_or{S}(::Type{$(name){S, TypeVar(:T)}}, or) = or
-            eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
-
-            size_or{T}(::Type{$(name){S where S, T}}, or) = or
-            size_or{S}(::Type{$(name){S, T where T}}, or) = Size{(S,)}()
-            size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
-        else
-            eltype_or{T}(::Type{$(name){S, T} where S}, or) = T
-            eltype_or{S}(::Type{$(name){S, T} where T}, or) = or
-            eltype_or{S, T}(::Type{$(name){S, T}}, or) = T
-
-            size_or{T}(::Type{$(name){S, T} where S}, or) = or
-            size_or{S}(::Type{$(name){S, T} where T}, or) = Size{(S,)}()
-            size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
-        end
+        size_or{T}(::Type{$(name){S, T} where S}, or) = or
+        size_or{S}(::Type{$(name){S, T} where T}, or) = Size{(S,)}()
+        size_or{S, T}(::Type{$(name){S, T}}, or) = (S,)
     end)
 end
 
