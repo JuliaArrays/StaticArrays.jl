@@ -54,6 +54,7 @@ end
 
 @pure tail(::Type{Size{S}}) where {S} = Size{Base.tail(S)}
 @inline tail(::S) where {S<:Size} = tail(S)()
+@inline tail(s::Size{()}) = s
 
 @inline index_sizes(s::Size) = ()
 @inline index_sizes(s::Size, ::Int, inds...) = (Size(), index_sizes(tail(s), inds...)...)
