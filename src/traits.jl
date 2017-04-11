@@ -82,11 +82,12 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 @pure length(::Size{S}) where {S} = length(S)
 @pure length_val{S}(::Size{S}) = Val{length(S)}
 
-@pure Base.:(==){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S == s
-@pure Base.:(==){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s == S
+# Note - using === here, as Base doesn't inline == for tuples as of julia-0.6
+@pure Base.:(==){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S === s
+@pure Base.:(==){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s === S
 
-@pure Base.:(!=){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S != s
-@pure Base.:(!=){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s != S
+@pure Base.:(!=){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S !== s
+@pure Base.:(!=){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s !== S
 
 @pure Base.prod{S}(::Size{S}) = prod(S)
 
@@ -104,3 +105,29 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 
 # The generated functions work with length, etc...
 @propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})
+
+
+"""
+Return either the statically known Size() or runtime size()
+"""
+@inline _size(a) = size(a)
+@inline _size(a::StaticArray) = Size(a)
+
+# Return static array from a set of arrays
+@inline _first_static(a1::StaticArray, as...) = a1
+@inline _first_static(a1, as...) = _first_static(as...)
+@inline _first_static() = throw(ArgumentError("No StaticArray found in argument list"))
+
+"""
+Returns the common Size of the inputs (or else throws a DimensionMismatch)
+"""
+@inline function same_size(as...)
+    s = Size(_first_static(as...))
+    _sizes_match(s, as...) || _throw_size_mismatch(as...)
+    s
+end
+@inline _sizes_match(s::Size, a1, as...) = ((s == _size(a1)) ? _sizes_match(s, as...) : false)
+@inline _sizes_match(s::Size) = true
+@noinline function _throw_size_mismatch(as...)
+    throw(DimensionMismatch("Sizes $(map(_size, as)) of input arrays do not match"))
+end
