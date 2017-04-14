@@ -31,6 +31,7 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
 # Manage dispatch of * and A_mul_B!
 # TODO RowVector? (Inner product?)
 
+@inline *(A::StaticMatrix, B::AbstractVector) = _A_mul_B(Size(A), A, B)
 @inline *(A::StaticMatrix, B::StaticVector) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
@@ -44,6 +45,23 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
 #@inline *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
 # Implementations
+
+@generated function _A_mul_B(::Size{sa}, a::StaticMatrix{Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
+    if sa[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+    else
+        exprs = [:(zero(T)) for k = 1:sa[1]]
+    end
+
+    return quote
+        @_inline_meta
+        if length(b) != sa[2]
+            throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
+        end
+        T = promote_matprod(Ta, Tb)
+        @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
+    end
+end
 
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticMatrix{Ta}, b::StaticVector{Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
@@ -62,8 +80,6 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
-
-# TODO: I removed StaticMatrix * AbstractVector. Reinstate?
 
 # outer product
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
