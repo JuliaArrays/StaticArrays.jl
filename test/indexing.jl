@@ -124,4 +124,10 @@
         a[SVector{0,Int}()] = 5.0
         @test b == a
     end
+
+    @testset "inferabilty of index_sizes helper" begin
+        # see JuliaLang/julia#21244
+        # it's not about inferring the correct type, but about inference throwing an error
+        @test code_warntype(DevNull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
+    end
 end
