@@ -1,6 +1,6 @@
 @inline (\)(a::StaticMatrix{<:Any, <:Any, T}, b::StaticVector{<:Any, T}) where {T} = solve(Size(a), Size(b), a, b)
 
-# TODO: Ineffective but requires some infrastructure (e.g. LU or QR) to make efficient so we fall back on inv for now
+# TODO: Ineffecient but requires some infrastructure (e.g. LU or QR) to make efficient so we fall back on inv for now
 @inline solve(::Size, ::Size, a, b) = inv(a) * b
 
 @inline solve(::Size{(1,1)}, ::Size{(1,)}, a, b) = similar_type(b, typeof(b[1] \ a[1]))(b[1] \ a[1])

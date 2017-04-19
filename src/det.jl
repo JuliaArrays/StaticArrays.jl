@@ -6,7 +6,7 @@
     @inbounds return A[1]*A[4] - A[3]*A[2]
 end
 
-@inline function _det(::Size{(2,2)}, A::StaticMatrix{<:Unsigned})
+@inline function _det(::Size{(2,2)}, A::StaticMatrix{<:Any, <:Any, <:Unsigned})
     @inbounds return Signed(A[1]*A[4]) - Signed(A[3]*A[2])
 end
 
@@ -17,7 +17,7 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
-@inline function _det(::Size{(3,3)}, A::StaticMatrix{<:Unsigned})
+@inline function _det(::Size{(3,3)}, A::StaticMatrix{<:Any, <:Any, <:Unsigned})
     @inbounds x0 = SVector(Signed(A[1]), Signed(A[2]), Signed(A[3]))
     @inbounds x1 = SVector(Signed(A[4]), Signed(A[5]), Signed(A[6]))
     @inbounds x2 = SVector(Signed(A[7]), Signed(A[8]), Signed(A[9]))
