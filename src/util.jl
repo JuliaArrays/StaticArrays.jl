@@ -40,20 +40,22 @@ end
 
 # Something doesn't match up type wise
 function check_array_parameters(Size, T, N, L)
-    (!isa(Size, DataType) || (Size.name !== Tuple.name)) && return throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
-    !isa(T, Type) && return throw(ArgumentError("Static Array parameter T must be a type, got $T"))
-    !isa(N.parameters[1], Int) && return throw(ArgumenError("Static Array parameter N must be an integer, got $(N.parameters[1])"))
-    !isa(L.parameters[1], Int) && return throw(ArgumentError("Static Array parameter L must be an integer, got $(L.parameters[1])"))
+    (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
+    !isa(T, Type) && throw(ArgumentError("Static Array parameter T must be a type, got $T"))
+    !isa(N.parameters[1], Int) && throw(ArgumenError("Static Array parameter N must be an integer, got $(N.parameters[1])"))
+    !isa(L.parameters[1], Int) && throw(ArgumentError("Static Array parameter L must be an integer, got $(L.parameters[1])"))
     # shouldn't reach here. Anything else should have made it to the function below
-    return error("Internal error. Please file a bug")
+    error("Internal error. Please file a bug")
 end
 
-function check_array_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
+@generated function check_array_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
     if !all(x->isa(x, Int), Size.parameters)
-        return throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`)."))
+        return :(throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`).")))
     end
+
     if L != tuple_prod(Size) || L < 0 || tuple_minimum(Size) < 0 || tuple_length(Size) != N
-        return throw(ArgumentError("Size mismatch in Static Array parameters. Got size $Size, dimension $N and length $L."))
+        return :(throw(ArgumentError("Size mismatch in Static Array parameters. Got size $Size, dimension $N and length $L.")))
     end
+
     return nothing
 end
