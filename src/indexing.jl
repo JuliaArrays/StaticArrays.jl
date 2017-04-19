@@ -54,18 +54,18 @@ end
 ## Indexing utilities  ##
 #########################
 
-@pure increment(::Type{Val{N}}) where {N} = Val{N+1}
+@pure tail(::Type{Size{S}}) where {S} = Size{Base.tail(S)}
+@inline tail(::S) where {S<:Size} = tail(S)()
+@inline tail(s::Size{()}) = s
 
-@inline index_sizes(s::Size, inds...) = _index_sizes(s, Val{1}, (), inds...)
-@inline _index_sizes(s::Size, ::Type{Val{N}}, x::Tuple) where {N} = x
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, ::Int, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size()), inds...)
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, a::StaticArray, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size(a)), inds...)
-@inline _index_sizes(s::Size, v::Type{Val{N}}, x::Tuple, a::Colon, inds...) where {N} = _index_sizes(s, increment(v), (x..., Size(s[N])), inds...)
+@inline index_sizes(s::Size) = ()
+@inline index_sizes(s::Size, ::Int, inds...) = (Size(), index_sizes(tail(s), inds...)...)
+@inline index_sizes(s::Size, a::StaticArray, inds...) = (Size(a), index_sizes(tail(s), inds...)...)
+@inline index_sizes(s::Size, ::Colon, inds...) = (Size(s[1]), index_sizes(tail(s), inds...)...)
 
-@inline index_sizes(inds...) = _index_sizes(Val{1}, (), inds...)
-@inline _index_sizes(::Type{Val{N}}, x::Tuple) where {N} = x
-@inline _index_sizes(v::Type{Val{N}}, x::Tuple, ::Int, inds...) where {N} = _index_sizes(increment(v), (x..., Size()), inds...)
-@inline _index_sizes(v::Type{Val{N}}, x::Tuple, a::StaticArray, inds...) where {N} = _index_sizes(increment(v), (x..., Size(a)), inds...)
+@inline index_sizes() = ()
+@inline index_sizes(::Int, inds...) = (Size(), index_sizes(inds...)...)
+@inline index_sizes(a::StaticArray, inds...) = (Size(a), index_sizes(inds...)...)
 
 out_index_size(ind_sizes::Type{<:Size}...) = Size(_out_index_size((), ind_sizes...))
 @inline _out_index_size(t::Tuple) = t
@@ -95,11 +95,11 @@ end
     end
 end
 
-@propagate_inbounds function getindex(a::StaticArray, inds::StaticArray{Int})
+@propagate_inbounds function getindex(a::StaticArray, inds::StaticArray{<:Any, Int})
     _getindex(a, Length(inds), inds)
 end
 
-@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
     exprs = [:(a[inds[$i]]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -142,12 +142,12 @@ end
     end
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{Int})
+@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{<:Any, Int})
     _setindex!(a, v, Length(inds), inds)
     return v
 end
 
-@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticArray{Int}) where {L}
+@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
     exprs = [:(a[inds[$i]] = v) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -155,7 +155,7 @@ end
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -166,7 +166,7 @@ end
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticArray{Int}) where {L}
+@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -183,42 +183,42 @@ end
 
 # getindex
 
-@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{Int}, Colon}...)
+@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Any, Int}, Colon}...)
     _getindex(a, index_sizes(Size(a), inds...), inds)
 end
 
-# Hard to describe "Union{Int, StaticArray{Int}} with at least one StaticArray{Int}"
-# Here we require the first StaticArray{Int} to be within the first four dimensions
-@propagate_inbounds function getindex(a::AbstractArray, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+# Hard to describe "Union{Int, StaticArray{<:Any, Int}} with at least one StaticArray{<:Any, Int}"
+# Here we require the first StaticArray{<:Any, Int} to be within the first four dimensions
+@propagate_inbounds function getindex(a::AbstractArray, i1::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, inds...), (i1, inds...))
 end
 
-@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, inds...), (i1, i2, inds...))
 end
 
-@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::Int, i3::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::Int, i3::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, i3, inds...), (i1, i2, i3, inds...))
 end
 
-@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::AbstractArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 
 # Disambuguity methods for the above
-@propagate_inbounds function getindex(a::StaticArray, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::StaticArray, i1::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, inds...), (i1, inds...))
 end
 
-@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, inds...), (i1, i2, inds...))
 end
 
-@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::Int, i3::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::Int, i3::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, i3, inds...), (i1, i2, i3, inds...))
 end
 
-@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function getindex(a::StaticArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _getindex(a, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 
@@ -260,67 +260,67 @@ end
 
 # setindex!
 
-@propagate_inbounds function setindex!(a::StaticArray, value, inds::Union{Int, StaticArray{Int}, Colon}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, inds::Union{Int, StaticArray{<:Any, Int}, Colon}...)
     _setindex!(a, value, index_sizes(Size(a), inds...), inds)
 end
 
-# Hard to describe "Union{Int, StaticArray{Int}} with at least one StaticArray{Int}"
-# Here we require the first StaticArray{Int} to be within the first four dimensions
-@propagate_inbounds function setindex!(a::AbstractArray, value, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+# Hard to describe "Union{Int, StaticArray{<:Any, Int}} with at least one StaticArray{<:Any, Int}"
+# Here we require the first StaticArray{<:Any, Int} to be within the first four dimensions
+@propagate_inbounds function setindex!(a::AbstractArray, value, i1::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, inds...), (i1, inds...))
 end
 
-@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, inds...), (i1, i2, inds...))
 end
 
-@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::Int, i3::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::Int, i3::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, inds...), (i1, i2, i3, inds...))
 end
 
-@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::Int, i3::Int, i4::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::AbstractArray, value, i1::Int, i2::Int, i3::Int, i4::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 
 # Disambiguity methods for the above
-@propagate_inbounds function setindex!(a::StaticArray, value, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, i1::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, inds...), (i1, inds...))
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, inds...), (i1, i2, inds...))
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::Int, i3::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::Int, i3::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, inds...), (i1, i2, i3, inds...))
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::Int, i3::Int, i4::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, i1::Int, i2::Int, i3::Int, i4::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 
 # disambiguities from Base
-@propagate_inbounds function setindex!(a::Array, value, i1::StaticVector{Int})
+@propagate_inbounds function setindex!(a::Array, value, i1::StaticVector{<:Any, Int})
     _setindex!(a, value, index_sizes(i1), (i1,))
 end
 
-@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticVector{Int})
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticVector{<:Any, Int})
     _setindex!(a, value, index_sizes(i1), (i1,))
 end
 
-@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, inds...), (i1, inds...))
 end
 
-@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, inds...), (i1, i2, inds...))
 end
 
-@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::Int, i3::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::Int, i3::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, inds...), (i1, i2, i3, inds...))
 end
 
-@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{Int}, inds::Union{Int, StaticArray{Int}}...)
+@propagate_inbounds function setindex!(a::Array, value::AbstractArray, i1::Int, i2::Int, i3::Int, i4::StaticArray{<:Any, Int}, inds::Union{Int, StaticArray{<:Any, Int}}...)
     _setindex!(a, value, index_sizes(i1, i2, i3, i4, inds...), (i1, i2, i3, i4, inds...))
 end
 

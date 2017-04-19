@@ -16,7 +16,7 @@
         @test @inferred(v*v') === @SMatrix [1 2; 2 4]
 
         v3 = [1, 2]
-        @test_broken m*v3 === @SVector [5, 11]
+        @test m*v3 === @SVector [5, 11]
 
         m2 = @MMatrix [1 2; 3 4]
         v4 = @MVector [1, 2]
@@ -32,11 +32,11 @@
 
         m5 = @SMatrix [1.0 2.0; 3.0 4.0]
         v7 = [1.0, 2.0]
-        @test_broken (m5*v7)::SVector ≈ @SVector [5.0, 11.0]
+        @test (m5*v7)::SVector ≈ @SVector [5.0, 11.0]
 
         m6 = @SMatrix Float32[1.0 2.0; 3.0 4.0]
         v8 = Float64[1.0, 2.0]
-        @test_broken (m6*v8)::SVector{2,Float64} ≈ @SVector [5.0, 11.0]
+        @test (m6*v8)::SVector{2,Float64} ≈ @SVector [5.0, 11.0]
 
     end
 
