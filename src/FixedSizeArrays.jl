@@ -87,7 +87,7 @@ end
 
 macro fixed_vector(name, parent)
     esc(quote
-        immutable $(name){S, T} <: $(parent){T}
+        immutable $(name){S, T} <: $(parent){S, T}
             data::NTuple{S, T}
 
             function (::Type{$(name){S, T}}){S, T}(x::NTuple{S,T})

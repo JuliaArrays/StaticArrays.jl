@@ -15,11 +15,12 @@ const Mat2d = Mat{2,2, Float64, 4}
 const Mat3d = Mat{3,3, Float64, 9}
 const Mat4d = Mat{4,4, Float64, 16}
 
-immutable RGB{T} <: FieldVector{T}
+immutable RGB{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
 end
+
 RGB{T}(x::T) = RGB{T}(x, x, x)
 (::RGB{T}){T}(r, g, b) = RGB{T}(T(r), T(g), T(b))
 (::RGB{T}){T}(r::Real) = RGB(T(r), T(r), T(r))
