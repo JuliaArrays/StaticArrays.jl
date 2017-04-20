@@ -18,11 +18,11 @@
 
         m3 = @SArray [1 2; 3 4]
         v5 = @SArray [1, 2]
-        @test m3*v5 === @SArray [5, 11]
+        @test m3*v5 === @SVector [5, 11]
 
         m4 = @MArray [1 2; 3 4]
         v6 = @MArray [1, 2]
-        @test (m4*v6)::MArray == @MArray [5, 11]
+        @test (m4*v6)::MVector == @MVector [5, 11]
 
         m5 = @SMatrix [1.0 2.0; 3.0 4.0]
         v7 = [1.0, 2.0]
@@ -62,11 +62,11 @@
 
         m = @SArray [1 2; 3 4]
         n = @SArray [2 3; 4 5]
-        @test m*n === @SArray [10 13; 22 29]
+        @test m*n === @SMatrix [10 13; 22 29]
 
         m = @MArray [1 2; 3 4]
         n = @MArray [2 3; 4 5]
-        @test (m*n)::MArray == @MArray [10 13; 22 29]
+        @test (m*n)::MMatrix == @MMatrix [10 13; 22 29]
 
         # Alternative methods used between 8 < n <= 14 and n > 14
         m_array = rand(1:10, 10, 10)

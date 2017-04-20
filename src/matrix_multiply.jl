@@ -102,7 +102,7 @@ end
 
     if s == sb
         if T == Tb
-            newtype = b
+            newtype = similar_type(b)
         else
             newtype = similar_type(b, T)
         end
@@ -141,7 +141,7 @@ end
 
     if s == sb
         if T == Tb
-            newtype = b
+            newtype = similar_type(b)
         else
             newtype = similar_type(b, T)
         end
@@ -237,7 +237,7 @@ end
 
     if s == sB
         if T == TB
-            newtype = B
+            newtype = similar_type(B)
         else
             newtype = similar_type(B, T)
         end
@@ -334,7 +334,7 @@ end
     # TODO think about which to be similar to
     if s == sB
         if T == TB
-            newtype = B
+            newtype = similar_type(B)
         else
             newtype = similar_type(B, T)
         end
@@ -375,7 +375,7 @@ end
     # TODO think about which to be similar to
     if s == sB
         if T == TB
-            newtype = B
+            newtype = similar_type(B)
         else
             newtype = similar_type(B, T)
         end
@@ -420,7 +420,7 @@ end
     # TODO think about which to be similar to
     if s == sB
         if T == TB
-            newtype = B
+            newtype = similar_type(B)
         else
             newtype = similar_type(B, T)
         end
@@ -463,7 +463,7 @@ end
 
     if s == sb
         if T == Tb
-            newtype = b
+            newtype = similar_type(b)
         else
             newtype = similar_type(b, T)
         end
