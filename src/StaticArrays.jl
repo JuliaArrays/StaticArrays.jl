@@ -4,7 +4,7 @@ module StaticArrays
 
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
-import Base: getindex, setindex!, size, similar, vec,
+import Base: getindex, setindex!, size, similar, vec, show,
              length, convert, promote_op, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
@@ -57,12 +57,13 @@ For mutable containers you may also need to define the following:
 
 (see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
 """
-abstract type StaticArray{T, N} <: AbstractArray{T, N} end
-const StaticScalar{T} = StaticArray{T, 0}
-const StaticVector{T} = StaticArray{T, 1}
-const StaticMatrix{T} = StaticArray{T, 2}
+abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
+const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
+const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
+const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
 
 const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
+const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
 
 include("util.jl")
 include("traits.jl")
@@ -73,9 +74,9 @@ include("FieldVector.jl")
 include("SArray.jl")
 include("SMatrix.jl")
 include("SVector.jl")
+include("Scalar.jl")
 include("MArray.jl")
 include("MVector.jl")
-include("Scalar.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
 

@@ -1,12 +1,11 @@
-length(a::T) where {T <: StaticArray} = prod(Size(T))
-length(a::Type{T}) where {T<:StaticArray} = prod(Size(T))
+length(a::SA) where {SA <: StaticArray} = prod(Size(SA))
+length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
 
-size{T<:StaticArray}(::T) = get(Size(T))
-size{T<:StaticArray}(::Type{T}) = get(Size(T))
+size(::StaticArray{S}) where {S} = get(Size(S))
+@pure size(::Type{<:StaticArray{S}}) where {S} = get(Size(S))
 
-size{T<:StaticArray}(::T, d::Int) = Size(T)[d]
-size{T<:StaticArray}(::Type{T}, d::Int) = Size(T)[d]
-
+size(::SA, d::Int) where {SA <: StaticArray} = Size(SA)[d]
+@pure size(::Type{SA}, d::Int) where {SA <: StaticArray} = Size(SA)[d]
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
@@ -39,32 +38,26 @@ if they wish to overload the default behavior.
 """
 function similar_type end
 
-similar_type{SA<:StaticArray}(::SA) = similar_type(SA,eltype(SA))
-similar_type{SA<:StaticArray}(::Type{SA}) = similar_type(SA,eltype(SA))
+similar_type(::SA) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
+similar_type(::Type{SA}) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
 
-similar_type{SA<:StaticArray,T}(::SA,::Type{T}) = similar_type(SA,T,Size(SA))
-similar_type{SA<:StaticArray,T}(::Type{SA},::Type{T}) = similar_type(SA,T,Size(SA))
+similar_type(::SA,::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
+similar_type(::Type{SA},::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
 
-similar_type{A<:AbstractArray,S}(::A,s::Size{S}) = similar_type(A,eltype(A),s)
-similar_type{A<:AbstractArray,S}(::Type{A},s::Size{S}) = similar_type(A,eltype(A),s)
+similar_type(::A,s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
+similar_type(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
 
-similar_type{A<:AbstractArray,T,S}(::A,::Type{T},s::Size{S}) = similar_type(A,T,s)
+similar_type(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar_type(A,T,s)
 
 # Default types
-# Generally, use SVector, etc
+# Generally, use SArray
 similar_type{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = default_similar_type(T,s,length_val(s))
-
-default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = Scalar{T}
-default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = SVector{S[1],T}
-default_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = SMatrix{S[1],S[2],T,prod(s)}
 default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{Tuple{S...},T,D,prod(s)}
+
 
 # should mutable things stay mutable?
 #similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
 
-mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{0}}) = SizedArray{(),T,0,0}
-mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{1}}) = MVector{S[1],T}
-mutable_similar_type{T,S}(::Type{T}, s::Size{S}, ::Type{Val{2}}) = MMatrix{S[1],S[2],T,prod(s)}
 mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{Tuple{S...},T,D,prod(s)}
 
 # Should `SizedArray` stay the same, and also take over an `Array`?

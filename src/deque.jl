@@ -72,8 +72,8 @@ end
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
 # could also be justified to live in src/indexing.jl
-@inline setindex(a::StaticArray{T}, x::T, index::Int) where {T} = _setindex(Size(a), a, x, index)
-@generated function _setindex(::Size{s}, a::StaticArray{T}, x::T, index::Int) where {s, T}
+@inline setindex(a::StaticArray, x, index::Int) = _setindex(Size(a), a, convert(eltype(typeof(a)), x), index)
+@generated function _setindex(::Size{s}, a::StaticArray{<:Any,T}, x::T, index::Int) where {s, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
     return quote
         @_inline_meta
@@ -83,8 +83,6 @@ end
         @inbounds return typeof(a)(tuple($(exprs...)))
     end
 end
-
-@propagate_inbounds setindex(a::StaticArray, x, index::Int) = setindex(a, convert(eltype(typeof(a)), x), index)
 
 # TODO proper multidimension boundscheck
 @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))

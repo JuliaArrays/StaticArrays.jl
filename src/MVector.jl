@@ -16,9 +16,12 @@ compiler (the element type may optionally also be specified).
 """
 const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 
-@inline (::Type{MVector}){S}(x::NTuple{S,Any}) = MVector{S}(x)
-@inline (::Type{MVector{S}}){S, T}(x::NTuple{S,T}) = MVector{S,T}(x)
-@inline (::Type{MVector{S}}){S, T <: Tuple}(x::T) = MVector{S,promote_tuple_eltype(T)}(x)
+@inline MVector(x::NTuple{S,Any}) where {S} = MVector{S}(x)
+@inline MVector{S}(x::NTuple{S,T}) where {S, T} = MVector{S, T}(x)
+@inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)
+
+# Simplified show for the type
+show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
 @inline zeros{N}(::Type{MVector{N}}) = zeros(MVector{N,Float64})
@@ -27,9 +30,6 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 #####################
 ## MVector methods ##
 #####################
-
-@pure Size{S}(::Type{MVector{S}}) = Size(S)
-@pure Size{S,T}(::Type{MVector{S,T}}) = Size(S)
 
 @propagate_inbounds function getindex(v::MVector, i::Int)
     v.data[i]
