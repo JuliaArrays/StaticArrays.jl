@@ -25,5 +25,5 @@ using Base.Test
     include("solve.jl") # Strange inference / world-age error
     include("eigen.jl")
     include("deque.jl")
-    #include("fixed_size_arrays.jl")
+    include("fixed_size_arrays.jl")
 end

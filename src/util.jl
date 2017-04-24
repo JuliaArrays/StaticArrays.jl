@@ -50,11 +50,11 @@ end
 
 @generated function check_array_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
     if !all(x->isa(x, Int), Size.parameters)
-        throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`)."))
+        return :(throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`).")))
     end
 
     if L != tuple_prod(Size) || L < 0 || tuple_minimum(Size) < 0 || tuple_length(Size) != N
-        throw(ArgumentError("Size mismatch in Static Array parameters. Got size $Size, dimension $N and length $L."))
+        return :(throw(ArgumentError("Size mismatch in Static Array parameters. Got size $Size, dimension $N and length $L.")))
     end
 
     return nothing

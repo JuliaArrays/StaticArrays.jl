@@ -5,38 +5,39 @@ using Base.Test
 import StaticArrays.FixedSizeArrays: @fixed_vector
 
 
-@compat const Vec1d = Vec{1, Float64}
-@compat const Vec2d = Vec{2, Float64}
-@compat const Vec3d = Vec{3, Float64}
-@compat const Vec4d = Vec{4, Float64}
-@compat const Vec3f = Vec{3, Float32}
+const Vec1d = Vec{1, Float64}
+const Vec2d = Vec{2, Float64}
+const Vec3d = Vec{3, Float64}
+const Vec4d = Vec{4, Float64}
+const Vec3f = Vec{3, Float32}
 
-@compat const Mat2d = Mat{2,2, Float64, 4}
-@compat const Mat3d = Mat{3,3, Float64, 9}
-@compat const Mat4d = Mat{4,4, Float64, 16}
+const Mat2d = Mat{2,2, Float64, 4}
+const Mat3d = Mat{3,3, Float64, 9}
+const Mat4d = Mat{4,4, Float64, 16}
 
-immutable RGB{T} <: FieldVector{T}
+immutable RGB{T} <: FieldVector{3, T}
     x::T
     y::T
     z::T
 end
+
 RGB{T}(x::T) = RGB{T}(x, x, x)
 (::RGB{T}){T}(r, g, b) = RGB{T}(T(r), T(g), T(b))
 (::RGB{T}){T}(r::Real) = RGB(T(r), T(r), T(r))
 StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = RGB{T}
 
 # TODO find equivalent in StaticArrays
-# testset "scalar nan" begin
-#     for (p, r) in (
-#             (Point{2, Float32}(NaN, 1), true),
-#             (Point{2, Float64}(1, NaN), true),
-#             (Vec{11, Float64}(NaN), true),
-#             (Point{2, Float32}(1, 1), false),
-#             (RGB{Float32}(NaN), true),
-#         )
-#         @fact isnan(p) == r
-#     end
-# end
+@testset "scalar nan" begin
+    for (p, r) in (
+            (Point{2, Float32}(NaN, 1), true),
+            (Point{2, Float64}(1, NaN), true),
+            (Vec{11, Float64}(NaN), true),
+            (Point{2, Float32}(1, 1), false),
+            (RGB{Float32}(NaN, NaN, NaN), true),
+        )
+        @test any(isnan, p) == r
+    end
+end
 
 # methods I needed to define:
 
@@ -124,8 +125,8 @@ rand(Mat{4,2, Int})
 @test typeof(rand(Mat{4,2, Int})) == Mat{4,2, Int, 8}
 @test typeof(rand(Vec{7, Int})) == Vec{7, Int}
 
-@test typeof(rand(-20f0:0.192f0:230f0, Mat4d)) == Mat4d
-@test typeof(rand(-20f0:0.192f0:230f0, Mat{4,21,Float32})) == Mat{4,21,Float32, 4*21}
+# @test typeof(rand(-20f0:0.192f0:230f0, Mat4d)) == Mat4d
+# @test typeof(rand(-20f0:0.192f0:230f0, Mat{4,21,Float32})) == Mat{4,21,Float32, 4*21}
 
 @test typeof(rand(Vec4d, 5,5)) == Matrix{Vec4d}
 #end
@@ -206,13 +207,13 @@ map(-, Vec(1,2,3))
 map(+, Vec(1,2,3), Vec(1,1, 1))
 (+).(Vec(1,2,3), 1.0)
 v1 = Vec3d(1,2,3)
-@test v1[(2,1)] == Vec2d(2,1)
+@test v1[Vec(2,1)] == Vec2d(2,1)
 
 @test @inferred(-v1) == Vec(-1.0,-2.0,-3.0)
 @test isa(-v1, Vec3d) == true
 @test @inferred(v1 ./ v1) == Vec3d(1.0,1.0,1.0)
 @test (<).(Vec(1,3), Vec(2,2)) === Vec{2,Bool}(true, false)
-
+#
 v1 = Vec(1.0,2.0,3.0)
 v2 = Vec(6.0,5.0,4.0)
 vi = Vec(1,2,3)
@@ -379,10 +380,9 @@ const unaryOps = (
 # vec-vec and vec-scalar
 const binaryOps = (
 
-    .+, .-, .*, ./, .\,
-    .==, .!=, .<, .<=, .>, .>=, +, -,
+    +, -, *, /, \,
+    ==, !=, <, <=, >, >=,
     min, max,
-
     atan2, besselj, bessely, hankelh1, hankelh2,
     besseli, besselk, beta, lbeta
 )
@@ -400,7 +400,7 @@ const binaryOps = (
                 @testset "$op with $v1 and $v2" begin
                     try # really bad tests, but better than nothing...
                         if applicable(op, v1[1], v2[1]) && typeof(op(v1[1], v2[1])) == eltype(v1)
-                            r = op(v1, v2)
+                            r = op.(v1, v2)
                             for j=1:length(v1)
                                 @test r[j] == op(v1[j], v2[j])
                             end
@@ -417,7 +417,7 @@ const binaryOps = (
                 @testset "$op with $t" begin
                     try
                         if applicable(op, t[1]) && typeof(op(t[1])) == eltype(t)
-                            v = op(t)
+                            v = op.(t)
                             for i=1:length(v)
                                 @test v[i] == op(t[i])
                             end
