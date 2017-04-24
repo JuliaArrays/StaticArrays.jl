@@ -27,17 +27,17 @@ RGB{T}(x::T) = RGB{T}(x, x, x)
 StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = RGB{T}
 
 # TODO find equivalent in StaticArrays
-# testset "scalar nan" begin
-#     for (p, r) in (
-#             (Point{2, Float32}(NaN, 1), true),
-#             (Point{2, Float64}(1, NaN), true),
-#             (Vec{11, Float64}(NaN), true),
-#             (Point{2, Float32}(1, 1), false),
-#             (RGB{Float32}(NaN), true),
-#         )
-#         @fact isnan(p) == r
-#     end
-# end
+@testset "scalar nan" begin
+    for (p, r) in (
+            (Point{2, Float32}(NaN, 1), true),
+            (Point{2, Float64}(1, NaN), true),
+            (Vec{11, Float64}(NaN), true),
+            (Point{2, Float32}(1, 1), false),
+            (RGB{Float32}(NaN), true),
+        )
+        @test all(isnan, p) == r
+    end
+end
 
 # methods I needed to define:
 
