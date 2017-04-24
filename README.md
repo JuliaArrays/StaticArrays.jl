@@ -8,12 +8,11 @@
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
-in Julia (≥ 0.5), using the abstract type `StaticArray{T,N} <: AbstractArray{T,N}`.
+in Julia (≥ 0.5), using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
 Subtypes of `StaticArray` will provide fast implementations of common array and
 linear algebra operations. Note that here "statically sized" means that the
-size can be determined from the *type* (so concrete implementations of
-`StaticArray` must define a method `size(::Type{T})`), and "static" does **not**
-necessarily imply `immutable`.
+size can be determined from the *type*, and "static" does **not** necessarily
+imply `immutable`.
 
 The package also provides some concrete static array types: `SVector`, `SMatrix`
 and `SArray`, which may be used as-is (or else embedded in your own type).
@@ -172,9 +171,6 @@ reshape(svector, Size(2,2))  # Convert SVector{4} to SMatrix{2,2}
 Size(3,3)(rand(3,3))         # Construct a random 3×3 SizedArray (see below)
 ```
 
-Users that introduce a new subtype of `StaticArray` should define a (`@pure`)
-method for `Size(::Type{NewArrayType})`.
-
 ### Indexing
 
 Statically sized indexing can be realized by indexing each dimension by a
@@ -212,13 +208,8 @@ specifying the size as plain integers).
 
 ### `SVector`
 
-The simplest static array is the `SVector`, defined as
-
-```julia
-immutable SVector{N,T} <: StaticVector{T}
-    data::NTuple{N,T}
-end
-```
+The simplest static array is the type `SVector{N,T}`, which provides an
+immutable vector of fixed length `N` and type `T`.
 
 `SVector` defines a series of convenience constructors, so you can just type
 e.g. `SVector(1,2,3)`. Alternatively there is an intelligent `@SVector` macro
@@ -234,19 +225,12 @@ limitation.)
 
 ### `SMatrix`
 
-Static matrices are also provided by `SMatrix`. It's definition is a little
-more complicated:
+Statically sized `N×M` matrices are provided by `SMatrix{N,M,T,L}`.
 
-```julia
-immutable SMatrix{S1, S2, T, L} <: StaticMatrix{T}
-    data::NTuple{L, T}
-end
-```
-
-Here `L` is the `length` of the matrix, such that `S1 × S2 = L`. However,
-convenience constructors are provided, so that `L`, `T` and even `S2` are
+Here `L` is the `length` of the matrix, such that `N × M = L`. However,
+convenience constructors are provided, so that `L`, `T` and even `M` are
 unnecessary. At minimum, you can type `SMatrix{2}(1,2,3,4)` to create a 2×2
-matrix (the total number of elements must divide evenly into `S1`). A
+matrix (the total number of elements must divide evenly into `N`). A
 convenience macro `@SMatrix [1 2; 3 4]` is provided (which also accepts
 comprehensions and the `zeros()`, `ones()`, `fill()`, `rand()`, `randn()` and `eye()`
 functions).
@@ -254,16 +238,14 @@ functions).
 ### `SArray`
 
 A container with arbitrarily many dimensions is defined as
-`immutable SArray{Size,T,N,L} <: StaticArray{T,N}`, where
-`Size = (S1, S2, ...)` is a tuple of `Int`s. You can easily construct one with
+`immutable SArray{Size,T,N,L} <: StaticArray{Size,T,N}`, where
+`Size = Tuple{S1, S2, ...}` is a tuple of `Int`s. You can easily construct one with
 the `@SArray` macro, supporting all the features of `@SVector` and `@SMatrix`
 (but with arbitrary dimension).
 
-Notably, the main reason `SVector` and `SMatrix` are defined is to make it
-easier to define the types without the extra tuple characters (compare
-`SVector{3}` to `SArray{(3,)}`). This extra convenience was made possible
-because it is so easy to define new `StaticArray` subtypes, and they naturally
-work together.
+The main reason `SVector` and `SMatrix` are defined is to make it easier to
+define the types without the extra tuple characters (compare `SVector{3}` to
+`SArray{Tuple{3}}`).
 
 ### `Scalar`
 
@@ -307,7 +289,7 @@ Convenience macros `@MVector`, `@MMatrix` and `@MArray` are provided.
 
 Another convenient mutable type is the `SizedArray`, which is just a wrapper-type
 about a standard Julia `Array` which declares its knwon size. For example, if
-we knew that `a` was a 2×2 `Matrix`, then we can type `sa = SizedArray{(2,2)}(a)`
+we knew that `a` was a 2×2 `Matrix`, then we can type `sa = SizedArray{Tuple{2,2}}(a)`
 to construct a new object which knows the type (the size will be verified
 automatically). A more convenient syntax for obtaining a `SizedArray` is by calling
 a `Size` object, e.g. `sa = Size(2,2)(a)`.
