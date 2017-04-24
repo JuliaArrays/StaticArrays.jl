@@ -33,9 +33,9 @@ StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = R
             (Point{2, Float64}(1, NaN), true),
             (Vec{11, Float64}(NaN), true),
             (Point{2, Float32}(1, 1), false),
-            (RGB{Float32}(NaN), true),
+            (RGB{Float32}(NaN, NaN, NaN), true),
         )
-        @test all(isnan, p) == r
+        @test any(isnan, p) == r
     end
 end
 
