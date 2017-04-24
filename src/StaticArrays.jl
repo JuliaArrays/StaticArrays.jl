@@ -28,10 +28,10 @@ export similar_type
 export push, pop, shift, unshift, insert, deleteat, setindex
 
 """
-    abstract type StaticArray{T, N} <: AbstractArray{T, N} end
-    StaticScalar{T} = StaticArray{T, 0}
-    StaticVector{T} = StaticArray{T, 1}
-    StaticMatrix{T} = StaticArray{T, 2}
+    abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
+    StaticScalar{T}     = StaticArray{Tuple{}, T, 0}
+    StaticVector{N,T}   = StaticArray{Tuple{N}, T, 1}
+    StaticMatrix{N,M,T} = StaticArray{Tuple{N,M}, T, 2}
 
 `StaticArray`s are Julia arrays with fixed, known size.
 
@@ -39,7 +39,6 @@ export push, pop, shift, unshift, insert, deleteat, setindex
 
 They must define the following methods:
  - Constructors that accept a flat tuple of data.
- - `Size()` on the *type*, returning an *instance* of `Size{(dim1, dim2, ...)}` (preferably `@pure`).
  - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
  - `Tuple()`, returning the data in a flat Tuple.
 
