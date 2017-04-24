@@ -1,11 +1,13 @@
 length(a::SA) where {SA <: StaticArray} = prod(Size(SA))
 length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
 
-size(::StaticArray{S}) where {S} = get(Size(S))
-@pure size(::Type{<:StaticArray{S}}) where {S} = get(Size(S))
-
-size(::SA, d::Int) where {SA <: StaticArray} = Size(SA)[d]
-@pure size(::Type{SA}, d::Int) where {SA <: StaticArray} = Size(SA)[d]
+@pure size(::Type{<:StaticArray{S}}) where S = tuple(S.parameters...)
+@inline function size(t::Type{<:StaticArray}, d::Int)
+    S = size(t)
+    d > length(S) ? 1 : S[d]
+end
+@inline size(a::StaticArray) = size(typeof(a))
+@inline size(a::StaticArray, d::Int) = size(typeof(a), d)
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
