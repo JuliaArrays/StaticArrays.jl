@@ -50,6 +50,10 @@
         @test (v[SVector(2,3)] = [22,23]; (v[2] == 22) & (v[3] == 23))
     end
 
+    @testset "Fancy APL indexing" begin
+        @test @SVector([1,2,3,4])[@SMatrix([1 2; 3 4])] === @SMatrix([1 2; 3 4])
+    end
+
     @testset "2D getindex() on SMatrix" begin
         sm = @SMatrix [1 3; 2 4]
 
