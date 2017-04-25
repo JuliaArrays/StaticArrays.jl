@@ -95,11 +95,11 @@ end
     end
 end
 
-@propagate_inbounds function getindex(a::StaticArray, inds::StaticArray{<:Any, Int})
+@propagate_inbounds function getindex(a::StaticArray, inds::StaticVector{<:Any, Int})
     _getindex(a, Length(inds), inds)
 end
 
-@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
+@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
     exprs = [:(a[inds[$i]]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -142,12 +142,12 @@ end
     end
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{<:Any, Int})
+@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticVector{<:Any, Int})
     _setindex!(a, v, Length(inds), inds)
     return v
 end
 
-@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
+@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
     exprs = [:(a[inds[$i]] = v) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -155,7 +155,7 @@ end
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
+@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
@@ -166,7 +166,7 @@ end
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticArray{<:Any, Int}) where {L}
+@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
