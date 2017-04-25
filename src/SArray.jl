@@ -73,8 +73,8 @@ end
 @inline Tuple(v::SArray) = v.data
 
 # See #53
-Base.cconvert{T}(::Type{Ptr{T}}, a::SArray) = Ref(a)
-Base.unsafe_convert{S,T,D,L}(::Type{Ptr{T}}, a::Ref{SArray{S,T,D,L}}) =
+Base.cconvert{T}(::Type{Ptr{T}}, a::SArray) = Base.RefValue(a)
+Base.unsafe_convert{S,T,D,L}(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) =
     Ptr{T}(Base.unsafe_convert(Ptr{SArray{S,T,D,L}}, a))
 
 macro SArray(ex)

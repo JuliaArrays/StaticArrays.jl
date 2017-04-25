@@ -33,6 +33,9 @@
         @test @inferred(similar_type(Point3D, Float32)) == SVector{3,Float32}
         @test @inferred(similar_type(Point3D, Size(4))) == SVector{4,Float64}
         @test @inferred(similar_type(Point3D, Float32, Size(4))) == SVector{4,Float32}
+
+        # Issue 146
+        @test [[Point3D(1.0,2.0,3.0)]; [Point3D(4.0,5.0,6.0)]]::Vector{Point3D} == [Point3D(1.0,2.0,3.0), Point3D(4.0,5.0,6.0)]
     end
 
     @testset "Mutable Point2D" begin

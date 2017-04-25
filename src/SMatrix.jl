@@ -74,12 +74,6 @@ end
 
 @inline Tuple(v::SMatrix) = v.data
 
-# See #53
-Base.cconvert{T}(::Type{Ptr{T}}, m::SMatrix) = Ref(m)
-Base.unsafe_convert{N,M,T,L}(::Type{Ptr{T}}, m::Ref{SMatrix{N,M,T,L}}) =
-    Ptr{T}(Base.unsafe_convert(Ptr{SMatrix{N,M,T,L}}, m))
-
-
 macro SMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @SMatrix")
