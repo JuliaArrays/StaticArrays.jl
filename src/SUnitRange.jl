@@ -30,3 +30,8 @@ show(io::IO, ::Type{SUnitRange}) = print(io, "SUnitRange")
 function show(io::IO, ::MIME"text/plain", ::SUnitRange{Start, L}) where {Start, L}
     print(io, "SUnitRange($Start,$(Start + L - 1))")
 end
+
+# For this type to be usable as `indices`, they need to support some more stuff
+Base.unsafe_length(r::SUnitRange) = length(r)
+@inline first(r::SUnitRange{Start}) where {Start} = Start # matches Base.UnitRange when L == 0...
+@inline endof(r::SUnitRange{Start, L}) where {Start, L} = L
