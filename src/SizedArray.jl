@@ -20,7 +20,7 @@ immutable SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
     end
 
     function (::Type{SizedArray{S, T, N, M}}){S, T, N, M}()
-        new{S, T, N, M}(Array{T, M}(S))
+        new{S, T, N, M}(Array{T, M}(S.parameters...))
     end
 end
 
