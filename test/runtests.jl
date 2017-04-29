@@ -11,6 +11,7 @@ using Base.Test
     include("FieldVector.jl")
     include("Scalar.jl")
     include("SUnitRange.jl")
+    include("SizedArray.jl")
     include("custom_types.jl")
 
     include("core.jl")
