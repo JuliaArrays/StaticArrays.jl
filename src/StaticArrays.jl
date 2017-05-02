@@ -8,7 +8,7 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, inv, eig, eigvals, trace, vecnorm, norm, dot, diagm,
              sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
-             maximum, extrema, mean, copy
+             maximum, extrema, mean, copy, read, read!, write
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
@@ -50,6 +50,7 @@ include("det.jl")
 include("inv.jl")
 include("eigen.jl")
 include("cholesky.jl")
+include("io.jl")
 
 if VERSION < v"0.6.0-dev.1671"
     include("FixedSizeArrays.jl")

@@ -23,7 +23,7 @@ using Base.Test
     include("solve.jl")
     include("eigen.jl")
     include("deque.jl")
-    if VERSION < v"0.6.0-dev.1671"
-        include("fixed_size_arrays.jl")
-    end
+    include("io.jl")
+
+    include("fixed_size_arrays.jl")
 end
