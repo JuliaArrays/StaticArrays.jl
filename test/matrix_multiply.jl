@@ -44,6 +44,13 @@
         m = @SMatrix [1 2 3 4]
         v = @SVector [1, 2]
         @test @inferred(v*m) === @SMatrix [1 2 3 4; 2 4 6 8]
+
+        # Outer product
+        v2 = zeros(SVector{3, Int})
+        @test v2 * v2' === zeros(SMatrix{3, 3, Int})
+
+        v3 = zeros(SVector{3, Complex{Int}})
+        @test v3 * v3' === zeros(SMatrix{3, 3, Complex{Int}})
     end
 
     @testset "Matrix-matrix" begin
