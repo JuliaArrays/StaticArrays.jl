@@ -103,7 +103,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
+        @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
 # TODO make these more efficient
@@ -129,7 +129,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
+        @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
 # TODO make these more efficient
@@ -297,8 +297,8 @@ end
     end
 end
 
-# TODO same for `RowVector`?
 @inline Size(::Union{RowVector{T, SA}, Type{RowVector{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
+@inline Size(::Union{RowVector{T, CA}, Type{RowVector{T, CA}}} where CA <: ConjVector{<:Any, SA}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
 @inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
 @inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
 
