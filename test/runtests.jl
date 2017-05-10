@@ -22,6 +22,7 @@ using Base.Test
     include("inv.jl")
     include("solve.jl")
     include("eigen.jl")
+    include("expm.jl")
     include("deque.jl")
     include("io.jl")
 
