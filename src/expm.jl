@@ -11,7 +11,7 @@
     end
 end
 
-@generated function _expm{T<:Real}(::Size{(2,2)}, A::StaticMatrix{T})
+@generated function _expm{S<:Real}(::Size{(2,2)}, A::StaticMatrix{S})
     @assert size(A) == (2,2)
     T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
     newtype = similar_type(A,T)
