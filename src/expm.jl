@@ -20,8 +20,8 @@ end
         $(Expr(:meta, :inline))
 
         @inbounds a = A[1]
-        @inbounds b = A[3]
         @inbounds c = A[2]
+        @inbounds b = A[3]
         @inbounds d = A[4]
 
         v = (a-d)^2 + 4*b*c
@@ -35,9 +35,9 @@ end
           z1 = cosh(z / 2)
           z2 = sinh(z / 2) / z
         elseif v < 0
-          z = sqrt(Complex(v))
-          z1 = real(cosh(z / 2))
-          z2 = real(sinh(z / 2) / z)
+          z = sqrt(-v)
+          z1 = cos(z / 2)
+          z2 = sin(z / 2) / z
         end
 
         r = exp((a + d) / 2)
