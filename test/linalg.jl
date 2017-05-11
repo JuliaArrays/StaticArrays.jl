@@ -100,6 +100,9 @@
 
         @test @inferred(vcat(SVector(1),SVector(2),SVector(3),SVector(4))) === SVector(1,2,3,4)
         @test @inferred(hcat(SVector(1),SVector(2),SVector(3),SVector(4))) === SMatrix{1,4}(1,2,3,4)
+
+        vcat(SVector(1.0f0), SVector(1.0)) === SVector(1.0, 1.0)
+        hcat(SVector(1.0f0), SVector(1.0)) === SMatrix{1,2}(1.0, 1.0)
     end
 
     @testset "normalization" begin
