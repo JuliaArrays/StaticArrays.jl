@@ -43,9 +43,4 @@ end
 # TODO add complex valued expm
 # TODO add special case for 3x3 matrices
 
-@inline function _expm(s::Size, A::StaticArray)
-    T = promote_type(typeof(exp(zero(eltype(A)))), Float32)
-    newtype = similar_type(A,T)
-
-    s(Base.expm(Array(A)))
-end
+@inline _expm(s::Size, A::StaticArray) = s(Base.expm(Array(A)))
