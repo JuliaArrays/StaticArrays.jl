@@ -36,13 +36,13 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
 @inline *(A::StaticMatrix, B::StaticMatrix) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
 @inline *(A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::RowVector{<:Any, CV} where CV <: ConjVector{<:Any, <:StaticVector}) = _A_mul_B(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _A_mul_B(Size(A), Size(B), A, B)
 
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = A_mul_B!(dest, reshape(A, Size(Size(A)[1], 1)), B)
 @inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, CV} where CV <: ConjVector{<:Any, <:StaticVector}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
 
 #@inline *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
@@ -96,7 +96,7 @@ end
 end
 
 # complex outer product
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, CV} where CV <: ConjVector{<:Any, <:StaticVector}) where {sa, sb, Ta, Tb}
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:ConjVector{<:Any, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
