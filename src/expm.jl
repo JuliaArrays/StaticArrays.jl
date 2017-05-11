@@ -7,7 +7,7 @@
     (newtype)((exp(A[1]), ))
 end
 
-@inline function _expm(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Real})
+@inline function _expm{S<:Real}(::Size{(2,2)}, A::StaticMatrix{S})
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
