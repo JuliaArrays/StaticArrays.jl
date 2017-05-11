@@ -1,14 +1,14 @@
 @inline expm(A::StaticMatrix) = _expm(Size(A), A)
 
 @inline function _expm(::Size{(1,1)}, A::StaticMatrix)
-    T = promote_type(typeof(exp(zero(eltype(A)))), Float32)
+    T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
     (newtype)((exp(A[1]), ))
 end
 
 @inline function _expm{S<:Real}(::Size{(2,2)}, A::StaticMatrix{S})
-    T = promote_type(typeof(exp(zero(eltype(A)))), Float32)
+    T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
     @inbounds a = A[1]
