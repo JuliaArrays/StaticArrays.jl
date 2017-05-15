@@ -7,4 +7,9 @@
 
     @test inv(@SMatrix [0x01 0x02; 0x02 0x01])::SMatrix ≈ [-1/3 2/3; 2/3 -1/3]
     @test inv(@SMatrix [0x01 0x02 0x00; 0x02 0x01 0x00; 0x00 0x00 0x01])::SMatrix ≈ [-1/3 2/3 0; 2/3 -1/3 0; 0 0 1]
+    
+    m = triu(randn(Float64, 4,4) + eye(4))
+    @test inv(SMatrix{4,4}(m))::StaticMatrix ≈ inv(m)
+    m = tril(randn(Float64, 4,4) + eye(4))
+    @test inv(SMatrix{4,4}(m))::StaticMatrix ≈ inv(m)
 end

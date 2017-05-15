@@ -13,6 +13,7 @@
 
     @testset "2×2" for i = 1:100
         m_a = randn(2,2)
+        @test_throws ErrorException eigvals(SMatrix{2,2}(m_a))
         m_a = m_a*m_a'
         m = SMatrix{2,2}(m_a)
 
@@ -43,6 +44,9 @@
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+       
+        m_d = randn(SVector{3}); m = diagm(m_d)
+        @test eigvals(m) ≈ sort(m_d)
     end
 
     @testset "3x3 degenerate cases" begin
