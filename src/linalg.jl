@@ -119,7 +119,7 @@ end
 
 @generated function _hcat(::Size{Sa}, ::Size{Sb}, a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}) where {Sa, Sb}
     if Sa[1] != Sb[1]
-        error("Dimension mismatch")
+        throw(DimensionMismatch("Tried to hcat arrays of size $Sa and $Sb"))
     end
 
     exprs = vcat([:(a[$i]) for i = 1:prod(Sa)],
