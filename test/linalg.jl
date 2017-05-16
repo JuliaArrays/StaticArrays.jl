@@ -28,6 +28,7 @@
         @test @inferred(I + @SMatrix([0 1; 2 3])) === @SMatrix [1 1; 2 4]
         @test @inferred(@SMatrix([0 1; 2 3]) - I) === @SMatrix [-1 1; 2 2]
         @test @inferred(I - @SMatrix([0 1; 2 3])) === @SMatrix [1 -1; -2 -2]
+        @test_throws DimensionMismatch I + @SMatrix [0 1 4; 2 3 5]
 
         @test @inferred(@SMatrix([0 1; 2 3]) * I) === @SMatrix [0 1; 2 3]
         @test @inferred(I * @SMatrix([0 1; 2 3])) === @SMatrix [0 1; 2 3]
@@ -39,11 +40,13 @@
         @test @inferred(diagm(SVector(1,2))) === @SMatrix [1 0; 0 2]
     end
 
-    @testset "one()" begin
+    @testset "one() and zero()" begin
         @test @inferred(one(SMatrix{2,2,Int})) === @SMatrix [1 0; 0 1]
         @test @inferred(one(SMatrix{2,2})) === @SMatrix [1.0 0.0; 0.0 1.0]
         @test @inferred(one(SMatrix{2})) === @SMatrix [1.0 0.0; 0.0 1.0]
         @test @inferred(one(one(SMatrix{2,2,Int}))) === @SMatrix [1 0; 0 1]
+        @test @inferred(zero(SMatrix{2,2,Int})) === @SMatrix [0 0; 0 0]
+        @test @inferred(zero(one(SMatrix{2,2,Int}))) === @SMatrix [0 0; 0 0]
 
         @test @inferred(one(MMatrix{2,2,Int}))::MMatrix == @MMatrix [1 0; 0 1]
         @test @inferred(one(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
@@ -91,6 +94,8 @@
 
         @test @inferred(vcat(SVector(1,2,3), SVector(4,5,6))) === SVector(1,2,3,4,5,6)
         @test @inferred(hcat(SVector(1,2,3), SVector(4,5,6))) === @SMatrix [1 4; 2 5; 3 6]
+        @test_throws DimensionMismatch vcat(SVector(1,2,3), @SMatrix [1 4; 2 5])
+        @test_throws DimensionMismatch hcat(SVector(1,2,3), SVector(4,5))
 
         @test @inferred(vcat(@SMatrix([1;2;3]), SVector(4,5,6))) === @SMatrix([1;2;3;4;5;6])
         @test @inferred(vcat(SVector(1,2,3), @SMatrix([4;5;6]))) === @SMatrix([1;2;3;4;5;6])

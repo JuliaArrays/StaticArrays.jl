@@ -64,11 +64,17 @@
         mm = MMatrix{4, 2, Int}()
         M = @SMatrix [1 2; 3 4; 5 6; 7 8]
 
+        @test_throws DimensionMismatch broadcast(+, v1, @SMatrix [4 3 2 1; 5 6 7 8])
+
+        @test @inferred(broadcast(convert, Float64, v1)) == convert(Vector{Float64}, [2,4,6,8])
+
         @test @inferred(broadcast(-, v1)) === map(-, v1)
 
         @test @inferred(broadcast(+, v1, c)) === @SVector [4, 6, 8, 10]
         @test @inferred(broadcast(+, v1, v2)) === map(+, v1, v2)
         @test @inferred(broadcast(+, v1, M)) === @SMatrix [3 4; 7 8; 11 12; 15 16]
+        
+        @test_throws DimensionMismatch broadcast!(-, MVector{5, Int}(), v1)
 
         broadcast!(-, mv, v1)
         @test mv == @MVector [-2, -4, -6, -8]
