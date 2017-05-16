@@ -22,6 +22,12 @@
         @test reduce(+, 0, v1) === 20
         @test sum(v1) === 20
         @test prod(v1) === 384
+        @test mean(v1) === 5.
+        @test maximum(v1) === 8
+        @test minimum(v1) === 2
+        vb = @SVector [true, false, true, false]
+        @test count(vb) === 2
+        @test any(vb)
     end
 
     @testset "reduce in dim" begin
