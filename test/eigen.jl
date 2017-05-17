@@ -27,6 +27,12 @@
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        
+        (vals, vecs) = eig(Hermitian(m))
+        @test vals::SVector ≈ vals_a
+        @test eigvals(Hermitian(m)) ≈ vals
+        @test eigvals(Hermitian(m, :L)) ≈ vals
+        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
     end
 
     @testset "3×3" for i = 1:100
@@ -43,8 +49,13 @@
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
+        @test eigvals(Hermitian(m)) ≈ vals
+        @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
        
+        (vals, vecs) = eig(Symmetric(m, :L))
+        @test vals::SVector ≈ vals_a
+        
         m_d = randn(SVector{3}); m = diagm(m_d)
         @test eigvals(m) ≈ sort(m_d)
     end
