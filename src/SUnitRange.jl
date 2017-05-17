@@ -13,7 +13,7 @@ end
 end
 
 function check_sunitrange_params(L)
-    throw(TypeError(:SUnitRange, "type parameters must be `Int`s", Tuple{Int, Int, Int}, Tuple{typeof(a), typeof(b), typeof(c)}))
+    throw(TypeError(:SUnitRange, "type parameters must be `Int`", Tuple{Int,}, Tuple{typeof(L),}))
 end
 
 @pure SUnitRange(a::Int, b::Int) = SUnitRange{a, max(0, b - a + 1)}()
