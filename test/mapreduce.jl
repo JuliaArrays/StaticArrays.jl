@@ -14,6 +14,13 @@
 
         map!(+, mv, v1, v2)
         @test mv == @MVector [6, 7, 8, 9]
+        mv2 = MVector{4, Int}()
+        map!(x->x^2, mv2, v1)
+        @test mv2 == @MVector [4, 16, 36, 64]
+        mv3 = MVector{4, Int}()
+        v3 = @SVector [1, 2, 3, 4]
+        map!(+, mv3, v1, v2, v3)
+        @test mv3 == @MVector [7, 9, 11, 13]
     end
 
     @testset "reduce" begin

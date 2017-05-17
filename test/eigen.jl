@@ -33,6 +33,10 @@
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        
+        m_d = randn(SVector{2}); m = diagm(m_d)
+        @test eigvals(m) ≈ sort(m_d)
+        @test eigvals(Hermitian(m)) ≈ sort(m_d)
     end
 
     @testset "3×3" for i = 1:100
@@ -58,6 +62,7 @@
         
         m_d = randn(SVector{3}); m = diagm(m_d)
         @test eigvals(m) ≈ sort(m_d)
+        @test eigvals(Hermitian(m)) ≈ sort(m_d)
     end
 
     @testset "3x3 degenerate cases" begin
