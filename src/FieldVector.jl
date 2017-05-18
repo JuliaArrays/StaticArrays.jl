@@ -24,7 +24,5 @@ abstract type FieldVector{N, T} <: StaticVector{N, T} end
 
 # See #53
 Base.cconvert{T}(::Type{Ptr{T}}, v::FieldVector) = Base.RefValue(v)
-Base.unsafe_convert{T, FV <: FieldVector}(::Type{Ptr{T}}, m::Base.RefValue{FV}) =
-    _unsafe_convert(Ptr{T}, eltype(FV), m)
-_unsafe_convert{T, FV <: FieldVector}(::Type{Ptr{T}}, ::Type{T}, m::Base.RefValue{FV}) =
-         Ptr{T}(Base.unsafe_convert(Ptr{FV}, m))
+Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FV}) where {N,T,FV<:FieldVector{N,T}} =
+    Ptr{T}(Base.unsafe_convert(Ptr{FV}, m))
