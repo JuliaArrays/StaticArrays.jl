@@ -2,7 +2,9 @@
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
         v = @SVector [1, 2]
+        v_bad = @SVector [1, 2, 3]
         @test m*v === @SVector [5, 11]
+        @test_throws DimensionMismatch m*v_bad
         # More complicated eltype inference
         v2 = @SVector [CartesianIndex((1,3)), CartesianIndex((3,1))]
         x = @inferred(m*v2)
@@ -17,6 +19,8 @@
 
         v3 = [1, 2]
         @test m*v3 === @SVector [5, 11]
+        v3_bad = [1, 2, 3]
+        @test_throws DimensionMismatch m*v3_bad
 
         m2 = @MMatrix [1 2; 3 4]
         v4 = @MVector [1, 2]
@@ -141,6 +145,48 @@
         m = MMatrix{16,16}(m_array)
         n = MMatrix{16,16}(n_array)
         @test m*n::MMatrix ≈ a_array
+
+        # Complex numbers
+        m_array = randn(4, 4)
+        n_array = im*randn(4, 4)
+        a_array = m_array*n_array
+
+        m = MMatrix{4,4}(m_array)
+        n = MMatrix{4,4}(n_array)
+        @test m*n::MMatrix ≈ a_array
+
+        m_array = randn(10, 10)
+        n_array = im*randn(10, 10)
+        a_array = m_array*n_array
+
+        m = MMatrix{10,10}(m_array)
+        n = MMatrix{10,10}(n_array)
+        @test m*n::MMatrix ≈ a_array
+
+        m_array = randn(16, 16)
+        n_array = im*randn(16, 16)
+        a_array = m_array*n_array
+
+        m = MMatrix{16,16}(m_array)
+        n = MMatrix{16,16}(n_array)
+        @test m*n::MMatrix ≈ a_array
+
+        # Bad dimensions
+        m_array = randn(16, 16)
+        n_array = randn(17, 17)
+        m = MMatrix{16,16}(m_array)
+        n = MMatrix{17,17}(n_array)
+        @test_throws DimensionMismatch m*n
+        m_array = randn(10, 10)
+        n_array = randn(11, 11)
+        m = MMatrix{10,10}(m_array)
+        n = MMatrix{11,11}(n_array)
+        @test_throws DimensionMismatch m*n
+        m_array = randn(4, 4)
+        n_array = randn(3, 3)
+        m = MMatrix{4,4}(m_array)
+        n = MMatrix{3,3}(n_array)
+        @test_throws DimensionMismatch m*n
     end
 
     @testset "A_mul_B!" begin
@@ -156,10 +202,15 @@
         A_mul_B!(outvec2, m, v2)
         @test outvec2 == [10,22]
 
+        # Bad dimensions
+        outvec_bad = MVector{3,Int}()
+        @test_throws DimensionMismatch A_mul_B!(outvec_bad, m, v)
+
         a = MMatrix{2,2,Int,4}()
         A_mul_B!(a, m, n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [10 13; 22 29]
 
+        a = MMatrix{2,2,Int,4}()
         Ac_mul_B!(a, m, n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [14 18; 20 26]
         A_mul_Bc!(a, m, n)
