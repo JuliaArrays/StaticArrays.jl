@@ -23,6 +23,6 @@ abstract type FieldVector{N, T} <: StaticVector{N, T} end
 @propagate_inbounds setindex!(v::FieldVector, x, i::Int) = setfield!(v, i, x)
 
 # See #53
-Base.cconvert{T}(::Type{Ptr{T}}, v::FieldVector) = Base.RefValue(v)
+Base.cconvert(::Type{<:Ptr}, v::FieldVector) = Base.RefValue(v)
 Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FV}) where {N,T,FV<:FieldVector{N,T}} =
     Ptr{T}(Base.unsafe_convert(Ptr{FV}, m))
