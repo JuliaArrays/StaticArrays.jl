@@ -52,6 +52,9 @@
         a = @SArray rand(4,3)  # as of Julia v0.5, diff() for regular Array is defined only for vectors and matrices
         @test diff(a) == diff(a, Val{1}) == diff(a, 1)
         @test diff(a, Val{2}) == diff(a, 2)
+        
+        @test reducedim(max, a, Val{1}, -1.) == reducedim(max, a, 1, -1.)
+        @test reducedim(max, a, Val{2}, -1.) == reducedim(max, a, 2, -1.)
     end
 
     @testset "mapreduce" begin
