@@ -62,5 +62,12 @@
         v[2] = 12
         v[3] = 13
         @test v.data === (11, 12, 13)
+        
+        v = @MVector [1.,2.,3.]
+        v[1] = Float16(11)
+        @test v.data === (11., 2., 3.)
+
+        @test_throws BoundsError setindex!(v, 4., -1)
+        @test_throws BoundsError setindex!(v, 4., 4)
     end
 end

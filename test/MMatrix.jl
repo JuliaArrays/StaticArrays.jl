@@ -54,6 +54,8 @@
         @test ((@MMatrix eye(Float32, 2, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
+
+        @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
     end
 
     @testset "Methods" begin
@@ -86,6 +88,13 @@
         m[2] = 12
         m[3] = 13
         m[4] = 14
+        @test m.data === (11, 12, 13, 14)
+        
+        m = @MMatrix [0 0; 0 0]
+        m[1] = Int8(11)
+        m[2] = Int8(12)
+        m[3] = Int8(13)
+        m[4] = Int8(14)
         @test m.data === (11, 12, 13, 14)
     end
 end
