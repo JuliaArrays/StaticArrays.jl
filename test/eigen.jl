@@ -35,6 +35,10 @@
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
         
         m_d = randn(SVector{2}); m = diagm(m_d)
+        (vals, vecs) = eig(Hermitian(m))
+        @test vals::SVector ≈ sort(m_d)
+        (vals, vecs) = eig(Hermitian(m, :L))
+        @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
     end
@@ -61,6 +65,10 @@
         @test vals::SVector ≈ vals_a
         
         m_d = randn(SVector{3}); m = diagm(m_d)
+        (vals, vecs) = eig(Hermitian(m))
+        @test vals::SVector ≈ sort(m_d)
+        (vals, vecs) = eig(Hermitian(m, :L))
+        @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
     end
