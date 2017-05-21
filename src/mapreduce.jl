@@ -126,7 +126,7 @@ end
 end
 
 @generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0) where {S, D}
-    N = ndims(a)
+    N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
 
     exprs = Array{Expr}(Snew)
@@ -134,6 +134,7 @@ end
     for i ∈ Base.product(itr...)
         expr = :v0
         for k = 1:S[D]
+            ik = collect(i)
             ik[D] = k
             expr = :(op($expr, f(a[$(ik...)])))
         end
