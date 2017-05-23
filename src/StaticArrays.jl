@@ -6,8 +6,8 @@ import Base: @pure, @propagate_inbounds, getindex, setindex!, size, similar,
              length, convert, promote_op, map, map!, reduce, reducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
-             fill!, det, inv, eig, eigvals, trace, vecnorm, norm, dot, diagm,
-             sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
+             fill!, det, inv, eig, eigvals, expm, trace, vecnorm, norm, dot,
+             diagm, sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
              maximum, extrema, mean, copy, read, read!, write
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
@@ -49,6 +49,7 @@ include("deque.jl")
 include("det.jl")
 include("inv.jl")
 include("eigen.jl")
+include("expm.jl")
 include("cholesky.jl")
 include("io.jl")
 
