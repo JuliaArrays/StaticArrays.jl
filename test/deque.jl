@@ -11,4 +11,8 @@
     @test @inferred(deleteat(v, 2)) === @SVector [1, 3]
 
     @test @inferred(setindex(v, -2, 2)) === @SVector [1, -2, 3]
+
+    @test_throws BoundsError insert(v, -2, 2)
+    @test_throws BoundsError deleteat(v, -2)
+    @test_throws BoundsError setindex(v, 2, -2)
 end
