@@ -35,6 +35,12 @@ type MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         new{S,T,N,L}()
     end
 end
+@pure size(::Type{<:MArray{S}}) where S = tuple(S.parameters...)
+@inline function size(t::Type{<:MArray},d::Int)
+    S = size(t)
+    d > length(S) ? 1 : S[d]
+end
+@inline size(t::MArray, d::Int) = size(typeof(t), d)
 
 @generated function (::Type{MArray{S,T,N}}){S,T,N}(x::Tuple)
     return quote

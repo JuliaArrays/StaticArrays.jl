@@ -28,6 +28,12 @@ immutable SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         new{S, T, N, L}(convert_ntuple(T, x))
     end
 end
+@pure size(T::Type{SArray{S}}) where S = tuple(S.parameters...)
+@inline function size(t::Type{<:SArray},d::Int)
+    S = size(t)
+    d > length(S) ? 1 : S[d]
+end
+@inline size(t::SArray,d::Int) = size(typeof(t), d)
 
 @generated function (::Type{SArray{S, T, N}}){S <: Tuple, T, N}(x::Tuple)
     return quote
