@@ -37,8 +37,6 @@ show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}")
     v.data[i]
 end
 
-@inline Tuple(v::SVector) = v.data
-
 # Converting a CartesianIndex to an SVector
 convert(::Type{SVector}, I::CartesianIndex) = SVector(I.I)
 convert{N}(::Type{SVector{N}}, I::CartesianIndex{N}) = SVector{N}(I.I)
