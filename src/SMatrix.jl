@@ -72,8 +72,6 @@ function getindex(v::SMatrix, i::Int)
     v.data[i]
 end
 
-@inline Tuple(v::SMatrix) = v.data
-
 macro SMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @SMatrix")

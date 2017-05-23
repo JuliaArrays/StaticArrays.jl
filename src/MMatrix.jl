@@ -99,8 +99,6 @@ end
     return val
 end
 
-@inline Tuple(v::MMatrix) = v.data
-
 macro MMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @MMatrix")

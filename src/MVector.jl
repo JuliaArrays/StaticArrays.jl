@@ -53,8 +53,6 @@ end
     return val
 end
 
-@inline Tuple(v::MVector) = v.data
-
 macro MVector(ex)
     if isa(ex, Expr) && ex.head == :vect
         return esc(Expr(:call, MVector{length(ex.args)}, Expr(:tuple, ex.args...)))

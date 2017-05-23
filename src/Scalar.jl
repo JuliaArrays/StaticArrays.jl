@@ -21,8 +21,6 @@ getindex(v::Scalar) = v.data[1]
     v.data[1]
 end
 
-@inline Tuple(v::Scalar) = (v.data,)
-
 # A lot more compact than the default array show
 Base.show(io::IO, ::MIME"text/plain", x::Scalar{T}) where {T} = print(io, "Scalar{$T}(", x.data, ")")
 
