@@ -36,6 +36,7 @@ StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = R
             (RGB{Float32}(NaN, NaN, NaN), true),
         )
         @test any(isnan, p) == r
+        @test isnan(p) == r
     end
 end
 
