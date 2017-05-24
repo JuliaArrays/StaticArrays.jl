@@ -69,7 +69,7 @@ end
     end
 end
 
-@inline ctranspose(m::StaticMatrix) = _transpose(Size(m), m)
+@inline ctranspose(m::StaticMatrix) = _ctranspose(Size(m), m)
 
 @generated function _ctranspose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])

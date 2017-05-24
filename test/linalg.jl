@@ -85,6 +85,7 @@
         @test @inferred(ctranspose(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
         @test @inferred(ctranspose(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(ctranspose(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
+        @test @inferred(ctranspose(@SMatrix([1 2*im 3; 4 5 6]))) === @SMatrix([1 4; -2*im 5; 3 6])
     end
 
     @testset "vcat() and hcat()" begin
