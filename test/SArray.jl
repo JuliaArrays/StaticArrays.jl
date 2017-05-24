@@ -61,6 +61,18 @@
         @test @SArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
     end
 
+    @testset "Leaftypes" begin
+        leaf1{N}(::NTuple{N,Bool}) = Vector{SArray(Size(N), Float64)}(0)
+        leaf2{N}(::NTuple{N,Bool}) = Vector{SArray(Size(N,N), Float32)}(0)
+        leaf3{N}(::NTuple{N,Bool}) = Vector{SArray(Size(N,N,N), Int)}(0)
+        @test isa(@inferred(leaf1((true, true))), Vector{SArray{Tuple{2}, Float64, 1, 2}})
+        @test isa(@inferred(leaf1((true, true, true))), Vector{SArray{Tuple{3}, Float64, 1, 3}})
+        @test isa(@inferred(leaf2((true, true))), Vector{SArray{Tuple{2,2}, Float32, 2, 4}})
+        @test isa(@inferred(leaf2((true, true, true))), Vector{SArray{Tuple{3,3}, Float32, 2, 9}})
+        @test isa(@inferred(leaf3((true, true))), Vector{SArray{Tuple{2,2,2}, Int, 3, 8}})
+        @test isa(@inferred(leaf3((true, true, true))), Vector{SArray{Tuple{3,3,3}, Int, 3, 27}})
+    end
+
     @testset "Methods" begin
         m = @SArray [11 13; 12 14]
 
