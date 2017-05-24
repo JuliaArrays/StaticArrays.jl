@@ -141,4 +141,33 @@
         @test vecs*diagm(vals)*vecs' ≈ m
         @test eigvals(m) ≈ vals
     end
+    
+    @testset "4×4" for i = 1:100
+        m_a = randn(4,4)
+        m_a = m_a*m_a'
+        m = SMatrix{4,4}(m_a)
+
+        (vals_a, vecs_a) = eig(m_a)
+        (vals, vecs) = eig(m)
+        @test vals::SVector ≈ vals_a
+        @test eigvals(m) ≈ vals
+        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+
+        (vals, vecs) = eig(Symmetric(m))
+        @test vals::SVector ≈ vals_a
+        @test eigvals(m) ≈ vals
+        @test eigvals(Hermitian(m)) ≈ vals
+        @test eigvals(Hermitian(m, :L)) ≈ vals
+        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+       
+        (vals, vecs) = eig(Symmetric(m, :L))
+        @test vals::SVector ≈ vals_a
+        m_d = randn(SVector{4}); m = diagm(m_d)
+        (vals, vecs) = eig(Hermitian(m))
+        @test vals::SVector ≈ sort(m_d)
+        (vals, vecs) = eig(Hermitian(m, :L))
+        @test vals::SVector ≈ sort(m_d)
+        @test eigvals(m) ≈ sort(m_d)
+        @test eigvals(Hermitian(m)) ≈ sort(m_d)
+    end
 end

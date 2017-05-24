@@ -12,6 +12,7 @@ end
 end
 
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(real(a.data[1]))
+@inline _eigvals(::Size{(1, 1)}, a::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
 @inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
@@ -102,6 +103,10 @@ end
     return SVector(eig1, eig2, eig3)
 end
 
+@inline function _eigvals(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+    vals = eigvals(Hermitian(Array(parent(A))))
+    return SVector{s[1], T}(vals)
+end
 
 
 
@@ -124,8 +129,8 @@ end
 end
 
 @inline function _eig(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    eigen = eigfact(Hermitian(Array(parent(A))); permute=permute, scale=scale)
-    return (s(eigen.values), s(eigen.vectors)) # Return a SizedArray
+    eigen = eigfact(Hermitian(Array(parent(A))))
+    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], T}(eigen.vectors)) # Return a SizedArray
 end
 
 
