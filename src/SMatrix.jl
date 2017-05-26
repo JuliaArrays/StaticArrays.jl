@@ -125,7 +125,7 @@ macro SMatrix(ex)
         end
         ex = ex.args[1]
         if length(ex.args) != 3
-            error("Use a 2-dimensional comprehension for @SMatrx")
+            error("Use a 2-dimensional comprehension for @SMatrix")
         end
 
         rng1 = eval(current_module(), ex.args[2].args[2])
@@ -145,7 +145,7 @@ macro SMatrix(ex)
         T = ex.args[1]
         ex = ex.args[2]
         if length(ex.args) != 3
-            error("Use a 2-dimensional comprehension for @SMatrx")
+            error("Use a 2-dimensional comprehension for @SMatrix")
         end
 
         rng1 = eval(current_module(), ex.args[2].args[2])
