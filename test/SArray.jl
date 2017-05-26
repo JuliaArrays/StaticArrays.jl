@@ -39,7 +39,13 @@
         @test ((@SArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::SArray{Tuple{2,2,2}}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
 
         @test (ex = macroexpand(:(@SArray [1 2; 3])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray Float64[1 2; 3])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray ones)); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray fill)); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray fill(1))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray eye(5,6,7,8,9))); isa(ex, Expr) && ex.head == :error)
 
+        @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@SArray ones(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
         @test ((@SArray eye(2))::SArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
