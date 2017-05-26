@@ -40,6 +40,7 @@
         @test ((@MMatrix Float64[i*j for i = 1:2, j=2:3])::MMatrix{2,2}).data === (2.0, 4.0, 3.0, 6.0)
 
         @test (ex = macroexpand(:(@MMatrix [1 2; 3])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MMatrix Float32[1 2; 3])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix [i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix Float32[i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix fill(2.3, 4, 5, 6))); isa(ex, Expr) && ex.head == :error)

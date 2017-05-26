@@ -44,6 +44,8 @@
         @test (ex = macroexpand(:(@MArray Float64[1 2; 3])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray fill)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray ones)); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MArray fill())); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MArray ones())); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray fill(1))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray eye(5,6,7,8,9))); isa(ex, Expr) && ex.head == :error)
 
