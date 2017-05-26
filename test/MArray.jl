@@ -54,6 +54,7 @@
         @test ((@MArray eye(2,2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
 
         @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MArray ones(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
@@ -61,6 +62,7 @@
         @test ((@MArray eye(Float32, 2, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
+        @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]

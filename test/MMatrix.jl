@@ -53,6 +53,7 @@
         @test ((@MMatrix eye(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
         @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
+        @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
 
         @test ((@MMatrix zeros(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
@@ -60,6 +61,7 @@
         @test ((@MMatrix eye(Float32, 2, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
+        @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
 
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
     end

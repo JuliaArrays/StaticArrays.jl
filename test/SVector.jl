@@ -30,11 +30,13 @@
         @test ((@SVector fill(2.5, 2))::SVector{2,Float64}).data === (2.5, 2.5)
         @test isa(@SVector(rand(2)), SVector{2, Float64})
         @test isa(@SVector(randn(2)), SVector{2, Float64})
+        @test isa(@SVector(randexp(2)), SVector{2, Float64})
 
         @test ((@SVector zeros(Float32, 2))::SVector{2,Float32}).data === (0.0f0, 0.0f0)
         @test ((@SVector ones(Float32, 2))::SVector{2,Float32}).data === (1.0f0, 1.0f0)
         @test isa(@SVector(rand(Float32, 2)), SVector{2, Float32})
         @test isa(@SVector(randn(Float32, 2)), SVector{2, Float32})
+        @test isa(@SVector(randexp(Float32, 2)), SVector{2, Float32})
         
         @test (ex = macroexpand(:(@SVector fill(1.5, 2, 3))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector ones(2, 3, 4))); isa(ex, Expr) && ex.head == :error)
