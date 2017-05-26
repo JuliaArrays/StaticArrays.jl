@@ -37,8 +37,10 @@
 
         @test ((@SMatrix [i*j for i = 1:2, j=2:3])::SMatrix{2,2}).data === (2, 4, 3, 6)
         @test ((@SMatrix Float64[i*j for i = 1:2, j=2:3])::SMatrix{2,2}).data === (2.0, 4.0, 3.0, 6.0)
-
         @test (ex = macroexpand(:(@SMatrix [1 2; 3])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SMatrix [i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SMatrix Float64[i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SMatrix fill(1.5, 2, 3, 4))); isa(ex, Expr) && ex.head == :error)
 
         @test ((@SMatrix zeros(2,2))::SMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@SMatrix ones(2,2))::SMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
