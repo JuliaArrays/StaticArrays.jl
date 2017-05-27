@@ -166,4 +166,9 @@
         @test convert(Array{Int,2}, ma) == a
         @test_inferred convert(Array{Int,2}, ma)
     end =#
+    @test_throws Exception Length{2.5}()
+    @test Length(2) == Length{2}()
+    @test Tuple{2, 3, 5} != Size{(2, 3, 4)}
+    @test Size{(2, 3, 4)} != Tuple{2, 3, 5} 
+
 end
