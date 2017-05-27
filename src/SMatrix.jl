@@ -159,7 +159,7 @@ macro SMatrix(ex)
             $(esc(Expr(:call, Expr(:curly, :SMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn || ex.args[1] == :randexp
             if length(ex.args) == 3
                 return quote
                     $(ex.args[1])(SMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
@@ -201,7 +201,7 @@ macro SMatrix(ex)
                 error("Bad eye() expression for @SMatrix")
             end
         else
-            error("@SMatrix only supports the zeros(), ones(), fill(), rand(), randn() and eye() functions.")
+            error("@SMatrix only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
         end
     else
         error("Bad input for @SMatrix")

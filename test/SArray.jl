@@ -54,6 +54,7 @@
         @test ((@SArray eye(2,2))::SArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@SArray(rand(2,2,1)), SArray{Tuple{2,2,1}, Float64})
         @test isa(@SArray(randn(2,2,1)), SArray{Tuple{2,2,1}, Float64})
+        @test isa(@SArray(randexp(2,2,1)), SArray{Tuple{2,2,1}, Float64})
 
         @test ((@SArray zeros(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@SArray ones(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
@@ -61,6 +62,7 @@
         @test ((@SArray eye(Float32, 2, 2))::SArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@SArray(rand(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
         @test isa(@SArray(randn(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
+        @test isa(@SArray(randexp(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
 
         m = [1 2; 3 4]
         @test SArray{Tuple{2,2}}(m) === @SArray [1 2; 3 4]

@@ -202,7 +202,7 @@ macro SArray(ex)
             $(esc(Expr(:call, Expr(:curly, :SArray, Tuple{rng_lengths...}, T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn || ex.args[1] == :randexp
             if length(ex.args) == 1
                 error("@SArray got bad expression: $(ex.args[1])()")
             else
@@ -246,7 +246,7 @@ macro SArray(ex)
                 error("Bad eye() expression for @SArray")
             end
         else
-            error("@SArray only supports the zeros(), ones(), rand(), randn() and eye() functions.")
+            error("@SArray only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
         end
     else
         error("Bad input for @SArray")

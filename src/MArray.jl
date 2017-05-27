@@ -239,7 +239,7 @@ macro MArray(ex)
             $(esc(Expr(:call, Expr(:curly, :MArray, Tuple{rng_lengths...}, T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn
+        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn || ex.args[1] == :randexp
             if length(ex.args) == 1
                 error("@MArray got bad expression: $(ex.args[1])()")
             else
@@ -283,7 +283,7 @@ macro MArray(ex)
                 error("Bad eye() expression for @MArray")
             end
         else
-            error("@MArray only supports the zeros(), ones(), rand(), randn() and eye() functions.")
+            error("@MArray only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
         end
     else
         error("Bad input for @MArray")
