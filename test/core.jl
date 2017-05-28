@@ -128,44 +128,30 @@
         @test convert(SArray{(1,),Float64,1,Tuple{Float64}}, ma_int) === sa_float
         @test_inferred convert(SArray{(1,),Float64,1,Tuple{Float64}}, ma_int)
     end
-
+    =#
     @testset "AbstractArray conversion" begin
-        sa = SArray{(2,2)}((3,4,5,6))
-        ma = MArray{(2,2)}((3,4,5,6))
+        sa = SArray{Tuple{2,2}, Int}((3, 4, 5, 6))
+        ma = MArray{Tuple{2,2}, Int}((3, 4, 5, 6))
         a = [3 5; 4 6]
 
-        @test convert(SArray{(2,2)}, a) === sa
-        @test_inferred convert(SArray{(2,2)}, a)
-        @test convert(SArray{(2,2),Int}, a) === sa
-        @test_inferred convert(SArray{(2,2),Int}, a)
-        @test convert(SArray{(2,2),Int,2}, a) === sa
-        @test_inferred convert(SArray{(2,2),Int,2}, a)
-        @test convert(SArray{(2,2),Int,2,NTuple{4,Int}}, a) === sa
-        @test_inferred convert(SArray{(2,2),Int,2,NTuple{4,Int}}, a)
+        @test @inferred(convert(SArray{Tuple{2,2}}, a)) === sa
+        @test @inferred(convert(SArray{Tuple{2,2},Int}, a)) === sa  
+        @test @inferred(convert(SArray{Tuple{2,2},Int,2}, a)) === sa
+        @test @inferred(convert(SArray{Tuple{2,2},Int,2,4}, a)) === sa
 
-        @test convert(MArray{(2,2)}, a) == ma
-        @test_inferred convert(MArray{(2,2)}, a)
-        @test convert(MArray{(2,2),Int}, a) == ma
-        @test_inferred convert(MArray{(2,2),Int}, a)
-        @test convert(MArray{(2,2),Int,2}, a) == ma
-        @test_inferred convert(MArray{(2,2),Int,2}, a)
-        @test convert(MArray{(2,2),Int,2,NTuple{4,Int}}, a) == ma
-        @test_inferred convert(MArray{(2,2),Int,2,NTuple{4,Int}}, a)
+        @test @inferred(convert(MArray{Tuple{2,2}}, a)) == ma
+        @test @inferred(convert(MArray{Tuple{2,2},Int}, a)) == ma
+        @test @inferred(convert(MArray{Tuple{2,2},Int,2}, a)) == ma
+        @test @inferred(convert(MArray{Tuple{2,2},Int,2,4}, a)) == ma
 
-        @test convert(Array, sa) == a
-        @test_inferred convert(Array, sa)
-        @test convert(Array{Int}, sa) == a
-        @test_inferred convert(Array{Int}, sa)
-        @test convert(Array{Int,2}, sa) == a
-        @test_inferred convert(Array{Int,2}, sa)
+        @test @inferred(convert(Array, sa)) == a
+        @test @inferred(convert(Array{Int}, sa)) == a
+        @test @inferred(convert(Array{Int,2}, sa)) == a
 
-        @test convert(Array, ma) == a
-        @test_inferred convert(Array, ma)
-        @test convert(Array{Int}, ma) == a
-        @test_inferred convert(Array{Int}, ma)
-        @test convert(Array{Int,2}, ma) == a
-        @test_inferred convert(Array{Int,2}, ma)
-    end =#
+        @test @inferred(convert(Array, ma)) == a
+        @test @inferred(convert(Array{Int}, ma)) == a
+        @test @inferred(convert(Array{Int,2}, ma)) == a
+    end
     @test_throws Exception Length{2.5}()
     @test Length(2) == Length{2}()
     @test Tuple{2, 3, 5} != Size{(2, 3, 4)}
