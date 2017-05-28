@@ -25,3 +25,20 @@
         @test m(A)\v(b) ≈ A\b
     end =#
 end
+
+@testset "Solving triangular system" begin
+    for n in (1,2,3,4),
+          (t1, uplo1) in ((UpperTriangular, :U),
+                          (LowerTriangular, :L)),
+            (m, v, u) in ((SMatrix{n, n}, SVector{n}, SMatrix{n, 2}), (MMatrix{n,n}, MVector{n}, SMatrix{n, 2})),
+                elty in (Float32, Float64, Int)
+
+        eval(quote
+            A = $(t1)($elty == Int ? rand(1:7, $n, $n) : convert(Matrix{$elty}, randn($n, $n)) |> t -> chol(t't) |> t -> $(uplo1 == :U) ? t : ctranspose(t))
+            b = convert(Matrix{$elty}, A*ones($n, 2))
+            SA = $t1($m(A.data))
+            @test SA \ $v(b[:, 1]) ≈ A \ b[:, 1]
+            @test SA \ $u(b) ≈ A \ b
+        end)
+    end
+end
