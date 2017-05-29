@@ -14,6 +14,14 @@
 end
 
 @testset "Broadcast" begin
+    @testset "AbstractArray-of-StaticArray with scalar math" begin
+        v = SVector{2,Float64}[SVector{2,Float64}(1,1)]
+        @test @inferred(v .* 1.0)::typeof(v) == v
+        @test @inferred(1 .- v)::typeof(v) == v .- v
+        v2 = SVector{2,Int}[SVector{2,Int}(1,1)]
+        @test @inferred(v2 .* 1.0)::typeof(v) == v
+    end
+
     @testset "2x2 StaticMatrix with StaticVector" begin
         m = @SMatrix [1 2; 3 4]
         v = SVector(1, 4)
