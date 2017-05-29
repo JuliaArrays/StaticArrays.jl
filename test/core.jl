@@ -60,75 +60,53 @@
         @test MArray{(1,),Float64}((1,)).data === (1.0,)
         @test_inferred MArray{(1,),Float64}((1,))
     end
-
+    =#
     @testset "eltype conversion" begin
-        sa_int = SArray{(1,)}((1,))
-        ma_int = MArray{(1,)}((1,))
+        sa_int = SArray{Tuple{1}}((1,))
+        ma_int = MArray{Tuple{1}}((1,))
 
-        sa_float = SArray{(1,)}((1.0,))
-        ma_float = MArray{(1,)}((1.0,))
+        sa_float = SArray{Tuple{1}}((1.0,))
+        ma_float = MArray{Tuple{1}}((1.0,))
 
-        @test convert(SArray{(1,),Float64}, sa_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64}, sa_int)
-        @test convert(SArray{(1,),Float64,1}, sa_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64,1}, sa_int)
-        @test convert(SArray{(1,),Float64,1,Tuple{Float64}}, sa_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64,1,Tuple{Float64}}, sa_int)
+        @test @inferred(convert(SArray{Tuple{1},Float64}, sa_int)) === sa_float
+        @test @inferred(convert(SArray{Tuple{1},Float64,1}, sa_int)) === sa_float
+        @test @inferred(convert(SArray{Tuple{1},Float64,1,1}, sa_int)) === sa_float
 
-        @test convert(MArray{(1,),Float64}, ma_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64}, ma_int)
-        @test convert(MArray{(1,),Float64,1}, ma_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64,1}, ma_int)
-        @test convert(MArray{(1,),Float64,1,Tuple{Float64}}, ma_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64,1,Tuple{Float64}}, ma_int)
+        @test @inferred(convert(MArray{Tuple{1},Float64}, ma_int)) == ma_float
+        @test @inferred(convert(MArray{Tuple{1},Float64,1}, ma_int)) == ma_float
+        @test @inferred(convert(MArray{Tuple{1},Float64,1,1}, ma_int)) == ma_float
     end
 
     @testset "StaticArray conversion" begin
-        sa_int = SArray{(1,)}((1,))
-        ma_int = MArray{(1,)}((1,))
+        sa_int = SArray{Tuple{1}}((1,))
+        ma_int = MArray{Tuple{1}}((1,))
 
-        sa_float = SArray{(1,)}((1.0,))
-        ma_float = MArray{(1,)}((1.0,))
+        sa_float = SArray{Tuple{1}}((1.0,))
+        ma_float = MArray{Tuple{1}}((1.0,))
 
         # SArray -> MArray
-        @test convert(MArray, sa_int) == ma_int
-        @test_inferred convert(MArray, sa_int)
-        @test convert(MArray{(1,)}, sa_int) == ma_int
-        @test_inferred convert(MArray{(1,)}, sa_int)
-        @test convert(MArray{(1,),Int}, sa_int) == ma_int
-        @test_inferred convert(MArray{(1,),Int}, sa_int)
-        @test convert(MArray{(1,),Int,1}, sa_int) == ma_int
-        @test_inferred convert(MArray{(1,),Int,1}, sa_int)
-        @test convert(MArray{(1,),Int,1,Tuple{Int}}, sa_int) == ma_int
-        @test_inferred convert(MArray{(1,),Int,1,Tuple{Int}}, sa_int)
+        #@test @inferred(convert(MArray, sa_int)) == ma_int
+        @test @inferred(convert(MArray{Tuple{1}}, sa_int)) == ma_int
+        @test @inferred(convert(MArray{Tuple{1},Int}, sa_int)) == ma_int
+        @test @inferred(convert(MArray{Tuple{1},Int,1}, sa_int)) == ma_int
+        @test @inferred(convert(MArray{Tuple{1},Int,1,1}, sa_int)) == ma_int
 
-        @test convert(MArray{(1,),Float64}, sa_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64}, sa_int)
-        @test convert(MArray{(1,),Float64,1}, sa_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64,1}, sa_int)
-        @test convert(MArray{(1,),Float64,1,Tuple{Float64}}, sa_int) == ma_float
-        @test_inferred convert(MArray{(1,),Float64,1,Tuple{Float64}}, sa_int)
+        @test @inferred(convert(MArray{Tuple{1},Float64}, sa_int)) == ma_float
+        @test @inferred(convert(MArray{Tuple{1},Float64,1}, sa_int)) == ma_float
+        @test @inferred(convert(MArray{Tuple{1},Float64,1,1}, sa_int)) == ma_float
 
         # MArray -> SArray
-        @test convert(SArray, ma_int) === sa_int
-        @test_inferred convert(SArray, ma_int)
-        @test convert(SArray{(1,)}, ma_int) === sa_int
-        @test_inferred convert(SArray{(1,)}, ma_int)
-        @test convert(SArray{(1,),Int}, ma_int) === sa_int
-        @test_inferred convert(SArray{(1,),Int}, ma_int)
-        @test convert(SArray{(1,),Int,1}, ma_int) === sa_int
-        @test_inferred convert(SArray{(1,),Int,1}, ma_int)
-        @test convert(SArray{(1,),Int,1,Tuple{Int}}, ma_int) === sa_int
-        @test_inferred convert(SArray{(1,),Int,1,Tuple{Int}}, ma_int)
+        #@test @inferred(convert(SArray, ma_int)) === sa_int
+        @test @inferred(convert(SArray{Tuple{1}}, ma_int)) === sa_int
+        @test @inferred(convert(SArray{Tuple{1},Int}, ma_int)) === sa_int
+        @test @inferred(convert(SArray{Tuple{1},Int,1}, ma_int)) === sa_int
+        @test @inferred(convert(SArray{Tuple{1},Int,1,1}, ma_int)) === sa_int
 
-        @test convert(SArray{(1,),Float64}, ma_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64}, ma_int)
-        @test convert(SArray{(1,),Float64,1}, ma_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64,1}, ma_int)
-        @test convert(SArray{(1,),Float64,1,Tuple{Float64}}, ma_int) === sa_float
-        @test_inferred convert(SArray{(1,),Float64,1,Tuple{Float64}}, ma_int)
+        @test @inferred(convert(SArray{Tuple{1},Float64}, ma_int)) === sa_float
+        @test @inferred(convert(SArray{Tuple{1},Float64,1}, ma_int)) === sa_float
+        @test @inferred(convert(SArray{Tuple{1},Float64,1,1}, ma_int)) === sa_float
     end
-    =#
+    
     @testset "AbstractArray conversion" begin
         sa = SArray{Tuple{2,2}, Int}((3, 4, 5, 6))
         ma = MArray{Tuple{2,2}, Int}((3, 4, 5, 6))
