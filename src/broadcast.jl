@@ -12,11 +12,9 @@ end
     _broadcast(f, (Size(), Size(x)), T, x)
 end
 
-@inline broadcast_sizes(a...) = _broadcast_sizes(a...)
-@inline _broadcast_sizes(a::StaticArray) = (Size(a),)
-@inline _broadcast_sizes(a::Number) = (Size(),)
-@inline _broadcast_sizes(a::StaticArray, as...) = (Size(a), _broadcast_sizes(as...)...)
-@inline _broadcast_sizes(a::Number, as...) = (Size(), _broadcast_sizes(as...)...)
+@inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
+@inline broadcast_sizes(a::Number, as...) = (Size(), broadcast_sizes(as...)...)
+@inline broadcast_sizes() = ()
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))
