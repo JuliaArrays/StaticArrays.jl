@@ -27,18 +27,28 @@
 end
 
 @testset "Solving triangular system" begin
-    for n in (1,2,3,4),
-          (t1, uplo1) in ((UpperTriangular, :U),
-                          (LowerTriangular, :L)),
-            (m, v, u) in ((SMatrix{n, n}, SVector{n}, SMatrix{n, 2}), (MMatrix{n,n}, MVector{n}, SMatrix{n, 2})),
-                elty in (Float32, Float64, Int)
+    for n in (1, 2, 3, 4),
+          (t, uplo) in ((UpperTriangular, :U),
+                        (LowerTriangular, :L)),
+              (m, v, u) in ((SMatrix{n,n}, SVector{n}, SMatrix{n, 2}),
+                            (MMatrix{n,n}, MVector{n}, SMatrix{n, 2})),
+                  eltya in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat}, Int),
+                      eltyb in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat})
 
         eval(quote
-            A = $(t1)($elty == Int ? rand(1:7, $n, $n) : convert(Matrix{$elty}, randn($n, $n)) |> t -> chol(t't) |> t -> $(uplo1 == :U) ? t : ctranspose(t))
-            b = convert(Matrix{$elty}, A*ones($n, 2))
-            SA = $t1($m(A.data))
-            @test SA \ $v(b[:, 1]) ≈ A \ b[:, 1]
-            @test SA \ $u(b) ≈ A \ b
+            A = $t($eltya == Int ? rand(1:7, $n, $n) : convert(Matrix{$eltya}, ($eltya <: Complex ? complex.(randn($n, $n), randn($n, $n)) : randn($n, $n)) |> z -> chol(z'z) |> z -> $(uplo == :U) ? z : ctranspose(z)))
+            b = convert(Matrix{$eltyb}, $eltya <: Complex ? real(A)*ones($n, 2) : A*ones($n, 2))
+            SA = $t($m(A.data))
+            Sx = SA \ $v(b[:, 1])
+            x = A \ b[:, 1]
+            @test typeof(Sx) <: StaticVector # test not falling back to Base
+            @test Sx ≈ x
+            @test eltype(Sx) == eltype(x)
+            SX = SA \ $u(b)
+            X = A \ b
+            @test typeof(SX) <: StaticMatrix # test not falling back to Base
+            @test SX ≈ X
+            @test eltype(SX) == eltype(X)
         end)
     end
 end
