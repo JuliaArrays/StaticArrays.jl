@@ -24,4 +24,10 @@
         b = A*ones(elty,n)
         @test m(A)\v(b) ≈ A\b
     end =#
+
+    m1 = @SMatrix eye(5)
+    m2 = @SMatrix eye(2)
+    v = @SVector ones(4)
+    @test_throws DimensionMismatch m1\v
+    @test_throws DimensionMismatch m1\m2
 end
