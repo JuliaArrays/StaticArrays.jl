@@ -1,13 +1,13 @@
 @testset "Broadcast sizes" begin
-    @test @inferred(broadcast_sizes(1, 1, 1)) === (Size(), Size(), Size())
+    @test @inferred(StaticArrays.broadcast_sizes(1, 1, 1)) === (Size(), Size(), Size())
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})
-        @test @inferred(broadcast_sizes(ones(t), ones(t), ones(t))) === (Size(t), Size(t), Size(t))
-        @test @inferred(broadcast_sizes(ones(t), 1, ones(t))) === (Size(t), Size(), Size(t))
-        @test @inferred(broadcast_sizes(1, ones(t), ones(t))) === (Size(), Size(t), Size(t))
-        @test @inferred(broadcast_sizes(ones(t), ones(t), 1)) === (Size(t), Size(t), Size())
-        @test @inferred(broadcast_sizes(1, ones(t), 1)) === (Size(), Size(t), Size())
-        @test @inferred(broadcast_sizes(ones(t), 1, 1)) === (Size(t), Size(), Size())
-        @test @inferred(broadcast_sizes(1, 1, ones(t))) === (Size(), Size(), Size(t))
+        @test @inferred(StaticArrays.broadcast_sizes(ones(t), ones(t), ones(t))) === (Size(t), Size(t), Size(t))
+        @test @inferred(StaticArrays.broadcast_sizes(ones(t), 1, ones(t))) === (Size(t), Size(), Size(t))
+        @test @inferred(StaticArrays.broadcast_sizes(1, ones(t), ones(t))) === (Size(), Size(t), Size(t))
+        @test @inferred(StaticArrays.broadcast_sizes(ones(t), ones(t), 1)) === (Size(t), Size(t), Size())
+        @test @inferred(StaticArrays.broadcast_sizes(1, ones(t), 1)) === (Size(), Size(t), Size())
+        @test @inferred(StaticArrays.broadcast_sizes(ones(t), 1, 1)) === (Size(t), Size(), Size())
+        @test @inferred(StaticArrays.broadcast_sizes(1, 1, ones(t))) === (Size(), Size(), Size(t))
     end
     # test case issue #191
     @test @inferred(broadcast((a, b, c) -> 0, SVector(1, 1), 0, 0)) == SVector(0, 0)

@@ -19,6 +19,7 @@ using Base.Test
     include("indexing.jl")
     include("mapreduce.jl")
     include("arraymath.jl")
+    include("broadcast.jl")
     include("linalg.jl")
     include("matrix_multiply.jl")
     include("det.jl")
