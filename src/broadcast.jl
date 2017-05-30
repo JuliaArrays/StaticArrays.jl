@@ -12,10 +12,9 @@ end
     _broadcast(f, (Size(), Size(x)), T, x)
 end
 
-@inline broadcast_sizes(a...) = _broadcast_sizes((), a...)
-@inline _broadcast_sizes(t::Tuple) = t
-@inline _broadcast_sizes(t::Tuple, a::StaticArray, as...) = _broadcast_sizes((t..., Size(a)), as...)
-@inline _broadcast_sizes(t::Tuple, a::Number, as...) = _broadcast_sizes((t..., Size()), as...)
+@inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
+@inline broadcast_sizes(a::Number, as...) = (Size(), broadcast_sizes(as...)...)
+@inline broadcast_sizes() = ()
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))
@@ -147,5 +146,6 @@ end
     return quote
         @_inline_meta
         @inbounds $(Expr(:block, exprs...))
+        return dest
     end
 end
