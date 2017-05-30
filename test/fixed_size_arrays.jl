@@ -204,6 +204,18 @@ for N = (1, 10)
         end
     end
 end
+
+@testset "heterogeneous construction" begin
+    @test typeof(@inferred(Vec(0.0, 0))) == Vec{2, Float64}
+    @test typeof(@inferred(Vec(0, 0.0))) == Vec{2, Float64}
+    @test typeof(@inferred(Point(0.0, 0))) == Point{2, Float64}
+    @test typeof(@inferred(Point(0, 0.0))) == Point{2, Float64}
+    @test typeof(@inferred(Vec(0.0, 0, 0))) == Vec{3, Float64}
+    @test typeof(@inferred(Vec(0, 0.0, 0))) == Vec{3, Float64}
+    @test typeof(@inferred(Point(0.0, 0, 0))) == Point{3, Float64}
+    @test typeof(@inferred(Point(0, 0.0, 0))) == Point{3, Float64}
+end
+
 map(-, Vec(1,2,3))
 map(+, Vec(1,2,3), Vec(1,1, 1))
 (+).(Vec(1,2,3), 1.0)

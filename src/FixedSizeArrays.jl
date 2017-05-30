@@ -120,6 +120,7 @@ macro fixed_vector(name, parent)
             $(name){1, T}((x,))
         end
         @inline (::Type{$(name)}){S}(x::NTuple{S}) = $(name){S}(x)
+        @inline (::Type{$(name)}){S, T <: Tuple{Vararg{Any, S}}}(x::T) = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         @inline function (::Type{$(name){S}}){S, T <: Tuple}(x::T)
             $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         end
