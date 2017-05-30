@@ -169,5 +169,8 @@
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
+
+        # not Hermitian
+        @test_throws Exception eig(@SMatrix randn(4,4))
     end
 end
