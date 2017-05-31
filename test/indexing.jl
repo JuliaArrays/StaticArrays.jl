@@ -119,6 +119,19 @@
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)
         @test (ma[2,1,1,1] = 48; ma[2,1,1,1] === 48)
     end
+    
+    @testset "4D StaticArray indexing" begin
+        sa = SArray{Tuple{2,2,2,2}, Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
+        @test (@inferred getindex(sa, 1, 1, 1, SVector(1,2))) === @SVector [24,30]
+        @test (@inferred getindex(sa, 1, 1, SVector(1,2), 1)) === @SVector [24,32]
+        @test (@inferred getindex(sa, 1, SVector(1,2), 1, 1)) === @SVector [24,36]
+        @test (@inferred getindex(sa, SVector(1,2), 1, 1, 1)) === @SVector [24,48]
+        a = [i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5]
+        @test (@inferred getindex(a, 1, 1, 1, SVector(1,2))) == [24,30]
+        @test (@inferred getindex(a, 1, 1, SVector(1,2), 1)) == [24,32]
+        @test (@inferred getindex(a, 1, SVector(1,2), 1, 1)) == [24,36]
+        @test (@inferred getindex(a, SVector(1,2), 1, 1, 1)) == [24,48]
+    end
 
     @testset "Indexing with empty vectors" begin
         a = randn(2,2)
