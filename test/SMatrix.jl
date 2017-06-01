@@ -24,6 +24,7 @@
         @test SMatrix{2,2,Int}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2,2}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2}((1,2,3,4)).data === (1,2,3,4)
+        @test_throws DimensionMismatch SMatrix{2}((1,2,3,4,5))
 
         @test ((@SMatrix [1.0])::SMatrix{1,1}).data === (1.0,)
         @test ((@SMatrix [1 2])::SMatrix{1,2}).data === (1, 2)
@@ -43,6 +44,7 @@
         @test (ex = macroexpand(:(@SMatrix Float64[i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SMatrix fill(1.5, 2, 3, 4))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SMatrix ones(2, 3, 4, 5))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SMatrix ones)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SMatrix eye(2, 3, 4, 5))); isa(ex, Expr) && ex.head == :error)
 
         @test ((@SMatrix fill(1.3, 2,2))::SMatrix{2, 2, Float64}).data === (1.3, 1.3, 1.3, 1.3)

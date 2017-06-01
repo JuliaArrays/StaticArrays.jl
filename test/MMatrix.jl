@@ -45,6 +45,7 @@
         @test (ex = macroexpand(:(@MMatrix Float32[i*j*k for i = 1:2, j=2:3, k=3:4])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix fill(2.3, 4, 5, 6))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix ones(4, 5, 6, 7))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MMatrix ones)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix eye(4, 5, 6, 7))); isa(ex, Expr) && ex.head == :error)
 
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
