@@ -26,10 +26,16 @@
         # SVector
         mv = MVector{4,Int}()
         @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+        
+        mv = MVector{4,Int}()
+        @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+        @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((2,2,2,2)))
 
         # Colon
         mv = MVector{4,Int}()
         @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
+        @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
+        @test (mv[:] = 2; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((2,2,2,2)))
     end
 
     @testset "Linear getindex()/setindex!() on MMatrix" begin
