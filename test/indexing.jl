@@ -36,6 +36,10 @@
         @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
         @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
         @test (mv[:] = 2; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((2,2,2,2)))
+
+        @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), SVector(1,2,3,4))
+        @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), :)
+        @test_throws DimensionMismatch setindex!(mv, [1,2,3], SVector(1,2,3,4))
     end
 
     @testset "Linear getindex()/setindex!() on MMatrix" begin
