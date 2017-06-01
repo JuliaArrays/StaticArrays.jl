@@ -112,5 +112,7 @@
         m[3] = 13
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
+
+        @test_throws BoundsError setindex!(v, 4, -1)
     end
 end
