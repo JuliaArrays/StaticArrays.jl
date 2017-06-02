@@ -25,6 +25,11 @@
 
     @testset "back to Array" begin
         @test Array(SizedArray{Tuple{2}, Int, 1}([3, 4])) == [3, 4]
+        @test Array{Int}(SizedArray{Tuple{2}, Int, 1}([3, 4])) == [3, 4]
+        @test Array{Int, 1}(SizedArray{Tuple{2}, Int, 1}([3, 4])) == [3, 4]
         @test Vector(SizedArray{Tuple{4}, Int, 1}(collect(3:6))) == collect(3:6)
+        @test convert(Vector, SizedArray{Tuple{4}, Int, 1}(collect(3:6))) == collect(3:6)
+        @test Matrix(SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
+        @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
     end
 end
