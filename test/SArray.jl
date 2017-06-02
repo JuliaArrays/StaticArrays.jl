@@ -35,8 +35,17 @@
         @test ((@SArray [1 2 ; 3 4])::SArray{Tuple{2,2}}).data === (1, 3, 2, 4)
         @test ((@SArray Float64[1 2 ; 3 4])::SArray{Tuple{2,2}}).data === (1.0, 3.0, 2.0, 4.0)
 
+        @test ((@SArray [i for i = 1:2])::SArray{Tuple{2}}).data === (1, 2)
+        @test ((@SArray [i*j for i = 1:2, j = 2:3])::SArray{Tuple{2,2}}).data === (2, 4, 3, 6)
         @test ((@SArray [i*j*k for i = 1:2, j = 2:3, k = 3:4])::SArray{Tuple{2,2,2}}).data === (6, 12, 9, 18, 8, 16, 12, 24)
+        @test ((@SArray [i*j*k*l for i = 1:2, j = 2:3, k = 3:4, l = 1:2])::SArray{Tuple{2,2,2,2}}).data === (6, 12, 9, 18, 8, 16, 12, 24, 12, 24, 18, 36, 16, 32, 24, 48)
+        @test ((@SArray [i*j*k*l*m for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2])::SArray{Tuple{2,2,2,2,2}}).data === (6, 12, 9, 18, 8, 16, 12, 24, 12, 24, 18, 36, 16, 32, 24, 48, 2*6, 2*12, 2*9, 2*18, 2*8, 2*16, 2*12, 2*24, 2*12, 2*24, 2*18, 2*36, 2*16, 2*32, 2*24, 2*48)
+        @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::SArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1, 64)
+        @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::SArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1, 128) 
+        @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 256)
+        @test (ex = macroexpand(:(@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])); isa(ex, Expr) && ex.head == :error)
         @test ((@SArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::SArray{Tuple{2,2,2}}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
+        @test ((@SArray [i*j*k*l for i = 1:2, j = 2:3, k = 3:4, l = 1:2])::SArray{Tuple{2,2,2,2}}).data === (6, 12, 9, 18, 8, 16, 12, 24, 12, 24, 18, 36, 16, 32, 24, 48)
 
         @test (ex = macroexpand(:(@SArray [1 2; 3])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray Float64[1 2; 3])); isa(ex, Expr) && ex.head == :error)
