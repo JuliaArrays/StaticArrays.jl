@@ -28,6 +28,7 @@
         @test reduce(+, v1) === 20
         @test reduce(+, 0, v1) === 20
         @test sum(v1) === 20
+        @test sum(abs2, v1) === 120
         @test prod(v1) === 384
         @test mean(v1) === 5.
         @test maximum(v1) === 8
@@ -52,7 +53,7 @@
         a = @SArray rand(4,3)  # as of Julia v0.5, diff() for regular Array is defined only for vectors and matrices
         @test diff(a) == diff(a, Val{1}) == diff(a, 1)
         @test diff(a, Val{2}) == diff(a, 2)
-        
+
         @test reducedim(max, a, Val{1}, -1.) == reducedim(max, a, 1, -1.)
         @test reducedim(max, a, Val{2}, -1.) == reducedim(max, a, 2, -1.)
     end
@@ -83,7 +84,7 @@
         @test @inferred(broadcast(+, v1, c)) === @SVector [4, 6, 8, 10]
         @test @inferred(broadcast(+, v1, v2)) === map(+, v1, v2)
         @test @inferred(broadcast(+, v1, M)) === @SMatrix [3 4; 7 8; 11 12; 15 16]
-        
+
         @test_throws DimensionMismatch broadcast!(-, MVector{5, Int}(), v1)
 
         broadcast!(-, mv, v1)
@@ -96,7 +97,7 @@
         @test mm == @MMatrix [3 4; 7 8; 11 12; 15 16]
         # issue #103
         @test map(+, M, M) == [2 4; 6 8; 10 12; 14 16]
-        
+
         @test ((@SVector Int64[]) + (@SVector Int64[])) == (@SVector Int64[])
     end
 end

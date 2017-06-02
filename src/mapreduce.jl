@@ -169,6 +169,7 @@ end
 
 # These are all similar in Base but not @inline'd
 @inline sum(a::StaticArray{<:Any, T}) where {T} = reduce(+, zero(T), a)
+@inline sum(f::Base.Callable, a::StaticArray) = mapreduce(f, +, a)
 @inline prod(a::StaticArray{<:Any, T}) where {T} = reduce(*, one(T), a)
 @inline count(a::StaticArray{<:Any, Bool}) = reduce(+, 0, a)
 @inline all(a::StaticArray{<:Any, Bool}) = reduce(&, true, a)  # non-branching versions
