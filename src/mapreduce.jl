@@ -174,8 +174,6 @@ end
 @inline all(a::StaticArray{<:Any, Bool}) = reduce(&, true, a)  # non-branching versions
 @inline any(a::StaticArray{<:Any, Bool}) = reduce(|, false, a) # (benchmarking needed)
 @inline mean(a::StaticArray) = sum(a) / length(a)
-@inline sumabs(a::StaticArray{<:Any, T}) where {T} = mapreduce(abs, +, zero(T), a)
-@inline sumabs2(a::StaticArray{<:Any, T}) where {T} = mapreduce(abs2, +, zero(T), a)
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
 @inline minimum(a::StaticArray, dim::Type{Val{D}}) where {D} = reducedim(min, a, dim)

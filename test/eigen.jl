@@ -27,13 +27,13 @@
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
-        
+
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
-        
+
         m_d = randn(SVector{2}); m = diagm(m_d)
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ sort(m_d)
@@ -60,10 +60,10 @@
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
-       
+
         (vals, vecs) = eig(Symmetric(m, :L))
         @test vals::SVector ≈ vals_a
-        
+
         m_d = randn(SVector{3}); m = diagm(m_d)
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ sort(m_d)
@@ -77,28 +77,30 @@
         # Rank 1
         v = randn(SVector{3,Float64})
         m = v*v'
+        vv = sum(abs2, v)
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
-        @test vals ≈ SVector(0.0, 0.0, sumabs2(v))
+        @test vals ≈ SVector(0.0, 0.0, vv)
         @test eigvals(m) ≈ vals
 
         # Rank 2
         v2 = randn(SVector{3,Float64})
-        v2 -= dot(v,v2)*v/sumabs2(v)
+        v2 -= dot(v,v2)*v/(vv)
+        v2v2 = sum(abs2, v2)
         m += v2*v2'
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
-        if sumabs2(v) < sumabs2(v2)
-            @test vals ≈ SVector(0.0, sumabs2(v), sumabs2(v2))
+        if vv < v2v2
+            @test vals ≈ SVector(0.0, vv, v2v2)
         else
-            @test vals ≈ SVector(0.0, sumabs2(v2), sumabs2(v))
+            @test vals ≈ SVector(0.0, v2v2, vv)
         end
         @test eigvals(m) ≈ vals
 
         # Degeneracy (2 large)
-        m = -99*(v*v')/sumabs2(v) + 100*eye(SMatrix{3,3,Float64})
+        m = -99*(v*v')/vv + 100*eye(SMatrix{3,3,Float64})
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
@@ -106,7 +108,7 @@
         @test eigvals(m) ≈ vals
 
         # Degeneracy (2 small)
-        m = (v*v')/sumabs2(v) + 1e-2*eye(SMatrix{3,3,Float64})
+        m = (v*v')/vv + 1e-2*eye(SMatrix{3,3,Float64})
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
@@ -141,7 +143,7 @@
         @test vecs*diagm(vals)*vecs' ≈ m
         @test eigvals(m) ≈ vals
     end
-    
+
     @testset "4×4" for i = 1:100
         m_a = randn(4,4)
         m_a = m_a*m_a'
@@ -159,7 +161,7 @@
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
-       
+
         (vals, vecs) = eig(Symmetric(m, :L))
         @test vals::SVector ≈ vals_a
         m_d = randn(SVector{4}); m = diagm(m_d)
