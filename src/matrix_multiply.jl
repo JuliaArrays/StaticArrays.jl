@@ -1,12 +1,9 @@
 import Base: *,        Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
 import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
 
-import Base.LinAlg: BlasFloat
+import Base.LinAlg: BlasFloat, matprod
 
 const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
-
-# Idea inspired by https://github.com/JuliaLang/julia/pull/18218
-promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero(T1)*zero(T2))
 
 # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
 
@@ -60,7 +57,7 @@ promote_matprod{T1,T2}(::Type{T1}, ::Type{T2}) = typeof(zero(T1)*zero(T2) + zero
         if length(b) != sa[2]
             throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
         end
-        T = promote_matprod(Ta, Tb)
+        T = promote_op(matprod,Ta,Tb)
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
@@ -78,7 +75,7 @@ end
 
     return quote
         @_inline_meta
-        T = promote_matprod(Ta, Tb)
+        T = promote_op(matprod,Ta,Tb)
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
@@ -171,7 +168,7 @@ end
 
     return quote
         @_inline_meta
-        T = promote_matprod(Ta, Tb)
+        T = promote_op(matprod,Ta,Tb)
         @inbounds return similar_type(a, T, $S)(tuple($(exprs...)))
     end
 end
@@ -190,7 +187,7 @@ end
 
     return quote
         @_inline_meta
-        T = promote_matprod(Ta, Tb)
+        T = promote_op(matprod,Ta,Tb)
 
         @inbounds $(Expr(:block, exprs_init...))
         for j = 2:$(sa[2])
@@ -218,7 +215,7 @@ end
 
     return quote
         @_inline_meta
-        T = promote_matprod(Ta, Tb)
+        T = promote_op(matprod,Ta,Tb)
         $(Expr(:block,
             vect_exprs...,
             :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
@@ -234,7 +231,7 @@ end
     if sa[2] != 0
         exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
-        exprs = [:(zero(promote_matprod(Ta,Tb))) for k = 1:sa[1]]
+        exprs = [:(zero(promote_op(matprod,Ta,Tb))) for k = 1:sa[1]]
     end
 
     return quote
