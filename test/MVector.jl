@@ -36,6 +36,7 @@
         @test isa(@MVector(randexp(Float32, 2)), MVector{2, Float32})
         @test (ex = macroexpand(:(@MVector fill(1.5, 2, 3))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MVector ones(2, 3, 4))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MVector sin(1:5))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MVector [i*j for i in 1:2, j in 2:3])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MVector Float32[i*j for i in 1:2, j in 2:3])); isa(ex, Expr) && ex.head == :error)
     end
