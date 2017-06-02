@@ -59,6 +59,7 @@
         @test (ex = macroexpand(:(@SArray ones)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray fill)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray ones())); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SArray sin(1:5))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray fill())); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray fill(1))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SArray eye(5,6,7,8,9))); isa(ex, Expr) && ex.head == :error)

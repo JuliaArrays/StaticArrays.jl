@@ -40,6 +40,7 @@
         
         @test (ex = macroexpand(:(@SVector fill(1.5, 2, 3))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector ones(2, 3, 4))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@SVector sin(1:5))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector [i*j for i in 1:2, j in 2:3])); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector Float32[i*j for i in 1:2, j in 2:3])); isa(ex, Expr) && ex.head == :error)
     end
