@@ -83,4 +83,9 @@
         @test @inferred(full(Hermitian(m))) == m_a
         @test @inferred(full(Hermitian(m, :L))) == m_a
     end
+
+    @testset "promotion" begin
+        @test @inferred(promote_type(SVector{2,Int}, SVector{2,Float64})) === SVector{2,Float64}
+        @test @inferred(promote_type(SMatrix{2,3,Float32,6}, SMatrix{2,3,Complex{Float64},6})) === SMatrix{2,3,Complex{Float64},6}
+    end
 end
