@@ -11,6 +11,11 @@
         @test isa(x, SVector{2,CartesianIndex{2}})
         @test x == @SVector [CartesianIndex((7,5)), CartesianIndex((15,13))]
 
+        # block matrices
+        bm = @SMatrix [m m; m m]
+        bv = @SVector [v,v]
+        @test (bm*bv)::SVector{2,SVector{2,Int}} == @SVector [[10,22],[10,22]]
+
         # inner product
         @test @inferred(v'*v) === 5
 
@@ -49,6 +54,11 @@
         v = @SVector [1, 2]
         @test @inferred(v*m) === @SMatrix [1 2 3 4; 2 4 6 8]
 
+        # block matrices
+        bm = @SMatrix [m m; m m]
+        bv = @SVector [v,v]
+        @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
+
         # Outer product
         v2 = SVector(1, 2)
         v3 = SVector(3, 4)
@@ -86,6 +96,11 @@
         m = @MArray [1 2; 3 4]
         n = @MArray [2 3; 4 5]
         @test (m*n) == @SMatrix [10 13; 22 29]
+        
+        # block matrices
+        bm = @SMatrix [m m; m m]
+        bm2 = @SMatrix [14 20; 30 44]
+        @test (bm*bm)::SMatrix{2,2,SMatrix{2,2,Int,4}} == @SMatrix [bm2 bm2; bm2 bm2]
 
         # Alternative methods used between 8 < n <= 14 and n > 14
         m_array = rand(1:10, 10, 10)
