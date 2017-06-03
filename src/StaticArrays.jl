@@ -9,7 +9,7 @@ import Base: getindex, setindex!, size, similar, vec, show,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, inv, eig, eigvals, expm, trace, vecnorm, norm, dot, diagm,
-             sum, diff, prod, count, any, all, sumabs, sumabs2, minimum,
+             sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write
 

@@ -278,16 +278,16 @@ end
     r₁ = SVector(a11 - eig1, a12, a13)
     r₂ = SVector(conj(a12), a22 - eig1, a23)
     r₃ = SVector(conj(a13), conj(a23), a33 - eig1)
-    n₁ = sumabs2(r₁)
-    n₂ = sumabs2(r₂)
-    n₃ = sumabs2(r₃)
+    n₁ = sum(abs2, r₁)
+    n₂ = sum(abs2, r₂)
+    n₃ = sum(abs2, r₃)
 
     r₁₂ = r₁ × r₂
     r₂₃ = r₂ × r₃
     r₃₁ = r₃ × r₁
-    n₁₂ = sumabs2(r₁₂)
-    n₂₃ = sumabs2(r₂₃)
-    n₃₁ = sumabs2(r₃₁)
+    n₁₂ = sum(abs2, r₁₂)
+    n₂₃ = sum(abs2, r₂₃)
+    n₃₁ = sum(abs2, r₃₁)
 
     # we want best angle so we put all norms on same footing
     # (cheaper to multiply by third nᵢ rather than divide by the two involved)
