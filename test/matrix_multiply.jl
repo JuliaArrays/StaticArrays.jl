@@ -55,6 +55,7 @@
         @test @inferred(v*m) === @SMatrix [1 2 3 4; 2 4 6 8]
 
         # block matrices
+        m = @SMatrix [1 2; 3 4]
         bm = @SMatrix [m m; m m]
         bv = @SVector [v,v]
         @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
