@@ -27,6 +27,7 @@ using Base.Test
     include("solve.jl") # Strange inference / world-age error
     include("eigen.jl")
     include("expm.jl")
+    include("sqrtm.jl")
     include("chol.jl")
     include("deque.jl")
     include("io.jl")

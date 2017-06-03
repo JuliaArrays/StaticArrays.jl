@@ -8,7 +8,7 @@ import Base: getindex, setindex!, size, similar, vec, show,
              length, convert, promote_op, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
-             fill!, det, inv, eig, eigvals, expm, trace, vecnorm, norm, dot, diagm,
+             fill!, det, inv, eig, eigvals, expm, sqrtm, trace, vecnorm, norm, dot, diagm,
              sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write
@@ -91,6 +91,7 @@ include("inv.jl")
 include("solve.jl")
 include("eigen.jl")
 include("expm.jl")
+include("sqrtm.jl")
 include("cholesky.jl")
 include("deque.jl")
 include("io.jl")
