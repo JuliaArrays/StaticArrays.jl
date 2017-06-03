@@ -1,7 +1,7 @@
 @inline sqrtm(A::StaticMatrix) = _sqrtm(Size(A),A)
 
 @inline function _sqrtm(::Size{(1,1)}, A::SA) where {SA<:StaticArray}
-    s = sqrt(A[1,1])
+    s = sqrtm(A[1,1])
     similar_type(SA,typeof(s))(s)
 end
 
