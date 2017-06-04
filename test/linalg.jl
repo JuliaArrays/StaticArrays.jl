@@ -72,6 +72,7 @@
     @testset "cross()" begin
         @test @inferred(cross(SVector(1,2,3), SVector(4,5,6))) === SVector(-3, 6, -3)
         @test @inferred(cross(SVector(1,2), SVector(4,5))) === -3
+        @test @inferred(cross(SVector(UInt(1),UInt(2)), SVector(UInt(4),UInt(5)))) === -3
 
     end
 
@@ -130,5 +131,12 @@
     @testset "trace" begin
         @test trace(@SMatrix [1.0 2.0; 3.0 4.0]) === 5.0
         @test_throws DimensionMismatch trace(@SMatrix rand(5,4))
+    end
+    
+    @testset "size zero" begin
+        @test vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
+        @test vecnorm(SVector{0, Float64}(())) === 0.
+        @test vecnorm(SVector{0, Float64}(()), 1) === 0.
+        @test trace(SMatrix{0,0,Float64}(())) === 0.
     end
 end
