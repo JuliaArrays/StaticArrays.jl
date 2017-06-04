@@ -124,7 +124,7 @@ typeof(reshape([1,2,3,4], Size(2,2))) === SizedArray{(2, 2),Int64,2,1}
 
 ## Approach
 
-The package provides an range of different useful built-in `StaticArray` types,
+The package provides a range of different useful built-in `StaticArray` types,
 which include mutable and immutable arrays based upon tuples, arrays based upon
 structs, and wrappers of `Array`. There is a relatively simple interface for
 creating your own, custom `StaticArray` types, too.
@@ -132,7 +132,7 @@ creating your own, custom `StaticArray` types, too.
 This package also provides methods for a wide range of `AbstractArray` functions,
 specialized for (potentially immutable) `StaticArray`s. Many of Julia's
 built-in method definitions inherently assume mutability, and further
-performance optimizations may be made when the size of the array is know to the
+performance optimizations may be made when the size of the array is known to the
 compiler. One example of this is by loop unrolling, which has a substantial
 effect on small arrays and tends to automatically triger LLVM's SIMD
 optimizations. Another way performance is boosted is by providing specialized
