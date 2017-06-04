@@ -1,6 +1,6 @@
 """
-    SArray{S, T, L}(x::NTuple{L, T})
-    SArray{S, T, L}(x1, x2, x3, ...)
+    sa = SArray{S, T, L}(x::NTuple{L, T})
+    sa = SArray{S, T, L}(x1, x2, x3, ...)
 
 Construct a statically-sized array `SArray`. Since this type is immutable, the data must be
 provided upon construction and cannot be mutated later. The `S` parameter is a Tuple-type
@@ -9,7 +9,7 @@ array. The `L` parameter is the `length` of the array and is always equal to `pr
 Constructors may drop the `L` and `T` parameters if they are inferrable from the input
 (e.g. `L` is always inferrable from `S`).
 
-    SArray{S}(a::Array)
+    sa = SArray{S}(a::Array)
 
 Construct a statically-sized array of dimensions `S` (expressed as a `Tuple{...}`) using
 the data from `a`. The `S` parameter is mandatory since the size of `a` is unknown to the
@@ -51,6 +51,22 @@ end
 end
 
 @inline SArray(a::StaticArray) = SArray{size_tuple(a)}(Tuple(a)) # TODO fixme
+
+
+"""
+    SA = SArray(s::Size, ::Type{T})
+
+Inferrably construct a concrete (leaf) `SArray` type with the given
+[Size](@ref) `s` and element type `T`.
+
+# Example
+
+```julia
+julia> SArray(Size(3,2,5), Float64)
+StaticArrays.SArray{Tuple{3,2,5},Float64,3,30}
+```
+"""
+SArray{S,T}(s::Size{S}, ::Type{T}) = SArray{Tuple{S...}, T, length(s), prod(s)}
 
 # Simplified show for the type
 show(io::IO, ::Type{SArray{S, T, N}}) where {S, T, N} = print(io, "SArray{$S,$T,$N}")
