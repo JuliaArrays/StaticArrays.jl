@@ -132,4 +132,10 @@
 
         @test_throws BoundsError setindex!(v, 4, -1)
     end
+
+    @testset "promotion" begin
+        @test @inferred(promote_type(MVector{1,Float64}, MVector{1,BigFloat})) == MVector{1,BigFloat}
+        @test @inferred(promote_type(MVector{2,Int}, MVector{2,Float64})) === MVector{2,Float64}
+        @test @inferred(promote_type(MMatrix{2,3,Float32,6}, MMatrix{2,3,Complex{Float64},6})) === MMatrix{2,3,Complex{Float64},6}
+    end
 end

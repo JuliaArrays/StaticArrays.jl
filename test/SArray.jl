@@ -115,4 +115,10 @@
 
         @test_throws Exception m[1] = 1
     end
+
+    @testset "promotion" begin
+        @test @inferred(promote_type(SVector{1,Float64}, SVector{1,BigFloat})) == SVector{1,BigFloat}
+        @test @inferred(promote_type(SVector{2,Int}, SVector{2,Float64})) === SVector{2,Float64}
+        @test @inferred(promote_type(SMatrix{2,3,Float32,6}, SMatrix{2,3,Complex{Float64},6})) === SMatrix{2,3,Complex{Float64},6}
+    end
 end

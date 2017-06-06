@@ -164,8 +164,3 @@ end
         end
     end
 end
-
-# Promotion
-function Base.promote_rule(::Type{SA1}, ::Type{SA2}) where {S,T,U,N, SA1<:StaticArray{S,T,N}, SA2<:StaticArray{S,U,N}}
-    similar_type(SA1, promote_type(T,U), Size(S))
-end

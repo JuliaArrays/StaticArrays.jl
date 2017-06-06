@@ -69,4 +69,10 @@
         @test Matrix(SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
         @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
     end
+
+    @testset "promotion" begin
+        @test @inferred(promote_type(SizedVector{1,Float64,1}, SizedVector{1,BigFloat,1})) == SizedVector{1,BigFloat,1}
+        @test @inferred(promote_type(SizedVector{2,Int,1}, SizedVector{2,Float64,1})) === SizedVector{2,Float64,1}
+        @test @inferred(promote_type(SizedMatrix{2,3,Float32,2}, SizedMatrix{2,3,Complex{Float64},2})) === SizedMatrix{2,3,Complex{Float64},2}
+    end
 end

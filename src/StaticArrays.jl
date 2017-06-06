@@ -5,7 +5,7 @@ module StaticArrays
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar, vec, show,
-             length, convert, promote_op, map, map!, reduce, reducedim, mapreducedim,
+             length, convert, promote_op, promote_rule, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, inv, eig, eigvals, expm, sqrtm, trace, vecnorm, norm, dot, diagm,

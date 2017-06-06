@@ -81,3 +81,8 @@ Creates a `SizedArray` wrapping `array` with the specified statically-known
 package.
 """
 (::Size{S}){S}(a::Array) = SizedArray{Tuple{S...}}(a)
+
+
+function promote_rule(::Type{<:SizedArray{S,T,N,M}}, ::Type{<:SizedArray{S,U,N,M}}) where {S,T,U,N,M}
+    SizedArray{S,promote_type(T,U),N,M}
+end
