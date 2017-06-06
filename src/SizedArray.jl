@@ -45,8 +45,8 @@ end
 end
 
 @inline (::Type{SizedArray{S,T,N}}){S,T,N}(x::Tuple) = SizedArray{S,T,N,N}(x)
-@inline (::Type{SizedArray{S,T}}){S,T}(x::Tuple) = SizedArray{S,T,_dims(S),_dims(S)}(x)
-@inline (::Type{SizedArray{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,_dims(S),_dims(S)}(x)
+@inline (::Type{SizedArray{S,T}}){S,T}(x::Tuple) = SizedArray{S,T,tuple_length(S),tuple_length(S)}(x)
+@inline (::Type{SizedArray{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,tuple_length(S),tuple_length(S)}(x)
 
 # Overide some problematic default behaviour
 @inline convert{SA<:SizedArray}(::Type{SA}, sa::SizedArray) = SA(sa.data)
@@ -64,17 +64,13 @@ end
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
-SizedVector{S,T,M} = SizedArray{S,T,1,M}
-@inline (::Type{SizedVector{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,1,M}(a)
-@inline (::Type{SizedVector{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,1,1}(x)
-@inline (::Type{Vector})(sa::SizedVector) = sa.data
-@inline convert(::Type{Vector}, sa::SizedVector) = sa.data
+SizedVector{S,T,M} = SizedArray{Tuple{S},T,1,M}
+@inline (::Type{SizedVector{S}}){S,T,M}(a::Array{T,M}) = SizedArray{Tuple{S},T,1,M}(a)
+@inline (::Type{SizedVector{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{Tuple{S},T,1,1}(x)
 
-SizedMatrix{S,T,M} = SizedArray{S,T,2,M}
-@inline (::Type{SizedMatrix{S}}){S,T,M}(a::Array{T,M}) = SizedArray{S,T,2,M}(a)
-@inline (::Type{SizedMatrix{S}}){S,T,L}(x::NTuple{L,T}) = SizedArray{S,T,2,2}(x)
-@inline (::Type{Matrix})(sa::SizedMatrix) = sa.data
-@inline convert(::Type{Matrix}, sa::SizedMatrix) = sa.data
+SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}
+@inline (::Type{SizedMatrix{S1,S2}}){S1,S2,T,M}(a::Array{T,M}) = SizedArray{Tuple{S1,S2},T,2,M}(a)
+@inline (::Type{SizedMatrix{S1,S2}}){S1,S2,T,L}(x::NTuple{L,T}) = SizedArray{Tuple{S1,S2},T,2,2}(x)
 
 
 """
