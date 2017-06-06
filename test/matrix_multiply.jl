@@ -58,6 +58,7 @@
         m = @SMatrix [1 2; 3 4]
         bm = @SMatrix [m m; m m]
         bv = @SVector [v,v]
+        # Broken only because output turns into a normal array:
         @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
 
         # Outer product
@@ -97,7 +98,7 @@
         m = @MArray [1 2; 3 4]
         n = @MArray [2 3; 4 5]
         @test (m*n) == @SMatrix [10 13; 22 29]
-        
+
         # block matrices
         bm = @SMatrix [m m; m m]
         bm2 = @SMatrix [14 20; 30 44]
