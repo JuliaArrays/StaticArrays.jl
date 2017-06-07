@@ -5,4 +5,5 @@
     @test_throws ErrorException Scalar(2)[2]
     @test Scalar(2)[] == 2
     @test Tuple(Scalar(2)) == (2,)
+    @test Tuple(convert(Scalar{Float64}, [2.0])) == (2.0,)
 end
