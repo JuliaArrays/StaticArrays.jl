@@ -69,14 +69,14 @@
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) == [1 2; 3 4]
     end
-    
+
     @testset "full" begin
         m_a = randn(2,2)
         m_a = m_a*m_a.'
         m = SMatrix{2,2}(m_a)
         @test @inferred(full(Symmetric(m))) == m_a
         @test @inferred(full(Symmetric(m, :L))) == m_a
-        
+
         m_a = randn(2,2) + im*randn(2,2)
         m_a = m_a*m_a'
         m = SMatrix{2,2}(m_a)
