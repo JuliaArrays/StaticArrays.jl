@@ -22,6 +22,7 @@ using Base.Test
     include("broadcast.jl")
     include("linalg.jl")
     include("matrix_multiply.jl")
+    include("triangular.jl")
     include("det.jl")
     include("inv.jl")
     include("solve.jl") # Strange inference / world-age error
