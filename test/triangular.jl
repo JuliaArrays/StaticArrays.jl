@@ -1,8 +1,8 @@
 @testset "Triangular-matrix multiplication" begin
     for n in (1, 2, 3, 4),
-        eltyA in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat}, Int),
+        eltyA in (Float64, Complex128, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat})
+                eltyB in (Float64, Complex128)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
@@ -38,9 +38,9 @@ end
 
 @testset "Triangular-matrix division" begin
     for n in (1, 2, 3, 4),
-        eltyA in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat}, Int),
+        eltyA in (Float64, Complex128, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float32, Float64, BigFloat, Complex64, Complex128, Complex{BigFloat})
+                eltyB in (Float64, Complex128)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
