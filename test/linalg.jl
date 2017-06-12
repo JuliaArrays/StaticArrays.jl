@@ -40,6 +40,12 @@
         @test @inferred(diagm(SVector(1,2))) === @SMatrix [1 0; 0 2]
     end
 
+    @testset "diag()" begin
+        @test @inferred(diag(@SMatrix([0 1; 2 3]))) === SVector(0, 3)
+        @test @inferred(diag(@SMatrix([0 1 2; 3 4 5]), Val{1})) === SVector(1, 5)
+        @test @inferred(diag(@SMatrix([0 1; 2 3; 4 5]), Val{-1})) === SVector(2, 5)
+    end
+
     @testset "one() and zero()" begin
         @test @inferred(one(SMatrix{2,2,Int})) === @SMatrix [1 0; 0 1]
         @test @inferred(one(SMatrix{2,2})) === @SMatrix [1.0 0.0; 0.0 1.0]
