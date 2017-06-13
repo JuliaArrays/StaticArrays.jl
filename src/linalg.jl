@@ -183,6 +183,19 @@ end
     end
 end
 
+@inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
+@generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
+    S1, S2 = S
+    rng = D ≤ 0 ? range(1-D, S1+1, min(S1+D, S2)) : range(D*S1+1, S1+1, min(S1, S2-D))
+    Snew = length(rng)
+    T = eltype(m)
+    exprs = [:(m[$i]) for i = rng]
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return similar_type($m, Size($Snew))(tuple($(exprs...)))
+    end
+end
+
 @inline cross(a::StaticVector, b::StaticVector) = _cross(same_size(a, b), a, b)
 _cross(::Size{S}, a::StaticVector, b::StaticVector) where {S} = error("Cross product not defined for $(S[1])-vectors")
 @inline function _cross(::Size{(2,)}, a::StaticVector, b::StaticVector)
