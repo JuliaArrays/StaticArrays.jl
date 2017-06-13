@@ -54,5 +54,8 @@ end
         @test SX isa StaticMatrix # test not falling back to Base
         @test SX ≈ X
         @test eltype(SX) == eltype(X)
+    
+        v_bad = @SVector ones(n+1)
+        @test_throws DimensionMismatch A\v_bad
     end
 end
