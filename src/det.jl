@@ -24,12 +24,13 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
-@generated function _det{S,T}(::Size{S}, A::StaticMatrix{T})
+@generated function _det{S}(::Size{S}, A::StaticMatrix)
     if S[1] != S[2]
         throw(DimensionMismatch("matrix is not square"))
     end
     return quote # Implementation from Base
         @_inline_meta
+        T = eltype(A)
         T2 = typeof((one(T)*zero(T) + zero(T))/one(T))
         if istriu(A) || istril(A)
             return convert(T2, det(UpperTriangular(A))) # Is this a Julia bug that a convert is not type stable??
