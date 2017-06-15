@@ -14,19 +14,20 @@ end
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
 @generated function promote_tuple_eltype{T <: Tuple}(::Union{T,Type{T}})
-    t = Union{}
+    types = []
     for i = 1:length(T.parameters)
         tmp = T.parameters[i]
         if tmp <: Vararg
             tmp = tmp.parameters[1]
         end
-        t = promote_type(t, tmp)
+        push!(types, tmp)
     end
     return quote
         $(Expr(:meta,:pure))
-        $t
+        $(Expr(:call, :promote_type, types...))
     end
 end
+
 
 # The ::Tuple variants exist to make sure that anything that calls with a tuple
 # instead of a Tuple gets through to the constructor, so the user gets a nice
