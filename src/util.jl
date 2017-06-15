@@ -20,7 +20,7 @@ end
         if tmp <: Vararg
             tmp = tmp.parameters[1]
         end
-        t = promote_type(t, tmp)
+        t = :(promote_type($t, $tmp))
     end
     return quote
         $(Expr(:meta,:pure))
