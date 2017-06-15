@@ -7,7 +7,7 @@ TupleN{T,N} = NTuple{N,T}
 @generated function convert_ntuple{N,T}(::Type{T}, d::NTuple{N,Any})
     exprs = ntuple(i -> :(convert(T, d[$i])), Val{N})
     return quote
-        $(Expr(:meta, :inline))
+        @_inline_meta
         $(Expr(:tuple, exprs...))
     end
 end
@@ -20,11 +20,11 @@ end
         if tmp <: Vararg
             tmp = tmp.parameters[1]
         end
-        push!(types, tmp)
+        t = :(promote_type($t, $tmp))
     end
     return quote
-        $(Expr(:meta,:pure))
-        $(Expr(:call, :promote_type, types...))
+        @_inline_meta
+        $t
     end
 end
 
