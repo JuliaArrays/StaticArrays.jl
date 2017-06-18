@@ -96,6 +96,7 @@ include("sqrtm.jl")
 include("cholesky.jl")
 include("deque.jl")
 include("io.jl")
+include("svd.jl")
 
 include("FixedSizeArrays.jl")
 include("ImmutableArrays.jl")
