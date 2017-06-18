@@ -1,3 +1,5 @@
+using StaticArrays, Base.Test
+
 """
 Create an almost singular `Matrix{Float64}` of size `N×N`.
 
@@ -69,24 +71,54 @@ end
 end
 
 
-# Fuzz testing for inv()
+#-------------------------------------------------------------------------------
+# More comprehensive but qualitiative testing for inv() accuracy
 #=
-for i=1:100
-    N = 4
-    A = almost_singular_matrix(N, 3, 1e-7)
-    SA = SMatrix{N,N}(A)
-    SA_residual = norm(Matrix(SA*inv(SA) - eye(N)))
-    A_residual = norm(A*inv(A) - eye(N))
-    if SA_residual/A_residual > 10000
-        @printf("%10e %.4f\n", SA_residual, SA_residual/A_residual)
-        println("[")
-        for i=1:4
-            for j=1:4
-                @printf("%.17e ", A[i,j])
-            end
-            println()
-        end
-        println("]")
+using PyPlot
+
+inv_residual(A::AbstractMatrix) = norm(A*inv(A) - eye(size(A,1)))
+
+"""
+    plot_residuals(N, rank, ϵ)
+
+Plot `inv_residual(::StaticMatrix)` vs `inv_residual(::Matrix)`
+
+"""
+function plot_residuals(N, rank, ϵ)
+    A_residuals = []
+    SA_residuals = []
+    for i=1:10000
+        A = almost_singular_matrix(N, rank, ϵ)
+        SA = SMatrix{N,N}(A)
+        SA_residual = norm(Matrix(SA*inv(SA) - eye(N)))
+        A_residual = norm(A*inv(A) - eye(N))
+        push!(SA_residuals, SA_residual)
+        push!(A_residuals, A_residual)
+        #= if SA_residual/A_residual > 10000 =#
+        #=     @printf("%10e %.4f\n", SA_residual, SA_residual/A_residual) =#
+        #=     println("[") =#
+        #=     for i=1:4 =#
+        #=         for j=1:4 =#
+        #=             @printf("%.17e ", A[i,j]) =#
+        #=         end =#
+        #=         println() =#
+        #=     end =#
+        #=     println("]") =#
+        #= end =#
     end
+    loglog(SA_residuals, A_residuals, ".", markersize=1.5)
 end
+
+# Plot the accuracy of inv implementations for almost singular matrices of
+# various rank
+clf()
+N = 4
+labels = []
+for i in N:-1:1
+    plot_residuals(N, i, 1e-7)
+    push!(labels, "rank $i")
+end
+xlabel("residual norm - inv(::StaticArray)")
+ylabel("residual norm - inv(::Array)")
+legend(labels)
 =#
