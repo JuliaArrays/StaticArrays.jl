@@ -1,6 +1,8 @@
 using StaticArrays
 using Base.Test
 
+include("testutil.jl")
+
 @testset "StaticArrays" begin
     include("SVector.jl")
     include("MVector.jl")
