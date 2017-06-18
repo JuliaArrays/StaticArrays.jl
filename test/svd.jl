@@ -1,16 +1,16 @@
 using StaticArrays, Base.Test
 
-@testset "SVD" begin
+@testset "SVD factorization" begin
     @testset "svd" begin
-        @testinf svdvals(@SMatrix [2 0; 0 0]) ≊ [2, 0]
+        @testinf svdvals(@SMatrix [2 0; 0 0])::StaticVector ≊ [2, 0]
         @testinf svdvals((@SMatrix [2 -2; 1 1]) / sqrt(2)) ≊ [2, 1]
 
         m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
         @testinf svdvals(m3) ≈ svdvals(Matrix(m3))
 
-        @testinf svd(m3)[1] ≈ svd(Matrix(m3))[1]
-        @testinf svd(m3)[2] ≈ svd(Matrix(m3))[2]
-        @testinf svd(m3)[3] ≈ svd(Matrix(m3))[3]
+        @testinf svd(m3)[1]::StaticMatrix ≈ svd(Matrix(m3))[1]
+        @testinf svd(m3)[2]::StaticVector ≈ svd(Matrix(m3))[2]
+        @testinf svd(m3)[3]::StaticMatrix ≈ svd(Matrix(m3))[3]
     end
 
     @testset "svdfact" begin
