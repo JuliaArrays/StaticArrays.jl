@@ -33,6 +33,7 @@ include("testutil.jl")
     include("chol.jl")
     include("deque.jl")
     include("io.jl")
+    include("svd.jl")
 
     include("fixed_size_arrays.jl")
 end
