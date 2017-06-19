@@ -11,11 +11,6 @@ SVD(U::AbstractArray{T}, S::AbstractVector, Vt::AbstractArray{T}) where {T} = SV
 
 getindex(::SVD, ::Symbol) = error("In order to avoid type instability, StaticArrays.SVD doesn't support indexing the output of svdfact with a symbol.  Instead, you can access the fields of the factorization directly as f.U, f.S, and f.Vt")
 
-# Return the "diagonal size" of a matrix - the minimum of the two dimensions
-@generated function diagsize(A::StaticMatrix{N,M}) where {N,M}
-    :($(min(N,M)))
-end
-
 function svdvals!(A::StaticMatrix)
     sv = svdvals!(Matrix(A))
     similar_type(A, eltype(sv), Size(diagsize(A)))(sv)
