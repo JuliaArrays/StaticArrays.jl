@@ -4,7 +4,7 @@ import Base: \, Ac_ldiv_B, At_ldiv_B
 @inline Size(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = Size(A.data)
 
 # TODO add specialized op(AbstractTriangular, AbstractTriangular) methods
-# TODO add *_rdiv_* methods
+# TODO add A*_rdiv_B* methods
 @inline *(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_B(Size(A), Size(B), A, B)
 @inline Ac_mul_B(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _Ac_mul_B(Size(A), Size(B), A, B)
@@ -34,520 +34,332 @@ At_mul_Bt(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatri
 @inline Ac_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _Ac_ldiv_B(Size(A), Size(B), A, B)
 @inline At_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _At_ldiv_B(Size(A), Size(B), A, B)
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = 1:m
-            ex = :(A.data[$i,$i]*B[$i,$j])
-            for k = i + 1:m
-                ex = :($ex + A.data[$i,$k]*B[$k,$j])
+for f in (:_A_mul_B, :_Ac_mul_B, :_At_mul_B)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
+            m = sb[1]
+            n = length(sb) > 1 ? sb[2] : 1
+            if m != sa[1]
+                throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = promote_op(matprod, TA, TB)
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+
+            code = quote end
+            for j = 1:n
+                if $(f == :_A_mul_B)
+                    for i = 1:m
+                        ex = :(A.data[$(sub2ind(sa,i,i))]*B[$(sub2ind(sb,i,j))])
+                        for k = i+1:m
+                            ex = :($ex + A.data[$(sub2ind(sa,i,k))]*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                elseif $(f == :_Ac_mul_B)
+                    for i = m:-1:1
+                        ex = :(A.data[$(sub2ind(sa,i,i))]'*B[$(sub2ind(sb,i,j))])
+                        for k = 1:i-1
+                            ex = :($ex + A.data[$(sub2ind(sa,k,i))]'*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                else # $(f == :_At_mul_B)
+                    for i = m:-1:1
+                        ex = :(A.data[$(sub2ind(sa,i,i))].'*B[$(sub2ind(sb,i,j))])
+                        for k = 1:i-1
+                            ex = :($ex + A.data[$(sub2ind(sa,k,i))].'*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $code
+                return similar_type(B, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = m:-1:1
-            ex = :(A.data[$i,$i]*B[$i,$j])
-            for k = 1:i - 1
-                ex = :($ex + A.data[$i,$k]*B[$k,$j])
+for f in (:_A_mul_B, :_Ac_mul_B, :_At_mul_B)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::LowerTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
+            m = sb[1]
+            n = length(sb) > 1 ? sb[2] : 1
+            if m != sa[1]
+                throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = promote_op(matprod, TA, TB)
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+
+            code = quote end
+            for j = 1:n
+                if $(f == :_A_mul_B)
+                    for i = m:-1:1
+                        ex = :(A.data[$(sub2ind(sa,i,i))]*B[$(sub2ind(sb,i,j))])
+                        for k = 1:i-1
+                            ex = :($ex + A.data[$(sub2ind(sa,i,k))]*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                elseif $(f == :_Ac_mul_B)
+                    for i = 1:m
+                        ex = :(A.data[$(sub2ind(sa,i,i))]'*B[$(sub2ind(sb,i,j))])
+                        for k = i+1:m
+                            ex = :($ex + A.data[$(sub2ind(sa,k,i))]'*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                else # $(f == :_At_mul_B)
+                    for i = 1:m
+                        ex = :(A.data[$(sub2ind(sa,i,i))].'*B[$(sub2ind(sb,i,j))])
+                        for k = i+1:m
+                            ex = :($ex + A.data[$(sub2ind(sa,k,i))].'*B[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $code
+                return similar_type(B, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _Ac_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = m:-1:1
-            ex = :(A.data[$i,$i]'*B[$i,$j])
-            for k = 1:i - 1
-                ex = :($ex + A.data[$k,$i]'*B[$k,$j])
+for f in (:_A_mul_B, :_A_mul_Bc, :_A_mul_Bt)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+            m, n = sa[1], sa[2]
+            if sb[1] != n
+                throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = promote_op(matprod, TA, TB)
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+
+            code = quote end
+            for i = 1:m
+                if $(f == :_A_mul_B)
+                    for j = n:-1:1
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))])
+                        for k = 1:j-1
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                elseif $(f == :_A_mul_Bc)
+                    for j = 1:n
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))]')
+                        for k = j+1:n
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))]')
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                else # $(f == :_A_mul_Bt)
+                    for j = 1:n
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))].')
+                        for k = j + 1:n
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))].')
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $code
+                return similar_type(A, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _Ac_mul_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = 1:m
-            ex = :(A.data[$i,$i]'*B[$i,$j])
-            for k = i + 1:m
-                ex = :($ex + A.data[$k,$i]'*B[$k,$j])
+for f in (:_A_mul_B, :_A_mul_Bc, :_A_mul_Bt)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+            m, n = sa[1], sa[2]
+            if sb[1] != n
+                throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = promote_op(matprod, TA, TB)
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+
+            code = quote end
+            for i = 1:m
+                if $(f == :_A_mul_B)
+                    for j = 1:n
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))])
+                        for k = j+1:n
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,k,j))])
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                elseif $(f == :_A_mul_Bc)
+                    for j = n:-1:1
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))]')
+                        for k = 1:j-1
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))]')
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                else # $(f == :_A_mul_Bt)
+                    for j = n:-1:1
+                        ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))].')
+                        for k = 1:j-1
+                            ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))].')
+                        end
+                        push!(code.args, :($(X[i,j]) = $ex))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $code
+                return similar_type(A, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _At_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = m:-1:1
-            ex = :(A.data[$i,$i].'*B[$i,$j])
-            for k = 1:i - 1
-                ex = :($ex + A.data[$k,$i].'*B[$k,$j])
+for t in (UpperTriangular, LowerTriangular)
+    @eval begin
+        @generated function _A_ldiv_B(::Size{sa}, ::Size{sb}, A::$t{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
+            m = sb[1]
+            n = length(sb) > 1 ? sb[2] : 1
+            if m != sa[1]
+                throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+            init = [:($(X[i,j]) = B[$(sub2ind(sb,i,j))]) for i = 1:m, j = 1:n]
+
+            code = quote end
+            for k = 1:n
+                for j = $(t == UpperTriangular ? :(m:-1:1) : :(1:m))
+                    if k == 1
+                        push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(Base.LinAlg.SingularException($j))))
+                    end
+                    push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $(X[j,k])))
+                    for i = $(t == UpperTriangular ? :(j-1:-1:1) : :(j+1:m))
+                        push!(code.args, :($(X[i,k]) -= A.data[$(sub2ind(sa,i,j))]*$(X[j,k])))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $(Expr(:block, init...))
+                @inbounds $code
+                @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _At_mul_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for j = 1:n
-        for i = 1:m
-            ex = :(A.data[$i,$i].'*B[$i,$j])
-            for k = i + 1:m
-                ex = :($ex + A.data[$k,$i].'*B[$k,$j])
+for f in (:_Ac_ldiv_B, :_At_ldiv_B)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
+            m = sb[1]
+            n = length(sb) > 1 ? sb[2] : 1
+            if m != sa[1]
+                throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+            TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
+
+            code = quote end
+            for k = 1:n
+                if $(f == :_Ac_ldiv_B)
+                    for j = 1:m
+                        ex = :(B[$(sub2ind(sb,j,k))])
+                        for i = 1:j-1
+                            ex = :($ex - A.data[$(sub2ind(sa,i,j))]'*$(X[i,k]))
+                        end
+                        if k == 1
+                            push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(Base.LinAlg.SingularException($j))))
+                        end
+                        push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))]' \ $ex))
+                    end
+                else # $(f == :_At_ldiv_B)
+                    for j = 1:m
+                        ex = :(B[$(sub2ind(sb,j,k))])
+                        for i = 1:j-1
+                            ex = :($ex - A.data[$(sub2ind(sa,i,j))]*$(X[i,k]))
+                        end
+                        if k == 1
+                            push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(Base.LinAlg.SingularException($j))))
+                        end
+                        push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $ex))
+                    end
+                end
+            end
+
+            return quote
+                @_inline_meta
+                @inbounds $code
+                @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+            end
+        end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = n:-1:1
-            ex = :(A[$i,$j]*B[$j,$j])
-            for k = 1:j - 1
-                ex = :($ex + A[$i,$k]*B.data[$k,$j])
+for f in (:_Ac_ldiv_B, :_At_ldiv_B)
+    @eval begin
+        @generated function $f(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
+            m = sb[1]
+            n = length(sb) > 1 ? sb[2] : 1
+            if m != sa[1]
+                throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
+            TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+            X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = 1:n
-            ex = :(A[$i,$j]*B[$j,$j])
-            for k = j + 1:n
-                ex = :($ex + A[$i,$k]*B.data[$k,$j])
+            code = quote end
+            for k = 1:n
+                if $(f == :_Ac_ldiv_B)
+                    for j = m:-1:1
+                        ex = :(B[$(sub2ind(sb,j,k))])
+                        for i = m:-1:j+1
+                            ex = :($ex - A.data[$(sub2ind(sa,i,j))]'*$(X[i,k]))
+                        end
+                        if k == 1
+                            push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(Base.LinAlg.SingularException($j))))
+                        end
+                        push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))]' \ $ex))
+                    end
+                else # $(f == :_At_ldiv_B)
+                    for j = m:-1:1
+                        ex = :(B[$(sub2ind(sb,j,k))])
+                        for i = m:-1:j+1
+                            ex = :($ex - A.data[$(sub2ind(sa,i,j))]*$(X[i,k]))
+                        end
+                        if k == 1
+                            push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(Base.LinAlg.SingularException($j))))
+                        end
+                        push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $ex))
+                    end
+                end
             end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
 
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = 1:n
-            ex = :(A[$i,$j]*B[$j,$j]')
-            for k = j + 1:n
-                ex = :($ex + A[$i,$k]*B.data[$j,$k]')
-            end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = n:-1:1
-            ex = :(A[$i,$j]*B[$j,$j]')
-            for k = 1:j - 1
-                ex = :($ex + A[$i,$k]*B.data[$j,$k]')
-            end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_mul_Bt(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = 1:n
-            ex = :(A[$i,$j]*B[$j,$j].')
-            for k = j + 1:n
-                ex = :($ex + A[$i,$k]*B.data[$j,$k].')
-            end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_mul_Bt(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
-    if sb[1] != n
-        throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
-    end
-
-    TAB = promote_op(matprod, TA, TB)
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for i = 1:m
-        for j = n:-1:1
-            ex = :(A[$i,$j]*B[$j,$j].')
-            for k = 1:j - 1
-                ex = :($ex + A[$i,$k]*B.data[$j,$k].')
-            end
-            push!(code.args, :($(X[i,j]) = $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_ldiv_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-    init = [:($(X[i,j]) = B[$i,$j]) for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = m:-1:1
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j] \ $(X[j,k])))
-            for i = j-1:-1:1
-                push!(code.args, :($(X[i,k]) -= A.data[$i,$j]*$(X[j,k])))
+            return quote
+                @_inline_meta
+                @inbounds $code
+                @inbounds return similar_type(B, $TAB)(tuple($(X...)))
             end
         end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $(Expr(:block, init...))
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _A_ldiv_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-    init = [:($(X[i,j]) = B[$i,$j]) for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = 1:m
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j] \ $(X[j,k])))
-            for i = j+1:m
-                push!(code.args, :($(X[i,k]) -= A.data[$i,$j]*$(X[j,k])))
-            end
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $(Expr(:block, init...))
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _At_ldiv_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = 1:m
-            ex = :(B[$j,$k])
-            for i = 1:j-1
-                ex = :($ex - A.data[$i,$j]*$(X[i,k]))
-            end
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j] \ $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _At_ldiv_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = m:-1:1
-            ex = :(B[$j,$k])
-            for i = m:-1:j+1
-                ex = :($ex - A.data[$i,$j]*$(X[i,k]))
-            end
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j] \ $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _Ac_ldiv_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = 1:m
-            ex = :(B[$j,$k])
-            for i = 1:j-1
-                ex = :($ex - A.data[$i,$j]'*$(X[i,k]))
-            end
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j]' \ $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
-    end
-end
-
-@generated function _Ac_ldiv_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
-    m = sb[1]
-    n = length(sb) > 1 ? sb[2] : 1
-    if m != sa[1]
-        throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
-    end
-
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
-    X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-
-    code = quote end
-    for k = 1:n
-        for j = m:-1:1
-            ex = :(B[$j,$k])
-            for i = m:-1:j+1
-                ex = :($ex - A.data[$i,$j]'*$(X[i,k]))
-            end
-            if k == 1
-                push!(code.args, :(A.data[$j,$j] == zero(A.data[$j,$j]) && throw(Base.LinAlg.SingularException($j))))
-            end
-            push!(code.args, :($(X[j,k]) = A.data[$j,$j]' \ $ex))
-        end
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
     end
 end
