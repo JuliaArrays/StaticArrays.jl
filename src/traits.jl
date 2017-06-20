@@ -123,3 +123,7 @@ end
 @noinline function _throw_size_mismatch(as...)
     throw(DimensionMismatch("Sizes $(map(_size, as)) of input arrays do not match"))
 end
+
+# Return the "diagonal size" of a matrix - the minimum of the two dimensions
+diagsize(A::StaticMatrix) = diagsize(Size(A))
+@pure diagsize(::Size{S}) where {S} = min(S...)

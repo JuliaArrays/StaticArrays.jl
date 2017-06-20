@@ -1,6 +1,7 @@
 using StaticArrays
 using Base.Test
 
+include("testutil.jl")
 include("SVector.jl")
 include("MVector.jl")
 include("SMatrix.jl")
@@ -12,7 +13,6 @@ include("Scalar.jl")
 include("SUnitRange.jl")
 include("SizedArray.jl")
 include("custom_types.jl")
-
 include("core.jl")
 include("abstractarray.jl")
 include("indexing.jl")
@@ -31,5 +31,4 @@ include("sqrtm.jl")
 include("chol.jl")
 include("deque.jl")
 include("io.jl")
-
 include("fixed_size_arrays.jl")

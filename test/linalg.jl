@@ -1,3 +1,5 @@
+using StaticArrays, Base.Test
+
 @testset "Linear algebra" begin
 
     @testset "SVector as a (mathematical) vector space" begin
@@ -38,6 +40,12 @@
 
     @testset "diagm()" begin
         @test @inferred(diagm(SVector(1,2))) === @SMatrix [1 0; 0 2]
+    end
+
+    @testset "diag()" begin
+        @test @inferred(diag(@SMatrix([0 1; 2 3]))) === SVector(0, 3)
+        @test @inferred(diag(@SMatrix([0 1 2; 3 4 5]), Val{1})) === SVector(1, 5)
+        @test @inferred(diag(@SMatrix([0 1; 2 3; 4 5]), Val{-1})) === SVector(2, 5)
     end
 
     @testset "one() and zero()" begin
@@ -132,7 +140,7 @@
         @test trace(@SMatrix [1.0 2.0; 3.0 4.0]) === 5.0
         @test_throws DimensionMismatch trace(@SMatrix rand(5,4))
     end
-    
+
     @testset "size zero" begin
         @test vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test vecnorm(SVector{0, Float64}(())) === 0.
