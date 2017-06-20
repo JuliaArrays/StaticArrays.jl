@@ -15,6 +15,7 @@ include("testutil.jl")
     include("SUnitRange.jl")
     include("SizedArray.jl")
     include("custom_types.jl")
+    include("promotion.jl")
 
     include("core.jl")
     include("abstractarray.jl")
