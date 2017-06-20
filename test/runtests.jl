@@ -1,6 +1,8 @@
 using StaticArrays
 using Base.Test
 
+include("testutil.jl")
+
 @testset "StaticArrays" begin
     include("SVector.jl")
     include("MVector.jl")
@@ -31,6 +33,7 @@ using Base.Test
     include("chol.jl")
     include("deque.jl")
     include("io.jl")
+    include("svd.jl")
 
     include("fixed_size_arrays.jl")
 end
