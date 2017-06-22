@@ -54,14 +54,13 @@ end
 ## Indexing utilities  ##
 #########################
 
-@pure tail(::Type{Size{S}}) where {S} = Size{Base.tail(S)}
-@inline tail(::S) where {S<:Size} = tail(S)()
-@inline tail(s::Size{()}) = s
+@pure unpack_size(::Type{Size{S}}) where {S} = map(Size, S)
 
-@inline index_sizes(s::Size) = ()
-@inline index_sizes(s::Size, ::Int, inds...) = (Size(), index_sizes(tail(s), inds...)...)
-@inline index_sizes(s::Size, a::StaticArray, inds...) = (Size(a), index_sizes(tail(s), inds...)...)
-@inline index_sizes(s::Size, ::Colon, inds...) = (Size(s[1]), index_sizes(tail(s), inds...)...)
+@inline index_size(::Size, ::Int) = Size()
+@inline index_size(::Size, a::StaticArray) = Size(a)
+@inline index_size(s::Size, ::Colon) = s
+
+@inline index_sizes(::S, inds...) where {S<:Size} = map(index_size, unpack_size(S), inds)
 
 @inline index_sizes() = ()
 @inline index_sizes(::Int, inds...) = (Size(), index_sizes(inds...)...)
