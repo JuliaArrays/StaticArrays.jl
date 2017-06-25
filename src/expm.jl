@@ -40,7 +40,27 @@ end
     (newtype)((m11, m21, m12, m22))
 end
 
-# TODO add complex valued expm
+@inline function _expm(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Complex})
+    T = typeof(exp(zero(eltype(A))))
+    newtype = similar_type(A,T)
+
+    @inbounds a = A[1]
+    @inbounds c = A[2]
+    @inbounds b = A[3]
+    @inbounds d = A[4]
+
+    z = sqrt((a-d)*(a-d) + 4.0*b*c )
+    e = exp(a/2.0 + d/2.0 - z/2.0)
+    f = exp(a/2.0 + d/2.0 + z/2.0)
+
+    m11 = -(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z)
+    m12 = -((e * b)/z) + (f * b)/z
+    m21 = -((e * c)/z) + (f * c)/z
+    m22 = -(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z)
+
+    (newtype)((m11, m21, m12, m22))
+end
+
 # TODO add special case for 3x3 matrices
 
 @inline _expm(s::Size, A::StaticArray) = s(Base.expm(Array(A)))
