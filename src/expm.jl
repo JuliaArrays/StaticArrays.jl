@@ -52,11 +52,12 @@ end
     z = sqrt((a-d)*(a-d) + 4.0*b*c )
     e = exp(a/2.0 + d/2.0 - z/2.0)
     f = exp(a/2.0 + d/2.0 + z/2.0)
+    zr = 1/z
 
-    m11 = -(e*(a - d - z))/(2.0* z) + (f*(a - d + z))/(2.0* z)
-    m12 = -((e * b)/z) + (f * b)/z
-    m21 = -((e * c)/z) + (f * c)/z
-    m22 = -(e*(-a + d - z))/(2.0* z) + (f*(-a + d + z))/(2.0* z)
+    m11 = (-e*(a - d - z) + f*(a - d + z)) * 0.5 * zr
+    m12 = (f-e) * b * zr
+    m21 = (f-e) * c * zr
+    m22 = (-e*(-a + d - z) + f*(-a + d + z)) * 0.5 * zr
 
     (newtype)((m11, m21, m12, m22))
 end
