@@ -49,15 +49,15 @@ end
     @inbounds b = A[3]
     @inbounds d = A[4]
 
-    z = sqrt((a-d)*(a-d) + 4.0*b*c )
-    e = exp(a/2.0 + d/2.0 - z/2.0)
-    f = exp(a/2.0 + d/2.0 + z/2.0)
-    zr = 1/z
+    z = sqrt((a - d)*(a - d) + 4*b*c )
+    e = exp((a + d - z)/2)
+    f = exp((a + d + z)/2)
+    zr = inv(z)
 
-    m11 = (-e*(a - d - z) + f*(a - d + z)) * 0.5 * zr
+    m11 = (-e*(a - d - z) + f*(a - d + z)) * zr/2  
     m12 = (f-e) * b * zr
     m21 = (f-e) * c * zr
-    m22 = (-e*(-a + d - z) + f*(-a + d + z)) * 0.5 * zr
+    m22 = (-e*(-a + d - z) + f*(-a + d + z)) * zr/2
 
     (newtype)((m11, m21, m12, m22))
 end
