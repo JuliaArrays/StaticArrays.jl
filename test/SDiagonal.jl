@@ -15,8 +15,13 @@
     end
 
     @testset "Methods" begin
+    
         m = SDiagonal(@SVector [11, 12, 13, 14])
-
+        m2 = diagm([11, 12, 13, 14])
+        
+        b = @SVector [2,-1,2,1]
+        b2 = Vector(b)
+        
         @test isimmutable(m) == true
 
         @test m[1,1] === 11
@@ -47,5 +52,21 @@
         @test length(m) === 4*4
 
         @test_throws Exception m[1] = 1
+        
+        @test m*b ==  @SVector [22,-12,26,14]
+        @test m\b == m2\b
+        @test m*m == m2*m
+        
+        @test ishermitian(m) == ishermitian(m2)
+        @test isposdef(m) == isposdef(m2)
+        @test issymmetric(m) == issymmetric(m2)
+        
+        @test m' == m
+        @test 2m == m + m
+        @test 0m == m - m
+        
+        @test m\m == eye(SDiagonal{4,Float64})
+        
+        
     end
 end

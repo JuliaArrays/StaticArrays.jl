@@ -19,10 +19,11 @@ struct SDiagonal{N,T} <: StaticMatrix{N, N, T}
 end    
 diagtype{N,T}(::Type{SDiagonal{N,T}}) = SVector{N,T}
 diagtype{N}(::Type{SDiagonal{N}}) = SVector{N}
+diagtype(::Type{SDiagonal}) = SVector
 
 # this is to deal with convert.jl
-@inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SD(diagtype(SD)(a)) 
-@inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SD(diagtype(SD)(a)) 
+@inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SDiagonal(diagtype(SD)(a)) 
+@inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SDiagonal(diagtype(SD)(a)) 
 @inline (::Type{SDiagonal}){N,T}(a::SVector{N,T}) = SDiagonal{N,T}(a) 
 
 @generated function SDiagonal{N,T}(a::SMatrix{N,N,T})
@@ -30,36 +31,37 @@ diagtype{N}(::Type{SDiagonal{N}}) = SVector{N}
     :(SDiagonal{N,T}($(expr...)))
 end
 
-function \{T,M}(D::SDiagonal, b::SVector{M,T} )
-    D.diag .* b
-end
 
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) = D
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal) = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
 
 size{N}(D::SDiagonal{N}) = (N,N)
 
-function size{N}(D::SDiagonal{N},d::Int64)
+function size{N}(D::SDiagonal{N},d::Int)
     if d<1
         throw(ArgumentError("dimension must be ≥ 1, got $d"))
     end
     return d<=2 ? N : 1
 end
 
-Base.@propagate_inbounds function getindex{T}(D::SDiagonal{T}, i::Int, j::Int)  
+Base.@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, i::Int, j::Int)  
     @boundscheck checkbounds(D, i, j)
     if i == j
-        D.diag[i]
+        @inbounds return D.diag[i]
     else
         zero(T)
     end
 end
 
-# linear indexing?
+# avoid linear indexing?
+Base.@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, k::Int) 
+    i, j = ind2sub(size(D), k)
+    D[i,j]
+end
 
 ishermitian{T<:Real}(D::SDiagonal{T}) = true
 ishermitian(D::SDiagonal) = all(D.diag .== real(D.diag))
-issym(D::SDiagonal) = true
+issymmetric(D::SDiagonal) = true
 isposdef(D::SDiagonal) = all(D.diag .> 0)
 
 factorize(D::SDiagonal) = D
@@ -70,7 +72,6 @@ factorize(D::SDiagonal) = D
 -(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag - Db.diag)
 -(A::SDiagonal, B::SMatrix) = eye(typeof(B))*A - B
 
-
 *{T<:Number}(x::T, D::SDiagonal) = SDiagonal(x * D.diag)
 *{T<:Number}(D::SDiagonal, x::T) = SDiagonal(D.diag * x)
 /{T<:Number}(D::SDiagonal, x::T) = SDiagonal(D.diag / x)
@@ -79,8 +80,7 @@ factorize(D::SDiagonal) = D
 *(V::SVector, D::SDiagonal) = D.diag .* V
 *(A::SMatrix, D::SDiagonal) = scalem(A,D.diag)
 *(D::SDiagonal, A::SMatrix) = scalem(D.diag,A)
-
-/(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag ./ Db.diag )
+\(D::SDiagonal, b::SVector) = D.diag .\ b
 
 conj(D::SDiagonal) = SDiagonal(conj(D.diag))
 transpose(D::SDiagonal) = D
@@ -95,8 +95,7 @@ function logdet{N,T<:Complex}(D::SDiagonal{N,T}) #Make sure branch cut is correc
     -pi<imag(x)<pi ? x : real(x)+(mod2pi(imag(x)+pi)-pi)*im
 end
 
-
-eye{N,T}(::Type{SDiagonal{N,T}}) = SDiagonal(one(SVector{N,T}))
+eye{N,T}(::Type{SDiagonal{N,T}}) = SDiagonal(ones(SVector{N,T}))
 
 expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
 logm(D::SDiagonal) = SDiagonal(log.(D.diag))
@@ -105,13 +104,14 @@ sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
 \(D::SDiagonal, B::SMatrix) = scalem(1 ./ D.diag, B)
 /(B::SMatrix, D::SDiagonal) = scalem(1 ./ D.diag, B)
 \(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Db.diag ./ Da.diag)
+/(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag ./ Db.diag )
 
 function inv{N,T}(D::SDiagonal{N,T})
-    for i = 1:length(D.diag)
+    for i = 1:N
         if D.diag[i] == zero(T)
             throw(SingularException(i))
         end
     end
-    SDiagonal(one(T)./D.diag)
+    SDiagonal(inv.(D.diag))
 end
 
