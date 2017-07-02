@@ -17,9 +17,12 @@ struct SDiagonal{N,T} <: StaticMatrix{N, N, T}
     diag::SVector{N,T}
     SDiagonal{N,T}(diag::SVector{N,T}) where {N,T} = new(diag)
 end    
+diagtype{N,T}(::Type{SDiagonal{N,T}}) = SVector{N,T}
+diagtype{N}(::Type{SDiagonal{N}}) = SVector{N}
 
 # this is to deal with convert.jl
-@inline (::Type{SDiagonal})(a::AbstractVector) = SDiagonal(SVector(a)) 
+@inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SD(diagtype(SD)(a)) 
+@inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SD(diagtype(SD)(a)) 
 @inline (::Type{SDiagonal}){N,T}(a::SVector{N,T}) = SDiagonal{N,T}(a) 
 
 @generated function SDiagonal{N,T}(a::SMatrix{N,N,T})
@@ -34,16 +37,17 @@ end
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) = D
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal) = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
 
-size(D::SDiagonal) = (length(D.diag),length(D.diag))
+size{N}(D::SDiagonal{N}) = (N,N)
 
-function size(D::SDiagonal,d::Integer)
+function size{N}(D::SDiagonal{N},d::Int64)
     if d<1
         throw(ArgumentError("dimension must be ≥ 1, got $d"))
     end
-    return d<=2 ? length(D.diag) : 1
+    return d<=2 ? N : 1
 end
 
-function getindex{T}(D::SDiagonal{T}, i::Int, j::Int)  
+Base.@propagate_inbounds function getindex{T}(D::SDiagonal{T}, i::Int, j::Int)  
+    @boundscheck checkbounds(D, i, j)
     if i == j
         D.diag[i]
     else
@@ -51,6 +55,7 @@ function getindex{T}(D::SDiagonal{T}, i::Int, j::Int)
     end
 end
 
+# linear indexing?
 
 ishermitian{T<:Real}(D::SDiagonal{T}) = true
 ishermitian(D::SDiagonal) = all(D.diag .== real(D.diag))
@@ -58,10 +63,6 @@ issym(D::SDiagonal) = true
 isposdef(D::SDiagonal) = all(D.diag .> 0)
 
 factorize(D::SDiagonal) = D
-
-abs(D::SDiagonal) = SDiagonal(abs(D.diag))
-real(D::SDiagonal) = SDiagonal(real(D.diag))
-imag(D::SDiagonal) = SDiagonal(imag(D.diag))
 
 ==(Da::SDiagonal, Db::SDiagonal) = Da.diag == Db.diag
 -(A::SDiagonal) = SDiagonal(-A.diag)
@@ -95,7 +96,7 @@ function logdet{N,T<:Complex}(D::SDiagonal{N,T}) #Make sure branch cut is correc
 end
 
 
-eye{N,T}(::Type{SDiagonal{N,T}}) = SDiagonal(one(SVector{n,Int}))
+eye{N,T}(::Type{SDiagonal{N,T}}) = SDiagonal(one(SVector{N,T}))
 
 expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
 logm(D::SDiagonal) = SDiagonal(log.(D.diag))
