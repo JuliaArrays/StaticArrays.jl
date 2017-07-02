@@ -13,16 +13,23 @@ end
     :(SMatrix{M,N,T}($(expr...)))
 end
 
-struct SDiagonal{N,T}
+struct SDiagonal{N,T} <: StaticMatrix{N, N, T}
     diag::SVector{N,T}
+    SDiagonal{N,T}(diag::SVector{N,T}) where {N,T} = new(diag)
 end    
+
+# this is to deal with convert.jl
+@inline (::Type{SDiagonal})(a::AbstractVector) = SDiagonal(SVector(a)) 
+@inline (::Type{SDiagonal}){N,T}(a::SVector{N,T}) = SDiagonal{N,T}(a) 
+
+@generated function SDiagonal{N,T}(a::SMatrix{N,N,T})
+    expr = [:(a[$i,$i]) for i=1:N]
+    :(SDiagonal{N,T}($(expr...)))
+end
 
 function \{T,M}(D::SDiagonal, b::SVector{M,T} )
     D.diag .* b
 end
-
-SDiagonal(A::SMatrix) = SDiagonal(diag(A))
-
 
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) = D
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal) = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
@@ -43,14 +50,7 @@ function getindex{T}(D::SDiagonal{T}, i::Int, j::Int)
         zero(T)
     end
 end
-function setindex!(D::SDiagonal, v, i::Int, j::Int)
-    if i == j
-        unsafe_setindex!(D.diag, v, i)
-    elseif v != 0
-        throw(ArgumentError("cannot set an off-diagonal index ($i, $j) to a nonzero value ($v)"))
-    end
-    D
-end
+
 
 ishermitian{T<:Real}(D::SDiagonal{T}) = true
 ishermitian(D::SDiagonal) = all(D.diag .== real(D.diag))
