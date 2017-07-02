@@ -19,6 +19,7 @@ export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
+export SDiagonal
 
 export Size, Length
 
@@ -79,6 +80,7 @@ include("MArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
+include("SDiagonal.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")
