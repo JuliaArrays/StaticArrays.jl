@@ -16,6 +16,8 @@
 
     @testset "Methods" begin
     
+        @test StaticArrays.scalem(@SMatrix([1 1 1;1 1 1; 1 1 1]), @SVector [1,2,3]) === @SArray [1 2 3; 1 2 3; 1 2 3]
+    
         m = SDiagonal(@SVector [11, 12, 13, 14])
         m2 = diagm([11, 12, 13, 14])
         
@@ -54,6 +56,8 @@
         @test_throws Exception m[1] = 1
         
         @test m*b ==  @SVector [22,-12,26,14]
+        @test (b'*m)' ==  @SVector [22,-12,26,14]
+        
         @test m\b == m2\b
         @test m*m == m2*m
         
@@ -66,6 +70,8 @@
         @test 0m == m - m
         
         @test m\m == eye(SDiagonal{4,Float64})
+        
+        
         
         
     end
