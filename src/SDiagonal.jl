@@ -3,48 +3,48 @@
 
 import Base: ==, -, +, *, /, \, abs, real, imag, conj
 
-@generated function scalem{M, N}(a::StaticMatrix{M,N}, b::StaticVector{N})
+@generated function scalem(a::StaticMatrix{M,N}, b::StaticVector{N}) where {M, N}
     expr = vec([:(a[$j,$i]*b[$i]) for j=1:M, i=1:N])
     :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
 end
-@generated function scalem{M, N}(a::StaticVector{M}, b::StaticMatrix{M, N})
+@generated function scalem(a::StaticVector{M}, b::StaticMatrix{M, N}) where {M, N}
     expr = vec([:(b[$j,$i]*a[$j]) for j=1:M, i=1:N])
     :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
 end
 
-struct SDiagonal{N,T} <: StaticMatrix{N, N, T}
+struct SDiagonal{N,T} <: StaticMatrix{N,N,T}
     diag::SVector{N,T}
     SDiagonal{N,T}(diag::SVector{N,T}) where {N,T} = new(diag)
 end    
-diagtype{N,T}(::Type{SDiagonal{N,T}}) = SVector{N,T}
-diagtype{N}(::Type{SDiagonal{N}}) = SVector{N}
+diagtype(::Type{SDiagonal{N,T}}) where {N, T} = SVector{N,T}
+diagtype(::Type{SDiagonal{N}}) where {N} = SVector{N}
 diagtype(::Type{SDiagonal}) = SVector
 
 # this is to deal with convert.jl
 @inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
 @inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
-@inline (::Type{SDiagonal}){N,T}(a::SVector{N,T}) = SDiagonal{N,T}(a) 
+@inline (::Type{SDiagonal})(a::SVector{N,T}) where {N,T} = SDiagonal{N,T}(a) 
 
-@generated function SDiagonal{N,T}(a::StaticMatrix{N,N,T})
+@generated function SDiagonal(a::StaticMatrix{N,N,T}) where {N,T}
     expr = [:(a[$i,$i]) for i=1:N]
     :(SDiagonal{N,T}($(expr...)))
 end
 
-convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) = D
-convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N}) = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
+convert(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) where {N,T} = D
+convert(::Type{SDiagonal{N,T}}, D::SDiagonal{N}) where {N,T} = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
 
-function getindex{N,T}(D::SDiagonal{N,T}, i::Int, j::Int)  
+function getindex(D::SDiagonal{N,T}, i::Int, j::Int) where {N,T}
     @boundscheck checkbounds(D, i, j)
     @inbounds return ifelse(i == j, D.diag[i], zero(T))
 end
 
 # avoid linear indexing?
-@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, k::Int) 
+@propagate_inbounds function getindex(D::SDiagonal{N,T}, k::Int) where {N,T}
     i, j = ind2sub(size(D), k)
     D[i,j]
 end
 
-ishermitian{T<:Real}(D::SDiagonal{T}) = true
+ishermitian(D::SDiagonal{N, T}) where {N,T<:Real} = true
 ishermitian(D::SDiagonal) = all(D.diag .== real(D.diag))
 issymmetric(D::SDiagonal) = true
 isposdef(D::SDiagonal) = all(D.diag .> 0)
@@ -57,9 +57,9 @@ factorize(D::SDiagonal) = D
 -(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag - Db.diag)
 -(A::SDiagonal, B::SMatrix) = eye(typeof(B))*A - B
 
-*{T<:Number}(x::T, D::SDiagonal) = SDiagonal(x * D.diag)
-*{T<:Number}(D::SDiagonal, x::T) = SDiagonal(D.diag * x)
-/{T<:Number}(D::SDiagonal, x::T) = SDiagonal(D.diag / x)
+*(x::T, D::SDiagonal) where {T<:Number} = SDiagonal(x * D.diag)
+*(D::SDiagonal, x::T) where {T<:Number} = SDiagonal(D.diag * x)
+/(D::SDiagonal, x::T) where {T<:Number} = SDiagonal(D.diag / x)
 *(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag .* Db.diag)
 *(D::SDiagonal, V::AbstractVector) = D.diag .* V
 *(D::SDiagonal, V::StaticVector) = D.diag .* V
@@ -76,12 +76,12 @@ diag(D::SDiagonal) = D.diag
 trace(D::SDiagonal) = sum(D.diag)
 det(D::SDiagonal) = prod(D.diag)
 logdet{N,T<:Real}(D::SDiagonal{N,T}) = sum(log.(D.diag))
-function logdet{N,T<:Complex}(D::SDiagonal{N,T}) #Make sure branch cut is correct
+function logdet(D::SDiagonal{N,T}) where {N,T<:Complex} #Make sure branch cut is correct
     x = sum(log.(D.diag))
     -pi<imag(x)<pi ? x : real(x)+(mod2pi(imag(x)+pi)-pi)*im
 end
 
-eye{N,T}(::Type{SDiagonal{N,T}}) = SDiagonal(ones(SVector{N,T}))
+eye(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 
 expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
 logm(D::SDiagonal) = SDiagonal(log.(D.diag))
@@ -93,13 +93,13 @@ sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
 /(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag ./ Db.diag )
 
 
-@generated function check_singular{N,T}(D::SDiagonal{N,T})
+@generated function check_singular(D::SDiagonal{N}) where {N}
     quote
     Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(Base.LinAlg.SingularException(i)))
     end
 end
 
-function inv{N,T}(D::SDiagonal{N,T})
+function inv(D::SDiagonal)
     check_singular(D)
     SDiagonal(inv.(D.diag))
 end
