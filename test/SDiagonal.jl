@@ -95,7 +95,7 @@
         @test 2m == m + m
         @test m*0 == m - m
         
-        @test m/m == m\m == eye(SDiagonal{4,Float64})
+        @test m*inv(m) == m/m == m\m == eye(SDiagonal{4,Float64})
         
         
         
