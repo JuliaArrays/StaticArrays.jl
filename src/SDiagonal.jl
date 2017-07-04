@@ -1,16 +1,15 @@
 # Originally contributed by D. Getz (https://github.com/getzdan), M. Schauer
 # at https://github.com/mschauer/Bridge.jl under MIT License
 
-import Base: getindex,setindex!,==,-,+,*,/,\,transpose,ctranspose,convert, size, abs, real, imag, conj, eye, inv
-import Base.LinAlg: ishermitian, issymmetric, isposdef, factorize, diag, trace, det, logdet, expm, logm, sqrtm
+import Base: ==, -, +, *, /, \, abs, real, imag, conj
 
 @generated function scalem{M, N}(a::StaticMatrix{M,N}, b::StaticVector{N})
     expr = vec([:(a[$j,$i]*b[$i]) for j=1:M, i=1:N])
-    :(let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
+    :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
 end
 @generated function scalem{M, N}(a::StaticVector{M}, b::StaticMatrix{M, N})
     expr = vec([:(b[$j,$i]*a[$j]) for j=1:M, i=1:N])
-    :(let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
+    :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
 end
 
 struct SDiagonal{N,T} <: StaticMatrix{N, N, T}
@@ -34,13 +33,13 @@ end
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N,T}) = D
 convert{N,T}(::Type{SDiagonal{N,T}}, D::SDiagonal{N}) = SDiagonal{N,T}(convert(SVector{N,T}, D.diag))
 
-Base.@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, i::Int, j::Int)  
+function getindex{N,T}(D::SDiagonal{N,T}, i::Int, j::Int)  
     @boundscheck checkbounds(D, i, j)
     @inbounds return ifelse(i == j, D.diag[i], zero(T))
 end
 
 # avoid linear indexing?
-Base.@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, k::Int) 
+@propagate_inbounds function getindex{N,T}(D::SDiagonal{N,T}, k::Int) 
     i, j = ind2sub(size(D), k)
     D[i,j]
 end
@@ -95,11 +94,9 @@ sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
 
 
 @generated function check_singular{N,T}(D::SDiagonal{N,T})
-    expr = Expr(:block)
-    for i=1:N
-        push!(expr.args, :(@inbounds iszero(D.diag[$i]) && throw(Base.LinAlg.SingularException($i))))
+    quote
+    Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(Base.LinAlg.SingularException(i)))
     end
-    expr
 end
 
 function inv{N,T}(D::SDiagonal{N,T})
