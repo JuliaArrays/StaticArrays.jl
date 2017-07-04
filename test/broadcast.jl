@@ -1,3 +1,7 @@
+using StaticArrays, Base.Test
+
+include("testutil.jl")
+
 @testset "Broadcast sizes" begin
     @test @inferred(StaticArrays.broadcast_sizes(1, 1, 1)) === (Size(), Size(), Size())
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})
@@ -138,5 +142,14 @@ end
         let a = broadcast(Float32, SVector(3, 4, 5))
             @test eltype(a) == Float32
         end
+    end
+
+    @testset "" begin
+        # Issue #239 - broadcast with non-numeric element types
+        @eval @enum Axis X Y Z
+        @testinf (SVector(X,Y,Z) .== X) == SVector(true,false,false)
+        mv = MVector(X,Y,Z)
+        @testinf broadcast!(identity, mv, X) == MVector(X,X,X)
+        @test mv == SVector(X,X,X)
     end
 end
