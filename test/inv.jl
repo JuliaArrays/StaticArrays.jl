@@ -106,19 +106,20 @@ function plot_residuals(N, rank, ϵ)
         #=     println("]") =#
         #= end =#
     end
-    loglog(SA_residuals, A_residuals, ".", markersize=1.5)
+    loglog(A_residuals, SA_residuals, ".", markersize=1.5)
 end
 
 # Plot the accuracy of inv implementations for almost singular matrices of
 # various rank
 clf()
 N = 4
+title("inv() accuracy for poorly conditioned $(N)x$(N) - Base vs block decomposition")
 labels = []
 for i in N:-1:1
     plot_residuals(N, i, 1e-7)
     push!(labels, "rank $i")
 end
-xlabel("residual norm - inv(::StaticArray)")
-ylabel("residual norm - inv(::Array)")
+xlabel("Residual norm: `inv(::Array)`")
+ylabel("Residual norm: `inv(::StaticArray)`")
 legend(labels)
 =#
