@@ -19,7 +19,7 @@ end
 @pure SUnitRange(a::Int, b::Int) = SUnitRange{a, max(0, b - a + 1)}()
 
 @pure @propagate_inbounds function getindex(x::SUnitRange{Start, L}, i::Int) where {Start, L}
-    @boundscheck if i < Start || i >= (Start + L)
+    @boundscheck if i < 1 || i > L
         throw(BoundsError(x, i))
     end
     return Start + i - 1
