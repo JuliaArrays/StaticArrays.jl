@@ -2,7 +2,6 @@ using StaticArrays
 using Base.Test
 
 include("testutil.jl")
-
 include("SVector.jl")
 include("MVector.jl")
 include("SMatrix.jl")
@@ -14,7 +13,6 @@ include("Scalar.jl")
 include("SUnitRange.jl")
 include("SizedArray.jl")
 include("custom_types.jl")
-
 include("core.jl")
 include("abstractarray.jl")
 include("indexing.jl")
@@ -23,6 +21,7 @@ include("arraymath.jl")
 include("broadcast.jl")
 include("linalg.jl")
 include("matrix_multiply.jl")
+include("triangular.jl")
 include("det.jl")
 include("inv.jl")
 include("solve.jl")
@@ -33,5 +32,4 @@ include("chol.jl")
 include("deque.jl")
 include("io.jl")
 include("svd.jl")
-
 include("fixed_size_arrays.jl")
