@@ -8,8 +8,8 @@ import Base: getindex, setindex!, size, similar, vec, show,
              length, convert, promote_op, promote_rule, map, map!, reduce, reducedim, mapreducedim,
              mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
-             fill!, det, inv, eig, eigvals, expm, sqrtm, trace, vecnorm, norm, dot, diagm, diag,
-             lu, svd, svdvals, svdfact,
+             fill!, det, logdet, inv, eig, eigvals, expm, logm, sqrtm, trace, diag, vecnorm, norm, dot, diagm, diag,
+             lu, svd, svdvals, svdfact, factorize, ishermitian, issymmetric, isposdef,
              sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write
@@ -19,6 +19,7 @@ export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
+export SDiagonal
 
 export Size, Length
 
@@ -79,6 +80,7 @@ include("MArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
+include("SDiagonal.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")

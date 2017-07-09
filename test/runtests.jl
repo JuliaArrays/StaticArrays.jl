@@ -12,6 +12,8 @@ include("FieldVector.jl")
 include("Scalar.jl")
 include("SUnitRange.jl")
 include("SizedArray.jl")
+include("SDiagonal.jl")
+
 include("custom_types.jl")
 include("core.jl")
 include("abstractarray.jl")
