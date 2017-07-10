@@ -2,18 +2,38 @@
 ## broadcast! ##
 ################
 
-# TODO: bad codegen for `broadcast(-, SVector(1,2,3))`
+import Base.Broadcast:
+    _containertype, promote_containertype, broadcast_indices,
+    broadcast_c, broadcast_c!
 
-@propagate_inbounds function broadcast(f, a::Union{Number, StaticArray}...)
-    _broadcast(f, broadcast_sizes(a...), a...)
-end
+# Add StaticArray as a new output type in Base.Broadcast promotion machinery.
+# This isn't the precise output type, just a placeholder to return from
+# promote_containertype, which will control dispatch to our broadcast_c.
+_containertype(::Type{<:StaticArray}) = StaticArray
 
-@propagate_inbounds function broadcast{T}(f::Function, a::Type{T}, x::StaticArray)
-    _broadcast(f, (Size(), Size(x)), T, x)
+# With the above, the default promote_containertype gives reasonable defaults:
+#   StaticArray, StaticArray -> StaticArray
+#   Array, StaticArray       -> Array
+#
+# We could be more precise about the latter, but this isn't really possible
+# without using Array{N} rather than Array in Base's promote_containertype.
+#
+# Base also has broadcast with tuple + Array, but while implementing this would
+# be consistent with Base, it's not exactly clear it's a good idea when you can
+# just use an SVector instead?
+promote_containertype(::Type{StaticArray}, ::Type{Any}) = StaticArray
+promote_containertype(::Type{Any}, ::Type{StaticArray}) = StaticArray
+
+broadcast_indices(::Type{StaticArray}, A) = indices(A)
+
+
+# Override for when output type is deduced to be a StaticArray.
+@inline function broadcast_c(f, ::Type{StaticArray}, as...)
+    _broadcast(f, broadcast_sizes(as...), as...)
 end
 
 @inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
-@inline broadcast_sizes(a::Number, as...) = (Size(), broadcast_sizes(as...)...)
+@inline broadcast_sizes(a, as...) = (Size(), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
 
 function broadcasted_index(oldsize, newindex)
@@ -94,12 +114,12 @@ end
 ## broadcast! ##
 ################
 
-@propagate_inbounds function broadcast!(f, dest::StaticArray, a::Union{Number, StaticArray}...)
-    _broadcast!(f, Size(dest), dest, broadcast_sizes(a...), a...)
+@inline function broadcast_c!(f, ::Type{StaticArray}, ::Type, dest, as...)
+    _broadcast!(f, Size(dest), dest, broadcast_sizes(as...), as...)
 end
 
 
-@generated function _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, a::Union{Number, StaticArray}...) where {newsize}
+@generated function _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
     sizes = [sz.parameters[1] for sz ∈ s.parameters]
     sizes = tuple(sizes...)
 
@@ -122,7 +142,7 @@ end
     more = newsize[1] != 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
     while more
-        exprs_vals = [(a[i] <: Number ? :(a[$i]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
         # increment current_ind (maybe use CartesianRange?)
