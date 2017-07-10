@@ -144,7 +144,7 @@ end
         end
     end
 
-    @testset "" begin
+    @testset "broadcast general scalars" begin
         # Issue #239 - broadcast with non-numeric element types
         @eval @enum Axis aX aY aZ
         @testinf (SVector(aX,aY,aZ) .== aX) == SVector(true,false,false)
