@@ -1,4 +1,5 @@
 @inline det(A::StaticMatrix) = _det(Size(A), A)
+@inline logdet(A::StaticMatrix) = _logdet(Size(A), A)
 
 @inline _det(::Size{(1,1)}, A::StaticMatrix) = @inbounds return A[1]
 
@@ -24,18 +25,25 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
-@generated function _det{S}(::Size{S}, A::StaticMatrix)
-    if S[1] != S[2]
-        throw(DimensionMismatch("matrix is not square"))
-    end
-    return quote # Implementation from Base
-        @_inline_meta
-        T = eltype(A)
-        T2 = typeof((one(T)*zero(T) + zero(T))/one(T))
-        if istriu(A) || istril(A)
-            return convert(T2, det(UpperTriangular(A))) # Is this a Julia bug that a convert is not type stable??
+@inline _logdet(S::Union{Size{(1,1)},Size{(2,2)},Size{(3,3)}}, A::StaticMatrix) = log(_det(S, A))
+
+for (symb, f) in [(:_det, :det), (:_logdet, :logdet)]
+    eval(quote
+        @generated function $symb{S}(::Size{S}, A::StaticMatrix)
+            if S[1] != S[2]
+                throw(DimensionMismatch("matrix is not square"))
+            end
+            return quote # Implementation from Base
+                @_inline_meta
+                T = eltype(A)
+                T2 = typeof((one(T)*zero(T) + zero(T))/one(T))
+                if istriu(A) || istril(A)
+                    return convert(T2, $($f)(UpperTriangular(A))) # Is this a Julia bug that a convert is not type stable??
+                end
+                AA = convert(Array{T2}, A)
+                return $($f)(lufact(AA))
+            end
         end
-        AA = convert(Array{T2}, A)
-        return det(lufact(AA))
-    end
+    end)    
 end
+
