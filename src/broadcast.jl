@@ -76,7 +76,7 @@ end
     newsize = tuple(newsize...)
 
     exprs = Array{Expr}(newsize)
-    more = newsize[1] != 0
+    more = prod(newsize) > 0
     current_ind = ones(Int, length(newsize))
 
     while more
@@ -139,7 +139,7 @@ end
 
     exprs = Array{Expr}(newsize)
     j = 1
-    more = newsize[1] != 0
+    more = prod(newsize) > 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
     while more
         exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
