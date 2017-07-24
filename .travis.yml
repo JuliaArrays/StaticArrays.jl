@@ -8,9 +8,12 @@ julia:
   - nightly
 notifications:
   email: false
-# matrix:
-  # allow_failures:
-    # - julia: nightly
+branches:
+  only: # Only kick off CI for master and potential merges to master from within PRs
+    - master
+matrix:
+  allow_failures:
+    - julia: nightly
     # - os: osx
 # uncomment the following lines to override the default test script
 #script:
