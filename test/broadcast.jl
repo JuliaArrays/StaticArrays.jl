@@ -109,6 +109,15 @@ end
         @test @inferred(2 .^ v) === SVector(2, 4)
     end
 
+    @testset "Empty arrays" begin
+        @test @inferred(1.0 .+ zeros(SMatrix{2,0})) === zeros(SMatrix{2,0})
+        @test @inferred(1.0 .+ zeros(SMatrix{0,2})) === zeros(SMatrix{0,2})
+        @test @inferred(1.0 .+ zeros(SArray{Tuple{2,3,0}})) === zeros(SArray{Tuple{2,3,0}})
+        @test @inferred(zeros(SVector{0}) .+ zeros(SMatrix{0,2})) === zeros(SMatrix{0,2})
+        m = zeros(MMatrix{0,2})
+        @test @inferred(broadcast!(+, m, m, zeros(SVector{0}))) == zeros(SMatrix{0,2})
+    end
+
     @testset "Mutating broadcast!" begin
         # No setindex! error
         A = eye(SMatrix{2, 2}); @test_throws ErrorException broadcast!(+, A, A, SVector(1, 4))
