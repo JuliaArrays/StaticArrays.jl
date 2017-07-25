@@ -14,7 +14,7 @@
 end
 
 @inline function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
-    if length(a) != length(SA)
+    @boundscheck if length(a) != length(SA)
         error("Dimension mismatch. Expected input array of length $(length(SA)), got length $(length(a))")
     end
 
