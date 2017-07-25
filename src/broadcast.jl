@@ -114,7 +114,9 @@ end
 ## broadcast! ##
 ################
 
-@inline function broadcast_c!(f, ::Type{StaticArray}, ::Type, dest, as...)
+# TODO: This signature could be relaxed to (::Any, ::Type{StaticArray}, ::Type, ...), though
+# we'd need to rework how _broadcast!() and broadcast_sizes() interact with normal AbstractArray.
+@inline function broadcast_c!(f, ::Type{StaticArray}, ::Type{StaticArray}, dest, as...)
     _broadcast!(f, Size(dest), dest, broadcast_sizes(as...), as...)
 end
 

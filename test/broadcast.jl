@@ -128,6 +128,11 @@ end
         A = @MMatrix([1 0]); @test @inferred(broadcast!(+, A, A, 2)) == @MMatrix [3 2]
     end
 
+    @testset "broadcast! with mixtures of SArray and Array" begin
+        a = zeros(MVector{2}); @test @inferred(broadcast!(+, a, [1,2])) == [1,2]
+        a = zeros(MMatrix{2,3}); @test @inferred(broadcast!(+, a, [1,2])) == [1 1 1; 2 2 2]
+    end
+
     @testset "eltype after broadcast" begin
         # test cases issue #198
         let a = SVector{4, Number}(2, 2.0, 4//2, 2+0im)
