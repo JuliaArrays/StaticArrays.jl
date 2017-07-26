@@ -17,7 +17,7 @@ Construct a statically-sized, mutable array of dimensions `S` (expressed as a `T
 using the data from `a`. The `S` parameter is mandatory since the size of `a` is unknown to
 the compiler (the element type may optionally also be specified).
 """
-type MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
+mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
     function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,T})

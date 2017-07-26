@@ -20,7 +20,7 @@ _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 # and other definitions as necessary
 ```
 """
-immutable Size{S}
+struct Size{S}
     function Size{S}() where {S}
         new{S::Tuple{Vararg{Int}}}()
     end
