@@ -172,11 +172,18 @@ end
     end
 end
 
-@inline diagm(v::StaticVector) = _diagm(Size(v), v)
-@generated function _diagm(::Size{S}, v::StaticVector) where {S}
-    Snew = (S[1], S[1])
+@inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = _diagm(Size(v), v, k)
+@generated function _diagm(::Size{S}, v::StaticVector, ::Type{Val{D}}) where {S,D}
+    S1 = S[1]
+    Snew1 = S1+abs(D)
+    Snew = (Snew1, Snew1)
+    Lnew = Snew1 * Snew1
     T = eltype(v)
-    exprs = [i == j ? :(v[$i]) : zero(T) for i = 1:S[1], j = 1:S[1]]
+    ind = diagind(Snew1, Snew1, D)
+    exprs = fill(:(zero($T)), Lnew)
+    for n = 1:S[1]
+        exprs[ind[n]] = :(v[$n])
+    end
     return quote
         $(Expr(:meta, :inline))
         @inbounds return similar_type($v, Size($Snew))(tuple($(exprs...)))
@@ -323,4 +330,3 @@ end
 
 @inline Base.LinAlg.Symmetric(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline Base.LinAlg.Hermitian(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))
-
