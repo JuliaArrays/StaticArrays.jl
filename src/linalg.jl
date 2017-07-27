@@ -310,6 +310,15 @@ end
     end
 end
 
+@inline kron(a::StaticMatrix, b::StaticMatrix) = _kron(Size(a), Size(b), a, b)
+@generated function _kron(::Size{SA}, ::Size{SB}, a, b) where {SA,SB}
+    rows = [:(hcat($([:(a[$(sub2ind(SA,i,j))]*b) for j=1:SA[2]]...))) for i=1:SA[1]]
+    return quote
+        @_inline_meta
+        @inbounds return vcat($(rows...))
+    end
+end
+
 @inline Size(::Union{RowVector{T, SA}, Type{RowVector{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
 @inline Size(::Union{RowVector{T, CA}, Type{RowVector{T, CA}}} where CA <: ConjVector{<:Any, SA}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
 @inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)

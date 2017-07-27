@@ -147,4 +147,13 @@ using StaticArrays, Base.Test
         @test vecnorm(SVector{0, Float64}(()), 1) === 0.
         @test trace(SMatrix{0,0,Float64}(())) === 0.
     end
+
+    @testset "kron" begin
+        @test @inferred(kron(@SMatrix([1 2; 3 4]), @SMatrix([0 1 0; 1 0 1]))) ==
+            SMatrix{4,6,Int}([0 1 0 0 2 0;
+                              1 0 1 2 0 2;
+                              0 3 0 0 4 0;
+                              3 0 3 4 0 4])
+        @test @inferred(kron(@SMatrix([1 2; 3 4]), @SMatrix([2.0]))) === @SMatrix [2.0 4.0; 6.0 8.0]
+    end
 end
