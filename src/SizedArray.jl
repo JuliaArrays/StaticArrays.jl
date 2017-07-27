@@ -9,7 +9,7 @@ array may be reshaped.
 
 (Also, `Size(dims...)(array)` acheives the same thing)
 """
-immutable SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
+struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
     data::Array{T, M}
 
     function (::Type{SizedArray{S, T, N, M}}){S, T, N, M}(a::Array)

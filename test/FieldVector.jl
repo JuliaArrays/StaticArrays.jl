@@ -1,7 +1,7 @@
 @testset "FieldVector" begin
     @testset "Immutable Point3D" begin
         eval(quote
-            immutable Point3D <: FieldVector{3, Float64}
+            struct Point3D <: FieldVector{3, Float64}
                 x::Float64
                 y::Float64
                 z::Float64
@@ -40,7 +40,7 @@
 
     @testset "Mutable Point2D" begin
         eval(quote
-            type Point2D{T} <: FieldVector{2, T}
+            mutable struct Point2D{T} <: FieldVector{2, T}
                 x::T
                 y::T
             end

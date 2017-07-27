@@ -240,7 +240,7 @@ functions).
 ### `SArray`
 
 A container with arbitrarily many dimensions is defined as
-`immutable SArray{Size,T,N,L} <: StaticArray{Size,T,N}`, where
+`struct SArray{Size,T,N,L} <: StaticArray{Size,T,N}`, where
 `Size = Tuple{S1, S2, ...}` is a tuple of `Int`s. You can easily construct one with
 the `@SArray` macro, supporting all the features of `@SVector` and `@SMatrix`
 (but with arbitrary dimension).
@@ -264,7 +264,7 @@ same vector. We can now do this with the `Scalar` type:
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 
 These statically sized arrays are identical to the above, but are defined as
-mutable Julia `type`s, instead of `immutable`. Because they are mutable, they
+`mutable struct`s, instead of immutable `struct`s. Because they are mutable, they
 allow `setindex!` to be defined (achieved through pointer manipulation, into a
 tuple).
 
@@ -312,7 +312,7 @@ with vector-like properties. *StaticArrays* can take care of this for you by
 allowing you to inherit from `FieldVector{N, T}`. For example, consider:
 
 ```julia
-immutable Point3D <: FieldVector{3, Float64}
+struct Point3D <: FieldVector{3, Float64}
     x::Float64
     y::Float64
     z::Float64
