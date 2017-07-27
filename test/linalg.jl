@@ -40,8 +40,8 @@ using StaticArrays, Base.Test
 
     @testset "diagm()" begin
         @test @inferred(diagm(SVector(1,2))) === @SMatrix [1 0; 0 2]
-        @test @inferred(diagm(SVector(1,2,3), Val{2})) == diagm([1,2,3], 2)
-        @test @inferred(diagm(SVector(1,2,3), Val{-2})) == diagm([1,2,3], -2)
+        @test @inferred(diagm(SVector(1,2,3), Val{2}))::SMatrix == diagm([1,2,3], 2)
+        @test @inferred(diagm(SVector(1,2,3), Val{-2}))::SMatrix == diagm([1,2,3], -2)
     end
 
     @testset "diag()" begin
