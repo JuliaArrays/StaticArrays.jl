@@ -310,8 +310,14 @@ end
     end
 end
 
-@inline kron(a::StaticMatrix, b::StaticMatrix) = _kron(Size(a), Size(b), a, b)
-@generated function _kron(::Size{SA}, ::Size{SB}, a, b) where {SA,SB}
+const _length_limit = Length(200)
+
+@inline kron(a::StaticMatrix, b::StaticMatrix) = _kron(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = SA .* SB
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
     rows = [:(hcat($([:(a[$(sub2ind(SA,i,j))]*b) for j=1:SA[2]]...))) for i=1:SA[1]]
     return quote
         @_inline_meta

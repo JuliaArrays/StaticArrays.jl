@@ -28,6 +28,7 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, shift, unshift, insert, deleteat, setindex
+export drop_sdims
 
 """
     abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
