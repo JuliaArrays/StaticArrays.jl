@@ -66,8 +66,8 @@ end
          3.42945636322714076e-01 3.29329508494837497e-01 2.25635541033857107e-01 6.03912636987153917e-02
          4.77828437366344727e-01 4.86406974015710591e-01 1.95415684569693188e-01 6.74775080892497797e-02]
     sm = SMatrix{4,4}(m)
-    @test_broken norm(Matrix(inv(sm)*sm - eye(4))) < 10*norm(inv(m)*m - eye(4))
-    @test_broken norm(Matrix(sm*inv(sm) - eye(4))) < 10*norm(m*inv(m) - eye(4))
+    @test norm(Matrix(inv(sm)*sm - eye(4))) < 10*norm(inv(m)*m - eye(4))
+    @test norm(Matrix(sm*inv(sm) - eye(4))) < 10*norm(m*inv(m) - eye(4))
 end
 
 

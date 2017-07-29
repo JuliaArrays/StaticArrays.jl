@@ -25,6 +25,22 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
+@inline function _det(::Size{(4,4)}, A::StaticMatrix)
+    @inbounds return (
+        A[13] * A[10]  * A[7]  * A[4]  - A[9] * A[14] * A[7]  * A[4]   -
+        A[13] * A[6]   * A[11] * A[4]  + A[5] * A[14] * A[11] * A[4]   +
+        A[9]  * A[6]   * A[15] * A[4]  - A[5] * A[10] * A[15] * A[4]   -
+        A[13] * A[10]  * A[3]  * A[8]  + A[9] * A[14] * A[3]  * A[8]   +
+        A[13] * A[2]   * A[11] * A[8]  - A[1] * A[14] * A[11] * A[8]   -
+        A[9]  * A[2]   * A[15] * A[8]  + A[1] * A[10] * A[15] * A[8]   +
+        A[13] * A[6]   * A[3]  * A[12] - A[5] * A[14] * A[3]  * A[12]  -
+        A[13] * A[2]   * A[7]  * A[12] + A[1] * A[14] * A[7]  * A[12]  +
+        A[5]  * A[2]   * A[15] * A[12] - A[1] * A[6]  * A[15] * A[12]  -
+        A[9]  * A[6]   * A[3]  * A[16] + A[5] * A[10] * A[3]  * A[16]  +
+        A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
+        A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
+end
+
 @inline _logdet(S::Union{Size{(1,1)},Size{(2,2)},Size{(3,3)}}, A::StaticMatrix) = log(_det(S, A))
 
 for (symb, f) in [(:_det, :det), (:_logdet, :logdet)]
@@ -44,6 +60,5 @@ for (symb, f) in [(:_det, :det), (:_logdet, :logdet)]
                 return $($f)(lufact(AA))
             end
         end
-    end)    
+    end)
 end
-
