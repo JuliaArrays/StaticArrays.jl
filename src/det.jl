@@ -7,10 +7,6 @@
     @inbounds return A[1]*A[4] - A[3]*A[2]
 end
 
-@inline function _det(::Size{(2,2)}, A::StaticMatrix{<:Any, <:Any, <:Unsigned})
-    @inbounds return Signed(A[1]*A[4]) - Signed(A[3]*A[2])
-end
-
 @inline function _det(::Size{(3,3)}, A::StaticMatrix)
     @inbounds x0 = SVector(A[1], A[2], A[3])
     @inbounds x1 = SVector(A[4], A[5], A[6])
@@ -18,14 +14,19 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
-@inline function _det(::Size{(3,3)}, A::StaticMatrix{<:Any, <:Any, <:Unsigned})
-    @inbounds x0 = SVector(Signed(A[1]), Signed(A[2]), Signed(A[3]))
-    @inbounds x1 = SVector(Signed(A[4]), Signed(A[5]), Signed(A[6]))
-    @inbounds x2 = SVector(Signed(A[7]), Signed(A[8]), Signed(A[9]))
-    return vecdot(x0, cross(x1, x2))
+@inline function _det(::Size{(2,2)}, A::StaticMatrix{2, 2, <:Unsigned})
+    @inbounds return det(SMatrix{2,2,Int64}(A))
 end
 
-@inline _logdet(S::Union{Size{(1,1)},Size{(2,2)},Size{(3,3)}}, A::StaticMatrix) = log(_det(S, A))
+@inline function _det(::Size{(3,3)}, A::StaticMatrix{3, 3, <:Unsigned})
+    @inbounds return det(SMatrix{3,3,Int64}(A))
+end
+
+@inline function _det(::Size{(4,4)}, A::StaticMatrix{4, 4, <:Unsigned})
+    @inbounds return det(SMatrix{4,4,Int64}(A))
+end
+
+@inline _logdet(S::Union{Size{(1,1)},Size{(2,2)},Size{(3,3)},Size{(4,4)}}, A::StaticMatrix) = log(_det(S, A))
 
 for (symb, f) in [(:_det, :det), (:_logdet, :logdet)]
     eval(quote
@@ -44,6 +45,5 @@ for (symb, f) in [(:_det, :det), (:_logdet, :logdet)]
                 return $($f)(lufact(AA))
             end
         end
-    end)    
+    end)
 end
-
