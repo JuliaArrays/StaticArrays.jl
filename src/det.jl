@@ -14,16 +14,12 @@ end
     return vecdot(x0, cross(x1, x2))
 end
 
-@inline function _det(::Size{(2,2)}, A::StaticMatrix{2, 2, <:Unsigned})
-    @inbounds return det(SMatrix{2,2,Int64}(A))
-end
-
-@inline function _det(::Size{(3,3)}, A::StaticMatrix{3, 3, <:Unsigned})
-    @inbounds return det(SMatrix{3,3,Int64}(A))
-end
-
-@inline function _det(::Size{(4,4)}, A::StaticMatrix{4, 4, <:Unsigned})
-    @inbounds return det(SMatrix{4,4,Int64}(A))
+@generated function det(A::StaticMatrix{<:Any,<:Any,T}) where T <:Unsigned
+    T1 = promote_type(T,typeof(signed(one(T))))
+    (T1 <: Unsigned) && (T1 = Float64) #if still unsigned cast to Float64
+    return quote
+        det(similar_type(A,$T1)(A))
+    end
 end
 
 @inline _logdet(S::Union{Size{(1,1)},Size{(2,2)},Size{(3,3)},Size{(4,4)}}, A::StaticMatrix) = log(_det(S, A))
