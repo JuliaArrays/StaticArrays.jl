@@ -10,7 +10,7 @@ import Base: getindex, setindex!, size, similar, vec, show,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, logdet, inv, eig, eigvals, expm, logm, sqrtm, lyap, trace, diag, vecnorm, norm, dot, diagm, diag,
              lu, svd, svdvals, svdfact, factorize, ishermitian, issymmetric, isposdef,
-             sum, diff, prod, count, any, all, minimum,
+             iszero, sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write
 

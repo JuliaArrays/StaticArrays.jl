@@ -25,16 +25,20 @@
 
     @testset "reduce" begin
         v1 = @SVector [2,4,6,8]
+        vz = @SVector zeros(4)
+        vb = @SVector [true, false, true, false]
         @test reduce(+, v1) === 20
         @test reduce(+, 0, v1) === 20
+        @test iszero(vz)
+        @test !iszero(vb)
         @test sum(v1) === 20
         @test sum(abs2, v1) === 120
         @test prod(v1) === 384
         @test mean(v1) === 5.
         @test maximum(v1) === 8
         @test minimum(v1) === 2
-        vb = @SVector [true, false, true, false]
         @test count(vb) === 2
+        @test count(x->x==0, vz) === 4
         @test any(vb)
     end
 

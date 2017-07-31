@@ -168,10 +168,12 @@ end
 #######################
 
 # These are all similar in Base but not @inline'd
+@inline iszero(a::StaticArray{<:Any, T}) where {T} = reduce((x,y) -> x && (y==zero(T)), true, a)
 @inline sum(a::StaticArray{<:Any, T}) where {T} = reduce(+, zero(T), a)
 @inline sum(f::Base.Callable, a::StaticArray) = mapreduce(f, +, a)
 @inline prod(a::StaticArray{<:Any, T}) where {T} = reduce(*, one(T), a)
 @inline count(a::StaticArray{<:Any, Bool}) = reduce(+, 0, a)
+@inline count(f::Base.Callable, a::StaticArray) = mapreduce(x->f(x)::Bool, +, 0, a)
 @inline all(a::StaticArray{<:Any, Bool}) = reduce(&, true, a)  # non-branching versions
 @inline any(a::StaticArray{<:Any, Bool}) = reduce(|, false, a) # (benchmarking needed)
 @inline mean(a::StaticArray) = sum(a) / length(a)
