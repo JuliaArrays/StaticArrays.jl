@@ -85,7 +85,7 @@ dimensions removed (ie, not a `StaticArray`).
 This is useful if you want to override dispatch to call the `Base` version of
 operations such as `kron` instead of the implementation in `StaticArrays`.
 Normally you shouldn't need to do this, but it can be more efficient for
-certian algorithms where the number of elements of the output is a lot larger
+certain algorithms where the number of elements of the output is a lot larger
 than the input.
 """
 @inline drop_sdims(a::StaticArray) = TrivialView(a)
