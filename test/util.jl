@@ -1,5 +1,7 @@
 using StaticArrays, Base.Test
 
+import StaticArrays: drop_sdims
+
 @testset "util" begin
     @test !(drop_sdims(SVector(1,2)) isa StaticArray)
     @test !(drop_sdims([1,2]) isa StaticArray)
