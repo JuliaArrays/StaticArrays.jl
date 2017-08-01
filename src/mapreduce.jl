@@ -160,27 +160,76 @@ end
 ## reducedim ##
 ###############
 
-@inline reducedim(op, a::StaticArray, ::Val{D}) where {D} = mapreducedim(identity, op, a, Val{D})
-@inline reducedim(op, a::StaticArray, ::Val{D}, v0) where {D} = mapreducedim(identity, op, a, Val{D}, v0)
+@inline reducedim(op, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(identity, op, a, Val{D})
+@inline reducedim(op, a::StaticArray, ::Type{Val{D}}, v0) where {D} = mapreducedim(identity, op, a, Val{D}, v0)
 
 #######################
 ## related functions ##
 #######################
 
 # These are all similar in Base but not @inline'd
-@inline iszero(a::StaticArray{<:Any, T}) where {T} = reduce((x,y) -> x && (y==zero(T)), true, a)
-@inline sum(a::StaticArray{<:Any, T}) where {T} = reduce(+, zero(T), a)
-@inline sum(f::Base.Callable, a::StaticArray) = mapreduce(f, +, a)
-@inline prod(a::StaticArray{<:Any, T}) where {T} = reduce(*, one(T), a)
-@inline count(a::StaticArray{<:Any, Bool}) = reduce(+, 0, a)
-@inline count(f::Base.Callable, a::StaticArray) = mapreduce(x->f(x)::Bool, +, 0, a)
-@inline all(a::StaticArray{<:Any, Bool}) = reduce(&, true, a)  # non-branching versions
-@inline any(a::StaticArray{<:Any, Bool}) = reduce(|, false, a) # (benchmarking needed)
+#
+# Implementation notes:
+#
+# 1. When providing an initial value v0, note that its location is different in reduce and
+# reducedim: v0 comes earlier than collection in reduce, whereas it is the last argument in
+# reducedim.  The same difference exists between mapreduce and mapreducedim.
+#
+# 2. mapreduce and mapreducedim usually do not take initial value v0, because we don't
+# always know the return type of an arbitrary mapping function f.  (We usually want to use
+# some initial value such as one(T) or zero(T) as v0, where T is the return type of f, but
+# if users provide type-unstable f, its return type cannot be known.)  Therefore, mapped
+# versions of the functions implemented below usually require the collection to have at
+# least two entries.
+#
+# 3. Exceptions are the ones that require Boolean mapping functions.  For example, f in
+# all and any must return Bool, so we know the appropriate v0 is true and false,
+# respectively.  Therefore, all(f, ...) and any(f, ...) are implemented by mapreduce(f, ...)
+# with an initial value v0 = true and false.
+#
+# 4. Some implementations (e.g., count(a, Val{D})) are commented out because corresponding
+# Base functions (e.g., count(a, D)) do not exist yet.
+@inline iszero(a::StaticArray{<:Any,T}) where {T} = reduce((x,y) -> x && (y==zero(T)), true, a)
+
+@inline sum(a::StaticArray{<:Any,T}) where {T} = reduce(+, zero(T), a)
+@inline sum(f::Function, a::StaticArray) = mapreduce(f, +, a)
+@inline sum(a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = reducedim(+, a, Val{D}, zero(T))
+@inline sum(f::Function, a::StaticArray, ::Type{Val{D}}) where D = mapreducedim(f, +, a, Val{D})
+
+@inline prod(a::StaticArray{<:Any,T}) where {T} = reduce(*, one(T), a)
+@inline prod(f::Function, a::StaticArray{<:Any,T}) where {T} = mapreduce(f, *, a)
+@inline prod(a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = reducedim(*, a, Val{D}, one(T))
+@inline prod(f::Function, a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = mapreducedim(f, *, a, Val{D})
+
+@inline count(a::StaticArray{<:Any,Bool}) = reduce(+, 0, a)
+@inline count(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, +, 0, a)
+# @inline count(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(+, a, Val{D}, 0)
+# @inline count(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, +, a, Val{D}, 0)
+
+@inline all(a::StaticArray{<:Any,Bool}) = reduce(&, true, a)  # non-branching versions
+@inline all(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, &, true, a)
+@inline all(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(&, a, Val{D}, true)
+@inline all(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, &, a, Val{D}, true)
+
+@inline any(a::StaticArray{<:Any,Bool}) = reduce(|, false, a) # (benchmarking needed)
+@inline any(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, |, false, a) # (benchmarking needed)
+@inline any(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(|, a, Val{D}, false)
+@inline any(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, |, a, Val{D}, false)
+
 @inline mean(a::StaticArray) = sum(a) / length(a)
+@inline mean(f::Function, a::StaticArray) = sum(f, a) / length(a)
+@inline mean(a::StaticArray, ::Type{Val{D}}) where {D} = sum(a, Val{D}) / size(a, D)
+# @inline mean(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = sum(f, a, Val{D}) / size(a, D)
+
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
+@inline minimum(f::Function, a::StaticArray) = mapreduce(f, min, a)
+@inline minimum(a::StaticArray, ::Type{Val{D}}) where {D} = reducedim(min, a, Val{D})
+@inline minimum(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(f, min, a, Val{D})
+
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
-@inline minimum(a::StaticArray, dim::Type{Val{D}}) where {D} = reducedim(min, a, dim)
-@inline maximum(a::StaticArray, dim::Type{Val{D}}) where {D} = reducedim(max, a, dim)
+@inline maximum(f::Function, a::StaticArray) = mapreduce(f, max, a)
+@inline maximum(a::StaticArray, ::Type{Val{D}}) where {D} = reducedim(max, a, Val{D})
+@inline maximum(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(f, max, a, Val{D})
 
 # Diff is slightly different
 @inline diff(a::StaticArray) = diff(a, Val{1})
