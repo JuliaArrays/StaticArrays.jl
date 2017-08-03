@@ -70,6 +70,14 @@ end
     @test_broken norm(Matrix(sm*inv(sm) - eye(4))) < 10*norm(m*inv(m) - eye(4))
 end
 
+@testset "Matrix inverse 5x5" begin
+    m = randn(Float64, 5,5) + eye(5)
+    @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
+    m = triu(randn(Float64, 5,5) + eye(5))
+    @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
+    m = tril(randn(Float64, 5,5) + eye(5))
+    @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
+end
 
 #-------------------------------------------------------------------------------
 # More comprehensive but qualitiative testing for inv() accuracy
