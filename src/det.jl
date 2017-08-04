@@ -6,7 +6,7 @@ end
 
 @inline logdet(A::StaticMatrix) = log(det(A))
 
-@inline _det(::Size{(1,1)}, A::StaticMatrix,::Type) = @inbounds return A[1]
+@inline _det(::Size{(1,1)}, A::StaticMatrix,S::Type) = @inbounds return convert(S,A[1])
 
 @inline function _det(::Size{(2,2)}, A::StaticMatrix, S::Type)
     A = similar_type(A,S)(A)
