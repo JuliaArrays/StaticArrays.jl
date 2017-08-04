@@ -59,3 +59,34 @@ end
 
     return nothing
 end
+
+
+# Trivial view used to drop static dimensions to override dispatch
+struct TrivialView{A,T,N} <: AbstractArray{T,N}
+    a::A
+end
+
+size(a::TrivialView) = size(a.a)
+getindex(a::TrivialView, inds...) = getindex(a.a, inds...)
+setindex!(a::TrivialView, inds...) = setindex!(a.a, inds...)
+Base.IndexStyle(::Type{<:TrivialView{A}}) where {A} = IndexStyle(A)
+
+TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
+
+
+# Remove the static dimensions from an array
+
+"""
+    drop_sdims(a)
+
+Return an `AbstractArray` with the same elements as `a`, but with static
+dimensions removed (ie, not a `StaticArray`).
+
+This is useful if you want to override dispatch to call the `Base` version of
+operations such as `kron` instead of the implementation in `StaticArrays`.
+Normally you shouldn't need to do this, but it can be more efficient for
+certain algorithms where the number of elements of the output is a lot larger
+than the input.
+"""
+@inline drop_sdims(a::StaticArray) = TrivialView(a)
+@inline drop_sdims(a) = a
