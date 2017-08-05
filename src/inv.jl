@@ -7,9 +7,10 @@ end
 @inline _inv(::Size{(1,1)}, A, S::Type) = inv(A[1])
 
 @inline function _inv(::Size{(2,2)}, A, S::Type)
-    newtype = similar_type(A, S)
-    d = det(A)
-    @inbounds return newtype((A[4]/d, -(A[2]/d), -(A[3]/d), A[1]/d))
+    newtype = similar_type(A,S)
+    A = newtype(A)
+    idet = 1/det(A)
+    @inbounds return newtype((A[4]*idet, -(A[2]*idet), -(A[3]*idet), A[1]*idet))
 end
 
 @inline function _inv(::Size{(3,3)}, A,S::Type)
