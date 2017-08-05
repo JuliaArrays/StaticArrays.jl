@@ -4,7 +4,7 @@
     _inv(Size(A),A,S)
 end
 
-@inline _inv(::Size{(1,1)}, A, S::Type) = inv(A[1])
+@inline _inv(::Size{(1,1)}, A, S::Type) = similar_type(A,S)(inv(A[1]))
 
 @inline function _inv(::Size{(2,2)}, A, S::Type)
     newtype = similar_type(A,S)
@@ -56,6 +56,6 @@ end
         return A = similar_type(A,S)(B)
 end
 
-@inline function _inv(::Size, A ,::Type)
-    inv(Matrix(A))
+@inline function _inv(::Size, A , S::Type)
+    similar_type(A,S)(inv(Matrix(A)))
 end
