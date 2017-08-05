@@ -111,7 +111,7 @@ end
     end
 end
 
-@inline rand!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _rand!(rng, Size(SA), a)
+@inline rand!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _rand!(rng, a)
 @generated function _rand!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = rand(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
@@ -123,6 +123,7 @@ end
 
 # ambiguity with AbstractRNG and non-Float64... possibly an optimized form in Base?
 @inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{<:Any, Float64}} = _rand!(rng, Size(SA), a)
+@inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{<:Tuple, Float64, <:Any}} = _rand!(rng, Size(SA), a)
 
 @inline randn!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _randn!(rng, Size(SA), a)
 @generated function _randn!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}

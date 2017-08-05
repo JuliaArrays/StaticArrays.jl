@@ -35,4 +35,15 @@
         fill!(m, 3)
         @test all(m .== 3.)
     end
+    
+    @testset "rand!()" begin
+        m = @MMatrix [0. 0.; 0. 0.]
+        rand!(m)
+        check = ((m .< 1.) .& (m .> 0.))
+        @test all(check)
+        m = @MMatrix [0. 0.; 0. 0.]
+        rand!(m, 1:2)
+        check = ((m .>= 1) .& (m .<= 2))
+        @test all(check)
+    end
 end
