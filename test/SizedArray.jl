@@ -68,6 +68,8 @@
         @test convert(Vector, SizedArray{Tuple{4}, Int, 1}(collect(3:6))) == collect(3:6)
         @test Matrix(SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
         @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
+        # Conversion after reshaping
+        @test_broken Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
     end
 
     @testset "promotion" begin

@@ -16,9 +16,9 @@ end
     S = typeof((one(T)*zero(T) + zero(T))/one(T))
     newtype = similar_type(A, S)
 
-    @inbounds x0 = SVector(A[1], A[2], A[3])
-    @inbounds x1 = SVector(A[4], A[5], A[6])
-    @inbounds x2 = SVector(A[7], A[8], A[9])
+    @inbounds x0 = SVector{3,S}(A[1], A[2], A[3])
+    @inbounds x1 = SVector{3,S}(A[4], A[5], A[6])
+    @inbounds x2 = SVector{3,S}(A[7], A[8], A[9])
 
     y0 = cross(x1,x2)
     d  = vecdot(x0, y0)
