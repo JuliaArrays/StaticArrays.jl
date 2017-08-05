@@ -127,3 +127,20 @@ end
 # Return the "diagonal size" of a matrix - the minimum of the two dimensions
 diagsize(A::StaticMatrix) = diagsize(Size(A))
 @pure diagsize(::Size{S}) where {S} = min(S...)
+
+
+struct Small ; end
+struct Large ; end
+
+"""
+    SizeClass(a::StaticArray, small_limit::Size)
+    SizeClass(a::StaticArray, small_limit::Length)
+
+Return a "size class" trait `Small()` or `Large()`, depending on whether the
+array `a` is small (`Length(a) <= Length(small_limit)`) or large (the
+converse).
+"""
+Base.@pure SizeClass(::Length{L1}, ::Length{L2}) where {L1,L2} = L1 <= L2 ? Small() : Large()
+@inline SizeClass(a::StaticArray, lenref::Length) = SizeClass(Length(a), lenref)
+@inline SizeClass(a::StaticArray, sizeref::Size) = SizeClass(Length(a), Length(sizeref))
+
