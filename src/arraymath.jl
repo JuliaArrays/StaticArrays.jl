@@ -116,7 +116,7 @@ end
     end
 end
 
-@inline rand!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _rand!(rng, a)
+@inline rand!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _rand!(rng, Size(SA), a)
 @generated function _rand!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = rand(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
