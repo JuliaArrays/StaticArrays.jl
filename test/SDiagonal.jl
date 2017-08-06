@@ -80,25 +80,30 @@
         @test (b'*m)' ==  @SVector [22,-12,26,14]
         
         @test m\b == m2\b
-        
+
         @test b'/m == b'/m2
         @test_throws Exception b/m
         @test m*m == m2*m
-        
+
         @test ishermitian(m) == ishermitian(m2)
         @test ishermitian(m/2)
-        
+        m_ireal = SDiagonal(@SVector [11+0im, 12+0im, 13+0im, 14+0im])
+        @test ishermitian(m_ireal)
+
         @test isposdef(m) == isposdef(m2)
         @test issymmetric(m) == issymmetric(m2)
-        
+
         @test (2*m/2)' == m
         @test 2m == m + m
+        @test -(-m) == m
         @test m*0 == m - m
-        
+
         @test m*inv(m) == m/m == m\m == eye(SDiagonal{4,Float64})
-        
-        
-        
-        
+
+        @test factorize(m) == m
+        @test m*[1; 1; 1; 1] == [11; 12; 13; 14]
+        @test m\[1; 1; 1; 1] == [11; 12; 13; 14].\[1; 1; 1; 1]
+        @test SMatrix{4,4}(eye(4))*m == m
+        @test m*SMatrix{4,4}(eye(4)) == m
     end
 end
