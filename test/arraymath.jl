@@ -36,6 +36,15 @@
         @test all(m .== 3.)
     end
     
+    @testset "rand()" begin
+        m = rand(1:2, SVector{3})
+        check = ((m .>= 1) .& (m .<= 2))
+        @test all(check)
+        m = rand(1:2, SMatrix{4, 4})
+        check = ((m .>= 1) .& (m .<= 2))
+        @test all(check)
+    end
+    
     @testset "rand!()" begin
         m = @MMatrix [0. 0.; 0. 0.]
         rand!(m)
