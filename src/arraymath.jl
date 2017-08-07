@@ -58,6 +58,8 @@ end
 
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(rng, range, SA)
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
+@inline rand(range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(Base.GLOBAL_RNG, range, SA)
+@inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Base.GLOBAL_RNG, range, Size(SA), SA)
 @generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, range)) for i = 1:prod(s)]
     return quote
@@ -65,6 +67,9 @@ end
         $SA(tuple($(v...)))
     end
 end
+
+#@inline rand(rng::MersenneTwister, range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(rng, range, SA)
+#@inline rand(rng::MersenneTwister, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
 
 @inline randn(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = randn(rng, SA)
 @inline randn(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _randn(rng, Size(SA), SA)
@@ -123,6 +128,7 @@ end
 
 # ambiguity with AbstractRNG and non-Float64... possibly an optimized form in Base?
 @inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{<:Any, Float64}} = _rand!(rng, Size(SA), a)
+@inline rand!(rng::MersenneTwister, a::SA) where {SA <: StaticArray{<:Tuple, Float64, <:Any}} = _rand!(rng, Size(SA), a)
 
 @inline randn!(rng::AbstractRNG, a::SA) where {SA <: StaticArray} = _randn!(rng, Size(SA), a)
 @generated function _randn!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}

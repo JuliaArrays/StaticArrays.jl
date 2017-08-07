@@ -83,7 +83,7 @@ using StaticArrays, Base.Test
         @test @inferred(cross(SVector(1,2,3), SVector(4,5,6))) === SVector(-3, 6, -3)
         @test @inferred(cross(SVector(1,2), SVector(4,5))) === -3
         @test @inferred(cross(SVector(UInt(1),UInt(2)), SVector(UInt(4),UInt(5)))) === -3
-
+        @test @inferred(cross(SVector(UInt(1),UInt(2),UInt(3)), SVector(UInt(4),UInt(5),UInt(6)))) === SVector(-3, 6, -3)
     end
 
     @testset "transpose() and conj()" begin

@@ -48,6 +48,7 @@
         @test (ex = macroexpand(:(@MMatrix ones)); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix sin(1:5))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MMatrix eye(4, 5, 6, 7))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MMatrix [1; 2; 3; 4]...)); isa(ex, Expr) && ex.head == :error)
 
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)

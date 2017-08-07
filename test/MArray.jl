@@ -65,6 +65,7 @@
         @test (ex = macroexpand(:(@MArray ones())); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray fill(1))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@MArray eye(5,6,7,8,9))); isa(ex, Expr) && ex.head == :error)
+        @test (ex = macroexpand(:(@MArray [1; 2; 3; 4]...)); isa(ex, Expr) && ex.head == :error)
 
         @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
