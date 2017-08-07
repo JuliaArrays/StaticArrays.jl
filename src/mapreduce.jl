@@ -101,9 +101,11 @@ end
     _mapreducedim(f, op, Size(a), a, Val{D}, v0)
 end
 
-@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S, D}
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
+    T0 = eltype(a)
+    T = :((T1 = Base.promote_op(f, $T0); Base.promote_op(op, T1, T1)))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n ∈ Snew]
@@ -118,14 +120,13 @@ end
         exprs[i...] = expr
     end
 
-    # TODO element type might change
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
+        @inbounds return similar_type(a, $T, Size($Snew))(tuple($(exprs...)))
     end
 end
 
-@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0) where {S, D}
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0::T) where {S,D,T}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
 
@@ -142,10 +143,9 @@ end
         exprs[i...] = expr
     end
 
-    # TODO element type might change
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
+        @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
     end
 end
 
@@ -186,9 +186,6 @@ end
 # all and any must return Bool, so we know the appropriate v0 is true and false,
 # respectively.  Therefore, all(f, ...) and any(f, ...) are implemented by mapreduce(f, ...)
 # with an initial value v0 = true and false.
-#
-# 4. Some implementations (e.g., count(a, Val{D})) are commented out because corresponding
-# Base functions (e.g., count(a, D)) do not exist yet.
 @inline iszero(a::StaticArray{<:Any,T}) where {T} = reduce((x,y) -> x && (y==zero(T)), true, a)
 
 @inline sum(a::StaticArray{<:Any,T}) where {T} = reduce(+, zero(T), a)
@@ -203,8 +200,8 @@ end
 
 @inline count(a::StaticArray{<:Any,Bool}) = reduce(+, 0, a)
 @inline count(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, +, 0, a)
-# @inline count(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(+, a, Val{D}, 0)
-# @inline count(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, +, a, Val{D}, 0)
+@inline count(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(+, a, Val{D}, 0)
+@inline count(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, +, a, Val{D}, 0)
 
 @inline all(a::StaticArray{<:Any,Bool}) = reduce(&, true, a)  # non-branching versions
 @inline all(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, &, true, a)
@@ -219,7 +216,7 @@ end
 @inline mean(a::StaticArray) = sum(a) / length(a)
 @inline mean(f::Function, a::StaticArray) = sum(f, a) / length(a)
 @inline mean(a::StaticArray, ::Type{Val{D}}) where {D} = sum(a, Val{D}) / size(a, D)
-# @inline mean(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = sum(f, a, Val{D}) / size(a, D)
+@inline mean(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = sum(f, a, Val{D}) / size(a, D)
 
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline minimum(f::Function, a::StaticArray) = mapreduce(f, min, a)
@@ -235,9 +232,10 @@ end
 @inline diff(a::StaticArray) = diff(a, Val{1})
 @inline diff(a::StaticArray, ::Type{Val{D}}) where {D} = _diff(Size(a), a, Val{D})
 
-@generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S, D}
+@generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
+    T = Base.promote_op(-, eltype(a), eltype(a))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
@@ -248,9 +246,8 @@ end
         exprs[i1...] = :(a[$(i2...)] - a[$(i1...)])
     end
 
-    # TODO element type might change
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, Size($Snew))(tuple($(exprs...)))
+        @inbounds return similar_type(a, $T, Size($Snew))(tuple($(exprs...)))
     end
 end
