@@ -12,7 +12,7 @@ import Base: getindex, setindex!, size, similar, vec, show,
              lu, svd, svdvals, svdfact, factorize, ishermitian, issymmetric, isposdef,
              sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
-             randexp!, normalize, normalize!, read, read!, write
+             randexp!, normalize, normalize!, read, read!, write, Eigen
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
