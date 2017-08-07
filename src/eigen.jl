@@ -376,6 +376,16 @@ end
     return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
+@inline function eigfact(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
+    vals, vecs = _eig(Size(A), A, permute, scale)
+    return Eigen(vals, vecs)
+end
+
+@inline function eigfact(A::Base.LinAlg.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
+    vals, vecs = _eig(Size(A), A, permute, scale)
+    return Eigen(vals, vecs)
+end
+
 # NOTE: The following Boost Software License applies to parts of the method:
 #     _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
 
