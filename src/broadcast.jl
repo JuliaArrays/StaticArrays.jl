@@ -103,7 +103,7 @@ end
     end
 
     eltype_exprs = [t <: AbstractArray ? :($(eltype(t))) : :($t) for t ∈ a]
-    newtype_expr = :(Core.Inference.return_type(f, Tuple{$(eltype_exprs...)}))
+    newtype_expr = prod(newsize) > 0 ? :(Base.promote_op(f, $(eltype_exprs...))) : :(Union{})
 
     return quote
         @_inline_meta
