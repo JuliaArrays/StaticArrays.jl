@@ -17,7 +17,7 @@ end
         exprs[i] = :(f($(tmp...)))
     end
     eltypes = [eltype(a[j]) for j ∈ 1:length(a)] # presumably, `eltype` is "hyperpure"?
-    newT = :(Base.promote_op(f, $(eltypes...)))
+    newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
     return quote
         @_inline_meta
         @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
@@ -105,7 +105,7 @@ end
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
     T0 = eltype(a)
-    T = :((T1 = Base.promote_op(f, $T0); Base.promote_op(op, T1, T1)))
+    T = :((T1 = Core.Inference.return_type(f, Tuple{$T0}); Core.Inference.return_type(op, Tuple{T1,T1})))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n ∈ Snew]
@@ -235,7 +235,7 @@ end
 @generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
-    T = Base.promote_op(-, eltype(a), eltype(a))
+    T = Core.Inference.return_type(-, Tuple{eltype(a),eltype(a)})
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
