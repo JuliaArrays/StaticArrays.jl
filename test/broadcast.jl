@@ -45,16 +45,16 @@ end
     @testset "2x2 StaticMatrix with 1x2 StaticMatrix" begin
         m1 = @SMatrix [1 2; 3 4]
         m2 = @SMatrix [1 4]
-        @test_broken @inferred(broadcast(+, m1, m2)) === @SMatrix [2 6; 4 8] #197
-        @test_broken @inferred(m1 .+ m2) === @SMatrix [2 6; 4 8] #197
+        @test @inferred(broadcast(+, m1, m2)) === @SMatrix [2 6; 4 8] #197
+        @test @inferred(m1 .+ m2) === @SMatrix [2 6; 4 8] #197
         @test @inferred(m2 .+ m1) === @SMatrix [2 6; 4 8]
-        @test_broken @inferred(m1 .* m2) === @SMatrix [1 8; 3 16] #197
+        @test @inferred(m1 .* m2) === @SMatrix [1 8; 3 16] #197
         @test @inferred(m2 .* m1) === @SMatrix [1 8; 3 16]
-        @test_broken @inferred(m1 ./ m2) === @SMatrix [1 1/2; 3 1] #197
+        @test @inferred(m1 ./ m2) === @SMatrix [1 1/2; 3 1] #197
         @test @inferred(m2 ./ m1) === @SMatrix [1 2; 1/3 1]
-        @test_broken @inferred(m1 .- m2) === @SMatrix [0 -2; 2 0] #197
+        @test @inferred(m1 .- m2) === @SMatrix [0 -2; 2 0] #197
         @test @inferred(m2 .- m1) === @SMatrix [0 2; -2 0]
-        @test_broken @inferred(m1 .^ m2) === @SMatrix [1 16; 1 256] #197
+        @test @inferred(m1 .^ m2) === @SMatrix [1 16; 3 256] #197
     end
 
     @testset "1x2 StaticMatrix with StaticVector" begin
@@ -62,15 +62,15 @@ end
         v = SVector(1, 4)
         @test @inferred(broadcast(+, m, v)) === @SMatrix [2 3; 5 6]
         @test @inferred(m .+ v) === @SMatrix [2 3; 5 6]
-        @test_broken @inferred(v .+ m) === @SMatrix [2 3; 5 6] #197
+        @test @inferred(v .+ m) === @SMatrix [2 3; 5 6] #197
         @test @inferred(m .* v) === @SMatrix [1 2; 4 8]
-        @test_broken @inferred(v .* m) === @SMatrix [1 2; 4 8] #197
+        @test @inferred(v .* m) === @SMatrix [1 2; 4 8] #197
         @test @inferred(m ./ v) === @SMatrix [1 2; 1/4 1/2]
-        @test_broken @inferred(v ./ m) === @SMatrix [1 1/2; 4 2] #197
+        @test @inferred(v ./ m) === @SMatrix [1 1/2; 4 2] #197
         @test @inferred(m .- v) === @SMatrix [0 1; -3 -2]
-        @test_broken @inferred(v .- m) === @SMatrix [0 -1; 3 2] #197
+        @test @inferred(v .- m) === @SMatrix [0 -1; 3 2] #197
         @test @inferred(m .^ v) === @SMatrix [1 2; 1 16]
-        @test_broken @inferred(v .^ m) === @SMatrix [1 1; 4 16] #197
+        @test @inferred(v .^ m) === @SMatrix [1 1; 4 16] #197
     end
 
     @testset "StaticVector with StaticVector" begin
@@ -89,9 +89,9 @@ end
         @test @inferred(v2 .^ v1) === SVector(1, 16)
         # test case issue #199
         @test @inferred(SVector(1) .+ SVector()) === SVector()
-        @test_broken @inferred(SVector() .+ SVector(1)) === SVector()
+        @test @inferred(SVector() .+ SVector(1)) === SVector()
         # test case issue #200
-        @test_broken @inferred(v1 .+ v2') === @SMatrix [2 5; 3 5]
+        @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
     end
 
     @testset "StaticVector with Scalar" begin
