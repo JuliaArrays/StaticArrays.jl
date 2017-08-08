@@ -17,7 +17,7 @@ end
         exprs[i] = :(f($(tmp...)))
     end
     eltypes = [eltype(a[j]) for j ∈ 1:length(a)] # presumably, `eltype` is "hyperpure"?
-    newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
+    newT = :(Base.promote_op(f, $(eltypes...)))
     return quote
         @_inline_meta
         @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
