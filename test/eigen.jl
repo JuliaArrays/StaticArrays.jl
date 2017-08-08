@@ -7,14 +7,14 @@
         @test vecs === SMatrix{1,1}(1.0)
         ef = eigfact(m)
         @test ef[:values] === SVector(2.0)
-        @test ef[:vecs] === SMatrix{1,1}(1.0)
+        @test ef[:vectors] === SMatrix{1,1}(1.0)
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals === SVector(2.0)
         @test vecs === SMatrix{1,1}(1.0)
         ef = eigfact(Symmetric(m))
         @test ef[:values] === SVector(2.0)
-        @test ef[:vecs] === SMatrix{1,1}(1.0)
+        @test ef[:vectors] === SMatrix{1,1}(1.0)
     end
 
     @testset "2×2" for i = 1:100
@@ -30,7 +30,7 @@
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
         ef = eigfact(m)
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vecs]*diagm(vals)*ef[:vecs]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
@@ -38,7 +38,7 @@
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
         ef = eigfact(Symmetric(m))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vecs]*diagm(vals)*ef[:vecs]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
 
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ vals_a
@@ -47,7 +47,7 @@
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
         ef = eigfact(Hermitian(m))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vecs]*diagm(vals)*ef[:vecs]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
 
         m_d = randn(SVector{2}); m = diagm(m_d)
         (vals, vecs) = eig(Hermitian(m))

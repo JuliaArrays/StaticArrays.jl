@@ -381,7 +381,7 @@ end
     return Eigen(vals, vecs)
 end
 
-@inline function eigfact(A::Base.LinAlg.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
+@inline function eigfact(A::Base.LinAlg.HermOrSym{T, SM}; permute::Bool=true, scale::Bool=true) where SM <: StaticMatrix where T<:Real
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
