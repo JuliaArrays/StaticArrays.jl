@@ -60,6 +60,9 @@
         @test isa(@inferred(similar(SArray{Tuple{1,1,1},Int,3,1}, Float64)), MArray{Tuple{1,1,1},Float64,3,1})
         @test isa(@inferred(similar(sv, Size(3,3,3))), MArray{Tuple{3,3,3},Int,3,27})
         @test isa(@inferred(similar(sv, Float64, Size(3,3,3))), MArray{Tuple{3,3,3},Float64,3,27})
+
+        @test isa(@inferred(similar(Diagonal{Int}, Size(2,2))), MArray{Tuple{2, 2}, Int, 2, 4})
+        @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
     end
 
     @testset "reshape" begin
@@ -69,7 +72,11 @@
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
         # AbstractArray
-        @test reshape(view(ones(4,4), 1:4, 1:2), Size(4,2)) == SMatrix{4,2}(ones(4,2))
+        # CartesianIndex
+        @test reshape(view(ones(4, 4), 1:4, 1:2), Size(4, 2)) == SMatrix{4,2}(ones(4, 2))
+        # IndexLinear
+        @test reshape(view(ones(4, 4), 1, 1:4), Size(4, 1)) == SMatrix{4,1}(ones(4, 1))
+        @test_throws DimensionMismatch reshape(view(ones(4,4), 1:4, 1:2), Size(5, 2))
     end
 
     @testset "copy" begin
