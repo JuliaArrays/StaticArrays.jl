@@ -69,9 +69,9 @@
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
     end
 
-    @testset "copy" begin        
+    @testset "copy" begin
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
-        @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix === [1 2; 3 4]
+        @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
     end
 
     @testset "full" begin
