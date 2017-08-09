@@ -67,6 +67,9 @@
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
+
+        # AbstractArray
+        @test reshape(view(ones(4,4), 1:4, 1:2), Size(4,2)) == SMatrix{4,2}(ones(4,2))
     end
 
     @testset "copy" begin

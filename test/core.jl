@@ -106,14 +106,14 @@
         @test @inferred(convert(SArray{Tuple{1},Float64,1}, ma_int)) === sa_float
         @test @inferred(convert(SArray{Tuple{1},Float64,1,1}, ma_int)) === sa_float
     end
-    
+
     @testset "AbstractArray conversion" begin
         sa = SArray{Tuple{2,2}, Int}((3, 4, 5, 6))
         ma = MArray{Tuple{2,2}, Int}((3, 4, 5, 6))
         a = [3 5; 4 6]
 
         @test @inferred(convert(SArray{Tuple{2,2}}, a)) === sa
-        @test @inferred(convert(SArray{Tuple{2,2},Int}, a)) === sa  
+        @test @inferred(convert(SArray{Tuple{2,2},Int}, a)) === sa
         @test @inferred(convert(SArray{Tuple{2,2},Int,2}, a)) === sa
         @test @inferred(convert(SArray{Tuple{2,2},Int,2,4}, a)) === sa
 
@@ -132,7 +132,7 @@
     end
     @test_throws Exception Length{2.5}()
     @test Length(2) == Length{2}()
-    @test Tuple{2, 3, 5} != Size{(2, 3, 4)}
-    @test Size{(2, 3, 4)} != Tuple{2, 3, 5} 
-
+    @test Tuple{2, 3, 5} != StaticArrays.Size{(2, 3, 4)}
+    @test StaticArrays.Size{(2, 3, 4)} != Tuple{2, 3, 5}
+    @test StaticArrays.check_length(2) == nothing
 end
