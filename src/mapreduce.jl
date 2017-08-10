@@ -235,7 +235,7 @@ end
 @generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
-    T = Core.Inference.return_type(-, Tuple{eltype(a),eltype(a)})
+    T = typeof(one(eltype(a)) - one(eltype(a)))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
