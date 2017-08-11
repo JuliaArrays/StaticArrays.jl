@@ -26,7 +26,7 @@
         # SVector
         mv = MVector{4,Int}()
         @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
-        
+
         mv = MVector{4,Int}()
         @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
         @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((2,2,2,2)))
@@ -39,6 +39,7 @@
 
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), SVector(1,2,3,4))
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), :)
+        @test_throws DimensionMismatch setindex!(mv, view(ones(8), 1:5), :)
         @test_throws DimensionMismatch setindex!(mv, [1,2,3], SVector(1,2,3,4))
     end
 
@@ -129,7 +130,7 @@
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)
         @test (ma[2,1,1,1] = 48; ma[2,1,1,1] === 48)
     end
-    
+
     @testset "4D StaticArray indexing" begin
         sa = SArray{Tuple{2,2,2,2}, Int}([i*j*k*l for i = 1:2, j = 2:3, k=3:4, l=4:5])
         @test (@inferred getindex(sa, 1, 1, 1, SVector(1,2))) === @SVector [24,30]
