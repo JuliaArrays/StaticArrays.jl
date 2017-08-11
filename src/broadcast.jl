@@ -10,6 +10,7 @@ import Base.Broadcast:
 # This isn't the precise output type, just a placeholder to return from
 # promote_containertype, which will control dispatch to our broadcast_c.
 _containertype(::Type{<:StaticArray}) = StaticArray
+_containertype(::Type{<:RowVector{<:Any,<:SVector}}) = StaticArray
 
 # With the above, the default promote_containertype gives reasonable defaults:
 #   StaticArray, StaticArray -> StaticArray
@@ -32,6 +33,7 @@ broadcast_indices(::Type{StaticArray}, A) = indices(A)
     _broadcast(f, broadcast_sizes(as...), as...)
 end
 
+@inline broadcast_sizes(a::RowVector{<:Any,<:SVector}, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a, as...) = (Size(), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
@@ -66,9 +68,9 @@ end
     for i = 1:length(sizes)
         s = sizes[i]
         for j = 1:length(s)
-            if newsize[j] == 1 || newsize[j] == s[j]
+            if newsize[j] == 1
                 newsize[j] = s[j]
-            else
+            elseif newsize[j] ≠ s[j] && s[j] ≠ 1
                 throw(DimensionMismatch("Tried to broadcast on inputs sized $sizes"))
             end
         end
