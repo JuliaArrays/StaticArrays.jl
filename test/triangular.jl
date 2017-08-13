@@ -56,7 +56,20 @@ end
         # Some weird type stuff going on here
         @test (SA*SB') ≈ A*conj(B)
         @test (SA'*SB)::Matrix ≈ A'*B.'
+        @test (SA'*SB.')::SVector{n} ≈ A'*B
+        @test (SA'*SB') ≈ A'*conj(B)
         @test (SA.'*SB)::Matrix ≈ A.'*B.'
+        @test (SA.'*SB.')::SVector{n} ≈ A.'*B
+        @test (SA.'*SB') ≈ A.'*conj(B)
+        @test (SB*SA)::RowVector{<:Any,<:SVector{n}} ≈ B.'*A
+        @test (SB*SA') ≈ B.'*A'
+        @test (SB*SA.')::RowVector{<:Any,<:SVector{n}} ≈ B.'*A.'
+        @test (SB.'*SA)::Matrix ≈ B*A
+        @test (SB'*SA)::Matrix ≈ conj(B)*A
+        @test (SB.'*SA.')::Matrix ≈ B*A.'
+        @test (SB.'*SA')::Matrix ≈ B*A'
+        @test (SB'*SA.')::Matrix ≈ conj(B)*A.'
+        @test (SB'*SA')::Matrix ≈ conj(B)*A'
     end
 end
 
