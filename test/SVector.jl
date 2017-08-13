@@ -37,7 +37,7 @@
         @test isa(@SVector(rand(Float32, 2)), SVector{2, Float32})
         @test isa(@SVector(randn(Float32, 2)), SVector{2, Float32})
         @test isa(@SVector(randexp(Float32, 2)), SVector{2, Float32})
-        
+
         @test (ex = macroexpand(:(@SVector fill(1.5, 2, 3))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector ones(2, 3, 4))); isa(ex, Expr) && ex.head == :error)
         @test (ex = macroexpand(:(@SVector sin(1:5))); isa(ex, Expr) && ex.head == :error)
@@ -76,5 +76,7 @@
         c = CartesianIndex((1,2))
         @test @inferred(eltype([a,c])) == SVector{2,Int}
         @test @inferred(eltype([b,c])) == SVector{2,Float32}
+        @test @inferred(convert(SVector, c)) == SVector{2,Int}([1, 2])
+        @test @inferred(convert(SVector{2}, c)) == SVector{2,Int}([1, 2])
     end
 end

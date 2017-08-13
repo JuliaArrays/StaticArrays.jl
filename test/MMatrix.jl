@@ -68,6 +68,7 @@
         @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
 
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
+        @test_throws DimensionMismatch MMatrix{3}((1,2,3,4))
     end
 
     @testset "Methods" begin
@@ -101,12 +102,16 @@
         m[3] = 13
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
-        
+
         m = @MMatrix [0 0; 0 0]
         m[1] = Int8(11)
         m[2] = Int8(12)
         m[3] = Int8(13)
         m[4] = Int8(14)
         @test m.data === (11, 12, 13, 14)
+
+        # setindex with non-elbits type
+        m = MMatrix{2,2,String}()
+        @test_throws ErrorException setindex!(m, "a", 1, 1)
     end
 end
