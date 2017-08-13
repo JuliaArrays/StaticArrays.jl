@@ -13,6 +13,8 @@ srand()
 
         @test (SA*SB[:,1])::SVector{n} ≈ A*B[:,1]
         @test (SA*SB)::SMatrix{n,n} ≈ A*B
+        @test (SA*SB.')::SMatrix{n,n} ≈ A*B.'
+        @test (SA*SB')::SMatrix{n,n} ≈ A*B'
         @test (SA'*SB[:,1])::SVector{n} ≈ A'*B[:,1]
         @test (SA'*SB)::SMatrix{n,n} ≈ A'*B
         @test (SA.'*SB[:,1])::SVector{n} ≈ A.'*B[:,1]
@@ -35,6 +37,26 @@ srand()
         @test_throws DimensionMismatch SA'*ones(SVector{n+1,eltyB})
         @test_throws DimensionMismatch ones(SMatrix{n+1,n+1,eltyB})*SA.'
         @test_throws DimensionMismatch ones(SMatrix{n+1,n+1,eltyB})*SA'
+    end
+end
+
+@testset "Triangular-RowVector multiplication" begin
+    for n in (1,),
+        eltyA in (Float64, Complex128, Int),
+            (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
+                eltyB in (Float64, Complex128)
+
+        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
+        B = convert(Vector{eltyB}, eltyA <: Complex ? real(A)*ones(n) : A*ones(n))
+        SA = t(SMatrix{n,n}(A.data))
+        SB = SVector{n}(B).'
+
+        @test (SA*SB)::Matrix ≈ A*B.'
+        @test (SA*SB.')::SVector{n} ≈ A*B
+        # Some weird type stuff going on here
+        @test (SA*SB') ≈ A*conj(B)
+        @test (SA'*SB)::Matrix ≈ A'*B.'
+        @test (SA.'*SB)::Matrix ≈ A.'*B.'
     end
 end
 
