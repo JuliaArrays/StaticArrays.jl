@@ -17,8 +17,10 @@ srand()
         @test (SA*SB')::SMatrix{n,n} ≈ A*B'
         @test (SA'*SB[:,1])::SVector{n} ≈ A'*B[:,1]
         @test (SA'*SB)::SMatrix{n,n} ≈ A'*B
+        @test (SA'*SB')::SMatrix{n,n} ≈ A'*B'
         @test (SA.'*SB[:,1])::SVector{n} ≈ A.'*B[:,1]
         @test (SA.'*SB)::SMatrix{n,n} ≈ A.'*B
+        @test (SA.'*SB.')::SMatrix{n,n} ≈ A.'*B.'
         @test (SB*SA)::SMatrix{n,n} ≈ B*A
         @test (SB[:,1].'*SA)::RowVector{<:Any,<:SVector{n}} ≈ B[:,1].'*A
         @test (SB.'*SA)::SMatrix{n,n} ≈ B.'*A
