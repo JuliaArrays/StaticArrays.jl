@@ -62,6 +62,7 @@
         @test isa(@inferred(similar(sv, Float64, Size(3,3,3))), MArray{Tuple{3,3,3},Float64,3,27})
 
         @test isa(@inferred(similar(Diagonal{Int}, Size(2,2))), MArray{Tuple{2, 2}, Int, 2, 4})
+        @test isa(@inferred(similar(SizedArray, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
     end
 
