@@ -138,8 +138,8 @@ end
 @inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
     hcat(hcat(a,b), c...)
 
-@inline Base.zero{SA <: StaticArray}(a::SA) = zeros(SA)
-@inline Base.zero{SA <: StaticArray}(a::Type{SA}) = zeros(SA)
+@inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
+@inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
 
 @inline one(::SM) where {SM <: StaticMatrix} = _one(Size(SM), SM)
 @inline one(::Type{SM}) where {SM <: StaticMatrix} = _one(Size(SM), SM)
@@ -338,10 +338,10 @@ end
 @inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
 
 # some micro-optimizations (TODO check these make sense for v0.6)
-@inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::SM) = _checksquare(Size(SM))
-@inline Base.LinAlg.checksquare{SM<:StaticMatrix}(::Type{SM}) = _checksquare(Size(SM))
+@inline Base.LinAlg.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
+@inline Base.LinAlg.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
 
-@pure _checksquare{S}(::Size{S}) = (S[1] == S[2] || error("marix must be square"); S[1])
+@pure _checksquare(::Size{S}) where {S} = (S[1] == S[2] || error("marix must be square"); S[1])
 
 @inline Base.LinAlg.Symmetric(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline Base.LinAlg.Hermitian(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))

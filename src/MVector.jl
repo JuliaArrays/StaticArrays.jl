@@ -24,8 +24,8 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
-@inline zeros{N}(::Type{MVector{N}}) = zeros(MVector{N,Float64})
-@inline ones{N}(::Type{MVector{N}}) = ones(MVector{N,Float64})
+@inline zeros(::Type{MVector{N}}) where {N} = zeros(MVector{N,Float64})
+@inline ones(::Type{MVector{N}}) where {N} = ones(MVector{N,Float64})
 
 #####################
 ## MVector methods ##
@@ -36,8 +36,8 @@ show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 end
 
 # Mutating setindex!
-@propagate_inbounds setindex!{S,T}(v::MVector{S,T}, val, i::Int) = setindex!(v, convert(T, val), i)
-@inline function setindex!{S,T}(v::MVector{S,T}, val::T, i::Int)
+@propagate_inbounds setindex!(v::MVector{S,T}, val, i::Int) where {S,T} = setindex!(v, convert(T, val), i)
+@inline function setindex!(v::MVector{S,T}, val::T, i::Int) where {S,T}
     @boundscheck if i < 1 || i > length(v)
         throw(BoundsError())
     end

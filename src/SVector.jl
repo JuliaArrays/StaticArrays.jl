@@ -15,9 +15,9 @@ compiler (the element type may optionally also be specified).
 """
 const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 
-@inline (::Type{SVector}){S}(x::NTuple{S,Any}) = SVector{S}(x)
-@inline (::Type{SVector{S}}){S, T}(x::NTuple{S,T}) = SVector{S,T}(x)
-@inline (::Type{SVector{S}}){S, T <: Tuple}(x::T) = SVector{S,promote_tuple_eltype(T)}(x)
+@inline (::Type{SVector})(x::NTuple{S,Any}) where {S} = SVector{S}(x)
+@inline (::Type{SVector{S}})(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
+@inline (::Type{SVector{S}})(x::T) where {S, T <: Tuple} = SVector{S,promote_tuple_eltype(T)}(x)
 
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))
@@ -26,8 +26,8 @@ const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}")
 
 # Some more advanced constructor-like functions
-@inline zeros{N}(::Type{SVector{N}}) = zeros(SVector{N,Float64})
-@inline ones{N}(::Type{SVector{N}}) = ones(SVector{N,Float64})
+@inline zeros(::Type{SVector{N}}) where {N} = zeros(SVector{N,Float64})
+@inline ones(::Type{SVector{N}}) where {N} = ones(SVector{N,Float64})
 
 #####################
 ## SVector methods ##
@@ -39,10 +39,10 @@ end
 
 # Converting a CartesianIndex to an SVector
 convert(::Type{SVector}, I::CartesianIndex) = SVector(I.I)
-convert{N}(::Type{SVector{N}}, I::CartesianIndex{N}) = SVector{N}(I.I)
-convert{N,T}(::Type{SVector{N,T}}, I::CartesianIndex{N}) = SVector{N,T}(I.I)
+convert(::Type{SVector{N}}, I::CartesianIndex{N}) where {N} = SVector{N}(I.I)
+convert(::Type{SVector{N,T}}, I::CartesianIndex{N}) where {N,T} = SVector{N,T}(I.I)
 
-Base.promote_rule{N,T}(::Type{SVector{N,T}}, ::Type{CartesianIndex{N}}) = SVector{N,promote_type(T,Int)}
+Base.promote_rule(::Type{SVector{N,T}}, ::Type{CartesianIndex{N}}) where {N,T} = SVector{N,promote_type(T,Int)}
 
 macro SVector(ex)
     if isa(ex, Expr) && ex.head == :vect

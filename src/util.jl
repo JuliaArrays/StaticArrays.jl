@@ -2,9 +2,9 @@
 TupleN{T,N} = NTuple{N,T}
 
 # Cast any Tuple to an TupleN{T}
-@inline convert_ntuple{T}(::Type{T},d::T) = T # For zero-dimensional arrays
-@inline convert_ntuple{N,T}(::Type{T},d::NTuple{N,T}) = d
-@generated function convert_ntuple{N,T}(::Type{T}, d::NTuple{N,Any})
+@inline convert_ntuple(::Type{T},d::T) where {T} = T # For zero-dimensional arrays
+@inline convert_ntuple(::Type{T},d::NTuple{N,T}) where {N,T} = d
+@generated function convert_ntuple(::Type{T}, d::NTuple{N,Any}) where {N,T}
     exprs = ntuple(i -> :(convert(T, d[$i])), Val{N})
     return quote
         @_inline_meta
@@ -13,7 +13,7 @@ TupleN{T,N} = NTuple{N,T}
 end
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
-@generated function promote_tuple_eltype{T <: Tuple}(::Union{T,Type{T}})
+@generated function promote_tuple_eltype(::Union{T,Type{T}}) where T <: Tuple
     t = Union{}
     for i = 1:length(T.parameters)
         tmp = T.parameters[i]
@@ -48,7 +48,7 @@ function check_array_parameters(Size, T, N, L)
     error("Internal error. Please file a bug")
 end
 
-@generated function check_array_parameters{Size,T,N,L}(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}})
+@generated function check_array_parameters(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}}) where {Size,T,N,L}
     if !all(x->isa(x, Int), Size.parameters)
         return :(throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`).")))
     end

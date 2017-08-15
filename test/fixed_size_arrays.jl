@@ -21,10 +21,10 @@ struct RGB{T} <: FieldVector{3, T}
     z::T
 end
 
-RGB{T}(x::T) = RGB{T}(x, x, x)
-(::RGB{T}){T}(r, g, b) = RGB{T}(T(r), T(g), T(b))
-(::RGB{T}){T}(r::Real) = RGB(T(r), T(r), T(r))
-StaticArrays.similar_type{SV <: RGB, T}(::Type{SV}, ::Type{T}, ::Size{(3,)}) = RGB{T}
+RGB(x::T) where {T} = RGB{T}(x, x, x)
+(::RGB{T})(r, g, b) where {T} = RGB{T}(T(r), T(g), T(b))
+(::RGB{T})(r::Real) where {T} = RGB(T(r), T(r), T(r))
+StaticArrays.similar_type(::Type{SV}, ::Type{T}, ::Size{(3,)}) where {SV <: RGB, T} = RGB{T}
 
 # TODO find equivalent in StaticArrays
 @testset "scalar nan" begin

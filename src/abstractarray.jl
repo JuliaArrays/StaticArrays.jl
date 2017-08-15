@@ -15,7 +15,7 @@ end
     1 <= ii <= length(a) ? true : false
 end
 
-Base.IndexStyle{T<:StaticArray}(::Type{T}) = IndexLinear()
+Base.IndexStyle(::Type{T}) where {T<:StaticArray} = IndexLinear()
 
 # Default type search for similar_type
 """
@@ -53,20 +53,20 @@ similar_type(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar_ty
 
 # Default types
 # Generally, use SArray
-similar_type{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = default_similar_type(T,s,length_val(s))
-default_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = SArray{Tuple{S...},T,D,prod(s)}
+similar_type(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = default_similar_type(T,s,length_val(s))
+default_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = SArray{Tuple{S...},T,D,prod(s)}
 
 
 # should mutable things stay mutable?
 #similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
 
-mutable_similar_type{T,S,D}(::Type{T}, s::Size{S}, ::Type{Val{D}}) = MArray{Tuple{S...},T,D,prod(s)}
+mutable_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = MArray{Tuple{S...},T,D,prod(s)}
 
 # Should `SizedArray` stay the same, and also take over an `Array`?
 #similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 #similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 
-sizedarray_similar_type{T,S,D}(::Type{T},s::Size{S},::Type{Val{D}}) = SizedArray{Tuple{S...},T,D,length(s)}
+sizedarray_similar_type(::Type{T},s::Size{S},::Type{Val{D}}) where {T,S,D} = SizedArray{Tuple{S...},T,D,length(s)}
 
 # Field vectors are user controlled, and currently default to SVector, etc
 
@@ -80,23 +80,23 @@ Constructs and returns a mutable but statically-sized array (i.e. a `StaticArray
 input `array` is not a `StaticArray`, then the `Size` is required to determine the output
 size (or else a dynamically sized array will be returned).
 """
-similar{SA<:StaticArray}(::SA) = similar(SA,eltype(SA))
-similar{SA<:StaticArray}(::Type{SA}) = similar(SA,eltype(SA))
+similar(::SA) where {SA<:StaticArray} = similar(SA,eltype(SA))
+similar(::Type{SA}) where {SA<:StaticArray} = similar(SA,eltype(SA))
 
-similar{SA<:StaticArray,T}(::SA,::Type{T}) = similar(SA,T,Size(SA))
-similar{SA<:StaticArray,T}(::Type{SA},::Type{T}) = similar(SA,T,Size(SA))
+similar(::SA,::Type{T}) where {SA<:StaticArray,T} = similar(SA,T,Size(SA))
+similar(::Type{SA},::Type{T}) where {SA<:StaticArray,T} = similar(SA,T,Size(SA))
 
-similar{A<:AbstractArray,S}(::A,s::Size{S}) = similar(A,eltype(A),s)
-similar{A<:AbstractArray,S}(::Type{A},s::Size{S}) = similar(A,eltype(A),s)
+similar(::A,s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s)
+similar(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s)
 
-similar{A<:AbstractArray,T,S}(::A,::Type{T},s::Size{S}) = similar(A,T,s)
+similar(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar(A,T,s)
 
 # defaults to built-in mutable types
-similar{A<:AbstractArray,T,S}(::Type{A},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))()
+similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))()
 
 # both SizedArray and Array return SizedArray
-similar{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))()
-similar{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))()
+similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))()
+similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_similar_type(T,s,length_val(s))()
 
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
