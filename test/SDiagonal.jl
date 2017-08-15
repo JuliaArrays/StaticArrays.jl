@@ -23,12 +23,9 @@
         @test StaticArrays.scalem(@SMatrix([1 1 1;1 1 1; 1 1 1]), @SVector [1,2,3]) === @SArray [1 2 3; 1 2 3; 1 2 3]
         @test StaticArrays.scalem(@SVector([1,2,3]),@SMatrix [1 1 1;1 1 1; 1 1 1])' === @SArray [1 2 3; 1 2 3; 1 2 3]
     
-        m = SDiagonal(@SVector [11, 12, 13, 14])
+        m = SDiagonal(@SVector [11, 12, 13, 14])  
         
-    
-        
-        @test diag(m) === m.diag
-        
+        @test diag(m) === m.diag 
      
         m2 = diagm([11, 12, 13, 14])
      
@@ -39,8 +36,11 @@
         @test logm(m) == logm(m2)
         @test expm(m) == expm(m2)
         @test sqrtm(m) == sqrtm(m2)
-     
+        @test chol(m) == chol(m2)
         
+        @test chol(reshape([1.0*m, 0.0*m, 0.0*m, 1.0*m], 2, 2)) == 
+            reshape([chol(1.0*m), 0.0*m, 0.0*m, chol(1.0*m)], 2, 2)
+
         @test isimmutable(m) == true
 
         @test m[1,1] === 11
