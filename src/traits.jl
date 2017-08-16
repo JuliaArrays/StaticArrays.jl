@@ -73,18 +73,18 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 @pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
 
 @pure length(::Size{S}) where {S} = length(S)
-@pure length_val{S}(::Size{S}) = Val{length(S)}
+@pure length_val(::Size{S}) where {S} = Val{length(S)}
 
 # Note - using === here, as Base doesn't inline == for tuples as of julia-0.6
-@pure Base.:(==){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S === s
-@pure Base.:(==){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s === S
+@pure Base.:(==)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S === s
+@pure Base.:(==)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s === S
 
-@pure Base.:(!=){S}(::Size{S}, s::Tuple{Vararg{Int}}) = S !== s
-@pure Base.:(!=){S}(s::Tuple{Vararg{Int}}, ::Size{S}) = s !== S
+@pure Base.:(!=)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S !== s
+@pure Base.:(!=)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s !== S
 
-@pure Base.prod{S}(::Size{S}) = prod(S)
+@pure Base.prod(::Size{S}) where {S} = prod(S)
 
-@pure @inline Base.sub2ind{S}(::Size{S}, x::Int...) = sub2ind(S, x...)
+@pure @inline Base.sub2ind(::Size{S}, x::Int...) where {S} = sub2ind(S, x...)
 
 # Some @pure convenience functions for `Length`
 @pure get(::Length{L}) where {L} = L

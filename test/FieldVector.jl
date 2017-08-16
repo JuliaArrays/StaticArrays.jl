@@ -45,7 +45,7 @@
                 y::T
             end
 
-            StaticArrays.similar_type{P2D<:Point2D,T}(::Type{P2D}, ::Type{T}, s::Size{(2,)}) = Point2D{T}
+            StaticArrays.similar_type(::Type{P2D}, ::Type{T}, s::Size{(2,)}) where {P2D<:Point2D,T} = Point2D{T}
         end)
 
         p = Point2D(0.0, 0.0)

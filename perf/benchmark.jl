@@ -24,16 +24,16 @@ end
 
 if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite == false
     f(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C*A; end; return C)
-    f_unrolled{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C)
-    f_unrolled_chunks{M}(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C)
-    f_via_sarray{M}(n::Integer, A::MMatrix{M,M})= @inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C)
+    f_unrolled(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C)
+    f_unrolled_chunks(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C)
+    f_via_sarray(n::Integer, A::MMatrix{M,M}) where {M}= @inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C)
     f_mut_array(n::Integer, A) = @inbounds (C = copy(A); tmp = similar(A); for i = 1:n;  A_mul_B!(tmp, C, A); map!(identity, C, tmp); end; return C)
     f_mut_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled!(tmp, C, A); C.data = tmp.data; end; return C)
     f_blas_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_blas!(tmp, C, A); C.data = tmp.data; end; return C)
 
     g(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C + A; end; return C)
     g_mut(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; @inbounds map!(+, C, C, A); end; return C)
-    g_via_sarray{M}(n::Integer, A::MMatrix{M,M}) = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C) + SMatrix{M,M}(A)); end; return C)
+    g_via_sarray(n::Integer, A::MMatrix{M,M}) where {M} = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C) + SMatrix{M,M}(A)); end; return C)
 
     # Notes: - A[:] = B[:] is allocating in Base, unlike `map!`
     #        - Also, the same goes for Base's implementation of broadcast!(f, A, B, C) (but map! is OK).

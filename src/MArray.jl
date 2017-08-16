@@ -20,51 +20,51 @@ the compiler (the element type may optionally also be specified).
 mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
-    function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,T})
+    function MArray{S,T,N,L}(x::NTuple{L,T}) where {S,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}(x)
     end
 
-    function (::Type{MArray{S,T,N,L}}){S,T,N,L}(x::NTuple{L,Any})
+    function MArray{S,T,N,L}(x::NTuple{L,Any}) where {S,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}(convert_ntuple(T, x))
     end
 
-    function (::Type{MArray{S,T,N,L}}){S,T,N,L}()
+    function MArray{S,T,N,L}() where {S,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
     end
 end
 
-@generated function (::Type{MArray{S,T,N}}){S,T,N}(x::Tuple)
+@generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
         MArray{S,T,N,$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{S,T}}){S,T}(x::Tuple)
+@generated function (::Type{MArray{S,T}})(x::Tuple) where {S,T}
     return quote
         $(Expr(:meta, :inline))
         MArray{S,T,$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{S}}){S, T <: Tuple}(x::T)
+@generated function (::Type{MArray{S}})(x::T) where {S, T <: Tuple}
     return quote
         $(Expr(:meta, :inline))
         MArray{S,$(promote_tuple_eltype(T)),$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{S,T,N}}){S,T,N}()
+@generated function (::Type{MArray{S,T,N}})() where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
         MArray{S, T, N, $(tuple_prod(S))}()
     end
 end
 
-@generated function (::Type{MArray{S,T}}){S,T}()
+@generated function (::Type{MArray{S,T}})() where {S,T}
     return quote
         $(Expr(:meta, :inline))
         MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}()
@@ -110,7 +110,7 @@ end
 
 @inline Tuple(v::MArray) = v.data
 
-@inline function Base.unsafe_convert{S,T}(::Type{Ptr{T}}, a::MArray{S,T})
+@inline function Base.unsafe_convert(::Type{Ptr{T}}, a::MArray{S,T}) where {S,T}
     Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
 end
 

@@ -17,7 +17,7 @@ unknown to the compiler (the element type may optionally also be specified).
 """
 const MMatrix{S1, S2, T, L} = MArray{Tuple{S1, S2}, T, 2, L}
 
-@generated function (::Type{MMatrix{S1}}){S1,L}(x::NTuple{L})
+@generated function (::Type{MMatrix{S1}})(x::NTuple{L}) where {S1,L}
     S2 = div(L, S1)
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
@@ -30,7 +30,7 @@ const MMatrix{S1, S2, T, L} = MArray{Tuple{S1, S2}, T, 2, L}
     end
 end
 
-@generated function (::Type{MMatrix{S1,S2}}){S1,S2,L}(x::NTuple{L})
+@generated function (::Type{MMatrix{S1,S2}})(x::NTuple{L}) where {S1,S2,L}
     T = promote_tuple_eltype(x)
 
     return quote
@@ -39,35 +39,35 @@ end
     end
 end
 
-@generated function (::Type{MMatrix{S1,S2,T}}){S1,S2,T,L}(x::NTuple{L})
+@generated function (::Type{MMatrix{S1,S2,T}})(x::NTuple{L}) where {S1,S2,T,L}
     return quote
         $(Expr(:meta, :inline))
         MMatrix{S1, S2, T, L}(x)
     end
 end
 
-@generated function (::Type{MMatrix{S1,S2,T}}){S1,S2,T}()
+@generated function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
     return quote
         $(Expr(:meta, :inline))
         MMatrix{S1, S2, T, $(S1*S2)}()
     end
 end
 
-@inline convert{S1,S2,T}(::Type{MMatrix{S1,S2}}, a::StaticArray{<:Any, T}) = MMatrix{S1,S2,T}(Tuple(a))
+@inline convert(::Type{MMatrix{S1,S2}}, a::StaticArray{<:Any, T}) where {S1,S2,T} = MMatrix{S1,S2,T}(Tuple(a))
 @inline MMatrix(a::StaticMatrix) = MMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
 # Simplified show for the type
 show(io::IO, ::Type{MMatrix{N, M, T}}) where {N, M, T} = print(io, "MMatrix{$N,$M,$T}")
 
 # Some more advanced constructor-like functions
-@inline one{N}(::Type{MMatrix{N}}) = one(MMatrix{N,N})
-@inline eye{N}(::Type{MMatrix{N}}) = eye(MMatrix{N,N})
+@inline one(::Type{MMatrix{N}}) where {N} = one(MMatrix{N,N})
+@inline eye(::Type{MMatrix{N}}) where {N} = eye(MMatrix{N,N})
 
 #####################
 ## MMatrix methods ##
 #####################
 
-@propagate_inbounds function getindex{S1,S2,T}(m::MMatrix{S1,S2,T}, i::Int)
+@propagate_inbounds function getindex(m::MMatrix{S1,S2,T}, i::Int) where {S1,S2,T}
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end
@@ -82,8 +82,8 @@ show(io::IO, ::Type{MMatrix{N, M, T}}) where {N, M, T} = print(io, "MMatrix{$N,$
     end
 end
 
-@propagate_inbounds setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val, i::Int) = setindex!(m, convert(T, val), i)
-@propagate_inbounds function setindex!{S1,S2,T}(m::MMatrix{S1,S2,T}, val::T, i::Int)
+@propagate_inbounds setindex!(m::MMatrix{S1,S2,T}, val, i::Int) where {S1,S2,T} = setindex!(m, convert(T, val), i)
+@propagate_inbounds function setindex!(m::MMatrix{S1,S2,T}, val::T, i::Int) where {S1,S2,T}
     #@boundscheck if i < 1 || i > length(m)
     #    throw(BoundsError(m,i))
     #end

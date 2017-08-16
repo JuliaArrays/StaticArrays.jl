@@ -18,32 +18,32 @@ compiler (the element type may optionally also be specified).
 struct SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
-    function (::Type{SArray{S, T, N, L}}){S, T, N, L}(x::NTuple{L,T})
+    function SArray{S, T, N, L}(x::NTuple{L,T}) where {S, T, N, L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S, T, N, L}(x)
     end
 
-    function (::Type{SArray{S, T, N, L}}){S, T, N, L}(x::NTuple{L,Any})
+    function SArray{S, T, N, L}(x::NTuple{L,Any}) where {S, T, N, L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S, T, N, L}(convert_ntuple(T, x))
     end
 end
 
-@generated function (::Type{SArray{S, T, N}}){S <: Tuple, T, N}(x::Tuple)
+@generated function (::Type{SArray{S, T, N}})(x::Tuple) where {S <: Tuple, T, N}
     return quote
         @_inline_meta
         SArray{S, T, N, $(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{SArray{S, T}}){S <: Tuple, T}(x::Tuple)
+@generated function (::Type{SArray{S, T}})(x::Tuple) where {S <: Tuple, T}
     return quote
         @_inline_meta
         SArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{SArray{S}}){S <: Tuple, T <: Tuple}(x::T)
+@generated function (::Type{SArray{S}})(x::T) where {S <: Tuple, T <: Tuple}
     return quote
         @_inline_meta
         SArray{S, $(promote_tuple_eltype(T)), $(tuple_length(S)), $(tuple_prod(S))}(x)
@@ -73,8 +73,8 @@ end
 @inline Tuple(v::SArray) = v.data
 
 # See #53
-Base.cconvert{T}(::Type{Ptr{T}}, a::SArray) = Base.RefValue(a)
-Base.unsafe_convert{S,T,D,L}(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) =
+Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)
+Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) where {S,T,D,L} =
     Ptr{T}(Base.unsafe_convert(Ptr{SArray{S,T,D,L}}, a))
 
 macro SArray(ex)

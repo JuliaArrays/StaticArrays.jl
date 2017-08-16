@@ -75,7 +75,7 @@ ctranspose(D::SDiagonal) = conj(D)
 diag(D::SDiagonal) = D.diag
 trace(D::SDiagonal) = sum(D.diag)
 det(D::SDiagonal) = prod(D.diag)
-logdet{N,T<:Real}(D::SDiagonal{N,T}) = sum(log.(D.diag))
+logdet(D::SDiagonal{N,T}) where {N,T<:Real} = sum(log.(D.diag))
 function logdet(D::SDiagonal{N,T}) where {N,T<:Complex} #Make sure branch cut is correct
     x = sum(log.(D.diag))
     -pi<imag(x)<pi ? x : real(x)+(mod2pi(imag(x)+pi)-pi)*im

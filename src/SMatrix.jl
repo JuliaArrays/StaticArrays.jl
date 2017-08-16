@@ -16,7 +16,7 @@ unknown to the compiler (the element type may optionally also be specified).
 """
 const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
 
-@generated function (::Type{SMatrix{S1}}){S1,L}(x::NTuple{L,Any})
+@generated function (::Type{SMatrix{S1}})(x::NTuple{L,Any}) where {S1,L}
     S2 = div(L, S1)
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
@@ -29,7 +29,7 @@ const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
     end
 end
 
-@generated function (::Type{SMatrix{S1,S2}}){S1,S2,L}(x::NTuple{L,Any})
+@generated function (::Type{SMatrix{S1,S2}})(x::NTuple{L,Any}) where {S1,S2,L}
     T = promote_tuple_eltype(x)
 
     return quote
@@ -38,7 +38,7 @@ end
     end
 end
 SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
-@generated function (::Type{SMatrixNoType{S1, S2, L}}){S1,S2,L}(x::NTuple{L,Any})
+@generated function (::Type{SMatrixNoType{S1, S2, L}})(x::NTuple{L,Any}) where {S1,S2,L}
     T = promote_tuple_eltype(x)
     return quote
         $(Expr(:meta, :inline))
@@ -46,22 +46,22 @@ SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
     end
 end
 
-@generated function (::Type{SMatrix{S1,S2,T}}){S1,S2,T,L}(x::NTuple{L,Any})
+@generated function (::Type{SMatrix{S1,S2,T}})(x::NTuple{L,Any}) where {S1,S2,T,L}
     return quote
         $(Expr(:meta, :inline))
         SMatrix{S1, S2, T, L}(x)
     end
 end
 
-@inline convert{S1,S2,T}(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Any, T}) = SMatrix{S1,S2,T}(Tuple(a))
+@inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Any, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
 @inline SMatrix(a::StaticMatrix) = SMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
 # Simplified show for the type
 show(io::IO, ::Type{SMatrix{N, M, T}}) where {N, M, T} = print(io, "SMatrix{$N,$M,$T}")
 
 # Some more advanced constructor-like functions
-@inline one{N}(::Type{SMatrix{N}}) = one(SMatrix{N,N})
-@inline eye{N}(::Type{SMatrix{N}}) = eye(SMatrix{N,N})
+@inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
+@inline eye(::Type{SMatrix{N}}) where {N} = eye(SMatrix{N,N})
 
 #####################
 ## SMatrix methods ##
