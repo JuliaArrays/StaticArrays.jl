@@ -47,6 +47,14 @@ end
     sm = SMatrix{4,4}(m)
     @test isapprox(inv(sm)::StaticMatrix, inv(m), rtol=2e-15)
 
+    # A permutation matrix which can cause problems for inversion methods
+    # without pivoting, eg 2x2 block decomposition (see #250)
+    mperm = [1 0 0 0;
+             0 0 1 0;
+             0 1 0 0;
+             0 0 0 1]
+    @test inv(SMatrix{4,4}(mperm))::StaticMatrix ≈ inv(mperm)  rtol=2e-16
+
     # Poorly conditioned matrix; almost_singular_matrix(4, 3, 1e-7)
     m = [
         2.83056817904263402e-01 1.26822318692296848e-01 2.59665505365002547e-01 1.24524798964590747e-01
