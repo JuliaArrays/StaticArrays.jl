@@ -13,7 +13,7 @@ end
     end
 end
 
-@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(a.data[1])
+@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
 @inline _eigvals(::Size{(1, 1)}, a::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
 @inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
