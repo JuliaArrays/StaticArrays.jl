@@ -15,6 +15,9 @@
         ef = eigfact(Symmetric(m))
         @test ef[:values] === SVector(2.0)
         @test ef[:vectors] === SMatrix{1,1}(1.0)
+        # handle non-Hermitian case
+        m = @SMatrix [2.0+im]
+        @test eigvals(m) === SVector(2.0+im)
     end
 
     @testset "2×2" for i = 1:100
@@ -39,6 +42,9 @@
         ef = eigfact(Symmetric(m))
         @test ef[:values]::SVector ≈ vals_a
         @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        ef = eigfact(Symmetric(m, :L))
+        @test ef[:values]::SVector ≈ vals_a
+        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
 
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ vals_a
@@ -46,6 +52,9 @@
         @test eigvals(Hermitian(m, :L)) ≈ vals
         @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
         ef = eigfact(Hermitian(m))
+        @test ef[:values]::SVector ≈ vals_a
+        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        ef = eigfact(Hermitian(m, :L))
         @test ef[:values]::SVector ≈ vals_a
         @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
 

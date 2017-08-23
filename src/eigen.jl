@@ -6,12 +6,14 @@ end
 @inline function eigvals(a::StaticArray; permute::Bool=true, scale::Bool=true)
     if ishermitian(a)
         _eigvals(Size(a), Hermitian(a), permute, scale)
+    elseif Size(a) == Size{(1,1)}()
+        _eigvals(Size(a), a, permute, scale)
     else
         error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
     end
 end
 
-@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(real(a.data[1]))
+@inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
 @inline _eigvals(::Size{(1, 1)}, a::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
 @inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
