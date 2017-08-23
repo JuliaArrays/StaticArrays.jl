@@ -135,6 +135,7 @@ using StaticArrays, Base.Test
         @test vecnorm(@SMatrix [1 2; 3 4.0+im]) ≈ vecnorm([1 2; 3 4.0+im])
         sm = @SMatrix [1 2; 3 4.0+im]
         @test vecnorm(sm, 3.) ≈ vecnorm([1 2; 3 4.0+im], 3.)
+        @test Base.LinAlg.norm_sqr(SVector(1.0,2.0)) ≈ vecnorm([1.0,2.0])^2
 
         @test normalize(SVector(1,2,3)) ≈ normalize([1,2,3])
         @test normalize(SVector(1,2,3), 1) ≈ normalize([1,2,3], 1)
