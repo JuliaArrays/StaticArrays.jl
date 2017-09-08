@@ -82,10 +82,16 @@ function logdet(D::SDiagonal{N,T}) where {N,T<:Complex} #Make sure branch cut is
 end
 
 eye(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
+one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
+one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
+Base.zero(::SDiagonal{N,T}) where {N,T} = SDiagonal(zeros(SVector{N,T}))
 
 expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
 logm(D::SDiagonal) = SDiagonal(log.(D.diag))
 sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
+Base.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
+Base.LinAlg._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
+
 
 \(D::SDiagonal, B::StaticMatrix) = scalem(1 ./ D.diag, B)
 /(B::StaticMatrix, D::SDiagonal) = scalem(1 ./ D.diag, B)

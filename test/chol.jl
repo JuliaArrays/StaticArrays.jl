@@ -32,4 +32,11 @@
         @test chol(m) ≈ chol(m_a)
         @test chol(Hermitian(m)) ≈ chol(m_a)
     end
+    @testset "static blockmatrix" for i = 1:10
+        m_a = randn(3,3)
+        m_a = m_a*m_a'
+        m = SMatrix{3,3}(m_a)
+        @test chol(reshape([m, 0m, 0m, m], 2, 2)) == 
+            reshape([chol(m), 0m, 0m, chol(m)], 2, 2)
+    end
 end
