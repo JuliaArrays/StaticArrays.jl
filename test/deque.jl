@@ -16,3 +16,9 @@
     @test_throws BoundsError deleteat(v, -2)
     @test_throws BoundsError setindex(v, 2, -2)
 end
+
+@testset "setindex" begin
+    a = @MArray ones(3, 3, 3)
+    a[2, 1, 3] = 2.
+    @test a[2, 1, 3] == 2.
+end
