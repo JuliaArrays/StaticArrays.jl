@@ -6,8 +6,14 @@
 
 # The following type signature for map() matches any list of AbstractArrays,
 # provided at least one is a static array.
-@inline function map(f, as::Union{SA,AbstractArray}...) where {SA<:StaticArray}
-    _map(f, same_size(as...), as...)
+if VERSION > v"0.7.0-"
+    @inline function map(f, as::Union{SA,AbstractArray}...) where {SA<:StaticArray}
+        _map(f, same_size(as...), as...)
+    end
+else
+    @inline function map(f, as::StaticArray)
+        _map(f, same_size(as...), as...)
+    end
 end
 
 @generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
