@@ -6,7 +6,7 @@
 
 # The following type signature for map() matches any list of AbstractArrays,
 # provided at least one is a static array.
-if VERSION > v"0.7.0-"
+if VERSION < v"0.7.0-"
     @inline function map(f, as::Union{SA,AbstractArray}...) where {SA<:StaticArray}
         _map(f, same_size(as...), as...)
     end
