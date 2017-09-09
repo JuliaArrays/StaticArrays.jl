@@ -10,3 +10,7 @@ makedocs(
             "Quick Start" => "pages/quickstart.md",
             ],
         )
+
+deploydocs(
+    repo = "github.com/JuliaArrays/StaticArrays.jl",
+)

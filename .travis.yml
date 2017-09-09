@@ -9,8 +9,9 @@ julia:
 notifications:
   email: false
 branches:
-  only: # Only kick off CI for master and potential merges to master from within PRs
+  only:
     - master
+    - /^v[0-9]+\.[0-9]+\.[0-9]+$/ # version tags for Documenter.jl, see # 298
 matrix:
   allow_failures:
     - julia: nightly
@@ -23,3 +24,5 @@ after_success:
   - if [ $TRAVIS_JULIA_VERSION = "0.6" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
       julia -e 'cd(Pkg.dir("StaticArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())';
     fi
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd(Pkg.dir("StaticArrays")); include(joinpath("docs", "make.jl"))'

@@ -8,6 +8,8 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/xabgh1yhsjxlp30d?svg=true)](https://ci.appveyor.com/project/JuliaArrays/staticarrays-jl)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 [![codecov.io](http://codecov.io/github/JuliaArrays/StaticArrays.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaArrays/StaticArrays.jl?branch=master)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/latest)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia (≥ 0.5), using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
@@ -22,6 +24,7 @@ Mutable versions `MVector`, `MMatrix` and `MArray` are also exported, as well
 as `SizedArray` for annotating standard `Array`s with static size information.
 Further, the abstract `FieldVector` can be used to make fast `StaticVector`s
 out of any uniform Julia "struct".
+Full documentation can be found [here](https://JuliaArrays.github.io/StaticArrays.jl/stable/).
 
 ## Speed
 
