@@ -56,9 +56,7 @@ end
     end
 end
 
-@inline rand(rng::AbstractRNG, range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(rng, range, SA)
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
-@inline rand(range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(Base.GLOBAL_RNG, range, SA)
 @inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Base.GLOBAL_RNG, range, Size(SA), SA)
 @generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, range)) for i = 1:prod(s)]
@@ -68,10 +66,8 @@ end
     end
 end
 
-#@inline rand(rng::MersenneTwister, range::AbstractArray, ::SA) where {SA <: StaticArray} = rand(rng, range, SA)
 #@inline rand(rng::MersenneTwister, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
 
-@inline randn(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = randn(rng, SA)
 @inline randn(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _randn(rng, Size(SA), SA)
 @generated function _randn(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
@@ -85,7 +81,6 @@ end
     end
 end
 
-@inline randexp(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = randexp(rng, SA)
 @inline randexp(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _randexp(rng, Size(SA), SA)
 @generated function _randexp(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
