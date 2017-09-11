@@ -11,8 +11,8 @@ if VERSION < v"0.7.0-"
         _map(f, same_size(as...), as...)
     end
 else
-    @inline function map(f, as::StaticArray)
-        _map(f, same_size(as...), as...)
+    @inline function map(f, a1::StaticArray, as::AbstractArray...)
+        _map(f, same_size(a1, as...), a1, as...)
     end
 end
 
