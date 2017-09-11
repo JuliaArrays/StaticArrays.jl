@@ -13,7 +13,7 @@
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia (≥ 0.5), using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
-Subtypes of [StaticArray](@ref) will provide fast implementations of common array and
+Subtypes of `StaticArray` will provide fast implementations of common array and
 linear algebra operations. Note that here "statically sized" means that the
 size can be determined from the *type*, and "static" does **not** necessarily
 imply `immutable`.
