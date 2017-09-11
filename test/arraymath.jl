@@ -54,5 +54,17 @@
         rand!(m, 1:2)
         check = ((m .>= 1) .& (m .<= 2))
         @test all(check)
+
+        m = @SMatrix [0. 0.; 0. 0.]
+        m2 = rand!(m)
+        check = ((m2 .< 1.) .& (m2 .> 0.))
+        @test all(check)
+    end
+
+    @testset "randn!()" begin # smoke test
+        m = @SMatrix [0. 0.; 0. 0.]
+        m2 = randn!(m)
+        @test typeof(m2) == typeof(m)
+        @test m2 != m     
     end
 end
