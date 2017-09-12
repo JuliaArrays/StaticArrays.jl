@@ -5,7 +5,9 @@
     _det(Size(A_S),A_S)
 end
 
-@inline logdet(A::StaticMatrix) = log(det(A))
+@inline logdet(a::StaticMatrix) = _logdet(SizeClass(a, Size(3,3)), a)
+@inline _logdet(::Small, a::StaticMatrix) = log(det(a))
+@inline _logdet(::Large, a::StaticMatrix) = logdet(drop_sdims(a))
 
 @inline _det(::Size{(1,1)}, A::StaticMatrix) = @inbounds return A[1]
 
