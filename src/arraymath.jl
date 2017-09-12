@@ -42,7 +42,6 @@ end
 
 # Also consider randcycle, randperm? Also faster rand!(staticarray, collection)
 
-@inline rand(rng::AbstractRNG, ::SA) where {SA <: StaticArray} = rand(rng, SA)
 @inline rand(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
 @generated function _rand(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
