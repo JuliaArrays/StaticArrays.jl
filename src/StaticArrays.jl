@@ -100,6 +100,7 @@ include("triangular.jl")
 include("cholesky.jl")
 include("svd.jl")
 include("lu.jl")
+include("qr.jl")
 include("deque.jl")
 include("io.jl")
 
