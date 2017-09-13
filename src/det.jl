@@ -5,8 +5,6 @@
     _det(Size(A_S),A_S)
 end
 
-@inline logdet(A::StaticMatrix) = log(det(A))
-
 @inline _det(::Size{(1,1)}, A::StaticMatrix) = @inbounds return A[1]
 
 @inline function _det(::Size{(2,2)}, A::StaticMatrix)
@@ -39,3 +37,7 @@ end
 @inline function _det(::Size, A::StaticMatrix)
     return det(Matrix(A))
 end
+
+@inline logdet(a::StaticMatrix) = _logdet(Size(a), a)
+@inline _logdet(::Union{Size{(1,1)}, Size{(2,2)}, Size{(3,3)}}, a::StaticMatrix) = log(det(a))
+@inline _logdet(::Size, a::StaticMatrix) = logdet(drop_sdims(a))
