@@ -149,4 +149,25 @@ end
         return a
     end
 end
+
+"""
+    arithmetic_closure(T)
+
+Return a "bigger" type, which is closed under `+,-,*,/`.
+
+```jldoctest
+julia> import StaticArrays.arithmetic_closure
+julia> arithmetic_closure(Bool)
+Float64
+
+julia> arithmetic_closure(Int32)
+Float64
+
+julia> arithmetic_closure(BigFloat)
+BigFloat
+
+julia> arithmetic_closure(BigInt)
+BigFloat
+```
+"""
 arithmetic_closure(T) = typeof((one(T)*zero(T) + zero(T))/one(T))
