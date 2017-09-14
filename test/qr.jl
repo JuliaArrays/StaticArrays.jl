@@ -26,12 +26,14 @@
         @test p == p_ref
     end
 
+    @test_throws ArgumentError qr(@SMatrix randn(1,2); thin=false)
 
     for arr in [
             (@MMatrix randn(2,2)),
             (@SMatrix randn(10, 12)),
             map(BigFloat, @SMatrix randn(1,1)),
             (@SMatrix zeros(Int,10,10)),
+            map(Complex128, @MMatrix randn(2,3))
         ]
         test_qr(arr)
     end

@@ -1,6 +1,6 @@
 @inline function inv(A::StaticMatrix)
     T = eltype(A)
-    S = typeof((one(T)*zero(T) + zero(T))/one(T))
+    S = arithmetic_closure(T)
     A_S = convert(similar_type(A,S),A)
     _inv(Size(A_S),A_S)
 end

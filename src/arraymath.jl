@@ -149,3 +149,4 @@ end
         return a
     end
 end
+arithmetic_closure(T) = typeof((one(T)*zero(T) + zero(T))/one(T))

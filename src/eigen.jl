@@ -37,7 +37,7 @@ end
 end
 
 @inline function _eigvals(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    S = typeof((one(T)*zero(T) + zero(T))/one(T))
+    S = arithmetic_closure(T)
     Sreal = real(S)
 
     @inbounds a11 = convert(Sreal, A.data[1])
@@ -201,7 +201,7 @@ end
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
 @inline function _eig(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    S = typeof((one(T)*zero(T) + zero(T))/one(T))
+    S = arithmetic_closure(T)
     Sreal = real(S)
 
     @inbounds a11 = convert(Sreal, A.data[1])
