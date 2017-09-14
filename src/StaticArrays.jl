@@ -14,6 +14,8 @@ import Base: getindex, setindex!, size, similar, vec, show,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write, Eigen
 
+using Compat
+
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
@@ -28,6 +30,8 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, shift, unshift, insert, deleteat, setindex
+
+const _module_arg = isdefined(Base, Symbol("@__MODULE__"))
 
 """
     abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
