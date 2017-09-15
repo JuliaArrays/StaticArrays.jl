@@ -153,7 +153,7 @@ end
 """
     arithmetic_closure(T)
 
-Return a "bigger" type, which is closed under `+,-,*,/`.
+Return the type which values of type `T` will promote to under a combination of the arithmetic operations `+, -, *` and `/`.
 
 ```jldoctest
 julia> import StaticArrays.arithmetic_closure
