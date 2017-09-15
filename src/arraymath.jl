@@ -143,3 +143,25 @@ end
         return a
     end
 end
+
+"""
+    arithmetic_closure(T)
+
+Return the type which values of type `T` will promote to under a combination of the arithmetic operations `+, -, *` and `/`.
+
+```jldoctest
+julia> import StaticArrays.arithmetic_closure
+julia> arithmetic_closure(Bool)
+Float64
+
+julia> arithmetic_closure(Int32)
+Float64
+
+julia> arithmetic_closure(BigFloat)
+BigFloat
+
+julia> arithmetic_closure(BigInt)
+BigFloat
+```
+"""
+arithmetic_closure(T) = typeof((one(T)*zero(T) + zero(T))/one(T))

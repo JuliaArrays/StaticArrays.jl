@@ -19,7 +19,7 @@ end
     T = eltype(A)
     # Trick to get the output eltype - can't rely on the result of f[:L] as
     # it's not type inferrable.
-    T2 = typeof((one(T)*zero(T) + zero(T))/one(T))
+    T2 = arithmetic_closure(T)
     L = similar_type(A, T2, Size(Size(A)[1], diagsize(A)))(f[:L])
     U = similar_type(A, T2, Size(diagsize(A), Size(A)[2]))(f[:U])
     p = similar_type(A, Int, Size(Size(A)[1]))(f[:p])

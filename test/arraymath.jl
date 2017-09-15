@@ -1,3 +1,4 @@
+import StaticArrays.arithmetic_closure
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]
@@ -56,5 +57,23 @@
         rand!(m, 1:2)
         check = ((m .>= 1) .& (m .<= 2))
         @test all(check)
+    end
+
+    @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
+                                                   subtypes(Signed);
+                                                   subtypes(AbstractFloat);
+                                                   Bool;
+                                                   Complex{Int};
+                                                   Complex128;
+                                                   BigInt
+                                                   ]
+        T = @inferred arithmetic_closure(T0)
+        @test arithmetic_closure(T) == T
+
+        t = one(T)
+        @test (t+t) isa T
+        @test (t-t) isa T
+        @test (t*t) isa T
+        @test (t/t) isa T
     end
 end
