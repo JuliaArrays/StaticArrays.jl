@@ -76,17 +76,19 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 
 # Remove the static dimensions from an array
 
-"""
-    drop_sdims(a)
-
-Return an `AbstractArray` with the same elements as `a`, but with static
-dimensions removed (ie, not a `StaticArray`).
-
-This is useful if you want to override dispatch to call the `Base` version of
-operations such as `kron` instead of the implementation in `StaticArrays`.
-Normally you shouldn't need to do this, but it can be more efficient for
-certain algorithms where the number of elements of the output is a lot larger
-than the input.
-"""
+# This docstring is commented out, because of a bug that happens when building the docs.
+# See https://github.com/JuliaLang/julia/issues/23826
+# """
+#     drop_sdims(a)
+# 
+# Return an `AbstractArray` with the same elements as `a`, but with static
+# dimensions removed (ie, not a `StaticArray`).
+# 
+# This is useful if you want to override dispatch to call the `Base` version of
+# operations such as `kron` instead of the implementation in `StaticArrays`.
+# Normally you shouldn't need to do this, but it can be more efficient for
+# certain algorithms where the number of elements of the output is a lot larger
+# than the input.
+# """
 @inline drop_sdims(a::StaticArray) = TrivialView(a)
 @inline drop_sdims(a) = a
