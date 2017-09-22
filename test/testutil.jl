@@ -1,4 +1,5 @@
 using Base.Test, StaticArrays
+using Compat
 
 """
     x ≊ y
@@ -33,4 +34,13 @@ end
     x = [1,2]
     @testinf x == [1,2]
     @testinf (@SVector [1,2]) == (@SVector [1,2])
+end
+
+function test_expand_error(ex)
+    if VERSION >= v"0.7.0-DEV.1729"
+        @test_throws LoadError macroexpand(@__MODULE__, ex)
+    else
+        ex = macroexpand(@__MODULE__, ex)
+        @test isa(ex, Expr) && ex.head == :error
+    end
 end

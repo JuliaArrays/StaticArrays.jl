@@ -5,7 +5,7 @@ TupleN{T,N} = NTuple{N,T}
 @inline convert_ntuple(::Type{T},d::T) where {T} = T # For zero-dimensional arrays
 @inline convert_ntuple(::Type{T},d::NTuple{N,T}) where {N,T} = d
 @generated function convert_ntuple(::Type{T}, d::NTuple{N,Any}) where {N,T}
-    exprs = ntuple(i -> :(convert(T, d[$i])), Val{N})
+    exprs = ntuple(i -> :(convert(T, d[$i])), Val(N))
     return quote
         @_inline_meta
         $(Expr(:tuple, exprs...))

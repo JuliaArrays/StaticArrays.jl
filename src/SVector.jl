@@ -58,7 +58,7 @@ macro SVector(ex)
             error("Use a one-dimensional comprehension for @SVector")
         end
 
-        rng = eval(current_module(), ex.args[2].args[2])
+        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
@@ -77,7 +77,7 @@ macro SVector(ex)
             error("Use a one-dimensional comprehension for @SVector")
         end
 
-        rng = eval(current_module(), ex.args[2].args[2])
+        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
