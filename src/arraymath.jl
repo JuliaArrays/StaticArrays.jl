@@ -151,6 +151,7 @@ Return the type which values of type `T` will promote to under a combination of 
 
 ```jldoctest
 julia> import StaticArrays.arithmetic_closure
+
 julia> arithmetic_closure(Bool)
 Float64
 
