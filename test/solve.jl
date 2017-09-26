@@ -6,7 +6,7 @@ using StaticArrays, Base.Test
                 elty in (Float64, Int)
 
         A = elty.(rand(-99:2:99,n,n))
-        b = A*ones(elty,n)
+        b = 2*A*ones(elty,n)
         @test m(A)\v(b) ≈ A\b
     end
 
