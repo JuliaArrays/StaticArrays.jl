@@ -4,7 +4,7 @@
 @inline solve(::Size, ::Size, a, b) = inv(a) * b
 
 @inline function solve(::Size{(1,1)}, ::Size{(1,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
-    @inbounds return similar_type(b, typeof(b[1] \ a[1]))(b[1] \ a[1])
+    @inbounds return similar_type(b, typeof(a[1] \ b[1]))(a[1] \ b[1])
 end
 
 @inline function solve(::Size{(2,2)}, ::Size{(2,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
