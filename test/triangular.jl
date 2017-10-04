@@ -6,7 +6,7 @@ srand()
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
                 eltyB in (Float64, Complex128)
 
-        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
+        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : adjoint(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
         SA = t(SMatrix{n,n}(A.data))
         SB = SMatrix{n,n}(B)
@@ -48,7 +48,7 @@ end
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
                 eltyB in (Float64, Complex128)
 
-        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
+        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : adjoint(t)))
         B = convert(Vector{eltyB}, eltyA <: Complex ? real(A)*ones(n) : A*ones(n))
         SA = t(SMatrix{n,n}(A.data))
         SB = SVector{n}(B).'
@@ -81,7 +81,7 @@ end
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
                 eltyB in (Float64, Complex128)
 
-        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : ctranspose(t)))
+        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : adjoint(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
         SA = t(SMatrix{n,n}(A.data))
         SB = SMatrix{n,n}(B)

@@ -9,17 +9,17 @@ const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:An
 
 # Deal with A_mul_Bc, etc...
 # TODO make faster versions of A*_mul_B*
-@inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * ctranspose(B)
-@inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = ctranspose(A) * ctranspose(B)
-@inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = ctranspose(A) * B
+@inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * adjoint(B)
+@inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * adjoint(B)
+@inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * B
 
 @inline A_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = A * transpose(B)
 @inline At_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * transpose(B)
 @inline At_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * B
 
-@inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, ctranspose(B))
-@inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, ctranspose(A), ctranspose(B))
-@inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, ctranspose(A), B)
+@inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, adjoint(B))
+@inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, adjoint(A), adjoint(B))
+@inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, adjoint(A), B)
 
 @inline A_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, transpose(B))
 @inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, transpose(A), transpose(B))

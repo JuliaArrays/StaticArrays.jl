@@ -69,9 +69,9 @@ end
     end
 end
 
-@inline ctranspose(m::StaticMatrix) = _ctranspose(Size(m), m)
+@inline adjoint(m::StaticMatrix) = _adjoint(Size(m), m)
 
-@generated function _ctranspose(::Size{S}, m::StaticMatrix) where {S}
+@generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
 
     exprs = [:(conj(m[$(sub2ind(S, j1, j2))])) for j2 = 1:S[2], j1 = 1:S[1]]
