@@ -29,6 +29,7 @@ export Size, Length
 
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
+export @FVector, @MFVector
 
 export similar_type
 export push, pop, shift, unshift, insert, deleteat, setindex
