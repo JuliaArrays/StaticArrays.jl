@@ -150,6 +150,7 @@ using StaticArrays, Base.Test
 
     @testset "size zero" begin
         @test vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
+        @test StaticArrays.bilinear_vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test vecnorm(SVector{0, Float64}(())) === 0.
         @test vecnorm(SVector{0, Float64}(()), 1) === 0.
         @test trace(SMatrix{0,0,Float64}(())) === 0.
