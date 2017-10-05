@@ -1,7 +1,3 @@
-using StaticArrays, Base.Test
-
-include("testutil.jl")
-
 @testset "Broadcast sizes" begin
     @test @inferred(StaticArrays.broadcast_sizes(1, 1, 1)) === (Size(), Size(), Size())
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})

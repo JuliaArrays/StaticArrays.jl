@@ -15,7 +15,7 @@ end
 struct SDiagonal{N,T} <: StaticMatrix{N,N,T}
     diag::SVector{N,T}
     SDiagonal{N,T}(diag::SVector{N,T}) where {N,T} = new(diag)
-end    
+end
 diagtype(::Type{SDiagonal{N,T}}) where {N, T} = SVector{N,T}
 diagtype(::Type{SDiagonal{N}}) where {N} = SVector{N}
 diagtype(::Type{SDiagonal}) = SVector
@@ -23,7 +23,7 @@ diagtype(::Type{SDiagonal}) = SVector
 # this is to deal with convert.jl
 @inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
 @inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
-@inline (::Type{SDiagonal})(a::SVector{N,T}) where {N,T} = SDiagonal{N,T}(a) 
+@inline (::Type{SDiagonal})(a::SVector{N,T}) where {N,T} = SDiagonal{N,T}(a)
 
 @generated function SDiagonal(a::StaticMatrix{N,N,T}) where {N,T}
     expr = [:(a[$i,$i]) for i=1:N]
@@ -70,7 +70,7 @@ factorize(D::SDiagonal) = D
 
 conj(D::SDiagonal) = SDiagonal(conj(D.diag))
 transpose(D::SDiagonal) = D
-ctranspose(D::SDiagonal) = conj(D)
+adjoint(D::SDiagonal) = conj(D)
 
 diag(D::SDiagonal) = D.diag
 trace(D::SDiagonal) = sum(D.diag)

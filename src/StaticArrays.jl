@@ -6,13 +6,15 @@ import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_i
 
 import Base: getindex, setindex!, size, similar, vec, show,
              length, convert, promote_op, promote_rule, map, map!, reduce, reducedim, mapreducedim,
-             mapreduce, broadcast, broadcast!, conj, transpose, ctranspose,
+             mapreduce, broadcast, broadcast!, conj, transpose,
              hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
              fill!, det, logdet, inv, eig, eigvals, eigfact, expm, logm, sqrtm, lyap, trace, kron, diag, vecnorm, norm, dot, diagm, diag,
              lu, svd, svdvals, svdfact, factorize, ishermitian, issymmetric, isposdef,
              iszero, sum, diff, prod, count, any, all, minimum,
              maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
              randexp!, normalize, normalize!, read, read!, write, Eigen
+
+import Compat.adjoint
 
 using Compat
 
