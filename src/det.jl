@@ -15,7 +15,7 @@ end
     @inbounds x0 = SVector(A[1], A[2], A[3])
     @inbounds x1 = SVector(A[4], A[5], A[6])
     @inbounds x2 = SVector(A[7], A[8], A[9])
-    return vecdot(x0, cross(x1, x2))
+    return bilinear_vecdot(x0, cross(x1, x2))
 end
 
 @inline function _det(::Size{(4,4)}, A::StaticMatrix)

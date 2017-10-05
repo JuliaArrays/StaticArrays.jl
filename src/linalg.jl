@@ -236,6 +236,23 @@ end
     end
 end
 
+@inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _bilinear_vecdot(same_size(a, b), a, b)
+@generated function _bilinear_vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
+    if prod(S) == 0
+        return :(zero(promote_op(*, eltype(a), eltype(b))))
+    end
+
+    expr = :(a[1] * b[1])
+    for j = 2:prod(S)
+        expr = :($expr + a[$j] * b[$j])
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds return $expr
+    end
+end
+
 @inline norm(v::StaticVector) = vecnorm(v)
 @inline norm(v::StaticVector, p::Real) = vecnorm(v, p)
 
