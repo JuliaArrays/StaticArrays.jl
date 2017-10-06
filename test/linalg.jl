@@ -86,6 +86,16 @@ using StaticArrays, Base.Test
         @test @inferred(cross(SVector(UInt(1),UInt(2),UInt(3)), SVector(UInt(4),UInt(5),UInt(6)))) === SVector(-3, 6, -3)
     end
 
+    @testset "inner products" begin
+        v1 = @SVector [2,4,6,8]
+        v2 = @SVector [4,3,2,1]
+
+        @test @inferred(dot(v1, v2)) === 40
+        @test @inferred(dot(v1, -v2)) === -40
+        @test @inferred(dot(v1*im, v2*im)) === 40*im*conj(im)
+        @test @inferred(StaticArrays.bilinear_vecdot(v1*im, v2*im)) === 40*im*im
+    end
+
     @testset "transpose() and conj()" begin
         @test @inferred(conj(SVector(1+im, 2+im))) === SVector(1-im, 2-im)
 
