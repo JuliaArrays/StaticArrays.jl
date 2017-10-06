@@ -241,7 +241,6 @@ end
 @generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
-    T = typeof(one(eltype(a)) - one(eltype(a)))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
@@ -254,6 +253,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, $T, Size($Snew))(tuple($(exprs...)))
+        T = typeof(one(eltype(a)) - one(eltype(a)))
+        @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
     end
 end
