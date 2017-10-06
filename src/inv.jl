@@ -21,7 +21,7 @@ end
     @inbounds x2 = SVector{3}(A[7], A[8], A[9])
 
     y0 = cross(x1,x2)
-    d  = vecdot(x0, y0)
+    d  = bilinear_vecdot(x0, y0)
     x0 = x0 / d
     y0 = y0 / d
     y1 = cross(x2,x0)

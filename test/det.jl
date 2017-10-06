@@ -3,7 +3,8 @@
     @test logdet(@SMatrix [1]) == 0.0
     @test det(@SMatrix [0 1; 1 0]) == -1
     @test logdet(@SMatrix Complex{Float64}[0 1; 1 0]) == log(det(@SMatrix Complex{Float64}[0 1; 1 0]))
-
+    @test det(eye(SMatrix{3,3})*im) == det(eye(3,3)*im)
+    
     @test det(@SMatrix [0 1 0; 1 0 0; 0 0 1]) == -1
     m = randn(Float64, 4,4)
     @test det(SMatrix{4,4}(m)) ≈ det(m)

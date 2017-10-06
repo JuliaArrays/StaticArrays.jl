@@ -22,7 +22,10 @@ end
     @test inv(@SMatrix [2])::SMatrix ≈ @SMatrix [0.5]
     @test inv(@SMatrix [1 2; 2 1])::SMatrix ≈ [-1/3 2/3; 2/3 -1/3]
     @test inv(@SMatrix [1 2 0; 2 1 0; 0 0 1])::SMatrix ≈ [-1/3 2/3 0; 2/3 -1/3 0; 0 0 1]
-
+    @test inv(@SMatrix [1+im 2 0; 1 2-im 1; 1 1 2+im])::SMatrix ≈ [2-2im  -3+1im   1-1im
+                                                         -1+0im   2+1im  -1+0im
+                                                          0+1im   0-1im   1-0.0im]/2
+   
     m = randn(Float64, 10,10) + eye(10) # well conditioned
     @test inv(SMatrix{10,10}(m))::StaticMatrix ≈ inv(m)
 
