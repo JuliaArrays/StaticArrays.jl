@@ -41,7 +41,6 @@ At_mul_Bt(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatri
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -58,7 +57,8 @@ At_mul_Bt(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatri
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -69,7 +69,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -86,7 +85,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -97,7 +97,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -114,7 +113,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -125,7 +125,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -142,7 +141,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -153,7 +153,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -170,7 +169,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -181,7 +181,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -198,7 +197,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -208,7 +208,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -225,7 +224,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -235,7 +235,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -252,7 +251,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -262,7 +262,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -279,7 +278,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -289,7 +289,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -306,7 +305,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -316,7 +316,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -333,7 +332,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -343,7 +343,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
 
-    TAB = promote_op(matprod, TA, TB)
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -360,7 +359,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        return similar_type(A, $TAB)(tuple($(X...)))
+        TAB = promote_op(matprod, TA, TB)
+        return similar_type(A, TAB)(tuple($(X...)))
     end
 end
 
@@ -371,7 +371,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(sub2ind(sb,i,j))]) for i = 1:m, j = 1:n]
 
@@ -392,7 +391,8 @@ end
         @_inline_meta
         @inbounds $(Expr(:block, init...))
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -403,7 +403,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(sub2ind(sb,i,j))]) for i = 1:m, j = 1:n]
 
@@ -424,7 +423,8 @@ end
         @_inline_meta
         @inbounds $(Expr(:block, init...))
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -435,7 +435,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -455,7 +454,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -466,7 +466,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -486,7 +485,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -497,7 +497,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -517,7 +516,8 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
 
@@ -528,7 +528,6 @@ end
         throw(DimensionMismatch("right hand side B needs first dimension of size $(sa[1]), has size $m"))
     end
 
-    TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
     code = quote end
@@ -548,6 +547,7 @@ end
     return quote
         @_inline_meta
         @inbounds $code
-        @inbounds return similar_type(B, $TAB)(tuple($(X...)))
+        TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
+        @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
 end
