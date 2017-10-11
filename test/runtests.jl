@@ -1,6 +1,10 @@
 using StaticArrays
 using Base.Test
 
+# We generate a lot of matrices using rand(), but unit tests should be
+# deterministic, so seed the RNG here.
+srand(42)
+
 include("testutil.jl")
 include("SVector.jl")
 include("MVector.jl")
