@@ -86,13 +86,14 @@
     end
 
     @testset "full" begin
-        m_a = randn(2,2)
+        m_a = [0.831333 -1.91207; 0.200986  -0.69399]
         m_a = m_a*m_a.'
         m = SMatrix{2,2}(m_a)
         @test @inferred(full(Symmetric(m))) == m_a
         @test @inferred(full(Symmetric(m, :L))) == m_a
 
-        m_a = randn(2,2) + im*randn(2,2)
+        m_a = [0.34911-2.08735im   -0.438891-0.446692im;
+               -0.666533-0.652323im   0.834871-2.10413im]
         m_a = m_a*m_a'
         m = SMatrix{2,2}(m_a)
         @test @inferred(full(Hermitian(m))) == m_a

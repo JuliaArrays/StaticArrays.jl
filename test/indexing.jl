@@ -145,7 +145,7 @@
     end
 
     @testset "Indexing with empty vectors" begin
-        a = randn(2,2)
+        a = [1.0 2.0; 3.0 4.0]
         @test a[SVector{0,Int}()] == SVector{0,Float64}(())
         @test a[SVector{0,Int}(),SVector{0,Int}()] == SMatrix{0,0,Float64,0}(())
         b = copy(a)
