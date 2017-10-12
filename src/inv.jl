@@ -9,7 +9,7 @@ end
 
 @inline function _inv(::Size{(2,2)}, A)
     newtype = similar_type(A)
-    idet = 1/det(A)
+    idet = inv(det(A))
     @inbounds return newtype((A[4]*idet, -(A[2]*idet), -(A[3]*idet), A[1]*idet))
 end
 
@@ -31,7 +31,7 @@ end
 end
 
 @inline function _inv(::Size{(4,4)}, A)
-    idet = 1/det(A)
+    idet = inv(det(A))
     B =  @SMatrix [
         (A[2,3]*A[3,4]*A[4,2] - A[2,4]*A[3,3]*A[4,2] + A[2,4]*A[3,2]*A[4,3] - A[2,2]*A[3,4]*A[4,3] - A[2,3]*A[3,2]*A[4,4] + A[2,2]*A[3,3]*A[4,4]) * idet
         (A[2,4]*A[3,3]*A[4,1] - A[2,3]*A[3,4]*A[4,1] - A[2,4]*A[3,1]*A[4,3] + A[2,1]*A[3,4]*A[4,3] + A[2,3]*A[3,1]*A[4,4] - A[2,1]*A[3,3]*A[4,4]) * idet
