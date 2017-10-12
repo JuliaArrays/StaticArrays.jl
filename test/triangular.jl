@@ -1,5 +1,3 @@
-srand()
-
 @testset "Triangular-matrix multiplication" begin
     for n in (1, 2, 3, 4),
         eltyA in (Float64, Complex128, Int),
