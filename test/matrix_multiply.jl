@@ -121,6 +121,14 @@
         n2 = SMatrix{16,16}(n_array2)
         @test m2*n2 === SMatrix{16,16}(a_array2)
 
+        # Non-square version
+        m_array3 = rand(1:10, 9, 10)
+        n_array3 = rand(1:10, 10, 11)
+        a_array3 = m_array3*n_array3
+        m3 = SMatrix{9,10}(m_array3)
+        n3 = SMatrix{10,11}(n_array3)
+        @test m3*n3 === SMatrix{9,11}(a_array3)
+
         # Mutating types follow different behaviour
         m_array = rand(1:10, 10, 10)
         n_array = rand(1:10, 10, 10)
