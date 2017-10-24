@@ -171,6 +171,9 @@ for N = (1, 10)
             # from other FSA without parameters
             v2 = VT2(v1)
 
+            # No-op conversion to same type without parameters
+            @test convert(VT, v1) === v1
+
             @test typeof(v2) == VT2{N, ET}
             @test length(v2) == N
             @test eltype(v2) == ET

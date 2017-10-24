@@ -157,7 +157,6 @@ macro fixed_vector(name, parent)
         end
         @inline Base.Tuple(v::$(name)) = v.data
         @inline Base.convert(::Type{$(name){S, T}}, x::NTuple{S, T}) where {S, T} = $(name){S, T}(x)
-        @inline Base.convert(::Type{$(name)}, x::StaticVector) = SV(x)
         @inline function Base.convert(::Type{$(name){S, T}}, x::Tuple) where {S, T}
             $(name){S, T}(convert(NTuple{S, T}, x))
         end
