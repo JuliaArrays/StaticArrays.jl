@@ -3,51 +3,49 @@ _thin_must_hold(thin) =
 import Base.qr
 
 
-@inline function qr(A::StaticMatrix, pivot::Type{Val{true}}; thin::Bool=true)
+@inline function qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}; thin::Bool=true)
     _thin_must_hold(thin)
     return qr(Size(A), A, pivot, Val{true})
 end
 
-@generated function qr(SA::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{true}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) where {sA, TA}
-    mQ = nQ = mR = sA[1]
-    nR = sA[2]
-    sA[1] > sA[2] && (mR = sA[2])
-    sA[1] > sA[2] && thin <: Type{Val{true}} && (nQ = sA[2])
-    T = arithmetic_closure(TA)
-    QT = similar_type(A, T, Size(mQ, nQ))
-    RT = similar_type(A, T, Size(mR, nR))
-    PT = similar_type(A, Int, Size(sA[2]))
-    return quote
-        @_inline_meta
-        Q0, R0, p0 = Base.qr(Matrix(A), pivot)
-        return $QT(Q0), $RT(R0), $PT(p0)
-    end
-end
 
+"""
+    qr(Size(A), A::StaticMatrix, pivot=Val{false}, thin=Val{true}) -> Q, R, [p]
 
-@inline function qr(A::StaticMatrix, pivot::Type{Val{false}}; thin::Bool=true)
-    _thin_must_hold(thin)
-    return qr(Size(A), A, pivot, Val{true})
-end
+Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
+This function is exported to allow bypass the type instability problem in base `qr` function
+with keyword `thin` parameter in the interface.
+"""
+@generated function qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
 
-@generated function qr(SA::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) where {sA, TA}
-    if sA[1] < 17 && sA[2] < 17
+    isthin = thin <: Type{Val{true}}
+
+    SizeQ = Size( sA[1], isthin ? diagsize(Size(A)) : sA[1] )
+    SizeR = Size( diagsize(Size(A)), sA[2] )
+
+    if pivot <: Type{Val{true}}
         return quote
             @_inline_meta
-            return qr_householder_unrolled(SA, A, thin)
+            Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+            T = arithmetic_closure(TA)
+            return similar_type(A, T, $(SizeQ))(Q0),
+                   similar_type(A, T, $(SizeR))(R0),
+                   similar_type(A, Int, $(Size(sA[2])))(p0)
         end
     else
-        mQ = nQ = mR = sA[1]
-        nR = sA[2]
-        sA[1] > sA[2] && (mR = sA[2])
-        sA[1] > sA[2] && thin <: Type{Val{true}} && (nQ = sA[2])
-        T = arithmetic_closure(TA)
-        QT = similar_type(A, T, Size(mQ, nQ))
-        RT = similar_type(A, T, Size(mR, nR))
-        return quote
-            @_inline_meta
-            Q0, R0 = Base.qr(Matrix(A), pivot)
-            return $QT(Q0), $RT(R0)
+        if (sA[1]*sA[1] + sA[1]*sA[2])÷2 * diagsize(Size(A)) < 17*17*17
+            return quote
+                @_inline_meta
+                return qr_unrolled(Size(A), A, thin)
+            end
+        else
+            return quote
+                @_inline_meta
+                Q0, R0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+                T = arithmetic_closure(TA)
+                return similar_type(A, T, $(SizeQ))(Q0),
+                       similar_type(A, T, $(SizeR))(R0)
+            end
         end
     end
 end
@@ -60,12 +58,8 @@ end
 # in the case of `thin=false` Q is full, but R is still reduced, see [`qr`](@ref).
 #
 # For original source code see below.
-@generated function qr_householder_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, thin::Union{Type{Val{false}},Type{Val{true}}}) where {sA, TA}
-    mQ = nQ = mR = m = sA[1]
-    nR = n = sA[2]
-    # truncate Q and R for thin case
-    m > n && (mR = n)
-    m > n && thin <: Type{Val{true}} && (nQ = n)
+@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, thin::Union{Type{Val{false}},Type{Val{true}}} = Val{true}) where {sA, TA}
+    m, n = sA[1], sA[2]
 
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]
     R = [Symbol("R_$(i)_$(j)") for i = 1:m, j = 1:n]
@@ -123,22 +117,31 @@ end
         end
     end
 
+    # truncate Q and R sizes in LAPACK consilient way
+    if thin <: Type{Val{true}}
+        mQ, nQ = m, min(m, n)
+    else
+        mQ, nQ = m, m
+    end
+    mR, nR = min(m, n), n
+
     return quote
         @_inline_meta
         T = arithmetic_closure(TA)
         @inbounds $(Expr(:block, initQ...))
         @inbounds $(Expr(:block, initR...))
         @inbounds $code
-        @inbounds return similar_type(A, T, $(Size(mQ,nQ)))(tuple($(Q[1:mQ,1:nQ]...))),
-                         similar_type(A, T, $(Size(mR,nR)))(tuple($(R[1:mR,1:nR]...)))
+        @inbounds return similar_type(A, T, $(Size(mQ, nQ)))( tuple($(Q[1:mQ, 1:nQ]...)) ),
+                         similar_type(A, T, $(Size(mR, nR)))( tuple($(R[1:mR, 1:nR]...)) )
     end
 
 end
 
-## source for @generated function above
-## derived from base/linalg/qr.jl
-## thin version of QR
-#function qr_householder_unrolled(A::StaticMatrix{<:Any, <:Any, TA}) where {TA}
+
+## Source for @generated qr_unrolled() function above.
+## Derived from base/linalg/qr.jl
+## thin=true version of QR
+#function qr_unrolled(A::StaticMatrix{<:Any, <:Any, TA}) where {TA}
 #    m, n = size(A)
 #    T = arithmetic_closure(TA)
 #    Q = eye(MMatrix{m,m,T,m*m})
