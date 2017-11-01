@@ -111,7 +111,9 @@
 
         @test_throws DimensionMismatch broadcast(+, v1, @SMatrix [4 3 2 1; 5 6 7 8])
 
-        @test @inferred(broadcast(convert, Float64, v1)) == convert(Vector{Float64}, [2,4,6,8])
+        @test @inferred(broadcast(convert, Float64, v1)) === SVector{4,Float64}(2,4,6,8)
+        # issue 329
+        @test @inferred(broadcast(round, Int, SVector(1.0,2.0))) === SVector{2,Int}(1,2)
 
         @test @inferred(broadcast(-, v1)) === map(-, v1)
 

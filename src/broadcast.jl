@@ -111,6 +111,12 @@ end
     end
 end
 
+if VERSION < v"0.7.0-DEV"
+# Workaround for #329
+@inline function Base.broadcast(f, ::Type{T}, a::StaticArray) where {T}
+    map(x->f(T,x), a)
+end
+end
 
 ################
 ## broadcast! ##
