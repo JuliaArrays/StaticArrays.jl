@@ -22,11 +22,10 @@ end
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
     end
-    eltypes = [eltype(a[j]) for j ∈ 1:length(a)] # presumably, `eltype` is "hyperpure"?
-    newT = :(Core.Inference.return_type(f, Tuple{$(eltypes...)}))
     return quote
         @_inline_meta
-        @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), Size(S))(elements)
     end
 end
 
@@ -110,8 +109,6 @@ end
 @generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
-    T0 = eltype(a)
-    T = :((T1 = Core.Inference.return_type(f, Tuple{$T0}); Core.Inference.return_type(op, Tuple{T1,T1})))
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n ∈ Snew]
@@ -128,7 +125,8 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, $T, Size($Snew))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
 end
 

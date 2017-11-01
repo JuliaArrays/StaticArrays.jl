@@ -102,12 +102,10 @@ end
         end
     end
 
-    eltype_exprs = [t <: AbstractArray ? :($(eltype(t))) : :($t) for t ∈ a]
-    newtype_expr = :(Core.Inference.return_type(f, Tuple{$(eltype_exprs...)}))
-
     return quote
         @_inline_meta
-        @inbounds return similar_type($first_staticarray, $newtype_expr, Size($newsize))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type($first_staticarray, eltype(elements), Size($newsize))(elements)
     end
 end
 
