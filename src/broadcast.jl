@@ -105,7 +105,7 @@ end
     return quote
         @_inline_meta
         elements = tuple($(exprs...))
-        @inbounds return similar_type($first_staticarray, eltype(elements), Size($newsize))(elements)
+        @inbounds return similar_type($first_staticarray, promote_tuple_eltype(elements), Size($newsize))(elements)
     end
 end
 

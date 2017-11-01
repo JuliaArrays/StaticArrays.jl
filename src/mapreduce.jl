@@ -25,7 +25,7 @@ end
     return quote
         @_inline_meta
         elements = tuple($(exprs...))
-        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), Size(S))(elements)
+        @inbounds return similar_type(typeof(_first(a...)), promote_tuple_eltype(elements), Size(S))(elements)
     end
 end
 
@@ -126,7 +126,7 @@ end
     return quote
         @_inline_meta
         elements = tuple($(exprs...))
-        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type(a, promote_tuple_eltype(elements), Size($Snew))(elements)
     end
 end
 
