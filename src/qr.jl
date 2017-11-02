@@ -21,12 +21,12 @@ end
 
 @generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
 
-    isthin = thin <: Type{Val{true}}
+    isthin = thin == Type{Val{true}}
 
     SizeQ = Size( sA[1], isthin ? diagsize(Size(A)) : sA[1] )
     SizeR = Size( diagsize(Size(A)), sA[2] )
 
-    if pivot <: Type{Val{true}}
+    if pivot == Type{Val{true}}
         return quote
             @_inline_meta
             Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
@@ -121,7 +121,7 @@ end
     end
 
     # truncate Q and R sizes in LAPACK consilient way
-    if thin <: Type{Val{true}}
+    if thin == Type{Val{true}}
         mQ, nQ = m, min(m, n)
     else
         mQ, nQ = m, m
