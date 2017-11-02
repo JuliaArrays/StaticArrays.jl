@@ -3,20 +3,20 @@ _thin_must_hold(thin) =
 import Base.qr
 
 
+"""
+    qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]
+
+Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
+This function is not support `thin=false` keyword option due to type inference instability.
+To use this option call `StaticArrays._qr(Size(A), A, pivot, Val{false})` instead.
+"""
 @inline function qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}; thin::Bool=true)
     _thin_must_hold(thin)
-    return qr(Size(A), A, pivot, Val{true})
+    return _qr(Size(A), A, pivot, Val{true})
 end
 
 
-"""
-    qr(Size(A), A::StaticMatrix, pivot=Val{false}, thin=Val{true}) -> Q, R, [p]
-
-Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
-This function is exported to allow bypass the type instability problem in base `qr` function
-with keyword `thin` parameter in the interface.
-"""
-@generated function qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
 
     isthin = thin <: Type{Val{true}}
 
@@ -36,7 +36,7 @@ with keyword `thin` parameter in the interface.
         if (sA[1]*sA[1] + sA[1]*sA[2])÷2 * diagsize(Size(A)) < 17*17*17
             return quote
                 @_inline_meta
-                return qr_unrolled(Size(A), A, thin)
+                return qr_unrolled(Size(A), A, pivot, thin)
             end
         else
             return quote
@@ -58,7 +58,7 @@ end
 # in the case of `thin=false` Q is full, but R is still reduced, see [`qr`](@ref).
 #
 # For original source code see below.
-@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, thin::Union{Type{Val{false}},Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}},Type{Val{true}}} = Val{true}) where {sA, TA}
     m, n = sA[1], sA[2]
 
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]
