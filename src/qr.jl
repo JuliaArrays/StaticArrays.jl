@@ -1,4 +1,4 @@
-_thin_must_hold(thin) = 
+_thin_must_hold(thin) =
     thin || throw(ArgumentError("For the sake of type stability, `thin = true` must hold."))
 import Base.qr
 
@@ -7,13 +7,16 @@ import Base.qr
     qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]
 
 Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
-This function is not support `thin=false` keyword option due to type inference instability.
-To use this option call `StaticArrays._qr(Size(A), A, pivot, Val{false})` instead.
+This function does not support `thin=false` keyword option due to type inference instability.
+To use this option call `qr(A, pivot, Val{false})` instead.
 """
 @inline function qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}; thin::Bool=true)
     _thin_must_hold(thin)
     return _qr(Size(A), A, pivot, Val{true})
 end
+
+
+@inline qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) = _qr(Size(A), A, pivot, thin)
 
 
 @generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
@@ -58,7 +61,7 @@ end
 # in the case of `thin=false` Q is full, but R is still reduced, see [`qr`](@ref).
 #
 # For original source code see below.
-@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}},Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
     m, n = sA[1], sA[2]
 
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]

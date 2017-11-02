@@ -27,7 +27,7 @@ srand(42)
         @test istriu(R)
 
         # fat (thin=false) case
-        QR = @inferred StaticArrays._qr(Size(arr), arr, Val{false}, Val{false})
+        QR = @inferred qr(arr, Val{false}, Val{false})
         @test QR isa Tuple
         @test length(QR) == 2
         Q, R = QR
