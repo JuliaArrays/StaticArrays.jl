@@ -16,6 +16,10 @@
         @test MVector((1,)).data === (1,)
         @test MVector((1.0,)).data === (1.0,)
 
+        # Constructors should create a copy (#335)
+        v = MVector(1,2)
+        @test MVector(v) !== v && MVector(v) == v
+
         @test ((@MVector [1.0])::MVector{1}).data === (1.0,)
         @test ((@MVector [1, 2, 3])::MVector{3}).data === (1, 2, 3)
         @test ((@MVector Float64[1,2,3])::MVector{3}).data === (1.0, 2.0, 3.0)

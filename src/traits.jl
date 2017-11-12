@@ -86,6 +86,8 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 
 @pure @inline Base.sub2ind(::Size{S}, x::Int...) where {S} = sub2ind(S, x...)
 
+@pure size_tuple(::Size{S}) where {S} = Tuple{S...}
+
 # Some @pure convenience functions for `Length`
 @pure get(::Length{L}) where {L} = L
 

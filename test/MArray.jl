@@ -27,6 +27,11 @@
         @test MArray{Tuple{2,2},Int}((1,2,3,4)).data === (1,2,3,4)
         @test MArray{Tuple{2,2}}((1,2,3,4)).data === (1,2,3,4)
 
+        @test MArray(SVector(1,2)) isa MArray{Tuple{2}}
+        # Constructors should create a copy (#335)
+        v = MArray{Tuple{2}}(1,2)
+        @test MArray(v) !== v && MArray(v) == v
+
         @test ((@MArray [1])::MArray{Tuple{1}}).data === (1,)
         @test ((@MArray [1,2])::MArray{Tuple{2}}).data === (1,2)
         @test ((@MArray Float64[1,2,3])::MArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
