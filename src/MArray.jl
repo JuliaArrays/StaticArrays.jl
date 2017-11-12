@@ -71,7 +71,7 @@ end
     end
 end
 
-@inline MArray(a::StaticArray) = MArray{size_tuple(typeof(a))}(Tuple(a))
+@inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
 show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")

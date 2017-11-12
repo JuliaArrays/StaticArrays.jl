@@ -25,6 +25,8 @@
         @test SArray{Tuple{2,2},Int}((1,2,3,4)).data === (1,2,3,4)
         @test SArray{Tuple{2,2}}((1,2,3,4)).data === (1,2,3,4)
 
+        @test SArray(SArray{Tuple{2}}(1,2)) === SArray{Tuple{2}}(1,2)
+
         @test ((@SArray [1])::SArray{Tuple{1}}).data === (1,)
         @test ((@SArray [1,2])::SArray{Tuple{2}}).data === (1,2)
         @test ((@SArray Float64[1,2,3])::SArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
