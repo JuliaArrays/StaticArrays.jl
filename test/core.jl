@@ -105,6 +105,10 @@
         @test @inferred(convert(SArray{Tuple{1},Float64}, ma_int)) === sa_float
         @test @inferred(convert(SArray{Tuple{1},Float64,1}, ma_int)) === sa_float
         @test @inferred(convert(SArray{Tuple{1},Float64,1,1}, ma_int)) === sa_float
+
+        # Self-conversion returns the matrix itself
+        @test convert(MArray, ma_int) === ma_int
+        @test convert(MArray, ma_float) === ma_float
     end
 
     @testset "AbstractArray conversion" begin
