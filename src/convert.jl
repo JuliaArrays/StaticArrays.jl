@@ -1,7 +1,8 @@
 (::Type{SA})(x::Tuple{Tuple{Tuple{<:Tuple}}}) where {SA <: StaticArray} = error("No precise constructor for $SA found. Length of input was $(length(x[1][1][1])).")
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
-@inline (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a) # Is this a good idea?
+@inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
+@inline (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
