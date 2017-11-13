@@ -265,6 +265,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "pages/api.html#Base.LinAlg.qr",
+    "page": "API",
+    "title": "Base.LinAlg.qr",
+    "category": "Function",
+    "text": "qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]\n\nCompute the QR factorization of A such that A = Q*R or A[:,p] = Q*R, see qr. This function does not support thin=false keyword option due to type inference instability. To use this option call qr(A, pivot, Val{false}) instead.\n\n\n\n"
+},
+
+{
     "location": "pages/api.html#Base.similar-Union{Tuple{SA}, Tuple{SA}} where SA<:StaticArrays.StaticArray",
     "page": "API",
     "title": "Base.similar",
