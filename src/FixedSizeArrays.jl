@@ -74,13 +74,14 @@ end
 export unit
 
 function Base.extrema(a::AbstractVector{T}) where T <: StaticVector
-    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), a)
+    ET = eltype(T)
+    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), (T(typemax(ET)), T(typemin(ET))), a)
 end
 function Base.minimum(a::AbstractVector{T}) where T <: StaticVector
-    reduce((x, v)-> min.(x[1], v), a)
+    reduce((x, v)-> min.(x[1], v), T(typemax(eltype(T))), a)
 end
 function Base.maximum(a::AbstractVector{T}) where T <: StaticVector
-    reduce((x, v)-> max.(x[1], v), a)
+    reduce((x, v)-> max.(x[1], v), T(typemin(eltype(T))), a)
 end
 
 
@@ -98,6 +99,15 @@ macro fixed_vector(name, parent)
                 new{S, T}(StaticArrays.convert_ntuple(T, x))
             end
         end
+        size_or(::Type{$(name)}, or) = or
+        eltype_or(::Type{$(name)}, or) = or
+        eltype_or(::Type{$(name){S, T} where S}, or) where {T} = T
+        eltype_or(::Type{$(name){S, T} where T}, or) where {S} = or
+        eltype_or(::Type{$(name){S, T}}, or) where {S, T} = T
+
+        size_or(::Type{$(name){S, T} where S}, or) where {T} = or
+        size_or(::Type{$(name){S, T} where T}, or) where {S} = Size{(S,)}()
+        size_or(::Type{$(name){S, T}}, or) where {S, T} = (S,)
         # Array constructor
         @inline function (::Type{$(name){S}})(x::AbstractVector{T}) where {S, T}
             @assert S <= length(x)
@@ -168,15 +178,7 @@ macro fixed_vector(name, parent)
                 StaticArrays.default_similar_type(T,s(),Val{length(S)})
             end
         end
-        size_or(::Type{$(name)}, or) = or
-        eltype_or(::Type{$(name)}, or) = or
-        eltype_or(::Type{$(name){S, T} where S}, or) where {T} = T
-        eltype_or(::Type{$(name){S, T} where T}, or) where {S} = or
-        eltype_or(::Type{$(name){S, T}}, or) where {S, T} = T
 
-        size_or(::Type{$(name){S, T} where S}, or) where {T} = or
-        size_or(::Type{$(name){S, T} where T}, or) where {S} = Size{(S,)}()
-        size_or(::Type{$(name){S, T}}, or) where {S, T} = (S,)
     end)
 end
 
