@@ -137,7 +137,7 @@ specialized for (potentially immutable) `StaticArray`s. Many of Julia's
 built-in method definitions inherently assume mutability, and further
 performance optimizations may be made when the size of the array is known to the
 compiler. One example of this is by loop unrolling, which has a substantial
-effect on small arrays and tends to automatically triger LLVM's SIMD
+effect on small arrays and tends to automatically trigger LLVM's SIMD
 optimizations. Another way performance is boosted is by providing specialized
 methods for `det`, `inv`, `eig` and `chol` where the algorithm depends on the
 precise dimensions of the input. In combination with intelligent fallbacks to
