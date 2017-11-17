@@ -72,4 +72,20 @@
         @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
         @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
     end
+
+    @testset "FieldVector with Tuple fields" begin
+        # verify that having a field which is itself a Tuple 
+        # doesn't break anything
+
+        eval(quote
+            struct TupleField <: FieldVector{1, NTuple{2, Int}}
+                x::NTuple{2, Int}
+            end
+        end)
+
+        x = TupleField((1,2))
+        @test length(x) == 1
+        @test length(x[1]) == 2
+        @test x.x == (1, 2)
+    end
 end
