@@ -36,6 +36,9 @@
 
         # Issue 146
         @test [[Point3D(1.0,2.0,3.0)]; [Point3D(4.0,5.0,6.0)]]::Vector{Point3D} == [Point3D(1.0,2.0,3.0), Point3D(4.0,5.0,6.0)]
+
+        # Issue 342
+        @test_throws ErrorException Point3D(1,2,3,4)
     end
 
     @testset "Mutable Point2D" begin

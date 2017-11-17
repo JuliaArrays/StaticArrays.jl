@@ -17,7 +17,7 @@ For example:
 abstract type FieldVector{N, T} <: StaticVector{N, T} end
 
 # Is this a good idea?? Should people just define constructors that accept tuples?
-@inline (::Type{FV})(x::Tuple) where {FV <: FieldVector} = FV(x...)
+@inline (::Type{FV})(x::Tuple{Vararg{Any, N}}) where {N, FV <: FieldVector{N}} = FV(x...)
 
 @propagate_inbounds getindex(v::FieldVector, i::Int) = getfield(v, i)
 @propagate_inbounds setindex!(v::FieldVector, x, i::Int) = setfield!(v, i, x)
