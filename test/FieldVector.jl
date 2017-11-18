@@ -36,6 +36,9 @@
 
         # Issue 146
         @test [[Point3D(1.0,2.0,3.0)]; [Point3D(4.0,5.0,6.0)]]::Vector{Point3D} == [Point3D(1.0,2.0,3.0), Point3D(4.0,5.0,6.0)]
+
+        # Issue 342
+        @test_throws ErrorException Point3D(1,2,3,4)
     end
 
     @testset "Mutable Point2D" begin
@@ -68,5 +71,21 @@
         @test @inferred(similar_type(Point2D{Float64}, Float32)) == Point2D{Float32}
         @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
         @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
+    end
+
+    @testset "FieldVector with Tuple fields" begin
+        # verify that having a field which is itself a Tuple 
+        # doesn't break anything
+
+        eval(quote
+            struct TupleField <: FieldVector{1, NTuple{2, Int}}
+                x::NTuple{2, Int}
+            end
+        end)
+
+        x = TupleField((1,2))
+        @test length(x) == 1
+        @test length(x[1]) == 2
+        @test x.x == (1, 2)
     end
 end
