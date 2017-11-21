@@ -99,15 +99,15 @@ end
 # I'm not sure why the signature for this from Base precludes multiple arrays?
 # (also, why now mutating `mapreducedim!` and `reducedim!`?)
 # (similarly, `broadcastreduce` and `broadcastreducedim` sounds useful)
-@inline function mapreducedim(f, op, a::StaticArray, ::Type{Val{D}}) where {D}
-    _mapreducedim(f, op, Size(a), a, Val{D})
+@inline function mapreducedim(f, op, a::StaticArray, ::Val{D}) where {D}
+    _mapreducedim(f, op, Size(a), a, Val(D))
 end
 
-@inline function mapreducedim(f, op, a::StaticArray, ::Type{Val{D}}, v0) where {D}
-    _mapreducedim(f, op, Size(a), a, Val{D}, v0)
+@inline function mapreducedim(f, op, a::StaticArray, ::Val{D}, v0) where {D}
+    _mapreducedim(f, op, Size(a), a, Val(D), v0)
 end
 
-@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Val{D}) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
     T0 = eltype(a)
@@ -132,7 +132,7 @@ end
     end
 end
 
-@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0::T) where {S,D,T}
+@generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Val{D}, v0::T) where {S,D,T}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
 
@@ -166,8 +166,8 @@ end
 ## reducedim ##
 ###############
 
-@inline reducedim(op, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(identity, op, a, Val{D})
-@inline reducedim(op, a::StaticArray, ::Type{Val{D}}, v0) where {D} = mapreducedim(identity, op, a, Val{D}, v0)
+@inline reducedim(op, a::StaticArray, ::Val{D}) where {D} = mapreducedim(identity, op, a, Val(D))
+@inline reducedim(op, a::StaticArray, ::Val{D}, v0) where {D} = mapreducedim(identity, op, a, Val(D), v0)
 
 #######################
 ## related functions ##
@@ -196,49 +196,49 @@ end
 
 @inline sum(a::StaticArray{<:Any,T}) where {T} = reduce(+, zero(T), a)
 @inline sum(f::Function, a::StaticArray) = mapreduce(f, +, a)
-@inline sum(a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = reducedim(+, a, Val{D}, zero(T))
-@inline sum(f::Function, a::StaticArray, ::Type{Val{D}}) where D = mapreducedim(f, +, a, Val{D})
+@inline sum(a::StaticArray{<:Any,T}, ::Val{D}) where {T,D} = reducedim(+, a, Val(D), zero(T))
+@inline sum(f::Function, a::StaticArray, ::Val{D}) where D = mapreducedim(f, +, a, Val(D))
 
 @inline prod(a::StaticArray{<:Any,T}) where {T} = reduce(*, one(T), a)
 @inline prod(f::Function, a::StaticArray{<:Any,T}) where {T} = mapreduce(f, *, a)
-@inline prod(a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = reducedim(*, a, Val{D}, one(T))
-@inline prod(f::Function, a::StaticArray{<:Any,T}, ::Type{Val{D}}) where {T,D} = mapreducedim(f, *, a, Val{D})
+@inline prod(a::StaticArray{<:Any,T}, ::Val{D}) where {T,D} = reducedim(*, a, Val(D), one(T))
+@inline prod(f::Function, a::StaticArray{<:Any,T}, ::Val{D}) where {T,D} = mapreducedim(f, *, a, Val(D))
 
 @inline count(a::StaticArray{<:Any,Bool}) = reduce(+, 0, a)
 @inline count(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, +, 0, a)
-@inline count(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(+, a, Val{D}, 0)
-@inline count(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, +, a, Val{D}, 0)
+@inline count(a::StaticArray{<:Any,Bool}, ::Val{D}) where {D} = reducedim(+, a, Val(D), 0)
+@inline count(f::Function, a::StaticArray, ::Val{D}) where {D} = mapreducedim(x->f(x)::Bool, +, a, Val(D), 0)
 
 @inline all(a::StaticArray{<:Any,Bool}) = reduce(&, true, a)  # non-branching versions
 @inline all(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, &, true, a)
-@inline all(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(&, a, Val{D}, true)
-@inline all(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, &, a, Val{D}, true)
+@inline all(a::StaticArray{<:Any,Bool}, ::Val{D}) where {D} = reducedim(&, a, Val(D), true)
+@inline all(f::Function, a::StaticArray, ::Val{D}) where {D} = mapreducedim(x->f(x)::Bool, &, a, Val(D), true)
 
 @inline any(a::StaticArray{<:Any,Bool}) = reduce(|, false, a) # (benchmarking needed)
 @inline any(f::Function, a::StaticArray) = mapreduce(x->f(x)::Bool, |, false, a) # (benchmarking needed)
-@inline any(a::StaticArray{<:Any,Bool}, ::Type{Val{D}}) where {D} = reducedim(|, a, Val{D}, false)
-@inline any(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(x->f(x)::Bool, |, a, Val{D}, false)
+@inline any(a::StaticArray{<:Any,Bool}, ::Val{D}) where {D} = reducedim(|, a, Val(D), false)
+@inline any(f::Function, a::StaticArray, ::Val{D}) where {D} = mapreducedim(x->f(x)::Bool, |, a, Val(D), false)
 
 @inline mean(a::StaticArray) = sum(a) / length(a)
 @inline mean(f::Function, a::StaticArray) = sum(f, a) / length(a)
-@inline mean(a::StaticArray, ::Type{Val{D}}) where {D} = sum(a, Val{D}) / size(a, D)
-@inline mean(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = sum(f, a, Val{D}) / size(a, D)
+@inline mean(a::StaticArray, ::Val{D}) where {D} = sum(a, Val(D)) / size(a, D)
+@inline mean(f::Function, a::StaticArray, ::Val{D}) where {D} = sum(f, a, Val(D)) / size(a, D)
 
 @inline minimum(a::StaticArray) = reduce(min, a) # base has mapreduce(idenity, scalarmin, a)
 @inline minimum(f::Function, a::StaticArray) = mapreduce(f, min, a)
-@inline minimum(a::StaticArray, ::Type{Val{D}}) where {D} = reducedim(min, a, Val{D})
-@inline minimum(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(f, min, a, Val{D})
+@inline minimum(a::StaticArray, ::Val{D}) where {D} = reducedim(min, a, Val(D))
+@inline minimum(f::Function, a::StaticArray, ::Val{D}) where {D} = mapreducedim(f, min, a, Val(D))
 
 @inline maximum(a::StaticArray) = reduce(max, a) # base has mapreduce(idenity, scalarmax, a)
 @inline maximum(f::Function, a::StaticArray) = mapreduce(f, max, a)
-@inline maximum(a::StaticArray, ::Type{Val{D}}) where {D} = reducedim(max, a, Val{D})
-@inline maximum(f::Function, a::StaticArray, ::Type{Val{D}}) where {D} = mapreducedim(f, max, a, Val{D})
+@inline maximum(a::StaticArray, ::Val{D}) where {D} = reducedim(max, a, Val(D))
+@inline maximum(f::Function, a::StaticArray, ::Val{D}) where {D} = mapreducedim(f, max, a, Val(D))
 
 # Diff is slightly different
-@inline diff(a::StaticArray) = diff(a, Val{1})
-@inline diff(a::StaticArray, ::Type{Val{D}}) where {D} = _diff(Size(a), a, Val{D})
+@inline diff(a::StaticArray) = diff(a, Val(1))
+@inline diff(a::StaticArray, ::Val{D}) where {D} = _diff(Size(a), a, Val(D))
 
-@generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
+@generated function _diff(::Size{S}, a::StaticArray, ::Val{D}) where {S,D}
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
 
