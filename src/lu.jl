@@ -1,12 +1,12 @@
 # LU decomposition
-function lu(A::StaticMatrix, pivot::Union{Type{Val{false}},Type{Val{true}}}=Val{true})
+function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true))
     L,U,p = _lu(Size(A), A, pivot)
     (L,U,p)
 end
 
 # For the square version, return explicit lower and upper triangular matrices.
 # We would do this for the rectangular case too, but Base doesn't support that.
-function lu(A::StaticMatrix{N,N}, pivot::Union{Type{Val{false}},Type{Val{true}}}=Val{true}) where {N}
+function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true)) where {N}
     L,U,p = _lu(Size(A), A, pivot)
     (LowerTriangular(L), UpperTriangular(U), p)
 end

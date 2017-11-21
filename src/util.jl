@@ -42,13 +42,13 @@ end
 function check_array_parameters(Size, T, N, L)
     (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
     !isa(T, Type) && throw(ArgumentError("Static Array parameter T must be a type, got $T"))
-    !isa(N.parameters[1], Int) && throw(ArgumenError("Static Array parameter N must be an integer, got $(N.parameters[1])"))
-    !isa(L.parameters[1], Int) && throw(ArgumentError("Static Array parameter L must be an integer, got $(L.parameters[1])"))
+    !isa(N, Val) && !isa(typeof(N).parameters[1], Int) && throw(ArgumenError("Static Array parameter N must be an instance of Integer Value Type (e.g. Val(4) == Val{4}()), got $(N)"))
+    !isa(L, Val) && !isa(typeof(L).parameters[1], Int) && throw(ArgumentError("Static Array parameter L must be an instance of Integer Value Type (e.g. Val(4) == Val{4}()), got $(L)"))
     # shouldn't reach here. Anything else should have made it to the function below
     error("Internal error. Please file a bug")
 end
 
-@generated function check_array_parameters(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}}) where {Size,T,N,L}
+@generated function check_array_parameters(::Type{Size}, ::Type{T}, ::Val{N}, ::Val{L}) where {Size,T,N,L}
     if !all(x->isa(x, Int), Size.parameters)
         return :(throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`).")))
     end
@@ -80,10 +80,10 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 # See https://github.com/JuliaLang/julia/issues/23826
 # """
 #     drop_sdims(a)
-# 
+#
 # Return an `AbstractArray` with the same elements as `a`, but with static
 # dimensions removed (ie, not a `StaticArray`).
-# 
+#
 # This is useful if you want to override dispatch to call the `Base` version of
 # operations such as `kron` instead of the implementation in `StaticArrays`.
 # Normally you shouldn't need to do this, but it can be more efficient for

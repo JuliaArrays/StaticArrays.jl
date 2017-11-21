@@ -172,8 +172,8 @@ end
     end
 end
 
-@inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = _diagm(Size(v), v, k)
-@generated function _diagm(::Size{S}, v::StaticVector, ::Type{Val{D}}) where {S,D}
+@inline diagm(v::StaticVector, k::Val{D}=Val(0)) where {D} = _diagm(Size(v), v, k)
+@generated function _diagm(::Size{S}, v::StaticVector, ::Val{D}) where {S,D}
     S1 = S[1]
     Snew1 = S1+abs(D)
     Snew = (Snew1, Snew1)
@@ -190,8 +190,8 @@ end
     end
 end
 
-@inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
-@generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
+@inline diag(m::StaticMatrix, k::Val{D}=Val(0)) where {D} = _diag(Size(m), m, k)
+@generated function _diag(::Size{S}, m::StaticMatrix, ::Val{D}) where {S,D}
     S1, S2 = S
     rng = D ≤ 0 ? range(1-D, S1+1, min(S1+D, S2)) : range(D*S1+1, S1+1, min(S1, S2-D))
     Snew = length(rng)
