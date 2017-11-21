@@ -27,7 +27,7 @@ srand(42)
         @test istriu(R)
 
         # fat (thin=false) case
-        QR = @inferred qr(arr, Val{false}, Val{false})
+        QR = @inferred qr(arr, Val(false), Val(false))
         @test QR isa Tuple
         @test length(QR) == 2
         Q, R = QR
@@ -43,7 +43,7 @@ srand(42)
         @test istriu(R)
 
         # pivot=true cases are not released yet
-        pivot = Val{true}
+        pivot = Val(true)
         QRp = @inferred qr(arr, pivot)
         @test QRp isa Tuple
         @test length(QRp) == 3

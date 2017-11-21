@@ -73,7 +73,7 @@ Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
 @pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
 
 @pure length(::Size{S}) where {S} = length(S)
-@pure length_val(::Size{S}) where {S} = Val{length(S)}
+@pure length_val(::Size{S}) where {S} = Val(length(S))
 
 # Note - using === here, as Base doesn't inline == for tuples as of julia-0.6
 @pure Base.:(==)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S === s

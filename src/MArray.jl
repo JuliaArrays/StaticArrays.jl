@@ -21,17 +21,17 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
     function MArray{S,T,N,L}(x::NTuple{L,T}) where {S,T,N,L}
-        check_array_parameters(S, T, Val{N}, Val{L})
+        check_array_parameters(S, T, Val(N), Val(L))
         new{S,T,N,L}(x)
     end
 
     function MArray{S,T,N,L}(x::NTuple{L,Any}) where {S,T,N,L}
-        check_array_parameters(S, T, Val{N}, Val{L})
+        check_array_parameters(S, T, Val(N), Val(L))
         new{S,T,N,L}(convert_ntuple(T, x))
     end
 
     function MArray{S,T,N,L}() where {S,T,N,L}
-        check_array_parameters(S, T, Val{N}, Val{L})
+        check_array_parameters(S, T, Val(N), Val(L))
         new{S,T,N,L}()
     end
 end
