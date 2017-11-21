@@ -4,29 +4,29 @@ import Base.qr
 
 
 """
-    qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]
+    qr(A::StaticMatrix, pivot=Val(false); thin=true) -> Q, R, [p]
 
 Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
 This function does not support `thin=false` keyword option due to type inference instability.
-To use this option call `qr(A, pivot, Val{false})` instead.
+To use this option call `qr(A, pivot, Val(false))` instead.
 """
-@inline function qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}; thin::Bool=true)
+@inline function qr(A::StaticMatrix, pivot::Union{Val{false}, Val{true}} = Val(false); thin::Bool=true)
     _thin_must_hold(thin)
-    return _qr(Size(A), A, pivot, Val{true})
+    return _qr(Size(A), A, pivot, Val(true))
 end
 
 
-@inline qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) = _qr(Size(A), A, pivot, thin)
+@inline qr(A::StaticMatrix, pivot::Union{Val{false}, Val{true}}, thin::Union{Val{false}, Val{true}}) = _qr(Size(A), A, pivot, thin)
 
 
-@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Val{false}, Val{true}} = Val(false), thin::Union{Val{false}, Val{true}} = Val(true)) where {sA, TA}
 
-    isthin = thin == Type{Val{true}}
+    isthin = thin == Val(true)
 
     SizeQ = Size( sA[1], isthin ? diagsize(Size(A)) : sA[1] )
     SizeR = Size( diagsize(Size(A)), sA[2] )
 
-    if pivot == Type{Val{true}}
+    if pivot == Val(true)
         return quote
             @_inline_meta
             Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
@@ -61,7 +61,7 @@ end
 # in the case of `thin=false` Q is full, but R is still reduced, see [`qr`](@ref).
 #
 # For original source code see below.
-@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Val{false}, thin::Union{Val{false}, Val{true}} = Val(true)) where {sA, TA}
     m, n = sA[1], sA[2]
 
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]
@@ -121,7 +121,7 @@ end
     end
 
     # truncate Q and R sizes in LAPACK consilient way
-    if thin == Type{Val{true}}
+    if thin == Val(true)
         mQ, nQ = m, min(m, n)
     else
         mQ, nQ = m, m
@@ -204,4 +204,3 @@ end
 #        return (similar_type(A, T, Size(m, m))(Q), similar_type(A, T, Size(n, n))(R))
 #    end
 #end
-
