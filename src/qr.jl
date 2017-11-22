@@ -19,6 +19,9 @@ end
 @inline qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) = _qr(Size(A), A, pivot, thin)
 
 
+_qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
+
+
 @generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
 
     isthin = thin == Type{Val{true}}
@@ -30,7 +33,7 @@ end
         return quote
             @_inline_meta
             Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
-            T = arithmetic_closure(TA)
+            T = _qreltype(TA)
             return similar_type(A, T, $(SizeQ))(Q0),
                    similar_type(A, T, $(SizeR))(R0),
                    similar_type(A, Int, $(Size(sA[2])))(p0)
@@ -45,7 +48,7 @@ end
             return quote
                 @_inline_meta
                 Q0, R0 = Base.qr(Matrix(A), pivot, thin=$isthin)
-                T = arithmetic_closure(TA)
+                T = _qreltype(TA)
                 return similar_type(A, T, $(SizeQ))(Q0),
                        similar_type(A, T, $(SizeR))(R0)
             end
@@ -130,7 +133,7 @@ end
 
     return quote
         @_inline_meta
-        T = arithmetic_closure(TA)
+        T = _qreltype(TA)
         @inbounds $(Expr(:block, initQ...))
         @inbounds $(Expr(:block, initR...))
         @inbounds $code
@@ -146,7 +149,7 @@ end
 ## thin=true version of QR
 #function qr_unrolled(A::StaticMatrix{<:Any, <:Any, TA}) where {TA}
 #    m, n = size(A)
-#    T = arithmetic_closure(TA)
+#    T = _qreltype(TA)
 #    Q = eye(MMatrix{m,m,T,m*m})
 #    R = MMatrix{m,n,T,m*n}(A)
 #    for k = 1:min(m - 1 + !(TA<:Real), n)

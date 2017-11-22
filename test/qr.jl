@@ -11,6 +11,8 @@ srand(42)
 @testset "QR decomposition" begin
     function test_qr(arr)
 
+        T = eltype(arr)
+
         # thin=true case
         QR = @inferred qr(arr)
         @test QR isa Tuple
@@ -18,6 +20,7 @@ srand(42)
         Q, R = QR
         @test Q isa StaticMatrix
         @test R isa StaticMatrix
+        @test eltype(Q) == eltype(R) == typeof((one(T)*zero(T) + zero(T))/norm([one(T)]))
 
         Q_ref,R_ref = qr(Matrix(arr))
         @test abs.(Q) ≈ abs.(Q_ref) # QR is unique up to diag(Q) signs
@@ -33,6 +36,7 @@ srand(42)
         Q, R = QR
         @test Q isa StaticMatrix
         @test R isa StaticMatrix
+        @test eltype(Q) == eltype(R) == typeof((one(T)*zero(T) + zero(T))/norm([one(T)]))
 
         Q_ref,R_ref = qr(Matrix(arr), thin=false)
         @test abs.(Q) ≈ abs.(Q_ref) # QR is unique up to diag(Q) signs
@@ -72,6 +76,7 @@ srand(42)
                    (@MMatrix randn(2,3)),
                    (@SMatrix([0 1 2; 0 2 3; 0 3 4; 0 4 5])),
                    (@SMatrix zeros(Int,4,4)),
+                   (@SMatrix([1//2 1//1])),
                    (@SMatrix randn(17,18)),    # fallback to LAPACK
                    (@SMatrix randn(18,17))
                ]
