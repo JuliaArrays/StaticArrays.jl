@@ -54,7 +54,7 @@ else
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where {N,M} = Broadcast.Unknown()
 
     # Add a broadcast method that calls the old @generated routine
-    @inline function broadcast(f, ::StaticArrayStyle{N}, ::Type{ElType}, inds::Tuple{Vararg{AbstractUnitRange, M}} where M, As...) where {N, ElType} 
+    @inline function broadcast(f, ::StaticArrayStyle, ::Void, ::Void, As...)
         _broadcast(f, broadcast_sizes(As...), As...)
     end
 
