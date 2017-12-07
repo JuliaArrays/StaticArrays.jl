@@ -63,8 +63,6 @@ else
 end
 
 
-# _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
-
 ##############################################
 ## Old broadcast machinery for StaticArrays ##
 ##############################################
@@ -75,7 +73,6 @@ broadcast_indices(A::StaticArray) = indices(A)
 @inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a, as...) = (Size(), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
-
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))
