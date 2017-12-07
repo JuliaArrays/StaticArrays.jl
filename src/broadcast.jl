@@ -48,6 +48,12 @@ else
     StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
+    
+    # Precedence: Make StaticArray - Array -> Array
+    BroadcastStyle(A::AbstractArrayStyle{N}, ::StaticArrayStyle{M}) where {N,M} = A
+    BroadcastStyle(::StaticArrayStyle{M}, ::AbstractArrayStyle{N}) where {N,M} = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where {N,M} = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where {N,M} = Broadcast.Unknown()
 
     # Add a broadcast method that calls the old @generated routine
     @inline function broadcast(f, ::StaticArrayStyle{N}, ::Type{ElType}, inds::Tuple{Vararg{AbstractUnitRange, M}} where M, As...) where {N, ElType} 
