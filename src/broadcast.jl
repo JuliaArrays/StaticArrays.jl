@@ -49,9 +49,7 @@ else
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
     
-    # Precedence: Make StaticArray - Array -> Array
-    BroadcastStyle(A::AbstractArrayStyle{N}, ::StaticArrayStyle{M}) where {N,M} = A
-    BroadcastStyle(::StaticArrayStyle{M}, ::AbstractArrayStyle{N}) where {N,M} = Broadcast.Unknown()
+    # Fix Precedence: Make StaticArray - Array -> Array
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where {N,M} = Broadcast.Unknown()
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where {N,M} = Broadcast.Unknown()
 
