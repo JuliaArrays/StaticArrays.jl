@@ -21,9 +21,9 @@ end
 
 # # TODO: This signature could be relaxed to (::Any, ::Type{StaticArray}, ::Type, ...), though
 # # we'd need to rework how _broadcast!() and broadcast_sizes() interact with normal AbstractArray.
-# @inline function broadcast_c!(f, ::Type{StaticArray}, ::Type{StaticArray}, dest, as...)
-#     _broadcast!(f, Size(dest), dest, broadcast_sizes(as...), as...)
-# end
+@inline function broadcast_c!(f, ::Type{StaticArray}, ::Type{StaticArray}, dest, as...)
+    _broadcast!(f, Size(dest), dest, broadcast_sizes(as...), as...)
+end
 
 # _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
 
@@ -117,58 +117,57 @@ if VERSION < v"0.7.0-DEV"
     end
 end
 
-################
-## broadcast! ##
-################
+# ################
+# ## broadcast! ##
+# ################
 
-@generated function _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
-    @show "Hi"
-    sizes = [sz.parameters[1] for sz ∈ s.parameters]
-    sizes = tuple(sizes...)
+# @generated function _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
+#     sizes = [sz.parameters[1] for sz ∈ s.parameters]
+#     sizes = tuple(sizes...)
 
-    ndims = 0
-    for i = 1:length(sizes)
-        ndims = max(ndims, length(sizes[i]))
-    end
+#     ndims = 0
+#     for i = 1:length(sizes)
+#         ndims = max(ndims, length(sizes[i]))
+#     end
 
-    for i = 1:length(sizes)
-        s = sizes[i]
-        for j = 1:length(s)
-            if s[j] != 1 && s[j] != (j <= length(newsize) ? newsize[j] : 1)
-                throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
-            end
-        end
-    end
+#     for i = 1:length(sizes)
+#         s = sizes[i]
+#         for j = 1:length(s)
+#             if s[j] != 1 && s[j] != (j <= length(newsize) ? newsize[j] : 1)
+#                 throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
+#             end
+#         end
+#     end
 
-    exprs = Array{Expr}(newsize)
-    j = 1
-    more = prod(newsize) > 0
-    current_ind = ones(Int, max(length(newsize), length.(sizes)...))
-    while more
-        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
-        exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
+#     exprs = Array{Expr}(newsize)
+#     j = 1
+#     more = prod(newsize) > 0
+#     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
+#     while more
+#         exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+#         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
-        # increment current_ind (maybe use CartesianRange?)
-        current_ind[1] += 1
-        for i ∈ 1:length(newsize)
-            if current_ind[i] > newsize[i]
-                if i == length(newsize)
-                    more = false
-                    break
-                else
-                    current_ind[i] = 1
-                    current_ind[i+1] += 1
-                end
-            else
-                break
-            end
-        end
-        j += 1
-    end
+#         # increment current_ind (maybe use CartesianRange?)
+#         current_ind[1] += 1
+#         for i ∈ 1:length(newsize)
+#             if current_ind[i] > newsize[i]
+#                 if i == length(newsize)
+#                     more = false
+#                     break
+#                 else
+#                     current_ind[i] = 1
+#                     current_ind[i+1] += 1
+#                 end
+#             else
+#                 break
+#             end
+#         end
+#         j += 1
+#     end
 
-    return quote
-        @_inline_meta
-        @inbounds $(Expr(:block, exprs...))
-        return dest
-    end
-end
+#     return quote
+#         @_inline_meta
+#         @inbounds $(Expr(:block, exprs...))
+#         return dest
+#     end
+# end
