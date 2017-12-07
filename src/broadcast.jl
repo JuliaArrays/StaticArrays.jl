@@ -40,7 +40,7 @@ if VERSION < v"0.7.0-DEV.2638"
 else   
     ## New Broadcast API ##
     import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, broadcast
+    BroadcastStyle, AbstractArrayStyle
 
     # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle 
     # A constructor that changes the style parameter N (array dimension) is also required
@@ -48,6 +48,7 @@ else
     StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
+    #BroadcastStyle(::Type{<:Scalar}) = Broadcast.Scalar()
 
     # Add a broadcast method that calls the old @generated routine
     @inline function broadcast(f, ::StaticArrayStyle{N}, ::Type{ElType}, inds::Tuple{Vararg{AbstractUnitRange, M}} where M, As...) where {N, ElType} 
