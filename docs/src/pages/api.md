@@ -36,7 +36,7 @@ functions).
 A container with arbitrarily many dimensions is defined as
 `struct SArray{Size,T,N,L} <: StaticArray{Size,T,N}`, where
 `Size = Tuple{S1, S2, ...}` is a tuple of `Int`s. You can easily construct one with
-the `@SArray` macro, supporting all the features of `@SVector` and `@SMatrix`
+the `@SArray` macro (or the short-form `@sa` macro), supporting all the features of `@SVector` and `@SMatrix`
 (but with arbitrary dimension).
 
 The main reason `SVector` and `SMatrix` are defined is to make it easier to

@@ -27,7 +27,7 @@ export SDiagonal
 
 export Size, Length
 
-export @SVector, @SMatrix, @SArray
+export @SVector, @SMatrix, @SArray, @sa
 export @MVector, @MMatrix, @MArray
 
 export similar_type

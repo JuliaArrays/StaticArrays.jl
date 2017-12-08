@@ -29,6 +29,10 @@ m5 = SMatrix{2,2}([1 3 ; 2 4]) # Array conversions must specify size
 # Higher-dimensional support
 a = @SArray randn(2, 2, 2, 2, 2, 2)
 
+# Short-form macro for static vectors or matrices
+m6 = @sa [1 2; 3 4]
+m7 = @sa[1 2; 3 4] * @sa[5, 6] # without space or parenthesis, requires Julia v0.7 or above
+
 # Supports all the common operations of AbstractArray
 v7 = v1 + v2
 v8 = sin.(v3)

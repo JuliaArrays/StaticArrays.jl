@@ -253,6 +253,8 @@ macro SArray(ex)
     end
 end
 
+macro sa(ex); esc(:(@SArray($ex))); end
+
 function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) where {S,T,U,N,L}
     SArray{S,promote_type(T,U),N,L}
 end

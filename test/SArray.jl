@@ -89,6 +89,9 @@
 
         # Non-square comprehensions built from SVectors - see #76
         @test @SArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
+
+        # @SArray short-form macro
+        @test @macroexpand(@sa([a b; c d])) == @macroexpand(@SArray([a b; c d]))
     end
 
     @testset "Methods" begin
