@@ -50,10 +50,10 @@ else
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
     
     # Fix Precedence: Make StaticArray - Array -> Array
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where {N,M} = Broadcast.Unknown()
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where {N,M} = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
 
-    # Add a broadcast method that calls the old @generated routine
+    # Add a broadcast method that calls the @generated routine
     @inline function broadcast(f, ::StaticArrayStyle, ::Void, ::Void, As...)
         _broadcast(f, broadcast_sizes(As...), As...)
     end
