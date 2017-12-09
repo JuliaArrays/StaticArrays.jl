@@ -20,7 +20,7 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
     end
 
     function SizedArray{S, T, N, M}() where {S, T, N, M}
-        @compat new{S, T, N, M}(Array{T, M}(uninitialized, S.parameters...))
+        new{S, T, N, M}(Array{T, M}(uninitialized, S.parameters...))
     end
 end
 
