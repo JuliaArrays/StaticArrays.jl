@@ -1,6 +1,5 @@
 using StaticArrays
 using Base.Test
-using Compat 
 
 # We generate a lot of matrices using rand(), but unit tests should be
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
