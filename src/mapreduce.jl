@@ -17,7 +17,7 @@ else
 end
 
 @generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
-    exprs = Vector{Expr}(prod(S))
+    @compat exprs = Vector{Expr}(uninitialized, prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
