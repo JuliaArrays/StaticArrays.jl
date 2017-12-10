@@ -49,11 +49,13 @@ else
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
     
-    # Precedence rules: needed in particular to make StaticArray - Array -> Array
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
+    # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
         Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    # FIXME: These two rules should be removed once VectorStyle and MatrixStyle are removed from base/broadcast.jl
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
+    # End FIXME
 
     # Add a broadcast method that calls the @generated routine
     @inline function broadcast(f, ::StaticArrayStyle, ::Void, ::Void, As...)
