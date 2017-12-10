@@ -49,9 +49,11 @@ else
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
     
-    # Fix Precedence: Make StaticArray - Array -> Array
+    # Precedence rules: needed in particular to make StaticArray - Array -> Array
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
+        Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
 
     # Add a broadcast method that calls the @generated routine
     @inline function broadcast(f, ::StaticArrayStyle, ::Void, ::Void, As...)
