@@ -5,7 +5,7 @@
 
 
 Construct a statically-sized, mutable array `MArray`. The data may optionally be
-provided upon construction and cannot be mutated later. The `S` parameter is a Tuple-type
+provided upon construction and can be mutated later. The `S` parameter is a Tuple-type
 specifying the dimensions, or size, of the array - such as `Tuple{3,4,5}` for a 3×4×5-sized
 array. The `L` parameter is the `length` of the array and is always equal to `prod(S)`.
 Constructors may drop the `L` and `T` parameters if they are inferrable from the input
