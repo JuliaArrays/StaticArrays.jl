@@ -74,11 +74,11 @@ show(io::IO, ::Type{MMatrix{N, M, T}}) where {N, M, T} = print(io, "MMatrix{$N,$
 
     # This is nasty... but it turns out Julia will literally copy the whole tuple to the stack otherwise!
     if isbits(T)
-        unsafe_load(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), i)
+        unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), i)
     else
         # Not sure about this... slow option for now...
         m.data[i]
-        #unsafe_load(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), i)
+        #unsafe_load(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(m.data)), i)
     end
 end
 
@@ -89,10 +89,10 @@ end
     #end
 
     if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), val, i)
+        unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), val, i)
     else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
         # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), Base.data_pointer_from_objref(val), i)
+        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(m.data)), pointer_from_objref(val), i)
         error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 

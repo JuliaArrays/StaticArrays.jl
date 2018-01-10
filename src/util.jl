@@ -80,10 +80,10 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 # See https://github.com/JuliaLang/julia/issues/23826
 # """
 #     drop_sdims(a)
-# 
+#
 # Return an `AbstractArray` with the same elements as `a`, but with static
 # dimensions removed (ie, not a `StaticArray`).
-# 
+#
 # This is useful if you want to override dispatch to call the `Base` version of
 # operations such as `kron` instead of the implementation in `StaticArrays`.
 # Normally you shouldn't need to do this, but it can be more efficient for
