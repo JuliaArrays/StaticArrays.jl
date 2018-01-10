@@ -2,7 +2,7 @@
 ## broadcast! ##
 ################
 
-if VERSION < v"0.7.0-DEV.2638"   
+if VERSION < v"0.7.0-DEV.2638"
     ## Old Broadcast API ##
     import Base.Broadcast:
     _containertype, promote_containertype, broadcast_indices,
@@ -37,18 +37,18 @@ if VERSION < v"0.7.0-DEV.2638"
     @inline function broadcast_c!(f, ::Type{StaticArray}, ::Type{StaticArray}, dest, as...)
         _broadcast!(f, Size(dest), dest, broadcast_sizes(as...), as...)
     end
-else   
+else
     ## New Broadcast API ##
     import Base.Broadcast:
     BroadcastStyle, AbstractArrayStyle, broadcast
 
-    # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle 
+    # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
     # A constructor that changes the style parameter N (array dimension) is also required
     struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
     StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
 
     BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
-    
+
     # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
         Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
@@ -63,9 +63,7 @@ else
     end
 
     # Add a specialized broadcast! method that overrides the Base fallback and calls the old routine
-    # TODO: This signature could be relaxed to (::AbstractArray, ::Vararg{StaticArray,N}), ::Type, ...), though
-    # we'd need to rework how _broadcast!() and broadcast_sizes() interact with normal AbstractArray.
-    @inline function broadcast!(f, C::StaticArray, As::Vararg{StaticArray,N}) where {N}
+    @inline function broadcast!(f, C, ::StaticArrayStyle, As...)
         _broadcast!(f, Size(C), C, broadcast_sizes(As...), As...)
     end
 end
@@ -76,7 +74,7 @@ end
 ##############################################
 
 broadcast_indices(A::StaticArray) = indices(A)
- 
+
 @inline broadcast_sizes(a::RowVector{<:Any,<:SVector}, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a, as...) = (Size(), broadcast_sizes(as...)...)
