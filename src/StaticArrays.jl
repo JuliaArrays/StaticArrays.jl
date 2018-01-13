@@ -32,6 +32,7 @@ export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
+export SSymmetricCompact
 
 export Size, Length
 
@@ -110,6 +111,7 @@ include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+include("SSymmetricCompact.jl")
 
 include("convert.jl")
 
