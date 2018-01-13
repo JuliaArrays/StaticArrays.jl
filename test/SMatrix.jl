@@ -67,6 +67,8 @@
         @test isa(@SMatrix(randexp(Float32, 2, 2)), SMatrix{2, 2, Float32})
 
         @test isa(SMatrix(@SMatrix zeros(4,4)), SMatrix{4, 4, Float64})
+
+        @inferred SMatrix(rand(SMatrix{3, 3})) # issue 356
     end
 
     @testset "Methods" begin
