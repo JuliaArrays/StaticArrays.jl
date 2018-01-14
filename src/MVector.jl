@@ -43,10 +43,10 @@ end
     end
 
     if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), val, i)
+        unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), val, i)
     else
         # This one is unsafe (#27)
-        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)
+        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
         error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 

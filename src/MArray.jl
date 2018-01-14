@@ -98,10 +98,10 @@ end
 
     T = eltype(v)
     if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), convert(T, val), i)
+        unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
     else
         # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)
+        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
         error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
@@ -111,7 +111,7 @@ end
 @inline Tuple(v::MArray) = v.data
 
 @inline function Base.unsafe_convert(::Type{Ptr{T}}, a::MArray{S,T}) where {S,T}
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
+    Base.unsafe_convert(Ptr{T}, pointer_from_objref(a))
 end
 
 macro MArray(ex)
