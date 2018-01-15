@@ -50,17 +50,17 @@ end
 @inline (::Type{SSymmetricCompact{N}})(a::NTuple{M, T}) where {N, T, M} = SSymmetricCompact{N, T}(a)
 @inline SSymmetricCompact(a::StaticMatrix{N, N, T}) where {N, T} = SSymmetricCompact{N, T}(a)
 
-@inline (::Type{SSC})(a::SSymmetricCompact) where {SSC<:SSymmetricCompact} = SSC(a.lowertriangle)
-@inline (::Type{SSC})(a::SSC) where {SSC<:SSymmetricCompact} = SSC(a.lowertriangle)
+@inline (::Type{SSC})(a::SSymmetricCompact) where {SSC <: SSymmetricCompact} = SSC(a.lowertriangle)
+@inline (::Type{SSC})(a::SSC) where {SSC <: SSymmetricCompact} = SSC(a.lowertriangle)
 
 @inline (::Type{SSC})(a::AbstractVector) where {SSC <: SSymmetricCompact} = SSC(convert(lowertriangletype(SSC), a))
 @inline (::Type{SSC})(a::Tuple) where {SSC <: SSymmetricCompact} = SSymmetricCompact(convert(lowertriangletype(SSC), a))
 
-convert(::Type{SSC}, a::SSC) where {SSC<:SSymmetricCompact} = a # TODO: needed?
+convert(::Type{SSC}, a::SSC) where {SSC <: SSymmetricCompact} = a # TODO: needed?
 # TODO: more convert methods?
 
 # TODO: is the following a good idea?
-@inline function similar_type(::Type{SSC}, ::Type{T}, ::Size{S}) where {SSC<:SSymmetricCompact, T, S<:Tuple{Int, Int}}
+@inline function similar_type(::Type{SSC}, ::Type{T}, ::Size{S}) where {SSC <: SSymmetricCompact, T, S <: Tuple{Int, Int}}
     if S[1] === S[2]
         N = S[1]
         L = triangularnumber(N)
@@ -113,7 +113,7 @@ end
     end
 end
 
-LinAlg.ishermitian(a::SSymmetricCompact{N, T}) where {N,T<:Real} = true
+LinAlg.ishermitian(a::SSymmetricCompact{N, T}) where {N,T <: Real} = true
 LinAlg.ishermitian(a::SSymmetricCompact) = all(isreal, a.lowertriangle)
 LinAlg.issymmetric(a::SSymmetricCompact) = true
 
@@ -155,8 +155,28 @@ end
 
 #TODO: one, eye
 
+@generated function _one(::Size{S}, ::Type{SSC}) where {S, SSC <: SSymmetricCompact}
+    N = S[1]
+    L = triangularnumber(N)
+    T = eltype(SSC)
+    if T == Any
+        T = Float64
+    end
+    exprs = Vector{Expr}(L)
+    i = 0
+    for col = 1 : N, row = col : N
+        exprs[i += 1] = row == col ? :(one($T)) : :(zero($T))
+    end
+    quote
+        @_inline_meta
+        return SSymmetricCompact(SVector(tuple($(exprs...))))
+    end
+end
+
+@inline _eye(s::Size{S}, t::Type{SSC}) where {S, SM <: SSymmetricCompact} = _one(s, t)
+
 # _fill covers fill, zeros, and ones:
-@generated function _fill(val, ::Size{s}, ::Type{SSC}) where {s, SSC<:SSymmetricCompact}
+@generated function _fill(val, ::Size{s}, ::Type{SSC}) where {s, SSC <: SSymmetricCompact}
     N = s[1]
     L = triangularnumber(N)
     v = [:val for i = 1:L]
@@ -166,7 +186,7 @@ end
     end
 end
 
-@generated function _rand(randfun, rng::AbstractRNG, ::Type{SSC}) where {N, SSC<:SSymmetricCompact{N}}
+@generated function _rand(randfun, rng::AbstractRNG, ::Type{SSC}) where {N, SSC <: SSymmetricCompact{N}}
     T = eltype(SSC)
     if T == Any
         T = Float64
@@ -179,6 +199,6 @@ end
     end
 end
 
-@inline rand(rng::AbstractRNG, ::Type{SSC}) where {SSC<:SSymmetricCompact} = _rand(rand, rng, SSC)
-@inline randn(rng::AbstractRNG, ::Type{SSC}) where {SSC<:SSymmetricCompact} = _rand(randn, rng, SSC)
-@inline randexp(rng::AbstractRNG, ::Type{SSC}) where {SSC<:SSymmetricCompact} = _rand(randexp, rng, SSC)
+@inline rand(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(rand, rng, SSC)
+@inline randn(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randn, rng, SSC)
+@inline randexp(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randexp, rng, SSC)
