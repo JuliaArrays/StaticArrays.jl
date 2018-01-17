@@ -1,6 +1,3 @@
-using Base.Test, StaticArrays
-using Compat
-
 """
     x ≊ y
 

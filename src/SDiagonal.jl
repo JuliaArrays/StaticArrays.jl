@@ -40,7 +40,7 @@ end
 
 # avoid linear indexing?
 @propagate_inbounds function getindex(D::SDiagonal{N,T}, k::Int) where {N,T}
-    i, j = ind2sub(size(D), k)
+    i, j = CartesianIndices(size(D))[k].I
     D[i,j]
 end
 

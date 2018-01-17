@@ -1,9 +1,10 @@
-using StaticArrays
+using StaticArrays, Compat
 if VERSION > v"0.7-"
     using Test
     using Random
 else
     using Base.Test
+    using Base.Random
 end
 
 # We generate a lot of matrices using rand(), but unit tests should be

@@ -2,7 +2,7 @@
 ## broadcast! ##
 ################
 
-if VERSION < v"0.7.0-DEV.2638"
+@static if VERSION < v"0.7.0-DEV.2638"
     ## Old Broadcast API ##
     import Base.Broadcast:
     _containertype, promote_containertype, broadcast_indices,
@@ -58,7 +58,7 @@ else
     # End FIXME
 
     # Add a broadcast method that calls the @generated routine
-    @inline function broadcast(f, ::StaticArrayStyle, ::Void, ::Void, As...)
+    @inline function broadcast(f, ::StaticArrayStyle, ::Nothing, ::Nothing, As...)
         _broadcast(f, broadcast_sizes(As...), As...)
     end
 
@@ -119,7 +119,7 @@ end
     end
     newsize = tuple(newsize...)
 
-    exprs = Array{Expr}(newsize)
+    exprs = Array{Expr}(uninitialized, newsize)
     more = prod(newsize) > 0
     current_ind = ones(Int, length(newsize))
 
@@ -145,7 +145,7 @@ end
     end
 
     eltype_exprs = [t <: AbstractArray ? :($(eltype(t))) : :($t) for t ∈ a]
-    newtype_expr = :(Core.Inference.return_type(f, Tuple{$(eltype_exprs...)}))
+    newtype_expr = :(return_type(f, Tuple{$(eltype_exprs...)}))
 
     return quote
         @_inline_meta
@@ -182,7 +182,7 @@ end
         end
     end
 
-    exprs = Array{Expr}(newsize)
+    exprs = Array{Expr}(uninitialized, newsize)
     j = 1
     more = prod(newsize) > 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))

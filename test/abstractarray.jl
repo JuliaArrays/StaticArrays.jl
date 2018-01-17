@@ -87,7 +87,7 @@
 
     @testset "full" begin
         m_a = [0.831333 -1.91207; 0.200986  -0.69399]
-        m_a = m_a*m_a.'
+        m_a = m_a*m_a'
         m = SMatrix{2,2}(m_a)
         @test @inferred(full(Symmetric(m))) == m_a
         @test @inferred(full(Symmetric(m, :L))) == m_a

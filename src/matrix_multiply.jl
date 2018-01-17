@@ -347,7 +347,7 @@ end
             strideB = $(sb[1])
             strideC = $(s[1])
 
-            ccall((Base.BLAS.@blasfunc($gemm), Base.BLAS.libblas), Void,
+            ccall((Base.BLAS.@blasfunc($gemm), Base.BLAS.libblas), Nothing,
                 (Ptr{UInt8}, Ptr{UInt8}, Ptr{Base.BLAS.BlasInt}, Ptr{Base.BLAS.BlasInt},
                  Ptr{Base.BLAS.BlasInt}, Ptr{$T}, Ptr{$T}, Ptr{Base.BLAS.BlasInt},
                  Ptr{$T}, Ptr{Base.BLAS.BlasInt}, Ptr{$T}, Ptr{$T},

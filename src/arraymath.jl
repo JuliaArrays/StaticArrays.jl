@@ -56,7 +56,7 @@ end
 end
 
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
-@inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Base.GLOBAL_RNG, range, Size(SA), SA)
+@inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Random.GLOBAL_RNG, range, Size(SA), SA)
 @generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, range)) for i = 1:prod(s)]
     return quote

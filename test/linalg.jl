@@ -177,7 +177,7 @@ using StaticArrays, Base.Test
         # Output should be heap allocated into a SizedArray when it gets large
         # enough.
         M1 = collect(1:20)
-        M2 = collect(20:-1:1).'
+        M2 = collect(20:-1:1)'
         @test @inferred(kron(SMatrix{20,1}(M1),SMatrix{1,20}(M2)))::SizedMatrix{20,20} == kron(M1,M2)
     end
 end

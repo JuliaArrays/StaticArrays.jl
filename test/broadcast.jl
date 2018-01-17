@@ -86,8 +86,8 @@ end
         @test @inferred(v1 .^ v2) === SVector(1, 16)
         @test @inferred(v2 .^ v1) === SVector(1, 16)
         # Issue #199: broadcast with empty SArray
-        @test @inferred(SVector(1) .+ SVector()) === SVector()
-        @test @inferred(SVector() .+ SVector(1)) === SVector()
+        @test @inferred(SVector(1) .+ SVector{0,Int}()) === SVector{0,Int}()
+        @test @inferred(SVector{0,Int}() .+ SVector(1)) === SVector{0,Int}()
         # Issue #200: broadcast with RowVector
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
     end

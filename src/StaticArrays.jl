@@ -14,10 +14,14 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              normalize!, read, read!, write, Eigen
 
 if VERSION < v"0.7-"
+    using Base.Random
     import Base: rand, randn, randexp, rand!, randn!, randexp!
+    using Core.Inference.return_type
 else
     using Random
     import Random: rand, randn, randexp, rand!, randn!, randexp!
+    using Core.Compiler: return_type
+    const RowVector = Adjoint
 end
 
 import Compat.adjoint
