@@ -38,7 +38,7 @@ end
     end
     quote
         @_inline_meta
-        @inbounds return SSymmetricCompact{N, T, L}(SVector{L, T}($(expr...)))
+        @inbounds return SSymmetricCompact{N, T, L}(SVector{L, T}(tuple($(expr...))))
     end
 end
 
@@ -51,24 +51,12 @@ end
 @inline SSymmetricCompact(a::StaticMatrix{N, N, T}) where {N, T} = SSymmetricCompact{N, T}(a)
 
 @inline (::Type{SSC})(a::SSymmetricCompact) where {SSC <: SSymmetricCompact} = SSC(a.lowertriangle)
-@inline (::Type{SSC})(a::SSC) where {SSC <: SSymmetricCompact} = SSC(a.lowertriangle)
+@inline (::Type{SSC})(a::SSC) where {SSC <: SSymmetricCompact} = a
 
 @inline (::Type{SSC})(a::AbstractVector) where {SSC <: SSymmetricCompact} = SSC(convert(lowertriangletype(SSC), a))
 @inline (::Type{SSC})(a::Tuple) where {SSC <: SSymmetricCompact} = SSymmetricCompact(convert(lowertriangletype(SSC), a))
 
-convert(::Type{SSC}, a::SSC) where {SSC <: SSymmetricCompact} = a # TODO: needed?
-# TODO: more convert methods?
-
-# TODO: is the following a good idea?
-@inline function similar_type(::Type{SSC}, ::Type{T}, ::Size{S}) where {SSC <: SSymmetricCompact, T, S <: Tuple{Int, Int}}
-    if S[1] === S[2]
-        N = S[1]
-        L = triangularnumber(N)
-        SSymmetricCompact{N, T, L}
-    else
-        default_similar_type(T, S, length_val(S))
-    end
-end
+# TODO: similar_type overload?
 
 @inline indextuple(::T) where {T <: SSymmetricCompact} = indextuple(T)
 @generated function indextuple(::Type{<:SSymmetricCompact{N}}) where N
@@ -117,7 +105,7 @@ LinAlg.ishermitian(a::SSymmetricCompact{N, T}) where {N,T <: Real} = true
 LinAlg.ishermitian(a::SSymmetricCompact) = all(isreal, a.lowertriangle)
 LinAlg.issymmetric(a::SSymmetricCompact) = true
 
-# TODO: factorize
+# TODO: factorize?
 
 # TODO: a.lowertriangle == b.lowertriangle is slow (used by SDiagonal). SMatrix etc. actually use AbstractArray fallback (also slow)
 @inline ==(a::SSymmetricCompact, b::SSymmetricCompact) = mapreduce(==, (x, y) -> x && y, a.lowertriangle, b.lowertriangle)
@@ -126,7 +114,7 @@ LinAlg.issymmetric(a::SSymmetricCompact) = true
     L = triangularnumber(N)
     exprs = Vector{Expr}(L)
     for i ∈ 1:L
-        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        tmp = [:(a[$j].lowertriangle[$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
     end
     return quote
@@ -148,12 +136,24 @@ end
 @inline /(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle / b)
 @inline \(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a \ b.lowertriangle)
 
-# TODO: operations With UniformScaling
+@generated function _plus_uniform(::Size{S}, a::SSymmetricCompact{N, T, L}, λ) where {S, N, T, L}
+    @assert S[1] == N
+    @assert S[2] == N
+    exprs = Vector{Expr}(L)
+    i = 0
+    for col = 1 : N, row = col : N
+        i += 1
+        exprs[i] = row == col ? :(a.lowertriangle[$i] + λ) : :(a.lowertriangle[$i])
+    end
+    return quote
+        @_inline_meta
+        T = promote_type(eltype(a), typeof(λ))
+        SSymmetricCompact{N, T, L}(SVector{L, T}(tuple($(exprs...))))
+    end
+end
 
-@inline transpose(a::SSymmetricCompact) = SSymmetricCompact(transpose.(a.lowertriangle))
+@inline transpose(a::SSymmetricCompact) = SSymmetricCompact((a.lowertriangle))
 @inline adjoint(a::SSymmetricCompact) = conj(a)
-
-#TODO: one, eye
 
 @generated function _one(::Size{S}, ::Type{SSC}) where {S, SSC <: SSymmetricCompact}
     N = S[1]
@@ -173,7 +173,7 @@ end
     end
 end
 
-@inline _eye(s::Size{S}, t::Type{SSC}) where {S, SM <: SSymmetricCompact} = _one(s, t)
+@inline _eye(s::Size{S}, t::Type{SSC}) where {S, SSC <: SSymmetricCompact} = _one(s, t)
 
 # _fill covers fill, zeros, and ones:
 @generated function _fill(val, ::Size{s}, ::Type{SSC}) where {s, SSC <: SSymmetricCompact}
