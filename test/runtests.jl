@@ -1,5 +1,10 @@
 using StaticArrays
-using Base.Test
+if VERSION > v"0.7-"
+    using Test
+    using Random
+else
+    using Base.Test
+end
 
 # We generate a lot of matrices using rand(), but unit tests should be
 # deterministic. Therefore seed the RNG here (and further down, to avoid test

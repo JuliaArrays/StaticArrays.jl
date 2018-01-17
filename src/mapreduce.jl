@@ -109,7 +109,7 @@ end
 
 @generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
-    Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
+    Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
     T0 = eltype(a)
     T = :((T1 = Core.Inference.return_type(f, Tuple{$T0}); Core.Inference.return_type(op, Tuple{T1,T1})))
 
@@ -134,7 +134,7 @@ end
 
 @generated function _mapreducedim(f, op, ::Size{S}, a::StaticArray, ::Type{Val{D}}, v0::T) where {S,D,T}
     N = length(S)
-    Snew = ([n==D ? 1 : S[n] for n = 1:N]...)
+    Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]
@@ -240,7 +240,7 @@ end
 
 @generated function _diff(::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
     N = length(S)
-    Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...)
+    Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...,)
 
     exprs = Array{Expr}(Snew)
     itr = [1:n for n = Snew]

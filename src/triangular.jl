@@ -16,7 +16,7 @@ import Base: \, Ac_ldiv_B, At_ldiv_B
 @inline *(rowvec::RowVector{<:Any,<:StaticVector}, A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
 @inline A_mul_Bt(rowvec::RowVector{<:Any,<:StaticVector}, A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
 @inline A_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A * transpose(rowvec)
-@inline At_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A.' * transpose(rowvec)
+@inline At_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = transpose(A) * transpose(rowvec)
 @inline A_mul_Bc(rowvec::RowVector{<:Any,<:StaticVector}, A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = adjoint(A * adjoint(rowvec))
 @inline A_mul_Bc(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A * adjoint(rowvec)
 @inline Ac_mul_Bc(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A' * adjoint(rowvec)
@@ -27,8 +27,8 @@ A_mul_Bc(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatri
 A_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = (*)(A, transpose(B))
 Ac_mul_Bc(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = Ac_mul_B(A, B')
 Ac_mul_Bc(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bc(A', B)
-At_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = At_mul_B(A, B.')
-At_mul_Bt(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bt(A.', B)
+At_mul_Bt(A::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = At_mul_B(A, transpose(B))
+At_mul_Bt(A::StaticMatrix, B::Base.LinAlg.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bt(transpose(A), B)
 
 @inline \(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
 @inline Ac_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _Ac_ldiv_B(Size(A), Size(B), A, B)
@@ -102,9 +102,9 @@ end
     code = quote end
     for j = 1:n
         for i = m:-1:1
-            ex = :(A.data[$(sub2ind(sa,i,i))].'*B[$(sub2ind(sb,i,j))])
+            ex = :(transpose(A.data[$(sub2ind(sa,i,i))])*B[$(sub2ind(sb,i,j))])
             for k = 1:i-1
-                ex = :($ex + A.data[$(sub2ind(sa,k,i))].'*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + transpose(A.data[$(sub2ind(sa,k,i))])*B[$(sub2ind(sb,k,j))])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -186,9 +186,9 @@ end
     code = quote end
     for j = 1:n
         for i = 1:m
-            ex = :(A.data[$(sub2ind(sa,i,i))].'*B[$(sub2ind(sb,i,j))])
+            ex = :(transpose(A.data[$(sub2ind(sa,i,i))])*B[$(sub2ind(sb,i,j))])
             for k = i+1:m
-                ex = :($ex + A.data[$(sub2ind(sa,k,i))].'*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + transpose(A.data[$(sub2ind(sa,k,i))])*B[$(sub2ind(sb,k,j))])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -267,9 +267,9 @@ end
     code = quote end
     for i = 1:m
         for j = 1:n
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))].')
+            ex = :(A[$(sub2ind(sa,i,j))]*transpose(B[$(sub2ind(sb,j,j))]))
             for k = j+1:n
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))].')
+                ex = :($ex + A[$(sub2ind(sa,i,k))]*transpose(B.data[$(sub2ind(sb,j,k))]))
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -348,9 +348,9 @@ end
     code = quote end
     for i = 1:m
         for j = n:-1:1
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))].')
+            ex = :(A[$(sub2ind(sa,i,j))]*transpose(B[$(sub2ind(sb,j,j))]))
             for k = 1:j-1
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))].')
+                ex = :($ex + A[$(sub2ind(sa,i,k))]*transpose(B.data[$(sub2ind(sb,j,k))]))
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
