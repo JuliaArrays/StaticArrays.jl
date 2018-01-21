@@ -90,7 +90,7 @@ expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
 logm(D::SDiagonal) = SDiagonal(log.(D.diag))
 sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
 Base.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
-Base.LinAlg._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
+LinearAlgebra._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
 
 
 \(D::SDiagonal, B::StaticMatrix) = scalem(1 ./ D.diag, B)
@@ -101,7 +101,7 @@ Base.LinAlg._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
 
 @generated function check_singular(D::SDiagonal{N}) where {N}
     quote
-    Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(Base.LinAlg.SingularException(i)))
+    Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(LinearAlgebra.SingularException(i)))
     end
 end
 

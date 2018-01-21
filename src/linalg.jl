@@ -256,7 +256,7 @@ end
 @inline norm(v::StaticVector) = vecnorm(v)
 @inline norm(v::StaticVector, p::Real) = vecnorm(v, p)
 
-@inline Base.LinAlg.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
+@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
 
 @inline vecnorm(a::StaticArray) = _vecnorm(Size(a), a)
 @generated function _vecnorm(::Size{S}, a::StaticArray) where {S}
@@ -355,10 +355,10 @@ end
 @inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
 
 # some micro-optimizations (TODO check these make sense for v0.6)
-@inline Base.LinAlg.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
-@inline Base.LinAlg.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
+@inline LinearAlgebra.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
+@inline LinearAlgebra.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
 
 @pure _checksquare(::Size{S}) where {S} = (S[1] == S[2] || error("marix must be square"); S[1])
 
-@inline Base.LinAlg.Symmetric(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
-@inline Base.LinAlg.Hermitian(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))
+@inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
+@inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))

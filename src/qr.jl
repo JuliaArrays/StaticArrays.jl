@@ -1,7 +1,5 @@
 _thin_must_hold(thin) =
     thin || throw(ArgumentError("For the sake of type stability, `thin = true` must hold."))
-import Base.qr
-
 
 """
     qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]
@@ -32,7 +30,7 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
     if pivot == Type{Val{true}}
         return quote
             @_inline_meta
-            Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+            Q0, R0, p0 = qr(Matrix(A), pivot, thin=$isthin)
             T = _qreltype(TA)
             return similar_type(A, T, $(SizeQ))(Q0),
                    similar_type(A, T, $(SizeR))(R0),
@@ -47,7 +45,7 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
         else
             return quote
                 @_inline_meta
-                Q0, R0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+                Q0, R0 = qr(Matrix(A), pivot, thin=$isthin)
                 T = _qreltype(TA)
                 return similar_type(A, T, $(SizeQ))(Q0),
                        similar_type(A, T, $(SizeR))(R0)

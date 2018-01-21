@@ -1,5 +1,5 @@
 
-@inline function eigvals(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) where {T <: Real, SA <: StaticArray}
+@inline function eigvals(a::LinearAlgebra.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) where {T <: Real, SA <: StaticArray}
     _eigvals(Size(SA), a, permute, scale)
 end
 
@@ -14,9 +14,9 @@ end
 end
 
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
-@inline _eigvals(::Size{(1, 1)}, a::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
+@inline _eigvals(::Size{(1, 1)}, a::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
-@inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
     if A.uplo == 'U'
@@ -36,7 +36,7 @@ end
     end
 end
 
-@inline function _eigvals(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
@@ -105,7 +105,7 @@ end
     return SVector(eig1, eig2, eig3)
 end
 
-@inline function _eigvals(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     vals = eigvals(Hermitian(Array(parent(A))))
     return SVector{s[1], T}(vals)
 end
@@ -116,7 +116,7 @@ end
     _eig(Size(A), A, permute, scale)
 end
 
-@inline function eig(A::Base.LinAlg.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
+@inline function eig(A::LinearAlgebra.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
     _eig(Size(SM), A, permute, scale)
 end
 
@@ -130,18 +130,18 @@ end
     end
 end
 
-@inline function _eig(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     eigen = eigfact(Hermitian(Array(parent(A))))
     return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], T}(eigen.vectors)) # Return a SizedArray
 end
 
 
-@inline function _eig(::Size{(1,1)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eig(::Size{(1,1)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
 end
 
 # TODO adapt the below to be complex-safe?
-@inline function _eig(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
     if A.uplo == 'U'
@@ -200,7 +200,7 @@ end
 # A small part of the code in the following method was inspired by works of David
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
-@inline function _eig(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
@@ -383,13 +383,13 @@ end
     return Eigen(vals, vecs)
 end
 
-@inline function eigfact(A::Base.LinAlg.HermOrSym{T, SM}; permute::Bool=true, scale::Bool=true) where SM <: StaticMatrix where T<:Real
+@inline function eigfact(A::LinearAlgebra.HermOrSym{T, SM}; permute::Bool=true, scale::Bool=true) where SM <: StaticMatrix where T<:Real
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
 
 # NOTE: The following Boost Software License applies to parts of the method:
-#     _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+#     _eig{T<:Real}(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale)
 
 #=
 Boost Software License - Version 1.0 - August 17th, 2003

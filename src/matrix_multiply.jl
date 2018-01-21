@@ -1,51 +1,59 @@
-import Base: *,        Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
-import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
-
-import Base.LinAlg: BlasFloat, matprod
-
 const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
-# TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
+@static if VERSION < v"0.7-"
+    import Base:           Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
+    import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
+ 
+    const mul! = Base.A_mul_B!
+    
+    import Base.LinAlg: BlasFloat, matprod
 
-# Deal with A_mul_Bc, etc...
-# TODO make faster versions of A*_mul_B*
-@inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * adjoint(B)
-@inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * adjoint(B)
-@inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * B
+    # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
 
-@inline A_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = A * transpose(B)
-@inline At_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * transpose(B)
-@inline At_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * B
+    # Deal with A_mul_Bc, etc...
+    # TODO make faster versions of A*_mul_B*
+    @inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * adjoint(B)
+    @inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * adjoint(B)
+    @inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * B
 
-@inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, adjoint(B))
-@inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, adjoint(A), adjoint(B))
-@inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, adjoint(A), B)
+    @inline A_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = A * transpose(B)
+    @inline At_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * transpose(B)
+    @inline At_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * B
 
-@inline A_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, A, transpose(B))
-@inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, transpose(A), transpose(B))
-@inline At_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = A_mul_B!(dest, transpose(A), B)
+    @inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, A, adjoint(B))
+    @inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, adjoint(A), adjoint(B))
+    @inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, adjoint(A), B)
 
-# Manage dispatch of * and A_mul_B!
+    @inline A_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, A, transpose(B))
+    @inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), transpose(B))
+    @inline At_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), B)
+else
+    import LinearAlgebra: BlasFloat, matprod
+end
+
+
+# Manage dispatch of * and mul!
 # TODO RowVector? (Inner product?)
 
-@inline *(A::StaticMatrix, B::AbstractVector) = _A_mul_B(Size(A), A, B)
-@inline *(A::StaticMatrix, B::StaticVector) = _A_mul_B(Size(A), Size(B), A, B)
-@inline *(A::StaticMatrix, B::StaticMatrix) = _A_mul_B(Size(A), Size(B), A, B)
+@inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
+@inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
-@inline *(A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _A_mul_B(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul(Size(A), Size(B), A, B)
 
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = A_mul_B!(dest, reshape(A, Size(Size(A)[1], 1)), B)
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline A_mul_B!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _A_mul_B!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = mul!(dest, reshape(A, Size(Size(A)[1], 1)), B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 
-#@inline *{TA<:Base.LinAlg.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
+#@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
+
 
 # Implementations
 
-@generated function _A_mul_B(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
+@generated function _mul(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
         exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
@@ -62,7 +70,7 @@ const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:An
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -81,7 +89,7 @@ end
 end
 
 # outer product
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -93,7 +101,7 @@ end
 end
 
 # complex outer product
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:ConjVector{<:Any, <:StaticVector}}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:ConjVector{<:Any, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -104,27 +112,27 @@ end
     end
 end
 
-@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
     if sa[1]*sa[2]*sb[2] <= 8*8*8
         return quote
             @_inline_meta
-            return A_mul_B_unrolled(Sa, Sb, a, b)
+            return mul_unrolled(Sa, Sb, a, b)
         end
     elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
         return quote
             @_inline_meta
-            return A_mul_B_unrolled_chunks(Sa, Sb, a, b)
+            return mul_unrolled_chunks(Sa, Sb, a, b)
         end
     else
         return quote
             @_inline_meta
-            return A_mul_B_loop(Sa, Sb, a, b)
+            return mul_loop(Sa, Sb, a, b)
         end
     end
 end
 
-@generated function _A_mul_B(Sa::Size{sa}, Sb::Size{sb}, a::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}, b::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}) where {sa, sb, T <: BlasFloat}
+@generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}, b::Union{SizedMatrix{T}, MMatrix{T}, MArray{T}}) where {sa, sb, T <: BlasFloat}
     S = Size(sa[1], sb[2])
 
     # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
@@ -132,28 +140,28 @@ end
         return quote
             @_inline_meta
             C = similar(a, T, $S)
-            A_mul_B_blas!($S, C, Sa, Sb, a, b)
+            mul_blas!($S, C, Sa, Sb, a, b)
             return C
         end
     elseif sa[1]*sa[2]*sb[2] < 8*8*8
         return quote
             @_inline_meta
-            return A_mul_B_unrolled(Sa, Sb, a, b)
+            return mul_unrolled(Sa, Sb, a, b)
         end
     elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
         return quote
             @_inline_meta
-            return similar_type(a, T, $S)(A_mul_B_unrolled_chunks(Sa, Sb, a, b))
+            return similar_type(a, T, $S)(mul_unrolled_chunks(Sa, Sb, a, b))
         end
     else
         return quote
             @_inline_meta
-            return A_mul_B_loop(Sa, Sb, a, b)
+            return mul_loop(Sa, Sb, a, b)
         end
     end
 end
 
-@generated function A_mul_B_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -174,7 +182,7 @@ end
 end
 
 
-@generated function A_mul_B_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -199,7 +207,7 @@ end
 
 # Concatenate a series of matrix-vector multiplications
 # Each function is N^2 not N^3 - aids in compile time.
-@generated function A_mul_B_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -243,7 +251,7 @@ end
 end
 
 # TODO aliasing problems if c === b?
-@generated function _A_mul_B!(::Size{sc}, c::StaticVector, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticVector) where {sa, sb, sc}
+@generated function _mul!(::Size{sc}, c::StaticVector, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticVector) where {sa, sb, sc}
     if sb[1] != sa[2] || sc[1] != sa[1]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -261,7 +269,7 @@ end
     end
 end
 
-@generated function _A_mul_B!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector, b::RowVector{<:Any, <:StaticVector}) where {sa, sb, sc}
+@generated function _mul!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector, b::RowVector{<:Any, <:StaticVector}) where {sa, sb, sc}
     if sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -275,26 +283,26 @@ end
     end
 end
 
-@generated function _A_mul_B!(Sc::Size{sc}, c::StaticMatrix{<:Any, <:Any, Tc}, Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, sc, Ta, Tb, Tc}
+@generated function _mul!(Sc::Size{sc}, c::StaticMatrix{<:Any, <:Any, Tc}, Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, sc, Ta, Tb, Tc}
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat
 
     if can_blas
         if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
                 @_inline_meta
-                A_mul_B_unrolled!(Sc, c, Sa, Sb, a, b)
+                mul_unrolled!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         elseif sa[1] * sa[2] * sb[2] < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
             return quote
                 @_inline_meta
-                A_mul_B_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
+                mul_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         else
             return quote
                 @_inline_meta
-                A_mul_B_blas!(Sc, c, Sa, Sb, a, b)
+                mul_blas!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         end
@@ -302,13 +310,13 @@ end
         if sa[1] * sa[2] * sb[2] < 4*4*4
             return quote
                 @_inline_meta
-                A_mul_B_unrolled!(Sc, c, Sa, Sb, a, b)
+                mul_unrolled!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         else
             return quote
                 @_inline_meta
-                A_mul_B_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
+                mul_unrolled_chunks!(Sc, c, Sa, Sb, a, b)
                 return c
             end
         end
@@ -316,7 +324,7 @@ end
 end
 
 
-@generated function A_mul_B_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, T}, b::StaticMatrix{<:Any, <:Any, T}) where {s,sa,sb, T <: BlasFloat}
+@generated function mul_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, T}, b::StaticMatrix{<:Any, <:Any, T}) where {s,sa,sb, T <: BlasFloat}
     if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != s[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $s"))
     end
@@ -364,7 +372,7 @@ end
 end
 
 
-@generated function A_mul_B_unrolled!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
+@generated function mul_unrolled!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
     if sb[1] != sa[2] || sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -381,7 +389,7 @@ end
     end
 end
 
-@generated function A_mul_B_unrolled_chunks!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
+@generated function mul_unrolled_chunks!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticMatrix) where {sa, sb, sc}
     if sb[1] != sa[2] || sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -401,7 +409,7 @@ end
     end
 end
 
-#function A_mul_B_blas(a, b, c, A, B)
+#function mul_blas(a, b, c, A, B)
 #q
 #end
 

@@ -95,8 +95,8 @@ end
         @test_throws DimensionMismatch SA.'\ones(SVector{n+2,eltyB})
         @test_throws DimensionMismatch SA'\ones(SVector{n+2,eltyB})
 
-        @test_throws Base.LinAlg.SingularException t(zeros(SMatrix{n,n,eltyA}))\ones(SVector{n,eltyB})
-        @test_throws Base.LinAlg.SingularException t(zeros(SMatrix{n,n,eltyA})).'\ones(SVector{n,eltyB})
-        @test_throws Base.LinAlg.SingularException t(zeros(SMatrix{n,n,eltyA}))'\ones(SVector{n,eltyB})
+        @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))\ones(SVector{n,eltyB})
+        @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA})).'\ones(SVector{n,eltyB})
+        @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))'\ones(SVector{n,eltyB})
     end
 end
