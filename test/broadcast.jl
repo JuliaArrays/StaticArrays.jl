@@ -88,7 +88,7 @@ end
         # Issue #199: broadcast with empty SArray
         @test @inferred(SVector(1) .+ SVector{0,Int}()) === SVector{0,Int}()
         @test @inferred(SVector{0,Int}() .+ SVector(1)) === SVector{0,Int}()
-        # Issue #200: broadcast with RowVector
+        # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
     end
 
@@ -118,9 +118,9 @@ end
 
     @testset "Mutating broadcast!" begin
         # No setindex! error
-        A = eye(SMatrix{2, 2}); @test_throws ErrorException broadcast!(+, A, A, SVector(1, 4))
-        A = eye(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, SVector(1, 4))) == @MMatrix [2 1; 4 5]
-        A = eye(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, @SMatrix([1  4]))) == @MMatrix [2 4; 1 5]
+        A = one(SMatrix{2, 2}); @test_throws ErrorException broadcast!(+, A, A, SVector(1, 4))
+        A = one(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, SVector(1, 4))) == @MMatrix [2 1; 4 5]
+        A = one(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, @SMatrix([1  4]))) == @MMatrix [2 4; 1 5]
         A = @MMatrix([1 0]); @test_throws DimensionMismatch broadcast!(+, A, A, SVector(1, 4))
         A = @MMatrix([1 0]); @test @inferred(broadcast!(+, A, A, @SMatrix([1 4]))) == @MMatrix [2 4]
         A = @MMatrix([1 0]); @test @inferred(broadcast!(+, A, A, 2)) == @MMatrix [3 2]

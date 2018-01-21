@@ -20,13 +20,13 @@
         @test (SA.'*SB)::SMatrix{n,n} ≈ A.'*B
         @test (SA.'*SB.')::SMatrix{n,n} ≈ A.'*B.'
         @test (SB*SA)::SMatrix{n,n} ≈ B*A
-        @test (SB[:,1].'*SA)::RowVector{<:Any,<:SVector{n}} ≈ B[:,1].'*A
+        @test (SB[:,1].'*SA)::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1].'*A
         @test (SB.'*SA)::SMatrix{n,n} ≈ B.'*A
         @test SB[:,1]'*SA ≈ B[:,1]'*A
         @test (SB'*SA)::SMatrix{n,n} ≈ B'*A
         @test (SB*SA')::SMatrix{n,n} ≈ B*A'
         @test (SB*SA.')::SMatrix{n,n} ≈ B*A.'
-        @test (SB[:,1].'*SA.')::RowVector{<:Any,<:SVector{n}} ≈ B[:,1].'*A.'
+        @test (SB[:,1].'*SA.')::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1].'*A.'
         @test (SB.'*SA.')::SMatrix{n,n} ≈ B.'*A.'
         @test (SB[:,1]'*SA') ≈ SB[:,1]'*SA'
         @test (SB'*SA')::SMatrix{n,n} ≈ B'*A'
@@ -40,7 +40,7 @@
     end
 end
 
-@testset "Triangular-RowVector multiplication" begin
+@testset "Triangular-Adjoint multiplication" begin
     for n in (1,),
         eltyA in (Float64, Complex128, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
@@ -61,9 +61,9 @@ end
         @test (SA.'*SB)::Matrix ≈ A.'*B.'
         @test (SA.'*SB.')::SVector{n} ≈ A.'*B
         @test (SA.'*SB') ≈ A.'*conj(B)
-        @test (SB*SA)::RowVector{<:Any,<:SVector{n}} ≈ B.'*A
+        @test (SB*SA)::Adjoint{<:Any,<:SVector{n}} ≈ B.'*A
         @test (SB*SA') ≈ B.'*A'
-        @test (SB*SA.')::RowVector{<:Any,<:SVector{n}} ≈ B.'*A.'
+        @test (SB*SA.')::Adjoint{<:Any,<:SVector{n}} ≈ B.'*A.'
         @test (SB.'*SA)::Matrix ≈ B*A
         @test (SB'*SA)::Matrix ≈ conj(B)*A
         @test (SB.'*SA.')::Matrix ≈ B*A.'

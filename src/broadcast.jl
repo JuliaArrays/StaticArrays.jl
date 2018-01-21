@@ -12,7 +12,7 @@
     # This isn't the precise output type, just a placeholder to return from
     # promote_containertype, which will control dispatch to our broadcast_c.
     _containertype(::Type{<:StaticArray}) = StaticArray
-    _containertype(::Type{<:RowVector{<:Any,<:SVector}}) = StaticArray
+    _containertype(::Type{<:Adjoint{<:Any,<:StaticVector}}) = StaticArray
 
     # With the above, the default promote_containertype gives reasonable defaults:
     #   StaticArray, StaticArray -> StaticArray
@@ -47,7 +47,9 @@ else
     struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
     StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
 
-    BroadcastStyle(::Type{<:StaticArray{D, T, N}}) where {D, T, N} = StaticArrayStyle{N}()
+    BroadcastStyle(::Type{<:StaticArray{<:Any, <:Any, N}}) where {N} = StaticArrayStyle{N}()
+    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticVector}}) = StaticArrayStyle{2}()
+    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticMatrix}}) = StaticArrayStyle{2}()
 
     # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
@@ -69,13 +71,13 @@ else
 end
 
 
-##############################################
-## Old broadcast machinery for StaticArrays ##
-##############################################
+###################################################
+## Internal broadcast machinery for StaticArrays ##
+###################################################
 
 broadcast_indices(A::StaticArray) = indices(A)
 
-@inline broadcast_sizes(a::RowVector{<:Any,<:SVector}, as...) = (Size(a), broadcast_sizes(as...)...)
+@inline broadcast_sizes(a::Adjoint{<:Any,<:StaticArray}, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a::StaticArray, as...) = (Size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes(a, as...) = (Size(), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
@@ -160,9 +162,9 @@ if VERSION < v"0.7.0-DEV"
     end
 end
 
-###############################################
-## Old broadcast! machinery for StaticArrays ##
-###############################################
+####################################################
+## Internal broadcast! machinery for StaticArrays ##
+####################################################
 
 @generated function _broadcast!(f, ::Size{newsize}, dest::StaticArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
     sizes = [sz.parameters[1] for sz ∈ s.parameters]

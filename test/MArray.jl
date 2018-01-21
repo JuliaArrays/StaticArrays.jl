@@ -69,14 +69,11 @@
         test_expand_error(:(@MArray fill()))
         test_expand_error(:(@MArray ones()))
         test_expand_error(:(@MArray fill(1)))
-        test_expand_error(:(@MArray eye(5,6,7,8,9)))
         test_expand_error(:(@MArray [1; 2; 3; 4]...))
 
         @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@MArray eye(2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
-        @test ((@MArray eye(2,2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
@@ -86,11 +83,15 @@
 
         @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MArray ones(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test ((@MArray eye(Float32, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
-        @test ((@MArray eye(Float32, 2, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
+
+        test_expand_error(:(@MArray eye(5,6,7,8,9)))
+        @test ((@MArray eye(Float32, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test ((@MArray eye(Float32, 2, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
+        @test ((@MArray eye(2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
+        @test ((@MArray eye(2,2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]

@@ -12,14 +12,14 @@ import Base: \, Ac_ldiv_B, At_ldiv_B
 @inline At_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _At_mul_B(Size(A), Size(B), A, B)
 @inline A_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_Bt(Size(A), Size(B), A, B)
 
-# Specializations for RowVector
-@inline *(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
-@inline A_mul_Bt(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
-@inline A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A * transpose(rowvec)
-@inline At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = transpose(A) * transpose(rowvec)
-@inline A_mul_Bc(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = adjoint(A * adjoint(rowvec))
-@inline A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A * adjoint(rowvec)
-@inline Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = A' * adjoint(rowvec)
+# Specializations for Adjoint
+@inline *(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
+@inline A_mul_Bt(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
+@inline A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * transpose(rowvec)
+@inline At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = transpose(A) * transpose(rowvec)
+@inline A_mul_Bc(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = adjoint(A * adjoint(rowvec))
+@inline A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * adjoint(rowvec)
+@inline Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A' * adjoint(rowvec)
 
 Ac_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(adjoint(A), B)
 At_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(transpose(A), B)

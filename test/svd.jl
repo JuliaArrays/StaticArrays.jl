@@ -20,9 +20,9 @@ using StaticArrays, Base.Test
     @testset "svdfact" begin
         @test_throws ErrorException svdfact(@SMatrix [1 0; 0 1])[:U]
 
-        @testinf svdfact(@SMatrix [2 0; 0 0]).U === eye(SMatrix{2,2})
+        @testinf svdfact(@SMatrix [2 0; 0 0]).U === one(SMatrix{2,2})
         @testinf svdfact(@SMatrix [2 0; 0 0]).S === SVector(2.0, 0.0)
-        @testinf svdfact(@SMatrix [2 0; 0 0]).Vt === eye(SMatrix{2,2})
+        @testinf svdfact(@SMatrix [2 0; 0 0]).Vt === one(SMatrix{2,2})
 
         @testinf svdfact((@SMatrix [2 -2; 1 1]) / sqrt(2)).U ≊ [-1 0; 0 1]
         @testinf svdfact((@SMatrix [2 -2; 1 1]) / sqrt(2)).S ≊ [2, 1]

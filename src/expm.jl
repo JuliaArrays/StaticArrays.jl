@@ -1,13 +1,17 @@
-@inline expm(A::StaticMatrix) = _expm(Size(A), A)
+if VERSION < v"0.7-"
+    @inline expm(A::StaticMatrix) = _exp(Size(A), A)
+else
+    @inline exp(A::StaticMatrix) = _exp(Size(A), A)
+end
 
-@inline function _expm(::Size{(1,1)}, A::StaticMatrix)
+@inline function _exp(::Size{(1,1)}, A::StaticMatrix)
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
     (newtype)((exp(A[1]), ))
 end
 
-@inline function _expm(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Real})
+@inline function _exp(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Real})
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
@@ -40,7 +44,7 @@ end
     (newtype)((m11, m21, m12, m22))
 end
 
-@inline function _expm(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Complex})
+@inline function _exp(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Complex})
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
 
@@ -63,5 +67,8 @@ end
 end
 
 # TODO add special case for 3x3 matrices
-
-@inline _expm(s::Size, A::StaticArray) = s(Base.expm(Array(A)))
+if VERSION < v"0.7-"
+    @inline _exp(s::Size, A::StaticArray) = s(Base.expm(Array(A)))
+else
+    @inline _exp(s::Size, A::StaticArray) = s(Base.exp(Array(A)))
+end

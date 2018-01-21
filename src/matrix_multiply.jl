@@ -33,20 +33,20 @@ end
 
 
 # Manage dispatch of * and mul!
-# TODO RowVector? (Inner product?)
+# TODO Adjoint? (Inner product?)
 
 @inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
 @inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
-@inline *(A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Adjoint{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul(Size(A), Size(B), A, B)
 
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = mul!(dest, reshape(A, Size(Size(A)[1], 1)), B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::RowVector{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:ConjVector{<:Any, <:StaticVector}}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 
 #@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
@@ -89,7 +89,7 @@ end
 end
 
 # outer product
-@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::Adjoint{Tb, <:StaticVector}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -101,7 +101,7 @@ end
 end
 
 # complex outer product
-@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::RowVector{Tb, <:ConjVector{<:Any, <:StaticVector}}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta}, b::Adjoint{Tb, <:ConjVector{<:Any, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -269,7 +269,7 @@ end
     end
 end
 
-@generated function _mul!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector, b::RowVector{<:Any, <:StaticVector}) where {sa, sb, sc}
+@generated function _mul!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector, b::Adjoint{<:Any, <:StaticVector}) where {sa, sb, sc}
     if sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end

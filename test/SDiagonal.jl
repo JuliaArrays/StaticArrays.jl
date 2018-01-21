@@ -100,14 +100,14 @@
         @test m - SMatrix{4,4}(zeros(4,4)) == m
         @test m*0 == m - m
 
-        @test m*inv(m) == m/m == m\m == eye(SDiagonal{4,Float64})
+        @test m*inv(m) == m/m == m\m == one(SDiagonal{4,Float64})
 
         @test factorize(m) == m
         @test m*[1; 1; 1; 1] == [11; 12; 13; 14]
         @test m\[1; 1; 1; 1] == [11; 12; 13; 14].\[1; 1; 1; 1]
-        @test SMatrix{4,4}(eye(4))*m == m
-        @test m*SMatrix{4,4}(eye(4)) == m
-        @test SMatrix{4,4}(eye(4))/m == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
-        @test m\SMatrix{4,4}(eye(4)) == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
+        @test SMatrix{4,4}(Matrix(1.0*I, 4, 4))*m == m
+        @test m*SMatrix{4,4}(Matrix(1.0*I, 4, 4)) == m
+        @test SMatrix{4,4}(Matrix(1.0*I, 4, 4))/m == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
+        @test m\SMatrix{4,4}(Matrix(1.0*I, 4, 4)) == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
     end
 end

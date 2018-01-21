@@ -104,7 +104,7 @@
         vv = sum(abs2, v)
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
-        @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
+        @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(0.0, 0.0, vv)
         @test eigvals(m) ≈ vals
 
@@ -115,7 +115,7 @@
         m += v2*v2'
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
-        @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
+        @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         if vv < v2v2
             @test vals ≈ SVector(0.0, vv, v2v2)
         else
@@ -124,18 +124,18 @@
         @test eigvals(m) ≈ vals
 
         # Degeneracy (2 large)
-        m = -99*(v*v')/vv + 100*eye(SMatrix{3,3,Float64})
+        m = -99*(v*v')/vv + 100*one(SMatrix{3,3,Float64})
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
-        @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
+        @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(1.0, 100.0, 100.0)
         @test eigvals(m) ≈ vals
 
         # Degeneracy (2 small)
-        m = (v*v')/vv + 1e-2*eye(SMatrix{3,3,Float64})
+        m = (v*v')/vv + 1e-2*one(SMatrix{3,3,Float64})
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
-        @test vecs'*vecs ≈ eye(SMatrix{3,3,Float64})
+        @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(1e-2, 1e-2, 1.01)
         @test eigvals(m) ≈ vals
 

@@ -1,10 +1,10 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
-@inline function Base.chol(A::StaticMatrix)
+@inline function LinearAlgebra.chol(A::StaticMatrix)
     ishermitian(A) || LinearAlgebra.non_hermitian_error("chol")
     _chol(Size(A), A)
 end
 
-@inline function Base.chol(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix})
+@inline function LinearAlgebra.chol(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix})
     _chol(Size(A), A.data)
 end
 @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = chol(A)
