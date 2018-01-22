@@ -7,6 +7,7 @@ else
     using Base.Test
     using Base.Random
     const LinearAlgebra = Base.LinAlg
+    const Adjoint = RowVector
 end
 
 # We generate a lot of matrices using rand(), but unit tests should be
