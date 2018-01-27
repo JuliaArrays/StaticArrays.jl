@@ -21,7 +21,7 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 @inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)
 
 # Simplified show for the type
-show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
+#show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
 @inline zeros(::Type{MVector{N}}) where {N} = zeros(MVector{N,Float64})

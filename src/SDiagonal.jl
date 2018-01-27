@@ -94,7 +94,7 @@ else
     log(D::SDiagonal) = SDiagonal(log.(D.diag))
     sqrt(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
 end
-Base.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
+LinearAlgebra.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
 LinearAlgebra._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
 
 \(D::SDiagonal, B::StaticMatrix) = scalem(1 ./ D.diag, B)
