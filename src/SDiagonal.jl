@@ -40,7 +40,7 @@ end
 
 # avoid linear indexing?
 @propagate_inbounds function getindex(D::SDiagonal{N,T}, k::Int) where {N,T}
-    i, j = ind2sub(size(D), k)
+    i, j = CartesianIndices(size(D))[k].I
     D[i,j]
 end
 
@@ -85,23 +85,26 @@ eye(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 Base.zero(::SDiagonal{N,T}) where {N,T} = SDiagonal(zeros(SVector{N,T}))
-
-expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
-logm(D::SDiagonal) = SDiagonal(log.(D.diag))
-sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
-Base.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
-Base.LinAlg._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
-
+if VERSION < v"0.7-"
+    expm(D::SDiagonal) = SDiagonal(exp.(D.diag))
+    logm(D::SDiagonal) = SDiagonal(log.(D.diag))
+    sqrtm(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
+else
+    exp(D::SDiagonal) = SDiagonal(exp.(D.diag))
+    log(D::SDiagonal) = SDiagonal(log.(D.diag))
+    sqrt(D::SDiagonal) = SDiagonal(sqrt.(D.diag))
+end
+LinearAlgebra.chol(D::SDiagonal) = SDiagonal(Base.chol.(D.diag))
+LinearAlgebra._chol!(D::SDiagonal, ::Type{UpperTriangular}) = chol(D)
 
 \(D::SDiagonal, B::StaticMatrix) = scalem(1 ./ D.diag, B)
 /(B::StaticMatrix, D::SDiagonal) = scalem(1 ./ D.diag, B)
 \(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Db.diag ./ Da.diag)
 /(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag ./ Db.diag )
 
-
 @generated function check_singular(D::SDiagonal{N}) where {N}
     quote
-    Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(Base.LinAlg.SingularException(i)))
+    Base.Cartesian.@nexprs $N i->(@inbounds iszero(D.diag[i]) && throw(LinearAlgebra.SingularException(i)))
     end
 end
 

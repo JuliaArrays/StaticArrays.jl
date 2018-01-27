@@ -136,10 +136,14 @@ rand(Mat{4,2, Int})
 
 #end
 
-@testset "eye" begin
-    @test typeof(eye(Mat4d)) == Mat4d
-    @test typeof(eye(Mat{4,2, Int})) == Mat{4,2, Int, 8}
+if VERSION < v"0.7-"
+    @testset "eye" begin
+        @test typeof(eye(Mat4d)) == Mat4d
+        @test typeof(eye(Mat{4,2, Int})) == Mat{4,2, Int, 8}
+    end
+    @test sum(eye(Mat4d)) == 4.0
 end
+
 @testset "one" begin
     x = Mat{4,2, Int}(1, 1, 1, 1, 1, 1, 1, 1)
     @test all(x-> x==1, x) == true
@@ -364,12 +368,6 @@ v2c = Vec(1.0 + 6.0im, 2.0 + 5.0im, 3.0 + 4.0im)
         @test y2 == x2
     end
 end
-
-
-
-
-
-@test sum(eye(Mat4d)) == 4.0
 
 
 const unaryOps = (

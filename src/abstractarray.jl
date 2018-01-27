@@ -11,7 +11,7 @@ end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
-    ii = sub2ind(size(a), i...)
+    ii = LinearIndices(size(a))[i...]
     1 <= ii <= length(a) ? true : false
 end
 

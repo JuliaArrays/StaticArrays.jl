@@ -60,13 +60,13 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
-                                                   subtypes(Signed);
-                                                   subtypes(AbstractFloat);
-                                                   Bool;
-                                                   Complex{Int};
-                                                   Complex128;
-                                                   BigInt
-                                                   ]
+                                             subtypes(Signed);
+                                             subtypes(AbstractFloat);
+                                             Bool;
+                                             Complex{Int};
+                                             Complex{Float64};
+                                             BigInt
+                                             ]
         T = @inferred arithmetic_closure(T0)
         @test arithmetic_closure(T) == T
 

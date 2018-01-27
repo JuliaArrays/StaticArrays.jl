@@ -26,7 +26,7 @@ srand(42)
         @test abs.(Q) ≈ abs.(Q_ref) # QR is unique up to diag(Q) signs
         @test abs.(R) ≈ abs.(R_ref)
         @test Q*R ≈ arr
-        @test Q'*Q ≈ eye(Q'*Q)
+        @test Q'*Q ≈ one(Q'*Q)
         @test istriu(R)
 
         # fat (thin=false) case
@@ -43,7 +43,7 @@ srand(42)
         @test abs.(R) ≈ abs.(R_ref)
         R0 = vcat(R, @SMatrix(zeros(size(arr)[1]-size(R)[1], size(R)[2])) )
         @test Q*R0 ≈ arr
-        @test Q'*Q ≈ eye(Q'*Q)
+        @test Q'*Q ≈ one(Q'*Q)
         @test istriu(R)
 
         # pivot=true cases are not released yet

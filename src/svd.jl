@@ -1,6 +1,6 @@
 # Singular Value Decomposition
 
-# We need our own SVD factorization struct, as Base.LinAlg.SVD assumes
+# We need our own SVD factorization struct, as LinearAlgebra.SVD assumes
 # Base.Vector for `S`, and that the `U` and `Vt` have the same
 struct SVD{T,TU,TS,TVt} <: Factorization{T}
     U::TU

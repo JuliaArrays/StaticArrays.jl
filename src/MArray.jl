@@ -74,7 +74,7 @@ end
 @inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
-show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
+#show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
@@ -101,7 +101,7 @@ end
         unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
     else
         # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
+        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
         error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 

@@ -4,19 +4,42 @@ module StaticArrays
 
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
-import Base: getindex, setindex!, size, similar, vec, show,
-             length, convert, promote_op, promote_rule, map, map!, reduce, reducedim, mapreducedim,
-             mapreduce, broadcast, broadcast!, conj, transpose,
-             hcat, vcat, ones, zeros, eye, one, cross, vecdot, reshape, fill,
-             fill!, det, logdet, inv, eig, eigvals, eigfact, expm, logm, sqrtm, lyap, trace, kron, diag, vecnorm, norm, dot, diagm, diag,
-             lu, svd, svdvals, svdfact, factorize, ishermitian, issymmetric, isposdef,
-             iszero, sum, diff, prod, count, any, all, minimum,
-             maximum, extrema, mean, copy, rand, randn, randexp, rand!, randn!,
-             randexp!, normalize, normalize!, read, read!, write, Eigen
+import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
+             promote_rule, map, map!, reduce, reducedim, mapreducedim, mapreduce, broadcast,
+             broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
+             iszero, sum, prod, count, any, all, minimum, maximum, extrema, mean,
+             copy, read, read!, write
 
-import Compat.adjoint
+if VERSION < v"0.7-"
+    using Compat
 
-using Compat
+    using Base.Random
+    import Base: rand, randn, randexp, rand!, randn!, randexp!
+    using Core.Inference.return_type
+
+    import Base.LinAlg: transpose, ctranspose, eye, vecdot, eig, eigvals, eigfact, expm,
+                        logm, sqrtm, lyap, trace, kron, diag, vecnorm, norm, dot, diagm, lu,
+                        svd, svdvals, svdfact, factorize, ishermitian, issymmetric,
+                        isposdef, normalize, normalize!, Eigen, det, logdet, cross, diff, qr
+    const LinearAlgebra = Base.LinAlg
+
+    const adjoint = ctranspose
+    const Adjoint = RowVector
+else
+    using Compat
+
+    using Random
+    import Random: rand, randn, randexp, rand!, randn!, randexp!
+    using Core.Compiler: return_type
+
+    import Base: sqrt, exp, log
+
+    using LinearAlgebra
+    import LinearAlgebra: transpose, adjoint, vecdot, eig, eigvals, eigfact, lyap, trace,
+                          kron, diag, vecnorm, norm, dot, diagm, lu, svd, svdvals, svdfact,
+                          factorize, ishermitian, issymmetric, isposdef, normalize,
+                          normalize!, Eigen, det, logdet, cross, diff, qr
+end
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

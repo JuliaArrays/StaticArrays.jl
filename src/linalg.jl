@@ -56,7 +56,7 @@ end
 # Transpose, conjugate, etc
 @inline conj(a::StaticArray) = map(conj, a)
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
-# note: transpose of StaticVector is a RowVector, handled by Base
+# note: transpose of StaticVector is a Adjoint, handled by Base
 
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
@@ -158,19 +158,21 @@ end
     end
 end
 
-@inline eye(::SM) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
-@inline eye(::Type{SM}) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
-@generated function _eye(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
-    T = eltype(SM) # should be "hyperpure"
-    if T == Any
-        T = Float64
+#if VERSION < v"0.7-"
+    @inline eye(::SM) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
+    @inline eye(::Type{SM}) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
+    @generated function _eye(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
+        T = eltype(SM) # should be "hyperpure"
+        if T == Any
+            T = Float64
+        end
+        exprs = [i == j ? :(one($T)) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
+        return quote
+            $(Expr(:meta, :inline))
+            SM(tuple($(exprs...)))
+        end
     end
-    exprs = [i == j ? :(one($T)) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
-    return quote
-        $(Expr(:meta, :inline))
-        SM(tuple($(exprs...)))
-    end
-end
+#end
 
 @inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = _diagm(Size(v), v, k)
 @generated function _diagm(::Size{S}, v::StaticVector, ::Type{Val{D}}) where {S,D}
@@ -256,7 +258,7 @@ end
 @inline norm(v::StaticVector) = vecnorm(v)
 @inline norm(v::StaticVector, p::Real) = vecnorm(v, p)
 
-@inline Base.LinAlg.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
+@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
 
 @inline vecnorm(a::StaticArray) = _vecnorm(Size(a), a)
 @generated function _vecnorm(::Size{S}, a::StaticArray) where {S}
@@ -349,16 +351,31 @@ const _length_limit = Length(200)
     end
 end
 
-@inline Size(::Union{RowVector{T, SA}, Type{RowVector{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
-@inline Size(::Union{RowVector{T, CA}, Type{RowVector{T, CA}}} where CA <: ConjVector{<:Any, SA}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
-@inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
-@inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+if VERSION < v"0.7-"
+    @inline Size(::Union{Adjoint{T, SA}, Type{Adjoint{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
+    @inline Size(::Union{Adjoint{T, CA}, Type{Adjoint{T, CA}}} where CA <: ConjVector{<:Any, SA}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
+    @inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+    @inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+else
+    @inline Size(::Adjoint{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
+    @inline Size(::Type{<:Adjoint{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
+    @inline Size(::Transpose{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
+    @inline Size(::Type{<:Transpose{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
 
-# some micro-optimizations (TODO check these make sense for v0.6)
-@inline Base.LinAlg.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
-@inline Base.LinAlg.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
+    @inline Size(::Adjoint{T, SM}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
+    @inline Size(::Type{<:Adjoint{T, SM}}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
+    @inline Size(::Transpose{T, SM}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
+    @inline Size(::Type{<:Transpose{T, SM}}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
+
+    @inline Size(::Union{Symmetric{T,SA}, Type{<:Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+    @inline Size(::Union{Hermitian{T,SA}, Type{<:Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+end
+
+# some micro-optimizations (TODO check these make sense for v0.6+)
+@inline LinearAlgebra.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
+@inline LinearAlgebra.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
 
 @pure _checksquare(::Size{S}) where {S} = (S[1] == S[2] || error("marix must be square"); S[1])
 
-@inline Base.LinAlg.Symmetric(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
-@inline Base.LinAlg.Hermitian(A::StaticMatrix, uplo::Char='U') = (Base.LinAlg.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))
+@inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
+@inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))

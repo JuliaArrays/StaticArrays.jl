@@ -53,7 +53,7 @@ end
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
-show(io::IO, ::Type{SArray{S, T, N}}) where {S, T, N} = print(io, "SArray{$S,$T,$N}")
+# show(io::IO, ::Type{SArray{S, T, N}}) where {S, T, N} = print(io, "SArray{$S,$T,$N}") # TODO reinstate
 
 # Some more advanced constructor-like functions
 @inline one(::Type{SArray{S}}) where {S} = one(SArray{S, Float64, tuple_length(S)})

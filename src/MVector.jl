@@ -21,7 +21,7 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 @inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)
 
 # Simplified show for the type
-show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
+#show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
 @inline zeros(::Type{MVector{N}}) where {N} = zeros(MVector{N,Float64})
@@ -46,7 +46,7 @@ end
         unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), val, i)
     else
         # This one is unsafe (#27)
-        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
+        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
         error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
