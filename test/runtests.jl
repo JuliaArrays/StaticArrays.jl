@@ -14,7 +14,7 @@ end
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
 # file order dependence)
 srand(42)
-
+include("fft.jl")
 include("testutil.jl")
 include("SVector.jl")
 include("MVector.jl")

@@ -133,6 +133,8 @@ include("qr.jl")
 include("deque.jl")
 include("io.jl")
 
+include("fft.jl")
+
 include("FixedSizeArrays.jl")
 include("ImmutableArrays.jl")
 
