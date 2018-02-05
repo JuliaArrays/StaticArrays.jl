@@ -6,17 +6,7 @@ using Primes
 ωcos(N, i) = cospi(-2i/N)
 ωsin(N, i) = sinpi(-2i/N)
 
-"""
-Note, this is not type stable.
-It is used for generated functions.
-"""
-function ω(N, i)
-    if i % N == 0 ###Save on computation of imaginary component in generated function.
-        return ωcos(N, i)
-    else
-        return ωcos(N, i) + im*ωsin(N, i)
-    end
-end
+ω(N, i) = ωcos(N, i) + im*ωsin(N, i)
 
 struct fft_meta1
     factors::Vector{Int}
