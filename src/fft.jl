@@ -109,10 +109,10 @@ function initial_expr!(expr, off, gap, N, i, output = :o_, input = :x_, ::Type{T
     for j ∈ 0:N-1
         push!(expr.args[2].args[2].args, 
                 :( $(Symbol( output, 1+i*N+j )) = $(Symbol(input, off)) +
-                    $(Complex{T}(ω(N, j))) * $(Symbol(input, off+gap)) ) )
+                    $(ω(N, j)) * $(Symbol(input, off+gap)) ) )
         for k ∈ 2:N-1 ##push to new line with += to avoid allocation.
             push!(expr.args[2].args[2].args, 
-            :( $(Symbol( output, 1+i*N+j )) +=   $(Complex{T}(ω(N, j*k))) * $(Symbol(input, off+gap*k) ) ) )
+            :( $(Symbol( output, 1+i*N+j )) +=   $(ω(N, j*k)) * $(Symbol(input, off+gap*k) ) ) )
         end
     end
     expr
@@ -161,10 +161,10 @@ function combine!(expr, last_N, current_N, cumulative_N, i, input, output, ::Typ
     for l ∈ 1:current_N, j ∈ 1:cumulative_N
         push!(expr.args[2].args[2].args, :( $(Symbol(output, 1+ind+offset )) =
                 $(Symbol(input, offset+j)) +
-                $(Complex{T}(ω(N, ind))) * $(Symbol(input, offset+j+cumulative_N)) ) )
+                $(ω(N, ind)) * $(Symbol(input, offset+j+cumulative_N)) ) )
         for k ∈ 2:current_N-1 ##push to new line with += to avoid allocation.
             push!(expr.args[2].args[2].args,
-                :( $(Symbol(output, 1+ind+offset )) += ( $(Complex{T}(ω(N, ind*k))) ) * $(Symbol(input, offset+j+cumulative_N*k) ))) 
+                :( $(Symbol(output, 1+ind+offset )) += ( $(ω(N, ind*k)) ) * $(Symbol(input, offset+j+cumulative_N*k) ))) 
 
         end
         ind += 1
