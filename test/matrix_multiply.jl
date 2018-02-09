@@ -295,6 +295,16 @@
         A_mul_B!(a_5, m_5, n_5)
         @test a_5 ≈ a_array_5
 
+        m_array_6 = rand(1:10, 8, 10)
+        n_array_6 = rand(1:10, 10, 8)
+        a_array_6 = m_array_6*n_array_6
+
+        m_6 = MMatrix{8,10}(m_array_6)
+        n_6 = MMatrix{10,8}(n_array_6)
+        a_6 = MMatrix{8,8,Int}()
+        A_mul_B!(a_6, m_6, n_6)
+        @test a_6 == a_array_6
+
         # Float64
         vf = @SVector [2.0, 4.0]
         vf2 = [2.0, 4.0]

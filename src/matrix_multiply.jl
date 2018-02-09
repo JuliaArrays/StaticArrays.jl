@@ -398,7 +398,7 @@ end
 
     # Do a custom b[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
     tmp_type = SVector{sb[1], eltype(c)}
-    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(sc, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
+    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(sb, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 
     exprs = [:(c[$(sub2ind(sc, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
