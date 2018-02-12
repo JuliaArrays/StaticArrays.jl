@@ -28,7 +28,7 @@ const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:An
     @inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), transpose(B))
     @inline At_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), B)
 else
-    import LinearAlgebra: BlasFloat, matprod
+    import LinearAlgebra: BlasFloat, matprod, mul!
 end
 
 
