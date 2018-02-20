@@ -153,6 +153,19 @@
         @test b == a
     end
 
+    @testset "Indexing empty arrays" begin
+        @test size(SVector{0}()[:]) == (0,)
+        @test size(SMatrix{0,0}()[:,:]) == (0,0)
+        @test size(SMatrix{5,0}()[1,:]) == (0,)
+        @test size(SMatrix{5,0}()[:,:]) == (5,0)
+        @test size(SMatrix{0,5}()[:,1]) == (0,)
+        @test size(SMatrix{0,5}()[:,:]) == (0,5)
+
+        @test (zeros(0)[SVector{0,Int}()] = 0) == 0
+        @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
+        @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
+    end
+
     @testset "inferabilty of index_sizes helper" begin
         # see JuliaLang/julia#21244
         # it's not about inferring the correct type, but about inference throwing an error
