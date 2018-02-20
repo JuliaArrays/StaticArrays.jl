@@ -33,64 +33,67 @@ _lu(A::StaticMatrix{1,N,T}, ::Type{Val{Pivot}}) where {N,T,Pivot} =
     (SMatrix{1,1,T}(one(T)), A, SVector{1,Int}(1))
 
 function _lu(A::StaticMatrix{M,1}, ::Type{Val{Pivot}}) where {M,Pivot}
-    kp = 1
-    if Pivot
-        amax = abs(A[1,1])
-        for i = 2:M
-            absi = abs(A[i,1])
-            if absi > amax
-                kp = i
-                amax = absi
+    @inbounds begin
+        kp = 1
+        if Pivot
+            amax = abs(A[1,1])
+            for i = 2:M
+                absi = abs(A[i,1])
+                if absi > amax
+                    kp = i
+                    amax = absi
+                end
             end
         end
+        ps = tailindices(Val{M})
+        if kp != 1
+            ps = setindex(ps, 1, kp-1)
+        end
+        U = SMatrix{1,1}(A[kp,1])
+        # Scale first column
+        Akkinv = inv(A[kp,1])
+        Ls = A[ps,1] * Akkinv
+        if !isfinite(Akkinv)
+            Ls = zeros(Ls)
+        end
+        L = [SVector{1}(one(eltype(Ls))); Ls]
+        p = [SVector{1,Int}(kp); ps]
     end
-    ps = tailindices(Val{M})
-    if kp != 1
-        ps = setindex(ps, 1, kp-1)
-    end
-    U = SMatrix{1,1}(A[kp,1])
-    # Scale first column
-    Akkinv = inv(A[kp,1])
-    Ls = A[ps,1] * Akkinv
-    if !isfinite(Akkinv)
-        Ls = zeros(Ls)
-    end
-    L = [SVector{1}(one(eltype(Ls))); Ls]
-    p = [SVector{1,Int}(kp); ps]
     return (SMatrix{M,1}(L), U, p)
 end
 
 function _lu(A::StaticMatrix{M,N,T}, ::Type{Val{Pivot}}) where {M,N,T,Pivot}
-    kp = 1
-    if Pivot
-        amax = abs(A[1,1])
-        for i = 2:M
-            absi = abs(A[i,1])
-            if absi > amax
-                kp = i
-                amax = absi
+    @inbounds begin
+        kp = 1
+        if Pivot
+            amax = abs(A[1,1])
+            for i = 2:M
+                absi = abs(A[i,1])
+                if absi > amax
+                    kp = i
+                    amax = absi
+                end
             end
         end
-    end
-    ps = tailindices(Val{M})
-    if kp != 1
-        ps = setindex(ps, 1, kp-1)
-    end
-    Ufirst = SMatrix{1,N}(A[kp,:])
-    # Scale first column
-    Akkinv = inv(A[kp,1])
-    Ls = A[ps,1] * Akkinv
-    if !isfinite(Akkinv)
-        Ls = zeros(Ls)
-    end
+        ps = tailindices(Val{M})
+        if kp != 1
+            ps = setindex(ps, 1, kp-1)
+        end
+        Ufirst = SMatrix{1,N}(A[kp,:])
+        # Scale first column
+        Akkinv = inv(A[kp,1])
+        Ls = A[ps,1] * Akkinv
+        if !isfinite(Akkinv)
+            Ls = zeros(Ls)
+        end
 
-    # Update the rest
-    Arest = A[ps,tailindices(Val{N})] - Ls*Ufirst[:,tailindices(Val{N})]
-    Lrest, Urest, prest = _lu(Arest, Val{Pivot})
-    p = [SVector{1,Int}(kp); ps[prest]]
-    L = [[SVector{1}(one(eltype(Ls))); Ls[prest]] [zeros(SMatrix{1}(Lrest[1,:])); Lrest]]
-    U = [Ufirst; [zeros(Urest[:,1]) Urest]]
-
+        # Update the rest
+        Arest = A[ps,tailindices(Val{N})] - Ls*Ufirst[:,tailindices(Val{N})]
+        Lrest, Urest, prest = _lu(Arest, Val{Pivot})
+        p = [SVector{1,Int}(kp); ps[prest]]
+        L = [[SVector{1}(one(eltype(Ls))); Ls[prest]] [zeros(SMatrix{1}(Lrest[1,:])); Lrest]]
+        U = [Ufirst; [zeros(Urest[:,1]) Urest]]
+    end
     return (L, U, p)
 end
 
