@@ -229,7 +229,7 @@ end
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(linearsizes))
-    more = linearsizes[1] != 0
+    more = !isempty(exprs)
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(linearsizes)]
         exprs[current_ind...] = :(getindex(a, $(exprs_tmp...)))
@@ -331,7 +331,7 @@ end
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(ind_types))
-    more = linearsizes[1] != 0
+    more = !isempty(exprs)
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(ind_types)]
         exprs[current_ind...] = :(setindex!(a, value, $(exprs_tmp...)))
