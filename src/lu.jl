@@ -11,28 +11,46 @@ function lu(A::StaticMatrix{N,N}, pivot::Union{Type{Val{false}},Type{Val{true}}}
     (LowerTriangular(L), UpperTriangular(U), p)
 end
 
-_lu(A::StaticMatrix{0,0,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
+@generated function _lu(A::StaticMatrix{M,N,T}, pivot) where {M,N,T}
+    if M*N ≤ 14*14
+        :(__lu(A, pivot))
+    else
+        quote
+            # call through to Base to avoid excessive time spent on type inference for large matrices
+            f = lufact(Matrix(A), pivot)
+            # Trick to get the output eltype - can't rely on the result of f[:L] as
+            # it's not type inferrable.
+            T2 = arithmetic_closure(T)
+            L = similar_type(A, T2, Size($M, $(min(M,N))))(f[:L])
+            U = similar_type(A, T2, Size($(min(M,N)), $N))(f[:U])
+            p = similar_type(A, Int, Size($M))(f[:p])
+            (L,U,p)
+        end
+    end
+end
+
+__lu(A::StaticMatrix{0,0,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
     (SMatrix{0,0,typeof(one(T))}(), A, SVector{0,Int}())
 
-_lu(A::StaticMatrix{0,1,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
+__lu(A::StaticMatrix{0,1,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
     (SMatrix{0,0,typeof(one(T))}(), A, SVector{0,Int}())
 
-_lu(A::StaticMatrix{0,N,T}, ::Type{Val{Pivot}}) where {T,N,Pivot} =
+__lu(A::StaticMatrix{0,N,T}, ::Type{Val{Pivot}}) where {T,N,Pivot} =
     (SMatrix{0,0,typeof(one(T))}(), A, SVector{0,Int}())
 
-_lu(A::StaticMatrix{1,0,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
+__lu(A::StaticMatrix{1,0,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
     (SMatrix{1,0,typeof(one(T))}(), SMatrix{0,0,T}(), SVector{1,Int}(1))
 
-_lu(A::StaticMatrix{M,0,T}, ::Type{Val{Pivot}}) where {T,M,Pivot} =
+__lu(A::StaticMatrix{M,0,T}, ::Type{Val{Pivot}}) where {T,M,Pivot} =
     (SMatrix{M,0,typeof(one(T))}(), SMatrix{0,0,T}(), SVector{M,Int}(1:M))
 
-_lu(A::StaticMatrix{1,1,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
+__lu(A::StaticMatrix{1,1,T}, ::Type{Val{Pivot}}) where {T,Pivot} =
     (SMatrix{1,1}(one(T)), A, SVector(1))
 
-_lu(A::StaticMatrix{1,N,T}, ::Type{Val{Pivot}}) where {N,T,Pivot} =
+__lu(A::StaticMatrix{1,N,T}, ::Type{Val{Pivot}}) where {N,T,Pivot} =
     (SMatrix{1,1,T}(one(T)), A, SVector{1,Int}(1))
 
-function _lu(A::StaticMatrix{M,1}, ::Type{Val{Pivot}}) where {M,Pivot}
+function __lu(A::StaticMatrix{M,1}, ::Type{Val{Pivot}}) where {M,Pivot}
     @inbounds begin
         kp = 1
         if Pivot
@@ -62,7 +80,7 @@ function _lu(A::StaticMatrix{M,1}, ::Type{Val{Pivot}}) where {M,Pivot}
     return (SMatrix{M,1}(L), U, p)
 end
 
-function _lu(A::StaticMatrix{M,N,T}, ::Type{Val{Pivot}}) where {M,N,T,Pivot}
+function __lu(A::StaticMatrix{M,N,T}, ::Type{Val{Pivot}}) where {M,N,T,Pivot}
     @inbounds begin
         kp = 1
         if Pivot
@@ -89,7 +107,7 @@ function _lu(A::StaticMatrix{M,N,T}, ::Type{Val{Pivot}}) where {M,N,T,Pivot}
 
         # Update the rest
         Arest = A[ps,tailindices(Val{N})] - Ls*Ufirst[:,tailindices(Val{N})]
-        Lrest, Urest, prest = _lu(Arest, Val{Pivot})
+        Lrest, Urest, prest = __lu(Arest, Val{Pivot})
         p = [SVector{1,Int}(kp); ps[prest]]
         L = [[SVector{1}(one(eltype(Ls))); Ls[prest]] [zeros(SMatrix{1}(Lrest[1,:])); Lrest]]
         U = [Ufirst; [zeros(Urest[:,1]) Urest]]

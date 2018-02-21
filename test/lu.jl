@@ -1,7 +1,7 @@
 using StaticArrays, Base.Test
 
 @testset "LU decomposition (pivot=$pivot)" for pivot in (true, false)
-    @testset "$m×$n" for m in 0:4, n in 0:4
+    @testset "$m×$n" for m in [0:4..., 15, 50], n in [0:4..., 15, 50]
         a = SMatrix{m,n,Int}(1:(m*n))
         l, u, p = @inferred(lu(a, Val{pivot}))
 
