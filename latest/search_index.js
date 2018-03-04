@@ -164,7 +164,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.FieldVector",
     "page": "API",
     "title": "StaticArrays.FieldVector",
-    "category": "Type",
+    "category": "type",
     "text": "abstract FieldVector{N, T} <: StaticVector{N, T}\n\nInheriting from this type will make it easy to create your own vector types. A FieldVector will automatically define getindex and setindex! appropriately. An immutable FieldVector will be as performant as an SVector of similar length and element type, while a mutable FieldVector will behave similarly to an MVector.\n\nFor example:\n\nstruct Point3D <: FieldVector{3, Float64}\n    x::Float64\n    y::Float64\n    z::Float64\nend\n\n\n\n"
 },
 
@@ -172,7 +172,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.MArray",
     "page": "API",
     "title": "StaticArrays.MArray",
-    "category": "Type",
+    "category": "type",
     "text": "MArray{S, T, L}()\nMArray{S, T, L}(x::NTuple{L, T})\nMArray{S, T, L}(x1, x2, x3, ...)\n\nConstruct a statically-sized, mutable array MArray. The data may optionally be provided upon construction and can be mutated later. The S parameter is a Tuple-type specifying the dimensions, or size, of the array - such as Tuple{3,4,5} for a 3×4×5-sized array. The L parameter is the length of the array and is always equal to prod(S). Constructors may drop the L and T parameters if they are inferrable from the input (e.g. L is always inferrable from S).\n\nMArray{S}(a::Array)\n\nConstruct a statically-sized, mutable array of dimensions S (expressed as a Tuple{...}) using the data from a. The S parameter is mandatory since the size of a is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -180,7 +180,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.MMatrix",
     "page": "API",
     "title": "StaticArrays.MMatrix",
-    "category": "Type",
+    "category": "type",
     "text": "MMatrix{S1, S2, T, L}()\nMMatrix{S1, S2, T, L}(x::NTuple{L, T})\nMMatrix{S1, S2, T, L}(x1, x2, x3, ...)\n\nConstruct a statically-sized, mutable matrix MMatrix. The data may optionally be provided upon construction and can be mutated later. The L parameter is the length of the array and is always equal to S1 * S2. Constructors may drop the L, T and even S2 parameters if they are inferrable from the input (e.g. L is always inferrable from S1 and S2).\n\nMMatrix{S1, S2}(mat::Matrix)\n\nConstruct a statically-sized, mutable matrix of dimensions S1 × S2 using the data from mat. The parameters S1 and S2 are mandatory since the size of mat is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -188,7 +188,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.MVector",
     "page": "API",
     "title": "StaticArrays.MVector",
-    "category": "Type",
+    "category": "type",
     "text": "MVector{S,T}()\nMVector{S,T}(x::NTuple{S, T})\nMVector{S,T}(x1, x2, x3, ...)\n\nConstruct a statically-sized, mutable vector MVector. Data may optionally be provided upon construction, and can be mutated later. Constructors may drop the T and S parameters if they are inferrable from the input (e.g. MVector(1,2,3) constructs an MVector{3, Int}).\n\nMVector{S}(vec::Vector)\n\nConstruct a statically-sized, mutable vector of length S using the data from vec. The parameter S is mandatory since the length of vec is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -196,7 +196,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.SArray",
     "page": "API",
     "title": "StaticArrays.SArray",
-    "category": "Type",
+    "category": "type",
     "text": "SArray{S, T, L}(x::NTuple{L, T})\nSArray{S, T, L}(x1, x2, x3, ...)\n\nConstruct a statically-sized array SArray. Since this type is immutable, the data must be provided upon construction and cannot be mutated later. The S parameter is a Tuple-type specifying the dimensions, or size, of the array - such as Tuple{3,4,5} for a 3×4×5-sized array. The L parameter is the length of the array and is always equal to prod(S). Constructors may drop the L and T parameters if they are inferrable from the input (e.g. L is always inferrable from S).\n\nSArray{S}(a::Array)\n\nConstruct a statically-sized array of dimensions S (expressed as a Tuple{...}) using the data from a. The S parameter is mandatory since the size of a is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -204,7 +204,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.SMatrix",
     "page": "API",
     "title": "StaticArrays.SMatrix",
-    "category": "Type",
+    "category": "type",
     "text": "SMatrix{S1, S2, T, L}(x::NTuple{L, T})\nSMatrix{S1, S2, T, L}(x1, x2, x3, ...)\n\nConstruct a statically-sized matrix SMatrix. Since this type is immutable, the data must be provided upon construction and cannot be mutated later. The L parameter is the length of the array and is always equal to S1 * S2. Constructors may drop the L, T and even S2 parameters if they are inferrable from the input (e.g. L is always inferrable from S1 and S2).\n\nSMatrix{S1, S2}(mat::Matrix)\n\nConstruct a statically-sized matrix of dimensions S1 × S2 using the data from mat. The parameters S1 and S2 are mandatory since the size of mat is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -212,7 +212,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.SVector",
     "page": "API",
     "title": "StaticArrays.SVector",
-    "category": "Type",
+    "category": "type",
     "text": "SVector{S, T}(x::NTuple{S, T})\nSVector{S, T}(x1, x2, x3, ...)\n\nConstruct a statically-sized vector SVector. Since this type is immutable, the data must be provided upon construction and cannot be mutated later. Constructors may drop the T and S parameters if they are inferrable from the input (e.g. SVector(1,2,3) constructs an SVector{3, Int}).\n\nSVector{S}(vec::Vector)\n\nConstruct a statically-sized vector of length S using the data from vec. The parameter S is mandatory since the length of vec is unknown to the compiler (the element type may optionally also be specified).\n\n\n\n"
 },
 
@@ -220,7 +220,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.Scalar",
     "page": "API",
     "title": "StaticArrays.Scalar",
-    "category": "Type",
+    "category": "type",
     "text": "Scalar{T}(x::T)\n\nConstruct a statically-sized 0-dimensional array that contains a single element, x. This type is particularly useful for influencing broadcasting operations.\n\n\n\n"
 },
 
@@ -228,7 +228,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.Size",
     "page": "API",
     "title": "StaticArrays.Size",
-    "category": "Type",
+    "category": "type",
     "text": "Size(dims::Int...)\n\nSize is used extensively in throughout the StaticArrays API to describe the size of a static array desired by the user. The dimensions are stored as a type parameter and are statically propagated by the compiler, resulting in efficient, type inferrable code. For example, to create a static matrix of zeros, use zeros(Size(3,3)) (rather than zeros(3,3), which constructs a Base.Array).\n\nSize(a::StaticArray)\nSize(::Type{T<:StaticArray})\n\nExtract the Size corresponding to the given static array. This has multiple uses, including using for \"trait\"-based dispatch on the size of a statically sized array. For example:\n\ndet(x::StaticMatrix) = _det(Size(x), x)\n_det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]\n_det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]\n# and other definitions as necessary\n\n\n\n"
 },
 
@@ -236,7 +236,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.Size-Union{Tuple{Array}, Tuple{S}} where S",
     "page": "API",
     "title": "StaticArrays.Size",
-    "category": "Method",
+    "category": "method",
     "text": "Size(dims)(array)\n\nCreates a SizedArray wrapping array with the specified statically-known dims, so to take advantage of the (faster) methods defined by the static array package.\n\n\n\n"
 },
 
@@ -244,7 +244,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.SizedArray",
     "page": "API",
     "title": "StaticArrays.SizedArray",
-    "category": "Type",
+    "category": "type",
     "text": "SizedArray{Tuple{dims...}}(array)\n\nWraps an Array with a static size, so to take advantage of the (faster) methods defined by the static array package. The size is checked once upon construction to determine if the number of elements (length) match, but the array may be reshaped.\n\n(Also, Size(dims...)(array) acheives the same thing)\n\n\n\n"
 },
 
@@ -252,7 +252,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.StaticArray",
     "page": "API",
     "title": "StaticArrays.StaticArray",
-    "category": "Type",
+    "category": "type",
     "text": "abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end\nStaticScalar{T}     = StaticArray{Tuple{}, T, 0}\nStaticVector{N,T}   = StaticArray{Tuple{N}, T, 1}\nStaticMatrix{N,M,T} = StaticArray{Tuple{N,M}, T, 2}\n\nStaticArrays are Julia arrays with fixed, known size.\n\nDev docs\n\nThey must define the following methods:\n\nConstructors that accept a flat tuple of data.\ngetindex() with an integer (linear indexing) (preferably @inline with @boundscheck).\nTuple(), returning the data in a flat Tuple.\n\nIt may be useful to implement:\n\nsimilar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize}), returning a type (or type constructor) that accepts a flat tuple of data.\n\nFor mutable containers you may also need to define the following:\n\nsetindex! for a single element (linear indexing).\nsimilar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize}).\nIn some cases, a zero-parameter constructor, MyStaticArray{...}() for unintialized data is assumed to exist.\n\n(see also SVector, SMatrix, SArray, MVector, MMatrix, MArray, SizedArray and FieldVector)\n\n\n\n"
 },
 
@@ -260,7 +260,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.similar_type",
     "page": "API",
     "title": "StaticArrays.similar_type",
-    "category": "Function",
+    "category": "function",
     "text": "similar_type(static_array)\nsimilar_type(static_array, T)\nsimilar_type(array, ::Size)\nsimilar_type(array, T, ::Size)\n\nReturns a constructor for a statically-sized array similar to the input array (or type) static_array/array, optionally with different element type T or size Size. If the input array is not a StaticArray then the Size is mandatory.\n\nThis differs from similar() in that the resulting array type may not be mutable (or define setindex!()), and therefore the returned type may need to be constructed with its data.\n\nNote that the (optional) size must be specified as a static Size object (so the compiler can infer the result statically).\n\nNew types should define the signature similar_type{A<:MyType,T,S}(::Type{A},::Type{T},::Size{S}) if they wish to overload the default behavior.\n\n\n\n"
 },
 
@@ -268,7 +268,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#Base.LinAlg.qr",
     "page": "API",
     "title": "Base.LinAlg.qr",
-    "category": "Function",
+    "category": "function",
     "text": "qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]\n\nCompute the QR factorization of A such that A = Q*R or A[:,p] = Q*R, see qr. This function does not support thin=false keyword option due to type inference instability. To use this option call qr(A, pivot, Val{false}) instead.\n\n\n\n"
 },
 
@@ -276,7 +276,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#Base.similar-Union{Tuple{SA}, Tuple{SA}} where SA<:StaticArrays.StaticArray",
     "page": "API",
     "title": "Base.similar",
-    "category": "Method",
+    "category": "method",
     "text": "similar(static_array)\nsimilar(static_array, T)\nsimilar(array, ::Size)\nsimilar(array, T, ::Size)\n\nConstructs and returns a mutable but statically-sized array (i.e. a StaticArray). If the input array is not a StaticArray, then the Size is required to determine the output size (or else a dynamically sized array will be returned).\n\n\n\n"
 },
 
@@ -284,7 +284,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays._size-Tuple{Any}",
     "page": "API",
     "title": "StaticArrays._size",
-    "category": "Method",
+    "category": "method",
     "text": "Return either the statically known Size() or runtime size()\n\n\n\n"
 },
 
@@ -292,7 +292,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.arithmetic_closure-Tuple{Any}",
     "page": "API",
     "title": "StaticArrays.arithmetic_closure",
-    "category": "Method",
+    "category": "method",
     "text": "arithmetic_closure(T)\n\nReturn the type which values of type T will promote to under a combination of the arithmetic operations +, -, * and /.\n\njulia> import StaticArrays.arithmetic_closure\n\njulia> arithmetic_closure(Bool)\nFloat64\n\njulia> arithmetic_closure(Int32)\nFloat64\n\njulia> arithmetic_closure(BigFloat)\nBigFloat\n\njulia> arithmetic_closure(BigInt)\nBigFloat\n\n\n\n"
 },
 
@@ -300,7 +300,7 @@ var documenterSearchIndex = {"docs": [
     "location": "pages/api.html#StaticArrays.same_size-Tuple",
     "page": "API",
     "title": "StaticArrays.same_size",
-    "category": "Method",
+    "category": "method",
     "text": "Returns the common Size of the inputs (or else throws a DimensionMismatch)\n\n\n\n"
 },
 
