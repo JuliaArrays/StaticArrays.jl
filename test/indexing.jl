@@ -154,12 +154,12 @@
     end
 
     @testset "Indexing empty arrays" begin
-        @test size(SVector{0}()[:]) == (0,)
-        @test size(SMatrix{0,0}()[:,:]) == (0,0)
-        @test size(SMatrix{5,0}()[1,:]) == (0,)
-        @test size(SMatrix{5,0}()[:,:]) == (5,0)
-        @test size(SMatrix{0,5}()[:,1]) == (0,)
-        @test size(SMatrix{0,5}()[:,:]) == (0,5)
+        @test size(SVector{0,Float64}()[:]) == (0,)
+        @test size(SMatrix{0,0,Float64}()[:,:]) == (0,0)
+        @test size(SMatrix{5,0,Float64}()[1,:]) == (0,)
+        @test size(SMatrix{5,0,Float64}()[:,:]) == (5,0)
+        @test size(SMatrix{0,5,Float64}()[:,1]) == (0,)
+        @test size(SMatrix{0,5,Float64}()[:,:]) == (0,5)
 
         @test (zeros(0)[SVector{0,Int}()] = 0) == 0
         @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
