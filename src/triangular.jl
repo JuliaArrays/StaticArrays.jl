@@ -1,38 +1,66 @@
-import Base: *, Ac_mul_B, At_mul_B, A_mul_Bc, A_mul_Bt, At_mul_Bt, Ac_mul_Bc
-import Base: \, Ac_ldiv_B, At_ldiv_B
-
 @inline Size(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = Size(A.data)
 
-# TODO add specialized op(AbstractTriangular, AbstractTriangular) methods
-# TODO add A*_rdiv_B* methods
-@inline *(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
-@inline *(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_B(Size(A), Size(B), A, B)
-@inline Ac_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _Ac_mul_B(Size(A), Size(B), A, B)
-@inline A_mul_Bc(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_Bc(Size(A), Size(B), A, B)
-@inline At_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _At_mul_B(Size(A), Size(B), A, B)
-@inline A_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_Bt(Size(A), Size(B), A, B)
+@static if VERSION < v"0.7-"
+    import Base: Ac_mul_B, At_mul_B, A_mul_Bc, A_mul_Bt, At_mul_Bt, Ac_mul_Bc
+    import Base: Ac_ldiv_B, At_ldiv_B
 
-# Specializations for Adjoint
-@inline *(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
-@inline A_mul_Bt(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
-@inline A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * transpose(rowvec)
-@inline At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = transpose(A) * transpose(rowvec)
-@inline A_mul_Bc(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = adjoint(A * adjoint(rowvec))
-@inline A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * adjoint(rowvec)
-@inline Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A' * adjoint(rowvec)
 
-Ac_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(adjoint(A), B)
-At_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(transpose(A), B)
-A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = (*)(A, adjoint(B))
-A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = (*)(A, transpose(B))
-Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = Ac_mul_B(A, B')
-Ac_mul_Bc(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bc(A', B)
-At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = At_mul_B(A, transpose(B))
-At_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bt(transpose(A), B)
+    # TODO add specialized op(AbstractTriangular, AbstractTriangular) methods
+    # TODO add A*_rdiv_B* methods
+    @inline Ac_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _Ac_mul_B(Size(A), Size(B), A, B)
+    @inline A_mul_Bc(A::StaticVecOrMat, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_Bc(Size(A), Size(B), A, B)
+    @inline At_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _At_mul_B(Size(A), Size(B), A, B)
+    @inline A_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_Bt(Size(A), Size(B), A, B)
 
-@inline \(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
-@inline Ac_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _Ac_ldiv_B(Size(A), Size(B), A, B)
-@inline At_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _At_ldiv_B(Size(A), Size(B), A, B)
+    # Specializations for Adjoint
+    @inline Base.:*(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
+    @inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = transpose(rowvec.vec * A)
+    @inline A_mul_Bt(rowvec::Adjoint{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(A * transpose(rowvec))
+    @inline A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * transpose(rowvec)
+    @inline At_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = transpose(rowvec.vec * A)
+    @inline At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = transpose(A) * transpose(rowvec)
+    @inline At_mul_Bt(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = rowvec.vec * transpose(A)
+    @inline A_mul_Bc(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = transpose(conj(A * adjoint(rowvec)))
+    @inline A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A * adjoint(rowvec)
+    @inline Ac_mul_B(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::RowVector{<:Any,<:StaticVector}) = adjoint(conj(rowvec.vec) * A)
+    @inline Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, rowvec::Adjoint{<:Any,<:StaticVector}) = A' * adjoint(rowvec)
+    @inline Ac_mul_Bc(rowvec::RowVector{<:Any,<:StaticVector}, A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = conj(rowvec.vec) * A'
+
+    Ac_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(adjoint(A), B)
+    At_mul_B(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = (*)(transpose(A), B)
+    A_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = (*)(A, adjoint(B))
+    A_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = (*)(A, transpose(B))
+    Ac_mul_Bc(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = Ac_mul_B(A, B')
+    Ac_mul_Bc(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bc(A', B)
+    At_mul_Bt(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticMatrix) = At_mul_B(A, transpose(B))
+    At_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = A_mul_Bt(transpose(A), B)
+
+    @inline Ac_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _Ac_ldiv_B(Size(A), Size(B), A, B)
+    @inline At_ldiv_B(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _At_ldiv_B(Size(A), Size(B), A, B)
+else
+    @inline transpose(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =
+        LinearAlgebra.UpperTriangular(transpose(A.data))
+    @inline adjoint(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =
+        LinearAlgebra.UpperTriangular(adjoint(A.data))
+    @inline transpose(A::LinearAlgebra.UpperTriangular{<:Any,<:StaticMatrix}) =
+        LinearAlgebra.LowerTriangular(transpose(A.data))
+    @inline adjoint(A::LinearAlgebra.UpperTriangular{<:Any,<:StaticMatrix}) =
+        LinearAlgebra.LowerTriangular(adjoint(A.data))
+
+    @inline Base.:*(A::Adjoint{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+        adjoint(adjoint(B) * adjoint(A))
+    @inline Base.:*(A::Transpose{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+        transpose(transpose(B) * transpose(A))
+    @inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Adjoint{<:Any,<:StaticVecOrMat}) =
+        adjoint(adjoint(B) * adjoint(A))
+    @inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVecOrMat}) =
+        transpose(transpose(B) * transpose(A))
+end
+
+@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
+@inline Base.:*(A::StaticVecOrMat, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_B(Size(A), Size(B), A, B)
+@inline Base.:\(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
+
 
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
     m = sb[1]
@@ -202,8 +230,13 @@ end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    m = sa[1]
+    if length(sa) == 1
+        n = 1
+    else
+        n = sa[2]
+    end
     if sb[1] != n
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
@@ -225,12 +258,17 @@ end
         @_inline_meta
         @inbounds $code
         TAB = promote_op(matprod, TA, TB)
-        return similar_type(A, TAB)(tuple($(X...)))
+        return similar_type(A, TAB, Size($m,$n))(tuple($(X...)))
     end
 end
 
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
+@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    m = sa[1]
+    if length(sa) == 1
+        n = 1
+    else
+        n = sa[2]
+    end
     if sb[1] != n
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
@@ -252,7 +290,7 @@ end
         @_inline_meta
         @inbounds $code
         TAB = promote_op(matprod, TA, TB)
-        return similar_type(A, TAB)(tuple($(X...)))
+        return similar_type(A, TAB, Size($m, $n))(tuple($(X...)))
     end
 end
 
@@ -283,8 +321,13 @@ end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    m = sa[1]
+    if length(sa) == 1
+        n = 1
+    else
+        n = sa[2]
+    end
     if sb[1] != n
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
@@ -306,12 +349,17 @@ end
         @_inline_meta
         @inbounds $code
         TAB = promote_op(matprod, TA, TB)
-        return similar_type(A, TAB)(tuple($(X...)))
+        return similar_type(A, TAB, Size($m,$n))(tuple($(X...)))
     end
 end
 
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticMatrix{<:Any,<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
-    m, n = sa[1], sa[2]
+@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    m = sa[1]
+    if length(sa) == 1
+        n = 1
+    else
+        n = sa[2]
+    end
     if sb[1] != n
         throw(DimensionMismatch("right hand side B needs first dimension of size $n, has size $(sb[1])"))
     end
@@ -333,7 +381,7 @@ end
         @_inline_meta
         @inbounds $code
         TAB = promote_op(matprod, TA, TB)
-        return similar_type(A, TAB)(tuple($(X...)))
+        return similar_type(A, TAB, Size($m,$n))(tuple($(X...)))
     end
 end
 

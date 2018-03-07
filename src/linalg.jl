@@ -56,7 +56,11 @@ end
 # Transpose, conjugate, etc
 @inline conj(a::StaticArray) = map(conj, a)
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
-# note: transpose of StaticVector is a Adjoint, handled by Base
+# note: transpose of StaticVector is a Transpose, handled by Base
+if VERSION >= v"0.7-"
+    @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
+    @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
+end
 
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
@@ -70,6 +74,10 @@ end
 end
 
 @inline adjoint(m::StaticMatrix) = _adjoint(Size(m), m)
+if VERSION >= v"0.7-"
+    @inline adjoint(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
+    @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
+end
 
 @generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
