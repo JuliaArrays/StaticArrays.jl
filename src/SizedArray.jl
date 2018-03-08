@@ -72,6 +72,9 @@ SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}
 @inline (::Type{SizedMatrix{S1,S2}})(a::Array{T,M}) where {S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}(a)
 @inline (::Type{SizedMatrix{S1,S2}})(x::NTuple{L,T}) where {S1,S2,T,L} = SizedArray{Tuple{S1,S2},T,2,2}(x)
 
+if isdefined(Base, :dataids) # v0.7-
+    Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
+end
 
 """
     Size(dims)(array)
