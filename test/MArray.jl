@@ -121,6 +121,12 @@
         @test size(typeof(m), 2) === 2
 
         @test length(m) === 4
+
+        if isdefined(Base, :mightalias) # v0.7-
+            @test Base.mightalias(m, m)
+            @test !Base.mightalias(m, copy(m))
+            @test Base.mightalias(m, view(m, :, 1))
+        end
     end
 
     @testset "setindex!" begin
