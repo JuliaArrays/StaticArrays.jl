@@ -72,6 +72,10 @@ end
 
 @inline Tuple(v::SArray) = v.data
 
+if isdefined(Base, :dataids) # v0.7-
+    Base.dataids(::SArray) = ()
+end
+
 # See #53
 Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)
 Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) where {S,T,D,L} =
