@@ -132,7 +132,7 @@ end
 
 @inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     eigen = eigfact(Hermitian(Array(parent(A))))
-    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], T}(eigen.vectors)) # Return a SizedArray
+    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], eltype(A)}(eigen.vectors))
 end
 
 
