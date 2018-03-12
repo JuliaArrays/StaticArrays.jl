@@ -199,4 +199,16 @@
         # not Hermitian
         @test_throws Exception eig(@SMatrix randn(4,4))
     end
+
+    @testset "complex" begin
+        for n=1:5
+            a = randn(n,n)+im*randn(n,n)
+            a = a+a'
+            A = Hermitian(SMatrix{n,n}(a))
+            D,V = eig(A)
+            @test V'V ≈ eye(n)
+            @test V*diagm(D)*V' ≈ A
+            @test V'*A*V ≈ diagm(D)
+        end
+    end
 end

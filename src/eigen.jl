@@ -137,7 +137,7 @@ end
 
 
 @inline function _eig(::Size{(1,1)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,eltype(A)}))
+    @inbounds return (SVector{1,T}((real(A[1]),)), eye(SMatrix{1,1,eltype(A)}))
 end
 
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
