@@ -17,7 +17,7 @@ else
 end
 
 @generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
-    exprs = Vector{Expr}(uninitialized, prod(S))
+    exprs = Vector{Expr}(undef, prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
@@ -44,7 +44,7 @@ end
 
 
 @generated function _map!(f, dest, ::Size{S}, a::StaticArray...) where {S}
-    exprs = Vector{Expr}(uninitialized, prod(S))
+    exprs = Vector{Expr}(undef, prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
         exprs[i] = :(dest[$i] = f($(tmp...)))
@@ -113,7 +113,7 @@ end
     T0 = eltype(a)
     T = :((T1 = return_type(f, Tuple{$T0}); return_type(op, Tuple{T1,T1})))
 
-    exprs = Array{Expr}(uninitialized, Snew)
+    exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n ∈ Snew]
     for i ∈ Base.product(itr...)
         expr = :(f(a[$(i...)]))
@@ -136,7 +136,7 @@ end
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
 
-    exprs = Array{Expr}(uninitialized, Snew)
+    exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n = Snew]
     for i ∈ Base.product(itr...)
         expr = :v0
@@ -242,7 +242,7 @@ end
     N = length(S)
     Snew = ([n==D ? S[n]-1 : S[n] for n = 1:N]...,)
 
-    exprs = Array{Expr}(uninitialized, Snew)
+    exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n = Snew]
 
     for i1 = Base.product(itr...)
