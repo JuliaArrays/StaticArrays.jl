@@ -140,7 +140,6 @@ end
     @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,eltype(A)}))
 end
 
-# TODO adapt the below to be complex-safe?
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
@@ -200,7 +199,8 @@ end
 # A small part of the code in the following method was inspired by works of David
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
-@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+# TODO extend the method to complex hermitian
+@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
