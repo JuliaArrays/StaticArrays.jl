@@ -46,9 +46,9 @@ At_mul_Bt(A::StaticMatrix, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMat
     code = quote end
     for j = 1:n
         for i = 1:m
-            ex = :(A.data[$(sub2ind(sa,i,i))]*B[$(sub2ind(sb,i,j))])
+            ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
             for k = i+1:m
-                ex = :($ex + A.data[$(sub2ind(sa,i,k))]*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + A.data[$(LinearIndices(sa)[i, k])]*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -74,9 +74,9 @@ end
     code = quote end
     for j = 1:n
         for i = m:-1:1
-            ex = :(A.data[$(sub2ind(sa,i,i))]'*B[$(sub2ind(sb,i,j))])
+            ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
             for k = 1:i-1
-                ex = :($ex + A.data[$(sub2ind(sa,k,i))]'*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + A.data[$(LinearIndices(sa)[k, i])]'*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -102,9 +102,9 @@ end
     code = quote end
     for j = 1:n
         for i = m:-1:1
-            ex = :(transpose(A.data[$(sub2ind(sa,i,i))])*B[$(sub2ind(sb,i,j))])
+            ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
             for k = 1:i-1
-                ex = :($ex + transpose(A.data[$(sub2ind(sa,k,i))])*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + transpose(A.data[$(LinearIndices(sa)[k, i])])*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -130,9 +130,9 @@ end
     code = quote end
     for j = 1:n
         for i = m:-1:1
-            ex = :(A.data[$(sub2ind(sa,i,i))]*B[$(sub2ind(sb,i,j))])
+            ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
             for k = 1:i-1
-                ex = :($ex + A.data[$(sub2ind(sa,i,k))]*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + A.data[$(LinearIndices(sa)[i, k])]*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -158,9 +158,9 @@ end
     code = quote end
     for j = 1:n
         for i = 1:m
-            ex = :(A.data[$(sub2ind(sa,i,i))]'*B[$(sub2ind(sb,i,j))])
+            ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
             for k = i+1:m
-                ex = :($ex + A.data[$(sub2ind(sa,k,i))]'*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + A.data[$(LinearIndices(sa)[k, i])]'*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -186,9 +186,9 @@ end
     code = quote end
     for j = 1:n
         for i = 1:m
-            ex = :(transpose(A.data[$(sub2ind(sa,i,i))])*B[$(sub2ind(sb,i,j))])
+            ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
             for k = i+1:m
-                ex = :($ex + transpose(A.data[$(sub2ind(sa,k,i))])*B[$(sub2ind(sb,k,j))])
+                ex = :($ex + transpose(A.data[$(LinearIndices(sa)[k, i])])*B[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -213,9 +213,9 @@ end
     code = quote end
     for i = 1:m
         for j = n:-1:1
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))])
+            ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
             for k = 1:j-1
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,k,j))])
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*B.data[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -240,9 +240,9 @@ end
     code = quote end
     for i = 1:m
         for j = 1:n
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))]')
+            ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
             for k = j+1:n
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))]')
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*B.data[$(LinearIndices(sb)[j, k])]')
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -267,9 +267,9 @@ end
     code = quote end
     for i = 1:m
         for j = 1:n
-            ex = :(A[$(sub2ind(sa,i,j))]*transpose(B[$(sub2ind(sb,j,j))]))
+            ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
             for k = j+1:n
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*transpose(B.data[$(sub2ind(sb,j,k))]))
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*transpose(B.data[$(LinearIndices(sb)[j, k])]))
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -294,9 +294,9 @@ end
     code = quote end
     for i = 1:m
         for j = 1:n
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))])
+            ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
             for k = j+1:n
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,k,j))])
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*B.data[$(LinearIndices(sb)[k, j])])
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -321,9 +321,9 @@ end
     code = quote end
     for i = 1:m
         for j = n:-1:1
-            ex = :(A[$(sub2ind(sa,i,j))]*B[$(sub2ind(sb,j,j))]')
+            ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
             for k = 1:j-1
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*B.data[$(sub2ind(sb,j,k))]')
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*B.data[$(LinearIndices(sb)[j, k])]')
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -348,9 +348,9 @@ end
     code = quote end
     for i = 1:m
         for j = n:-1:1
-            ex = :(A[$(sub2ind(sa,i,j))]*transpose(B[$(sub2ind(sb,j,j))]))
+            ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
             for k = 1:j-1
-                ex = :($ex + A[$(sub2ind(sa,i,k))]*transpose(B.data[$(sub2ind(sb,j,k))]))
+                ex = :($ex + A[$(LinearIndices(sa)[i, k])]*transpose(B.data[$(LinearIndices(sb)[j, k])]))
             end
             push!(code.args, :($(X[i,j]) = $ex))
         end
@@ -372,17 +372,17 @@ end
     end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-    init = [:($(X[i,j]) = B[$(sub2ind(sb,i,j))]) for i = 1:m, j = 1:n]
+    init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
     code = quote end
     for k = 1:n
         for j = m:-1:1
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $(X[j,k])))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])] \ $(X[j,k])))
             for i = j-1:-1:1
-                push!(code.args, :($(X[i,k]) -= A.data[$(sub2ind(sa,i,j))]*$(X[j,k])))
+                push!(code.args, :($(X[i,k]) -= A.data[$(LinearIndices(sa)[i, j])]*$(X[j,k])))
             end
         end
     end
@@ -404,17 +404,17 @@ end
     end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
-    init = [:($(X[i,j]) = B[$(sub2ind(sb,i,j))]) for i = 1:m, j = 1:n]
+    init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
     code = quote end
     for k = 1:n
         for j = 1:m
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $(X[j,k])))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])] \ $(X[j,k])))
             for i = j+1:m
-                push!(code.args, :($(X[i,k]) -= A.data[$(sub2ind(sa,i,j))]*$(X[j,k])))
+                push!(code.args, :($(X[i,k]) -= A.data[$(LinearIndices(sa)[i, j])]*$(X[j,k])))
             end
         end
     end
@@ -440,14 +440,14 @@ end
     code = quote end
     for k = 1:n
         for j = 1:m
-            ex = :(B[$(sub2ind(sb,j,k))])
+            ex = :(B[$(LinearIndices(sb)[j, k])])
             for i = 1:j-1
-                ex = :($ex - A.data[$(sub2ind(sa,i,j))]'*$(X[i,k]))
+                ex = :($ex - A.data[$(LinearIndices(sa)[i, j])]'*$(X[i,k]))
             end
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))]' \ $ex))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])]' \ $ex))
         end
     end
 
@@ -471,14 +471,14 @@ end
     code = quote end
     for k = 1:n
         for j = 1:m
-            ex = :(B[$(sub2ind(sb,j,k))])
+            ex = :(B[$(LinearIndices(sb)[j, k])])
             for i = 1:j-1
-                ex = :($ex - A.data[$(sub2ind(sa,i,j))]*$(X[i,k]))
+                ex = :($ex - A.data[$(LinearIndices(sa)[i, j])]*$(X[i,k]))
             end
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $ex))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])] \ $ex))
         end
     end
 
@@ -502,14 +502,14 @@ end
     code = quote end
     for k = 1:n
         for j = m:-1:1
-            ex = :(B[$(sub2ind(sb,j,k))])
+            ex = :(B[$(LinearIndices(sb)[j, k])])
             for i = m:-1:j+1
-                ex = :($ex - A.data[$(sub2ind(sa,i,j))]'*$(X[i,k]))
+                ex = :($ex - A.data[$(LinearIndices(sa)[i, j])]'*$(X[i,k]))
             end
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))]' \ $ex))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])]' \ $ex))
         end
     end
 
@@ -533,14 +533,14 @@ end
     code = quote end
     for k = 1:n
         for j = m:-1:1
-            ex = :(B[$(sub2ind(sb,j,k))])
+            ex = :(B[$(LinearIndices(sb)[j, k])])
             for i = m:-1:j+1
-                ex = :($ex - A.data[$(sub2ind(sa,i,j))]*$(X[i,k]))
+                ex = :($ex - A.data[$(LinearIndices(sa)[i, j])]*$(X[i,k]))
             end
             if k == 1
-                push!(code.args, :(A.data[$(sub2ind(sa,j,j))] == zero(A.data[$(sub2ind(sa,j,j))]) && throw(LinearAlgebra.SingularException($j))))
+                push!(code.args, :(A.data[$(LinearIndices(sa)[j, j])] == zero(A.data[$(LinearIndices(sa)[j, j])]) && throw(LinearAlgebra.SingularException($j))))
             end
-            push!(code.args, :($(X[j,k]) = A.data[$(sub2ind(sa,j,j))] \ $ex))
+            push!(code.args, :($(X[j,k]) = A.data[$(LinearIndices(sa)[j, j])] \ $ex))
         end
     end
 

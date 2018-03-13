@@ -89,7 +89,7 @@ function broadcasted_index(oldsize, newindex)
             index[i] = newindex[i]
         end
     end
-    return sub2ind(oldsize, index...)
+    return LinearIndices(oldsize)[index...]
 end
 
 @generated function _broadcast(f, s::Tuple{Vararg{Size}}, a...)

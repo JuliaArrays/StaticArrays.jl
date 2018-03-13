@@ -40,7 +40,7 @@ import Base: +, -, *, /, \
         throw(DimensionMismatch("matrix is not square: dimensions are $S"))
     end
     n = S[1]
-    exprs = [i == j ? :(a[$(sub2ind(size(a), i, j))] + λ) : :(a[$(sub2ind(size(a), i, j))]) for i = 1:n, j = 1:n]
+    exprs = [i == j ? :(a[$(LinearIndices(S)[i, j])] + λ) : :(a[$(LinearIndices(S)[i, j])]) for i = 1:n, j = 1:n]
     return quote
         $(Expr(:meta, :inline))
         @inbounds return similar_type(a, promote_type(eltype(a), typeof(λ)))(tuple($(exprs...)))
@@ -61,7 +61,7 @@ end
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
 
-    exprs = [:(m[$(sub2ind(S, j1, j2))]) for j2 = 1:S[2], j1 = 1:S[1]]
+    exprs = [:(m[$(LinearIndices(S)[j1, j2])]) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
@@ -74,7 +74,7 @@ end
 @generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
 
-    exprs = [:(conj(m[$(sub2ind(S, j1, j2))])) for j2 = 1:S[2], j1 = 1:S[1]]
+    exprs = [:(conj(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
@@ -327,7 +327,7 @@ end
         return zero(eltype(a))
     end
 
-    exprs = [:(a[$(sub2ind(S, i, i))]) for i = 1:S[1]]
+    exprs = [:(a[$(LinearIndices(S)[i, i])]) for i = 1:S[1]]
     total = reduce((ex1, ex2) -> :($ex1 + $ex2), exprs)
 
     return quote
@@ -344,7 +344,7 @@ const _length_limit = Length(200)
     if prod(outsize) > length_limit
         return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
     end
-    rows = [:(hcat($([:(a[$(sub2ind(SA,i,j))]*b) for j=1:SA[2]]...))) for i=1:SA[1]]
+    rows = [:(hcat($([:(a[$(LinearIndices(SA)[i, j])]*b) for j=1:SA[2]]...))) for i=1:SA[1]]
     return quote
         @_inline_meta
         @inbounds return vcat($(rows...))

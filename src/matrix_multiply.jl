@@ -55,7 +55,7 @@ end
 
 @generated function _mul(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
         exprs = [:(zero(T)) for k = 1:sa[1]]
     end
@@ -76,7 +76,7 @@ end
     end
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
         exprs = [:(zero(T)) for k = 1:sa[1]]
     end
@@ -169,7 +169,7 @@ end
     S = Size(sa[1], sb[2])
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k1, j))]*b[$(sub2ind(sb, j, k2))]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k1, j])]*b[$(LinearIndices(sb)[j, k2])]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
     else
         exprs = [:(zero(T)) for k1 = 1:sa[1], k2 = 1:sb[2]]
     end
@@ -218,7 +218,7 @@ end
     tmp_type_in = :(SVector{$(sb[1]), T})
     tmp_type_out = :(SVector{$(sa[1]), T})
     vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(Size(a), Size($(sb[1])), a,
-                    $(Expr(:call, tmp_type_in, [Expr(:ref, :b, sub2ind(sb, i, k2)) for i = 1:sb[1]]...)))::$tmp_type_out)
+                    $(Expr(:call, tmp_type_in, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))::$tmp_type_out)
                   for k2 = 1:sb[2]]
 
     exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
@@ -239,7 +239,7 @@ end
     end
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
         exprs = [:(zero(promote_op(matprod,Ta,Tb))) for k = 1:sa[1]]
     end
@@ -257,7 +257,7 @@ end
     end
 
     if sa[2] != 0
-        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k, j))]*b[$j]) for j = 1:sa[2]]))) for k = 1:sa[1]]
+        exprs = [:(c[$k] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]))) for k = 1:sa[1]]
     else
         exprs = [:(c[$k] = zero(eltype(c))) for k = 1:sa[1]]
     end
@@ -274,7 +274,7 @@ end
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
-    exprs = [:(c[$(sub2ind(sc, i, j))] = a[$i] * b[$j]) for i = 1:sa[1], j = 1:sb[2]]
+    exprs = [:(c[$(LinearIndices(sc)[i, j])] = a[$i] * b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
     return quote
         @_inline_meta
@@ -397,9 +397,9 @@ end
     end
 
     if sa[2] != 0
-        exprs = [:(c[$(sub2ind(sc, k1, k2))] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(sub2ind(sa, k1, j))]*b[$(sub2ind(sb, j, k2))]) for j = 1:sa[2]]))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        exprs = [:(c[$(LinearIndices(sc)[k1, k2])] = $(reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k1, j])]*b[$(LinearIndices(sb)[j, k2])]) for j = 1:sa[2]]))) for k1 = 1:sa[1], k2 = 1:sb[2]]
     else
-        exprs = [:(c[$(sub2ind(sc, k1, k2))] = zero(eltype(c))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        exprs = [:(c[$(LinearIndices(sc)[k1, k2])] = zero(eltype(c))) for k1 = 1:sa[1], k2 = 1:sb[2]]
     end
 
     return quote
@@ -417,9 +417,9 @@ end
 
     # Do a custom b[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
     tmp_type = SVector{sb[1], eltype(c)}
-    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, sub2ind(sb, i, k2)) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
+    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 
-    exprs = [:(c[$(sub2ind(sc, k1, k2))] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    exprs = [:(c[$(LinearIndices(sc)[k1, k2])] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
     return quote
         @_inline_meta
