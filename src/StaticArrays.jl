@@ -35,7 +35,7 @@ else
     import Base: sqrt, exp, log
 
     using LinearAlgebra
-    import LinearAlgebra: transpose, adjoint, vecdot, eig, eigvals, eigfact, lyap, trace,
+    import LinearAlgebra: transpose, adjoint, eye, vecdot, eig, eigvals, eigfact, lyap, trace,
                           kron, diag, vecnorm, norm, dot, diagm, lu, svd, svdvals, svdfact,
                           factorize, ishermitian, issymmetric, isposdef, normalize,
                           normalize!, Eigen, det, logdet, cross, diff, qr
