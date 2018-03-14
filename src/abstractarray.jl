@@ -134,8 +134,8 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 @inline Base.full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), sym)
 
 @generated function _full(::Size{S}, sym::Symmetric{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
+    exprs_up = [i <= j ? :(m[$(LinearIndices(S)[i, j])]) : :(m[$(LinearIndices(S)[j, i])]) for i = 1:S[1], j=1:S[2]]
+    exprs_lo = [i >= j ? :(m[$(LinearIndices(S)[i, j])]) : :(m[$(LinearIndices(S)[j, i])]) for i = 1:S[1], j=1:S[2]]
 
     return quote
         @_inline_meta
@@ -151,8 +151,8 @@ end
 @inline Base.full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), herm)
 
 @generated function _full(::Size{S}, herm::Hermitian{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
+    exprs_up = [i <= j ? :(m[$(LinearIndices(S)[i, j])]) : :(conj(m[$(LinearIndices(S)[j, i])])) for i = 1:S[1], j=1:S[2]]
+    exprs_lo = [i >= j ? :(m[$(LinearIndices(S)[i, j])]) : :(conj(m[$(LinearIndices(S)[j, i])])) for i = 1:S[1], j=1:S[2]]
 
     return quote
         @_inline_meta

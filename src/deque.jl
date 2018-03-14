@@ -86,4 +86,8 @@ import Base: setindex
 end
 
 # TODO proper multidimension boundscheck
-@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))
+if VERSION < v"0.7-"
+    @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))
+else
+    @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])
+end
