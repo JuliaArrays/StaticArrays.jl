@@ -132,15 +132,14 @@ end
 
 @inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     eigen = eigfact(Hermitian(Array(parent(A))))
-    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], T}(eigen.vectors)) # Return a SizedArray
+    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], eltype(A)}(eigen.vectors))
 end
 
 
 @inline function _eig(::Size{(1,1)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
+    @inbounds return (SVector{1,T}((real(A[1]),)), eye(SMatrix{1,1,eltype(A)}))
 end
 
-# TODO adapt the below to be complex-safe?
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
@@ -153,7 +152,7 @@ end
         vals = SVector(t_half - tmp, t_half + tmp)
 
         @inbounds if a[3] == 0
-            vecs = eye(SMatrix{2,2,T})
+            vecs = eye(SMatrix{2,2,eltype(A)})
         else
             @inbounds v11 = vals[1]-a[4]
             @inbounds n1 = sqrt(v11'*v11 + a[3]'*a[3])
@@ -178,7 +177,7 @@ end
         vals = SVector(t_half - tmp, t_half + tmp)
 
         @inbounds if a[2] == 0
-            vecs = eye(SMatrix{2,2,T})
+            vecs = eye(SMatrix{2,2,eltype(A)})
         else
             @inbounds v11 = vals[1]-a[4]
             @inbounds n1 = sqrt(v11'*v11 + a[2]'*a[2])
@@ -200,7 +199,8 @@ end
 # A small part of the code in the following method was inspired by works of David
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
-@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+# TODO extend the method to complex hermitian
+@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
