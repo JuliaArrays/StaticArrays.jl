@@ -121,7 +121,7 @@ end
     end
     newsize = tuple(newsize...)
 
-    exprs = Array{Expr}(uninitialized, newsize)
+    exprs = Array{Expr}(undef, newsize)
     more = prod(newsize) > 0
     current_ind = ones(Int, length(newsize))
 
@@ -184,7 +184,7 @@ end
         end
     end
 
-    exprs = Array{Expr}(uninitialized, newsize)
+    exprs = Array{Expr}(undef, newsize)
     j = 1
     more = prod(newsize) > 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
