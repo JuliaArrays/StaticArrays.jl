@@ -166,4 +166,12 @@ end
         @testinf broadcast!(identity, mv, Ref(aX)) == MVector(aX,aX,aX)
         @test mv == SVector(aX,aX,aX)
     end
+
+    @testset "broadcast! with Array destination" begin
+        # Issue #385
+        a = zeros(3, 3)
+        b = ones(SMatrix{3, 3})
+        a .= b
+        @test a == b
+    end
 end
