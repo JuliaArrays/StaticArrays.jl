@@ -36,9 +36,7 @@
         _broadcast(f, combine_sizes(argsizes), argsizes, as...)
     end
 
-    # TODO: This signature could be relaxed to (::Any, ::Type{StaticArray}, ::Type, ...), though
-    # we'd need to rework how _broadcast!() and broadcast_sizes() interact with normal AbstractArray.
-    @inline function broadcast_c!(f, ::Type{StaticArray}, ::Type{StaticArray}, dest, as...)
+    @inline function broadcast_c!(f, ::Type, ::Type{StaticArray}, dest, as...)
         argsizes = broadcast_sizes(as...)
         _broadcast!(f, broadcast_dest_size(broadcast_size(dest), combine_sizes(argsizes)), dest, argsizes, as...)
     end
