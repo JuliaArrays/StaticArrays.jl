@@ -14,6 +14,9 @@
     _containertype(::Type{<:StaticArray}) = StaticArray
     _containertype(::Type{<:Adjoint{<:Any,<:StaticVector}}) = StaticArray
 
+    # issue #382; prevent infinite recursion in generic broadcast code:
+    Base.Broadcast.broadcast_indices(::Type{StaticArray}, A) = indices(A)
+
     # With the above, the default promote_containertype gives reasonable defaults:
     #   StaticArray, StaticArray -> StaticArray
     #   Array, StaticArray       -> Array
