@@ -77,7 +77,6 @@ import Base.setindex
 @generated function _setindex(::Size{s}, a::StaticArray{<:Any,T}, x::T, index::Int) where {s, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
     return quote
-        @_inline_meta
         @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $(s[1]))
             throw(BoundsError(a, index))
