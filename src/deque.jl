@@ -72,12 +72,13 @@ end
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
 # could also be justified to live in src/indexing.jl
-import Base: setindex
-@inline setindex(a::StaticArray, x, index::Int) = _setindex(Size(a), a, convert(eltype(typeof(a)), x), index)
+import Base.setindex
+@propagate_inbounds setindex(a::StaticArray, x, index::Int) = _setindex(Size(a), a, convert(eltype(typeof(a)), x), index)
 @generated function _setindex(::Size{s}, a::StaticArray{<:Any,T}, x::T, index::Int) where {s, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
     return quote
         @_inline_meta
+        @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $(s[1]))
             throw(BoundsError(a, index))
         end
