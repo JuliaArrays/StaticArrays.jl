@@ -131,7 +131,7 @@ end
     current_ind = ones(Int, length(newsize))
 
     while more
-        exprs_vals = [(!(a[i] <: AbstractArray) ? :(a[$i]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+        exprs_vals = [(!(a[i] <: AbstractArray) ? :(a[$i][]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(f($(exprs_vals...)))
 
         # increment current_ind (maybe use CartesianRange?)
