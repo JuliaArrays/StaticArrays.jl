@@ -57,6 +57,8 @@ else
     # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
         Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
+        StaticArrayStyle{M}()
     # FIXME: These two rules should be removed once VectorStyle and MatrixStyle are removed from base/broadcast.jl
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
