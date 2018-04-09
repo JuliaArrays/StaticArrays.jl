@@ -69,9 +69,9 @@ else
         _broadcast(f, broadcast_sizes(As...), As...)
     end
 
-    # Add a specialized broadcast! method that overrides the Base fallback and calls the old routine
-    @inline function broadcast!(f, C, ::StaticArrayStyle, As...)
-        _broadcast!(f, Size(C), C, broadcast_sizes(As...), As...)
+    # Add a specialized broadcast! method that overrides the Base fallback
+    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle, As::Vararg{Any,N}) where {Tf, N}
+        _broadcast!(f, Size(dest), dest, broadcast_sizes(As...), As...)
     end
 end
 
@@ -194,7 +194,7 @@ end
     more = prod(newsize) > 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
     while more
-        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
         # increment current_ind (maybe use CartesianRange?)
