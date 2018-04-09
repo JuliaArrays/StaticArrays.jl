@@ -161,9 +161,9 @@ end
     @testset "broadcast general scalars" begin
         # Issue #239 - broadcast with non-numeric element types
         @eval @enum Axis aX aY aZ
-        @testinf (SVector(aX,aY,aZ) .== aX) == SVector(true,false,false)
+        @testinf (SVector(aX,aY,aZ) .== Ref(aX)) == SVector(true,false,false)
         mv = MVector(aX,aY,aZ)
-        @testinf broadcast!(identity, mv, aX) == MVector(aX,aX,aX)
+        @testinf broadcast!(identity, mv, Ref(aX)) == MVector(aX,aX,aX)
         @test mv == SVector(aX,aX,aX)
     end
 end
