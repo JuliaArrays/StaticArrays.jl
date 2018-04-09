@@ -57,6 +57,8 @@ else
     # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
         Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
+        StaticArrayStyle{M}()
     # FIXME: These two rules should be removed once VectorStyle and MatrixStyle are removed from base/broadcast.jl
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
@@ -67,9 +69,9 @@ else
         _broadcast(f, broadcast_sizes(As...), As...)
     end
 
-    # Add a specialized broadcast! method that overrides the Base fallback and calls the old routine
-    @inline function broadcast!(f, C, ::StaticArrayStyle, As...)
-        _broadcast!(f, Size(C), C, broadcast_sizes(As...), As...)
+    # Add a specialized broadcast! method that overrides the Base fallback
+    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle, As::Vararg{Any,N}) where {Tf, N}
+        _broadcast!(f, Size(dest), dest, broadcast_sizes(As...), As...)
     end
 end
 
@@ -129,7 +131,7 @@ end
     current_ind = ones(Int, length(newsize))
 
     while more
-        exprs_vals = [(!(a[i] <: AbstractArray) ? :(a[$i]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+        exprs_vals = [(!(a[i] <: AbstractArray) ? :(a[$i][]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(f($(exprs_vals...)))
 
         # increment current_ind (maybe use CartesianRange?)
@@ -192,7 +194,7 @@ end
     more = prod(newsize) > 0
     current_ind = ones(Int, max(length(newsize), length.(sizes)...))
     while more
-        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
+        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
         # increment current_ind (maybe use CartesianRange?)
