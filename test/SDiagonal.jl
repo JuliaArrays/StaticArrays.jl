@@ -32,10 +32,16 @@
         @test logdet(m) == logdet(m2)
         @test logdet(im*m) ≈ logdet(im*m2)
         @test det(m) == det(m2)
-        @test trace(m) == trace(m2)
-        @test logm(m) == logm(m2)
-        @test expm(m) == expm(m2)
-        @test sqrtm(m) == sqrtm(m2)
+        @test tr(m) == tr(m2)
+        if VERSION < v"0.7-"
+            @test logm(m) == logm(m2)
+            @test expm(m) == expm(m2)
+            @test sqrtm(m) == sqrtm(m2)
+        else
+            @test log(m) == log(m2)
+            @test exp(m) == exp(m2)
+            @test sqrt(m) == sqrt(m2)
+        end
         @test chol(m) == chol(m2)
         
         # Aparently recursive chol never really worked

@@ -161,8 +161,8 @@ using StaticArrays, Base.Test
     end
 
     @testset "trace" begin
-        @test trace(@SMatrix [1.0 2.0; 3.0 4.0]) === 5.0
-        @test_throws DimensionMismatch trace(@SMatrix ones(5,4))
+        @test tr(@SMatrix [1.0 2.0; 3.0 4.0]) === 5.0
+        @test_throws DimensionMismatch tr(@SMatrix ones(5,4))
     end
 
     @testset "size zero" begin
@@ -170,7 +170,7 @@ using StaticArrays, Base.Test
         @test StaticArrays.bilinear_vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test vecnorm(SVector{0, Float64}(())) === 0.
         @test vecnorm(SVector{0, Float64}(()), 1) === 0.
-        @test trace(SMatrix{0,0,Float64}(())) === 0.
+        @test tr(SMatrix{0,0,Float64}(())) === 0.
     end
 
     @testset "kron" begin

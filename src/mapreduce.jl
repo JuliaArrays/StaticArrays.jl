@@ -97,7 +97,7 @@ end
 ##################
 
 # I'm not sure why the signature for this from Base precludes multiple arrays?
-# (also, why now mutating `mapreducedim!` and `reducedim!`?)
+# (also, why not mutating `mapreducedim!` and `reducedim!`?)
 # (similarly, `broadcastreduce` and `broadcastreducedim` sounds useful)
 @inline function mapreducedim(f, op, a::StaticArray, ::Type{Val{D}}) where {D}
     _mapreducedim(f, op, Size(a), a, Val{D})

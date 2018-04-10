@@ -100,7 +100,7 @@ end
 
     eig3 = q + 2 * p * cos(phi)
     eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
-    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+    eig2 = 3 * q - eig1 - eig3     # since tr(A) = eig1 + eig2 + eig3
 
     return SVector(eig1, eig2, eig3)
 end
@@ -268,7 +268,7 @@ end
 
     eig3 = q + 2 * p * cos(phi)
     eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
-    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+    eig2 = 3 * q - eig1 - eig3     # since tr(A) = eig1 + eig2 + eig3
 
     if r > 0 # Helps with conditioning the eigenvector calculation
         (eig1, eig3) = (eig3, eig1)

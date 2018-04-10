@@ -3,11 +3,13 @@ if VERSION > v"0.7-"
     using Test
     using Random
     using LinearAlgebra
+    using InteractiveUtils
 else
     using Base.Test
     using Base.Random
     const LinearAlgebra = Base.LinAlg
     const Adjoint = RowVector
+    const tr = trace
 end
 
 # We generate a lot of matrices using rand(), but unit tests should be

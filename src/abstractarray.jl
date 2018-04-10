@@ -105,7 +105,7 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
     if indexstyle == IndexLinear
         exprs = [:(a[$i]) for i = 1:prod(S)]
     else
-        exprs = [:(a[$(inds)]) for inds ∈ CartesianRange(S)]
+        exprs = [:(a[$(inds)]) for inds ∈ CartesianIndices(S)]
     end
 
     return quote
