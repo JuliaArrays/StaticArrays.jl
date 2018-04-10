@@ -73,7 +73,7 @@ transpose(D::SDiagonal) = D
 adjoint(D::SDiagonal) = conj(D)
 
 diag(D::SDiagonal) = D.diag
-trace(D::SDiagonal) = sum(D.diag)
+tr(D::SDiagonal) = sum(D.diag)
 det(D::SDiagonal) = prod(D.diag)
 logdet(D::SDiagonal{N,T}) where {N,T<:Real} = sum(log.(D.diag))
 function logdet(D::SDiagonal{N,T}) where {N,T<:Complex} #Make sure branch cut is correct

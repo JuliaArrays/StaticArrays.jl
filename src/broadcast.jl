@@ -59,10 +59,6 @@ else
         Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
         StaticArrayStyle{M}()
-    # FIXME: These two rules should be removed once VectorStyle and MatrixStyle are removed from base/broadcast.jl
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.VectorStyle) where M = Broadcast.Unknown()
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.MatrixStyle) where M = Broadcast.Unknown()
-    # End FIXME
 
     # Add a broadcast method that calls the @generated routine
     @inline function broadcast(f, ::StaticArrayStyle, ::Nothing, ::Nothing, As...)
@@ -134,7 +130,7 @@ end
         exprs_vals = [(!(a[i] <: AbstractArray) ? :(a[$i][]) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(f($(exprs_vals...)))
 
-        # increment current_ind (maybe use CartesianRange?)
+        # increment current_ind (maybe use CartesianIndices?)
         current_ind[1] += 1
         for i ∈ 1:length(newsize)
             if current_ind[i] > newsize[i]
@@ -151,7 +147,7 @@ end
         end
     end
 
-    eltype_exprs = [t <: AbstractArray ? :($(eltype(t))) : :($t) for t ∈ a]
+    eltype_exprs = [t <: Union{AbstractArray, Ref} ? :(eltype($t)) : :($t) for t ∈ a]
     newtype_expr = :(return_type(f, Tuple{$(eltype_exprs...)}))
 
     return quote
@@ -197,7 +193,7 @@ end
         exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
         exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
 
-        # increment current_ind (maybe use CartesianRange?)
+        # increment current_ind (maybe use CartesianIndices?)
         current_ind[1] += 1
         for i ∈ 1:length(newsize)
             if current_ind[i] > newsize[i]

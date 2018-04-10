@@ -314,11 +314,11 @@ end
 @inline normalize(a::StaticVector) = inv(vecnorm(a))*a
 @inline normalize(a::StaticVector, p::Real) = inv(vecnorm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)))
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(vecnorm(a, p)))
+@inline normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)); return a)
+@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(vecnorm(a, p)); return a)
 
-@inline trace(a::StaticMatrix) = _trace(Size(a), a)
-@generated function _trace(::Size{S}, a::StaticMatrix) where {S}
+@inline tr(a::StaticMatrix) = _tr(Size(a), a)
+@generated function _tr(::Size{S}, a::StaticMatrix) where {S}
     if S[1] != S[2]
         throw(DimensionMismatch("matrix is not square"))
     end

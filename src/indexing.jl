@@ -224,7 +224,7 @@ end
 @generated function _getindex(a::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)
     newsize = out_index_size(ind_sizes.parameters...)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters
@@ -326,7 +326,7 @@ end
 # setindex! from a scalar
 @generated function _setindex!(a::AbstractArray, value, ind_sizes::Tuple{Vararg{Size}}, inds)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters
@@ -363,7 +363,7 @@ end
 # setindex! from an array
 @generated function _setindex!(a::AbstractArray, v::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters

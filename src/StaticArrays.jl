@@ -25,6 +25,7 @@ if VERSION < v"0.7-"
 
     const adjoint = ctranspose
     const Adjoint = RowVector
+    const tr = trace
 else
     using Compat
 
@@ -35,7 +36,7 @@ else
     import Base: sqrt, exp, log
 
     using LinearAlgebra
-    import LinearAlgebra: transpose, adjoint, eye, vecdot, eig, eigvals, eigfact, lyap, trace,
+    import LinearAlgebra: transpose, adjoint, eye, vecdot, eig, eigvals, eigfact, lyap, tr,
                           kron, diag, vecnorm, norm, dot, diagm, lu, svd, svdvals, svdfact,
                           factorize, ishermitian, issymmetric, isposdef, normalize,
                           normalize!, Eigen, det, logdet, cross, diff, qr
