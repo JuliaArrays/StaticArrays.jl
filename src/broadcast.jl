@@ -5,7 +5,7 @@
 @static if VERSION < v"0.7.0-DEV.2638"
     ## Old Broadcast API ##
     import Base.Broadcast:
-    _containertype, promote_containertype, broadcast_indices,
+    _containertype, promote_containertype, broadcast_indices, containertype,
     broadcast_c, broadcast_c!
 
     # Add StaticArray as a new output type in Base.Broadcast promotion machinery.
@@ -33,12 +33,15 @@
     # Override for when output type is deduced to be a StaticArray.
     @inline function broadcast_c(f, ::Type{StaticArray}, as...)
         argsizes = broadcast_sizes(as...)
-        _broadcast(f, combine_sizes(argsizes), argsizes, as...)
+        destsize = combine_sizes(argsizes)
+        _broadcast(f, destsize, argsizes, as...)
     end
 
     @inline function broadcast_c!(f, ::Type, ::Type{StaticArray}, dest, as...)
         argsizes = broadcast_sizes(as...)
-        _broadcast!(f, broadcast_dest_size(broadcast_size(dest), combine_sizes(argsizes)), dest, argsizes, as...)
+        destsize = combine_sizes((Size(dest), argsizes...))
+        Length(destsize) === Length{Dynamic()}() && return broadcast_c!(f, containertype(dest), Array, dest, as...)
+        _broadcast!(f, destsize, dest, argsizes, as...)
     end
 else
     ## New Broadcast API ##
@@ -60,16 +63,21 @@ else
     BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
         StaticArrayStyle{M}()
 
-    # Add a broadcast method that calls the @generated routine
-    @inline function broadcast(f::Tf, ::StaticArrayStyle, ::Nothing, ::Nothing, as::Vararg{Any, N}...) where {Tf, N}
+    # Add a specialized broadcast method that overrides the Base fallback
+     @inline function broadcast(f::Tf, ::StaticArrayStyle{M}, ::Nothing, ::Nothing, as::Vararg{Any, N}) where {Tf, M, N}
         argsizes = broadcast_sizes(as...)
-        _broadcast(f, combine_sizes(argsizes), argsizes, as...)
+        destsize = combine_sizes(argsizes)
+        # TODO: use the following to fall back to generic broadcast once the precedence rules are less conservative:
+        # Length(destsize) === Length{Dynamic()}() && return broadcast(f, Broadcast.DefaultArrayStyle{M}(), nothing, nothing, as...)
+        _broadcast(f, destsize, argsizes, as...)
     end
 
-    # Add a specialized broadcast! method that overrides the Base fallback and calls the old routine
-    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle, as::Vararg{Any,N}...) where {Tf, N}
+    # Add a specialized broadcast! method that overrides the Base fallback
+    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle{M}, as::Vararg{Any,N}) where {Tf, M, N}
         argsizes = broadcast_sizes(as...)
-        _broadcast!(f, broadcast_dest_size(broadcast_size(dest), combine_sizes(argsizes)), dest, argsizes, as...)
+        destsize = combine_sizes((Size(dest), argsizes...))
+        Length(destsize) === Length{Dynamic()}() && return broadcast!(f, dest, Broadcast.DefaultArrayStyle{M}(), as...)
+        _broadcast!(f, destsize, dest, argsizes, as...)
     end
 end
 
@@ -79,12 +87,12 @@ end
 ###################################################
 
 broadcast_indices(A::StaticArray) = indices(A)
-@inline broadcast_size(a::Adjoint{<:Any,<:StaticArray}) = Size(a)
-@inline broadcast_size(a::StaticArray) = Size(a)
-@inline broadcast_size(a) = Size()
 
+# TODO: just use map(broadcast_size, as)?
 @inline broadcast_sizes(a, as...) = (broadcast_size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
+@inline broadcast_size(a) = Size()
+@inline broadcast_size(a::AbstractArray) = Size(a)
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))
@@ -103,11 +111,13 @@ end
     for i = 1:length(sizes)
         ndims = max(ndims, length(sizes[i]))
     end
-    newsize = ones(Int, ndims)
+    newsize = StaticDimension[Dynamic() for _ = 1 : ndims]
     for i = 1:length(sizes)
         s = sizes[i]
         for j = 1:length(s)
-            if newsize[j] == 1
+            if s[j] isa Dynamic
+                continue
+            elseif newsize[j] isa Dynamic || newsize[j] == 1
                 newsize[j] = s[j]
             elseif newsize[j] ≠ s[j] && s[j] ≠ 1
                 throw(DimensionMismatch("Tried to broadcast on inputs sized $sizes"))
@@ -175,16 +185,12 @@ end
 ## Internal broadcast! machinery for StaticArrays ##
 ####################################################
 
-@inline broadcast_dest_size(destsize::Size{()}, size_from_args::Size) = size_from_args
-@inline broadcast_dest_size(destsize::Size, size_from_args::Size{()}) = destsize
-@inline broadcast_dest_size(destsize::Size{S}, size_from_args::Size{S}) where S = size_from_args
-function broadcast_dest_size(destsize::Size, size_from_args::Size)
-    throw(DimensionMismatch("Tried to broadcast to destination sized $destsize, while $size_from_args was expected."))
-end
-
 @generated function _broadcast!(f, ::Size{newsize}, dest::AbstractArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
     sizes = [sz.parameters[1] for sz ∈ s.parameters]
     sizes = tuple(sizes...)
+
+    # TODO: this could also be done outside the generated function:
+    sizematch(Size{newsize}(), Size(dest)) || throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
 
     ndims = 0
     for i = 1:length(sizes)

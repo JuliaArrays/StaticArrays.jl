@@ -139,6 +139,7 @@
     @test Tuple{2, 3, 5} != StaticArrays.Size{(2, 3, 4)}
     @test StaticArrays.Size{(2, 3, 4)} != Tuple{2, 3, 5}
     @test StaticArrays.check_length(2) == nothing
+    @test StaticArrays.check_length(StaticArrays.Dynamic()) == nothing
 
     @test convert(Tuple, @SVector [2]) == (2,)
 end

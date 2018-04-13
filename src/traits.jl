@@ -1,4 +1,25 @@
 """
+    Dynamic()
+
+Used to signify that a dimension of an array is not known statically.
+"""
+struct Dynamic end
+
+const StaticDimension = Union{Int, Dynamic}
+
+"""
+    dimmatch(x::StaticDimension, y::StaticDimension)
+
+Return whether dimensions `x` and `y` match at compile time, that is:
+
+* if `x` and `y` are both `Int`s, check that they are equal
+* if `x` or `y` are `Dynamic()`, return true
+"""
+function dimmatch end
+dimmatch(x::Int, y::Int) = x === y
+dimmatch(x::StaticDimension, y::StaticDimension) = true
+
+"""
     Size(dims::Int...)
 
 `Size` is used extensively in throughout the `StaticArrays` API to describe the size of a
@@ -22,12 +43,12 @@ _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 """
 struct Size{S}
     function Size{S}() where {S}
-        new{S::Tuple{Vararg{Int}}}()
+        new{S::Tuple{Vararg{StaticDimension}}}()
     end
 end
 
-@pure Size(s::Tuple{Vararg{Int}}) = Size{s}()
-@pure Size(s::Int...) = Size{s}()
+@pure Size(s::Tuple{Vararg{StaticDimension}}) = Size{s}()
+@pure Size(s::StaticDimension...) = Size{s}()
 @pure Size(s::Type{<:Tuple}) = Size{tuple(s.parameters...)}()
 
 Base.show(io::IO, ::Size{S}) where {S} = print(io, "Size", S)
@@ -47,8 +68,9 @@ function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error mess
             SMatrix{3,3}(m) # correct - size is inferrable
         """)
 end =#
-Size(a::StaticArray{S}) where {S} = Size(S)
-Size(a::Type{<:StaticArray{S}}) where {S} = Size(S)
+Size(a::T) where {T<:AbstractArray} = Size(T)
+Size(::Type{<:StaticArray{S}}) where {S} = Size(S)
+@pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
 struct Length{L}
     function Length{L}() where L
@@ -58,14 +80,17 @@ struct Length{L}
 end
 
 check_length(L::Int) = nothing
-check_length(L) = error("Length was expected to be an `Int`")
+check_length(L::Dynamic) = nothing
+check_length(L) = error("Length was expected to be an `Int` or `Dynamic`")
 
 Base.show(io::IO, ::Length{L}) where {L} = print(io, "Length(", L, ")")
 
-Length(a::StaticArray) = Length(Size(a))
-Length(::Type{SA}) where {SA <: StaticArray} = Length(Size(SA))
-@pure Length(::Size{S}) where {S} = Length{prod(S)}()
+Length(a::AbstractArray) = Length(Size(a))
+Length(::Type{A}) where {A <: AbstractArray} = Length(Size(A))
 @pure Length(L::Int) = Length{L}()
+Length(::Size{S}) where {S} = _Length(S...)
+@pure _Length(S::Int...) = Length{prod(S)}()
+@inline _Length(S...) = Length{Dynamic()}()
 
 # Some @pure convenience functions for `Size`
 @pure get(::Size{S}) where {S} = S
@@ -106,6 +131,17 @@ Compat.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 # unroll_tuple also works with `Length`
 @propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})
 
+"""
+    sizematch(::Size, ::Size)
+
+Determines whether two `Size`s match, in the sense that they have the same
+number of dimensions, and their dimensions match as determined by [`dimmatch`](@ref).
+"""
+sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = _sizematch(S1, S2)
+_sizematch(::Tuple{}, ::Tuple{}) = true
+_sizematch(S1::Tuple{Vararg{<:StaticDimension, N}}, S2::Tuple{Vararg{<:StaticDimension, N}}) where {N} =
+    dimmatch(S1[1], S2[1]) && _sizematch(Base.tail(S1), Base.tail(S2))
+_sizematch(::Tuple{Vararg{<:StaticDimension}}, ::Tuple{Vararg{<:StaticDimension}}) = false # mismatch in number of dimensions
 
 """
 Return either the statically known Size() or runtime size()

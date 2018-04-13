@@ -170,8 +170,12 @@ end
     @testset "broadcast! with Array destination" begin
         # Issue #385
         a = zeros(3, 3)
-        b = ones(SMatrix{3, 3})
+        b = @SMatrix [1 2 3; 4 5 6; 7 8 9]
         a .= b
         @test a == b
+
+        c = SVector(1, 2, 3)
+        a .= c
+        @test a == [1 1 1; 2 2 2; 3 3 3]
     end
 end
