@@ -22,24 +22,41 @@ dimmatch(x::StaticDimension, y::StaticDimension) = true
 """
     Size(dims::Int...)
 
-`Size` is used extensively in throughout the `StaticArrays` API to describe the size of a
-static array desired by the user. The dimensions are stored as a type parameter and are
-statically propagated by the compiler, resulting in efficient, type inferrable code. For
+`Size` is used extensively throughout the `StaticArrays` API to describe _compile-time_
+knowledge of the size of an array. The dimensions are stored as a type parameter and are
+statically propagated by the compiler, resulting in efficient, type-inferrable code. For
 example, to create a static matrix of zeros, use `zeros(Size(3,3))` (rather than
 `zeros(3,3)`, which constructs a `Base.Array`).
 
-    Size(a::StaticArray)
-    Size(::Type{T<:StaticArray})
-
-Extract the `Size` corresponding to the given static array. This has multiple uses,
-including using for "trait"-based dispatch on the size of a statically sized array. For
-example:
+```julia
+Size(a::StaticArray)
+Size(::Type{T<:StaticArray})
 ```
+
+Note that if dimensions are not known statically (e.g., for standard `Array`s),
+[`Dynamic()`](@ref) should be used instead of an `Int`.
+
+The `Size` constructor can be used to extract static dimension information from a given
+array. For example:
+
+```julia-repl
+julia> Size(zeros(SMatrix{3, 4}))
+Size(3, 4)
+
+julia> Size(zeros(3, 4))
+Size(StaticArrays.Dynamic(), StaticArrays.Dynamic())
+```
+
+This has multiple uses, including "trait"-based dispatch on the size of a statically-sized
+array. For example:
+
+```julia
 det(x::StaticMatrix) = _det(Size(x), x)
 _det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]
 _det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
 # and other definitions as necessary
 ```
+
 """
 struct Size{S}
     function Size{S}() where {S}
