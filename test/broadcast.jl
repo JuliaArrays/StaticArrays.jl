@@ -177,5 +177,8 @@ end
         c = SVector(1, 2, 3)
         a .= c
         @test a == [1 1 1; 2 2 2; 3 3 3]
+
+        d = SVector(1, 2, 3, 4)
+        @test_throws DimensionMismatch a .= d
     end
 end

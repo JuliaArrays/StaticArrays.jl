@@ -16,8 +16,8 @@ Return whether dimensions `x` and `y` match at compile time, that is:
 * if `x` or `y` are `Dynamic()`, return true
 """
 function dimmatch end
-dimmatch(x::Int, y::Int) = x === y
-dimmatch(x::StaticDimension, y::StaticDimension) = true
+@inline dimmatch(x::Int, y::Int) = x === y
+@inline dimmatch(x::StaticDimension, y::StaticDimension) = true
 
 """
     Size(dims::Int...)
@@ -28,13 +28,11 @@ statically propagated by the compiler, resulting in efficient, type-inferrable c
 example, to create a static matrix of zeros, use `zeros(Size(3,3))` (rather than
 `zeros(3,3)`, which constructs a `Base.Array`).
 
-```julia
-Size(a::StaticArray)
-Size(::Type{T<:StaticArray})
-```
-
 Note that if dimensions are not known statically (e.g., for standard `Array`s),
 [`Dynamic()`](@ref) should be used instead of an `Int`.
+
+    Size(a::AbstractArray)
+    Size(::Type{T<:AbstractArray})
 
 The `Size` constructor can be used to extract static dimension information from a given
 array. For example:
@@ -150,15 +148,26 @@ Compat.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 """
     sizematch(::Size, ::Size)
+    sizematch(::Tuple, ::Tuple)
 
-Determines whether two `Size`s match, in the sense that they have the same
+Determine whether two sizes match, in the sense that they have the same
 number of dimensions, and their dimensions match as determined by [`dimmatch`](@ref).
 """
-sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = _sizematch(S1, S2)
-_sizematch(::Tuple{}, ::Tuple{}) = true
-_sizematch(S1::Tuple{Vararg{<:StaticDimension, N}}, S2::Tuple{Vararg{<:StaticDimension, N}}) where {N} =
-    dimmatch(S1[1], S2[1]) && _sizematch(Base.tail(S1), Base.tail(S2))
-_sizematch(::Tuple{Vararg{<:StaticDimension}}, ::Tuple{Vararg{<:StaticDimension}}) = false # mismatch in number of dimensions
+@pure sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = sizematch(S1, S2)
+@inline sizematch(::Tuple{}, ::Tuple{}) = true
+@inline sizematch(S1::Tuple{Vararg{<:StaticDimension, N}}, S2::Tuple{Vararg{<:StaticDimension, N}}) where {N} =
+    dimmatch(S1[1], S2[1]) && sizematch(Base.tail(S1), Base.tail(S2))
+@inline sizematch(::Tuple{Vararg{<:StaticDimension}}, ::Tuple{Vararg{<:StaticDimension}}) = false # mismatch in number of dimensions
+
+"""
+    sizematch(::Size, A::AbstractArray)
+
+Determine whether array `A` matches the given size. If `A` is a
+`StaticArray`, the check is performed at compile time, otherwise,
+the check is performed at runtime.
+"""
+@inline sizematch(::Size{S}, A::StaticArray) where {S} = sizematch(Size{S}(), Size(A))
+@inline sizematch(::Size{S}, A::AbstractArray) where {S} = sizematch(S, size(A))
 
 """
 Return either the statically known Size() or runtime size()

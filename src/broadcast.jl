@@ -190,7 +190,8 @@ end
     sizes = tuple(sizes...)
 
     # TODO: this could also be done outside the generated function:
-    sizematch(Size{newsize}(), Size(dest)) || throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
+    sizematch(Size{newsize}(), Size(dest)) ||
+        throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
 
     ndims = 0
     for i = 1:length(sizes)
@@ -225,6 +226,7 @@ end
 
     return quote
         @_inline_meta
+        sizematch($(Size{newsize}()), dest) || throw(DimensionMismatch("array could not be broadcast to match destination"))
         @inbounds $(Expr(:block, exprs...))
         return dest
     end
