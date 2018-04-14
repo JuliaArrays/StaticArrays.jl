@@ -142,4 +142,39 @@
     @test StaticArrays.check_length(StaticArrays.Dynamic()) == nothing
 
     @test convert(Tuple, @SVector [2]) == (2,)
+
+    @testset "dimmatch" begin
+        @test StaticArrays.dimmatch(3, 3)
+        @test StaticArrays.dimmatch(3, StaticArrays.Dynamic())
+        @test StaticArrays.dimmatch(StaticArrays.Dynamic(), 3)
+        @test StaticArrays.dimmatch(StaticArrays.Dynamic(), StaticArrays.Dynamic())
+
+        @test !StaticArrays.dimmatch(3, 2)
+    end
+
+    @testset "sizematch" begin
+        @test StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2, 3))
+        @test StaticArrays.sizematch(Size(1, StaticArrays.Dynamic(), 3), Size(1, 2, 3))
+        @test StaticArrays.sizematch(Size(1, 2, 3), Size(1, StaticArrays.Dynamic(), 3))
+        @test StaticArrays.sizematch(Size(StaticArrays.Dynamic()), Size(StaticArrays.Dynamic()))
+
+        @test !StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2, 4))
+        @test !StaticArrays.sizematch(Size(2, 2, 3), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(2, 2, StaticArrays.Dynamic()), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(1, 2), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2))
+
+        sa = SArray{Tuple{2,3}, Int}((3, 4, 5, 6, 7, 8))
+        a = [3 5 7; 4 6 8]
+
+        @test StaticArrays.sizematch(Size(2, 3), sa)
+        @test StaticArrays.sizematch(Size(2, StaticArrays.Dynamic()), sa)
+        @test StaticArrays.sizematch(Size(2, 3), a)
+        @test StaticArrays.sizematch(Size(2, StaticArrays.Dynamic()), a)
+
+        @test !StaticArrays.sizematch(Size(2, 2), sa)
+        @test !StaticArrays.sizematch(Size(3, StaticArrays.Dynamic()), sa)
+        @test !StaticArrays.sizematch(Size(2, 2), a)
+        @test !StaticArrays.sizematch(Size(3, StaticArrays.Dynamic()), a)
+    end
 end
