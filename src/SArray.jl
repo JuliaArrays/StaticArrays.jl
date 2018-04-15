@@ -29,6 +29,8 @@ struct SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     end
 end
 
+convert_similar_type(::Type{<:SArray}, ::Type{T}, S::Size) where {T} = SArray{size_tuple(S), T, length(S), get(Length(S))}
+
 @generated function (::Type{SArray{S, T, N}})(x::Tuple) where {S <: Tuple, T, N}
     return quote
         @_inline_meta
@@ -49,8 +51,6 @@ end
         SArray{S, $(promote_tuple_eltype(T)), $(tuple_length(S)), $(tuple_prod(S))}(x)
     end
 end
-
-@inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
 # show(io::IO, ::Type{SArray{S, T, N}}) where {S, T, N} = print(io, "SArray{$S,$T,$N}") # TODO reinstate

@@ -1,8 +1,14 @@
+convert_similar_type(::Type{SA}, ::Type{T}) where {SA<:StaticArray, T} = convert_similar_type(SA, T, Size(SA))
+convert_similar_type(::Type{SA}, S::Size) where {SA<:StaticArray} = convert_similar_type(SA, eltype(SA), S)
+
 (::Type{SA})(x::Tuple{Tuple{Tuple{<:Tuple}}}) where {SA <: StaticArray} = error("No precise constructor for $SA found. Length of input was $(length(x[1][1][1])).")
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
-@inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
-@inline (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
+@inline (::Type{SA})(a::StaticArray) where {S<:Tuple, T, N, SA<:StaticArray{S, T, N}} = SA(Tuple(a))
+@inline (::Type{SA})(a::StaticArray) where {S<:Tuple, SA<:StaticArray{S}} = convert_similar_type(SA, eltype(a))(Tuple(a))::SA
+@inline (::Type{SA})(a::StaticArray) where {S<:Tuple, T, SA<:StaticArray{S, T}} = SA(Tuple(a))
+@inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = convert_similar_type(SA, eltype(a), Size(a))(Tuple(a))::SA
+@inline (::Type{SA})(a::AbstractArray) where {SA<:StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))

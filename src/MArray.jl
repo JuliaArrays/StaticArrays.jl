@@ -36,6 +36,8 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     end
 end
 
+convert_similar_type(::Type{<:MArray}, ::Type{T}, S::Size) where {T} = MArray{size_tuple(S), T, length(S), get(Length(S))}
+
 @generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
@@ -70,8 +72,6 @@ end
         MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}()
     end
 end
-
-@inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
 #show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
