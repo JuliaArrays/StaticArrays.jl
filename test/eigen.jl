@@ -30,35 +30,35 @@
         (vals, vecs) = eig(m)
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
         ef = eigfact(m)
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(Val(0) => vals)*ef[:vectors]')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
         ef = eigfact(Symmetric(m))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(Val(0) => vals)*ef[:vectors]')::SMatrix ≈ m
         ef = eigfact(Symmetric(m, :L))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(Val(0) => vals)*ef[:vectors]')::SMatrix ≈ m
 
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
         ef = eigfact(Hermitian(m))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(Val(0) => vals)*ef[:vectors]')::SMatrix ≈ m
         ef = eigfact(Hermitian(m, :L))
         @test ef[:values]::SVector ≈ vals_a
-        @test (ef[:vectors]*diagm(vals)*ef[:vectors]')::SMatrix ≈ m
+        @test (ef[:vectors]*diagm(Val(0) => vals)*ef[:vectors]')::SMatrix ≈ m
 
-        m_d = randn(SVector{2}); m = diagm(m_d)
+        m_d = randn(SVector{2}); m = diagm(Val(0) => m_d)
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ sort(m_d)
         (vals, vecs) = eig(Hermitian(m, :L))
@@ -76,19 +76,19 @@
         (vals, vecs) = eig(m)
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m, :L))
         @test vals::SVector ≈ vals_a
 
-        m_d = randn(SVector{3}); m = diagm(m_d)
+        m_d = randn(SVector{3}); m = diagm(Val(0) => m_d)
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ sort(m_d)
         (vals, vecs) = eig(Hermitian(m, :L))
@@ -146,7 +146,7 @@
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vals ≈ [0.0, 1.0, 2.0]
-        @test vecs*diagm(vals)*vecs' ≈ m
+        @test vecs*diagm(Val(0) => vals)*vecs' ≈ m
         @test eigvals(m) ≈ vals
 
         m = @SMatrix [1.0 0.0 1.0;
@@ -155,7 +155,7 @@
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vals ≈ [0.0, 1.0, 2.0]
-        @test vecs*diagm(vals)*vecs' ≈ m
+        @test vecs*diagm(Val(0) => vals)*vecs' ≈ m
         @test eigvals(m) ≈ vals
 
         m = @SMatrix [1.0 1.0 0.0;
@@ -164,7 +164,7 @@
         vals, vecs = eig(m)::Tuple{SVector,SMatrix}
 
         @test vals ≈ [0.0, 1.0, 2.0]
-        @test vecs*diagm(vals)*vecs' ≈ m
+        @test vecs*diagm(Val(0) => vals)*vecs' ≈ m
         @test eigvals(m) ≈ vals
     end
 
@@ -177,18 +177,18 @@
         (vals, vecs) = eig(m)
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m))
         @test vals::SVector ≈ vals_a
         @test eigvals(m) ≈ vals
         @test eigvals(Hermitian(m)) ≈ vals
         @test eigvals(Hermitian(m, :L)) ≈ vals
-        @test (vecs*diagm(vals)*vecs')::SMatrix ≈ m
+        @test (vecs*diagm(Val(0) => vals)*vecs')::SMatrix ≈ m
 
         (vals, vecs) = eig(Symmetric(m, :L))
         @test vals::SVector ≈ vals_a
-        m_d = randn(SVector{4}); m = diagm(m_d)
+        m_d = randn(SVector{4}); m = diagm(Val(0) => m_d)
         (vals, vecs) = eig(Hermitian(m))
         @test vals::SVector ≈ sort(m_d)
         (vals, vecs) = eig(Hermitian(m, :L))
@@ -207,8 +207,8 @@
             A = Hermitian(SMatrix{n,n}(a))
             D,V = eig(A)
             @test V'V ≈ eye(n)
-            @test V*diagm(D)*V' ≈ A
-            @test V'*A*V ≈ diagm(D)
+            @test V*diagm(Val(0) => D)*V' ≈ A
+            @test V'*A*V ≈ diagm(Val(0) => D)
         end
     end
 end
