@@ -169,10 +169,6 @@
     @testset "inferabilty of index_sizes helper" begin
         # see JuliaLang/julia#21244
         # it's not about inferring the correct type, but about inference throwing an error
-        if VERSION < v"0.7-"
-            @test code_warntype(DevNull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
-        else
-            @test code_warntype(devnull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
-        end
+        @test code_warntype(devnull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
     end
 end
