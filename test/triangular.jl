@@ -1,8 +1,8 @@
 @testset "Triangular-matrix multiplication" begin
     for n in (1, 2, 3, 4),
-        eltyA in (Float64, Complex128, Int),
+        eltyA in (Float64, ComplexF64, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float64, Complex128)
+                eltyB in (Float64, ComplexF64)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : rand(eltyA, n, n))
         B = rand(eltyB, n, n)
@@ -52,9 +52,9 @@ end
 
 @testset "Triangular-Adjoint multiplication" begin
     for n in (1,),
-        eltyA in (Float64, Complex128, Int),
+        eltyA in (Float64, ComplexF64, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float64, Complex128)
+                eltyB in (Float64, ComplexF64)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : rand(eltyA, n, n))
         B = rand(eltyB, n)
@@ -90,9 +90,9 @@ end
 
 @testset "Triangular-matrix division" begin
     for n in (1, 2, 3, 4),
-        eltyA in (Float64, Complex128, Int),
+        eltyA in (Float64, ComplexF64, Int),
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float64, Complex128)
+                eltyB in (Float64, ComplexF64)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : adjoint(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
