@@ -1,11 +1,9 @@
-using StaticArrays, Compat
+using StaticArrays, Compat, Compat.Test
 if VERSION > v"0.7-"
-    using Test
     using Random
     using LinearAlgebra
     using InteractiveUtils
 else
-    using Base.Test
     using Base.Random
     const LinearAlgebra = Base.LinAlg
     const Adjoint = RowVector

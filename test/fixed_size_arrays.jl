@@ -1,6 +1,6 @@
 using StaticArrays
 using StaticArrays.FixedSizeArrays
-using Base.Test
+using Compat.Test
 
 import StaticArrays.FixedSizeArrays: @fixed_vector
 

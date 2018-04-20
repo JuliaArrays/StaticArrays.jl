@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 """
 Create an almost singular `Matrix{Float64}` of size `N×N`.

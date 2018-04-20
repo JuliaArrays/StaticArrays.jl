@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 @testset "Solving linear system" begin
     @testset "Problem size: $n x $n. Matrix type: $m. Element type: $elty" for n in (1,2,3,4),

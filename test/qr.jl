@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 Base.randn(::Type{BigFloat}) = BigFloat(randn(Float64))
 Base.randn(::Type{BigFloat}, I::Integer) = [randn(BigFloat) for i=1:I]

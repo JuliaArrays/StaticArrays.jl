@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 @testset "SVD factorization" begin
     m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
