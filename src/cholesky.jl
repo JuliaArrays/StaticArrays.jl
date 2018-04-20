@@ -1,13 +1,23 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
+if isdefined(Compat.LinearAlgebra, :non_hermitian_error)
+    non_hermitian_error() = Compat.LinearAlgebra.non_hermitian_error("chol")
+else
+    non_hermitian_error() = throw(Compat.LinearAlgebra.PosDefException(-1))
+end
 @inline function LinearAlgebra.chol(A::StaticMatrix)
-    ishermitian(A) || LinearAlgebra.non_hermitian_error("chol")
+    ishermitian(A) || non_hermitian_error()
     _chol(Size(A), A)
 end
 
 @inline function LinearAlgebra.chol(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix})
     _chol(Size(A), A.data)
 end
-@inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = chol(A)
+if VERSION < v"0.7.0-DEV.393"
+    @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = chol(A)
+else
+    # TODO should return non-zero info instead of throwing on errors
+    @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (chol(A), 0)
+end
 
 
 @generated function _chol(::Size{(1,1)}, A::StaticMatrix)
@@ -50,4 +60,4 @@ end
 end
 
 # Otherwise default algorithm returning wrapped SizedArray
-@inline _chol(s::Size, A::StaticArray) = s(full(chol(Hermitian(Array(A)))))
+@inline _chol(s::Size, A::StaticArray) = s(Matrix(chol(Hermitian(Array(A)))))
