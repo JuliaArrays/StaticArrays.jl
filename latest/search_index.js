@@ -229,7 +229,7 @@ var documenterSearchIndex = {"docs": [
     "page": "API",
     "title": "StaticArrays.Size",
     "category": "type",
-    "text": "Size(dims::Int...)\n\nSize is used extensively in throughout the StaticArrays API to describe the size of a static array desired by the user. The dimensions are stored as a type parameter and are statically propagated by the compiler, resulting in efficient, type inferrable code. For example, to create a static matrix of zeros, use zeros(Size(3,3)) (rather than zeros(3,3), which constructs a Base.Array).\n\nSize(a::StaticArray)\nSize(::Type{T<:StaticArray})\n\nExtract the Size corresponding to the given static array. This has multiple uses, including using for \"trait\"-based dispatch on the size of a statically sized array. For example:\n\ndet(x::StaticMatrix) = _det(Size(x), x)\n_det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]\n_det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]\n# and other definitions as necessary\n\n\n\n"
+    "text": "Size(dims::Int...)\n\nSize is used extensively throughout the StaticArrays API to describe _compile-time_ knowledge of the size of an array. The dimensions are stored as a type parameter and are statically propagated by the compiler, resulting in efficient, type-inferrable code. For example, to create a static matrix of zeros, use zeros(Size(3,3)) (rather than zeros(3,3), which constructs a Base.Array).\n\nNote that if dimensions are not known statically (e.g., for standard Arrays), Dynamic() should be used instead of an Int.\n\nSize(a::AbstractArray)\nSize(::Type{T<:AbstractArray})\n\nThe Size constructor can be used to extract static dimension information from a given array. For example:\n\njulia> Size(zeros(SMatrix{3, 4}))\nSize(3, 4)\n\njulia> Size(zeros(3, 4))\nSize(StaticArrays.Dynamic(), StaticArrays.Dynamic())\n\nThis has multiple uses, including \"trait\"-based dispatch on the size of a statically-sized array. For example:\n\ndet(x::StaticMatrix) = _det(Size(x), x)\n_det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]\n_det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]\n# and other definitions as necessary\n\n\n\n"
 },
 
 {
@@ -265,6 +265,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "pages/api.html#StaticArrays.Dynamic",
+    "page": "API",
+    "title": "StaticArrays.Dynamic",
+    "category": "type",
+    "text": "Dynamic()\n\nUsed to signify that a dimension of an array is not known statically.\n\n\n\n"
+},
+
+{
     "location": "pages/api.html#Base.LinAlg.qr",
     "page": "API",
     "title": "Base.LinAlg.qr",
@@ -297,11 +305,35 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "pages/api.html#StaticArrays.dimmatch",
+    "page": "API",
+    "title": "StaticArrays.dimmatch",
+    "category": "function",
+    "text": "dimmatch(x::StaticDimension, y::StaticDimension)\n\nReturn whether dimensions x and y match at compile time, that is:\n\nif x and y are both Ints, check that they are equal\nif x or y are Dynamic(), return true\n\n\n\n"
+},
+
+{
     "location": "pages/api.html#StaticArrays.same_size-Tuple",
     "page": "API",
     "title": "StaticArrays.same_size",
     "category": "method",
     "text": "Returns the common Size of the inputs (or else throws a DimensionMismatch)\n\n\n\n"
+},
+
+{
+    "location": "pages/api.html#StaticArrays.sizematch-Union{Tuple{S1}, Tuple{S2}, Tuple{StaticArrays.Size{S1},StaticArrays.Size{S2}}} where S2 where S1",
+    "page": "API",
+    "title": "StaticArrays.sizematch",
+    "category": "method",
+    "text": "sizematch(::Size, ::Size)\nsizematch(::Tuple, ::Tuple)\n\nDetermine whether two sizes match, in the sense that they have the same number of dimensions, and their dimensions match as determined by dimmatch.\n\n\n\n"
+},
+
+{
+    "location": "pages/api.html#StaticArrays.sizematch-Union{Tuple{StaticArrays.Size{S},StaticArrays.StaticArray}, Tuple{S}} where S",
+    "page": "API",
+    "title": "StaticArrays.sizematch",
+    "category": "method",
+    "text": "sizematch(::Size, A::AbstractArray)\n\nDetermine whether array A matches the given size. If A is a StaticArray, the check is performed at compile time, otherwise, the check is performed at runtime.\n\n\n\n"
 },
 
 {
