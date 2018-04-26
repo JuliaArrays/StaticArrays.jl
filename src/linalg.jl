@@ -200,8 +200,11 @@ end
     end
 end
 
-# old interface, to be deprecated/deleted eventually
-@inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = diagm(k() => v)
+if VERSION < v"v0.7.0-DEV.2161"
+    @inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = diagm(k() => v)
+else
+    @deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
+end
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
