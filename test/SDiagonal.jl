@@ -22,13 +22,13 @@
     
         @test StaticArrays.scalem(@SMatrix([1 1 1;1 1 1; 1 1 1]), @SVector [1,2,3]) === @SArray [1 2 3; 1 2 3; 1 2 3]
         @test StaticArrays.scalem(@SVector([1,2,3]),@SMatrix [1 1 1;1 1 1; 1 1 1])' === @SArray [1 2 3; 1 2 3; 1 2 3]
-    
-        m = SDiagonal(@SVector [11, 12, 13, 14])  
-        
-        @test diag(m) === m.diag 
-     
-        m2 = diagm([11, 12, 13, 14])
-     
+
+        m = SDiagonal(@SVector [11, 12, 13, 14])
+
+        @test diag(m) === m.diag
+
+        m2 = diagm(0 => [11, 12, 13, 14])
+
         @test logdet(m) == logdet(m2)
         @test logdet(im*m) ≈ logdet(im*m2)
         @test det(m) == det(m2)
@@ -113,7 +113,7 @@
         @test m\[1; 1; 1; 1] == [11; 12; 13; 14].\[1; 1; 1; 1]
         @test SMatrix{4,4}(Matrix{Float64}(I, 4, 4))*m == m
         @test m*SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == m
-        @test SMatrix{4,4}(Matrix{Float64}(I, 4, 4))/m == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
-        @test m\SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == diagm([11; 12; 13; 14].\[1; 1; 1; 1])
+        @test SMatrix{4,4}(Matrix{Float64}(I, 4, 4))/m == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
+        @test m\SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
     end
 end

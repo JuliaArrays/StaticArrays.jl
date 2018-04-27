@@ -182,22 +182,28 @@ end
     end
 #end
 
-@inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = _diagm(Size(v), v, k)
-@generated function _diagm(::Size{S}, v::StaticVector, ::Type{Val{D}}) where {S,D}
-    S1 = S[1]
-    Snew1 = S1+abs(D)
-    Snew = (Snew1, Snew1)
-    Lnew = Snew1 * Snew1
-    T = eltype(v)
-    ind = diagind(Snew1, Snew1, D)
-    exprs = fill(:(zero($T)), Lnew)
-    for n = 1:S[1]
-        exprs[ind[n]] = :(v[$n])
+@generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
+    N = maximum(abs(kv.parameters[1].parameters[1]) + length(kv.parameters[2]) for kv in kvs)
+    X = [Symbol("x_$(i)_$(j)") for i in 1:N, j in 1:N]
+    T = promote_type((eltype(kv.parameters[2]) for kv in kvs)...)
+    exprs = fill(:(zero($T)), N*N)
+    for m in eachindex(kvs)
+        kv = kvs[m]
+        ind = diagind(N, N, kv.parameters[1].parameters[1])
+        for n = 1:length(kv.parameters[2])
+            exprs[ind[n]] = :(kvs[$m].second[$n])
+        end
     end
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return similar_type($v, Size($Snew))(tuple($(exprs...)))
+        @inbounds return SMatrix{$N,$N,$T}(tuple($(exprs...)))
     end
+end
+
+if VERSION < v"v0.7.0-DEV.2161"
+    @inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = diagm(k() => v)
+else
+    @deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
 end
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
