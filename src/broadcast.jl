@@ -2,7 +2,7 @@
 ## broadcast! ##
 ################
 
-@static if VERSION < v"0.7.0-DEV.2638"
+@static if VERSION < v"0.7.0-DEV.5096"
     ## Old Broadcast API ##
     import Base.Broadcast:
     _containertype, promote_containertype, broadcast_indices, containertype,
@@ -46,7 +46,7 @@
 else
     ## New Broadcast API ##
     import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, broadcast
+    BroadcastStyle, AbstractArrayStyle, Broadcasted
 
     # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
     # A constructor that changes the style parameter N (array dimension) is also required
@@ -64,7 +64,8 @@ else
         StaticArrayStyle{M}()
 
     # Add a specialized broadcast method that overrides the Base fallback
-     @inline function broadcast(f::Tf, ::StaticArrayStyle{M}, ::Nothing, ::Nothing, as::Vararg{Any, N}) where {Tf, M, N}
+    @inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
+        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes(argsizes)
         # TODO: use the following to fall back to generic broadcast once the precedence rules are less conservative:
@@ -73,10 +74,11 @@ else
     end
 
     # Add a specialized broadcast! method that overrides the Base fallback
-    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle{M}, as::Vararg{Any,N}) where {Tf, M, N}
+    @inline function Base.copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
+        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && return broadcast!(f, dest, Broadcast.DefaultArrayStyle{M}(), as...)
+        Length(destsize) === Length{Dynamic()}() && error("Dynamic not implemented")#return broadcast!(f, dest, Broadcast.DefaultArrayStyle{M}(), as...)
         _broadcast!(f, destsize, dest, argsizes, as...)
     end
 end
