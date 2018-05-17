@@ -46,7 +46,7 @@
 else
     ## New Broadcast API ##
     import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle
+    BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
 
     # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
     # A constructor that changes the style parameter N (array dimension) is also required
@@ -63,29 +63,25 @@ else
     BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
         StaticArrayStyle{M}()
 
-    # Add a specialized broadcast method that overrides the Base fallback
+    # copy overload
     @inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
         flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes(argsizes)
-        # TODO: use the following to fall back to generic broadcast once the precedence rules are less conservative:
-        Length(destsize) === Length{Dynamic()}() && return copy(Broadcasted{DefaultArrayStyle{M}}(f, as))
         _broadcast(f, destsize, argsizes, as...)
     end
 
-    # Add a specialized broadcast! method that overrides the Base fallback
-    @inline function Base.copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
+    # copyto! overloads
+    @inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+    @inline Base.copyto!(dest::AbstractArray, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+    @inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
         flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && return copyto!(dest, Broadcasted{DefaultArrayStyle{M}}(f, as))
-        _broadcast!(f, destsize, dest, argsizes, as...)
-    end
-    @inline function Base.copyto!(dest::AbstractArray, B::Broadcasted{StaticArrayStyle{M}}) where M
-        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
-        argsizes = broadcast_sizes(as...)
-        destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && return copyto!(dest, Broadcasted{DefaultArrayStyle{M}}(f, as))
+        if Length(destsize) === Length{Dynamic()}()
+            # destination dimension cannot be determined statically; fall back to generic broadcast!
+            return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
+        end
         _broadcast!(f, destsize, dest, argsizes, as...)
     end
 end
