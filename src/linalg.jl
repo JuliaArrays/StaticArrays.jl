@@ -358,12 +358,135 @@ const _length_limit = Length(200)
     if prod(outsize) > length_limit
         return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
     end
-    rows = [:(hcat($([:(a[$(LinearIndices(SA)[i, j])]*b) for j=1:SA[2]]...))) for i=1:SA[1]]
+
+    M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
+
     return quote
         @_inline_meta
-        @inbounds return vcat($(rows...))
+        @inbounds return  similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
+
+@inline kron(a::StaticVector, b::StaticVector) = _kron_vec_x_vec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_vec_x_vec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = SA .* SB
+    if prod(outsize) > length_limit
+        return :( SizedVector{$(outsize[1])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    m = [ :(a[$ia] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[1]]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(m...)))
+    end
+end
+
+@inline kron(a::RowVector{<:Number,<:StaticArray}, b::RowVector{<:Number,<:StaticArray}) = _kron_tvec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_tvec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = SA .* SB
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    m = [ :(a[$ia] * b[$ib]) for ib in 1:SB[2], ia in 1:SA[2]]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(m...)))
+    end
+end
+
+@inline kron(a::RowVector{<:Number,<:StaticArray}, b::StaticVector) = _kron_tvec_x_vec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_tvec_x_vec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = (SA[1] * SB[1], SA[2])
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[2]]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
+    end
+end
+
+@inline kron(a::StaticVector, b::RowVector{<:Number,<:StaticArray}) = _kron_vec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_vec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = (SA[1] * SB[1], SB[2])
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia] * b[$ib]) for  ia in 1:SA[1], ib in 1:SB[2]]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($a, Size($(outsize)))(tuple($(M...)))
+    end
+end
+
+@inline kron(a::StaticVector, b::StaticMatrix) = _kron_vec_x_mat(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_vec_x_mat(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = (SA[1] * SB[1], SB[2])
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2]]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($b, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
+    end
+end
+
+@inline kron(a::StaticMatrix, b::StaticVector) = _kron_mat_x_vec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_mat_x_vec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = (SA[1] * SB[1], SA[2])
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia,$ja] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[1], ja in 1:SA[2] ]
+
+    return quote
+        @_inline_meta
+        @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
+    end
+end
+
+@inline kron(a::StaticMatrix, b::RowVector{<:Number,<:StaticArray}) = _kron_mat_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_mat_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = SA .* SB
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
+
+    return quote
+        @_inline_meta
+        @inbounds return  similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
+    end
+end
+
+@inline kron(a::RowVector{<:Number,<:StaticArray}, b::StaticMatrix) = _kron_tvec_x_mat(_length_limit, Size(a), Size(b), a, b)
+@generated function _kron_tvec_x_mat(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
+    outsize = SA .* SB
+    if prod(outsize) > length_limit
+        return :( SizedMatrix{$(outsize[1]),$(outsize[2])}( kron(drop_sdims(a), drop_sdims(b)) ) )
+    end
+
+    M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
+
+    return quote
+        @_inline_meta
+        @inbounds return  similar_type($b, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
+    end
+end
+
 
 if VERSION < v"0.7-"
     @inline Size(::Union{Adjoint{T, SA}, Type{Adjoint{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
