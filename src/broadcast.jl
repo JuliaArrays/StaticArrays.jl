@@ -46,7 +46,7 @@
 else
     ## New Broadcast API ##
     import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, Broadcasted
+    BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle
 
     # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
     # A constructor that changes the style parameter N (array dimension) is also required
@@ -58,9 +58,9 @@ else
     BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticMatrix}}) = StaticArrayStyle{2}()
 
     # Precedence rules
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
-        Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
+    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
+        DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
         StaticArrayStyle{M}()
 
     # Add a specialized broadcast method that overrides the Base fallback
@@ -69,7 +69,7 @@ else
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes(argsizes)
         # TODO: use the following to fall back to generic broadcast once the precedence rules are less conservative:
-        # Length(destsize) === Length{Dynamic()}() && return broadcast(f, Broadcast.DefaultArrayStyle{M}(), nothing, nothing, as...)
+        Length(destsize) === Length{Dynamic()}() && return copy(Broadcasted{DefaultArrayStyle{M}}(f, as))
         _broadcast(f, destsize, argsizes, as...)
     end
 
@@ -78,7 +78,14 @@ else
         flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && error("Dynamic not implemented")#return broadcast!(f, dest, Broadcast.DefaultArrayStyle{M}(), as...)
+        Length(destsize) === Length{Dynamic()}() && return copyto!(dest, Broadcasted{DefaultArrayStyle{M}}(f, as))
+        _broadcast!(f, destsize, dest, argsizes, as...)
+    end
+    @inline function Base.copyto!(dest::AbstractArray, B::Broadcasted{StaticArrayStyle{M}}) where M
+        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
+        argsizes = broadcast_sizes(as...)
+        destsize = combine_sizes((Size(dest), argsizes...))
+        Length(destsize) === Length{Dynamic()}() && return copyto!(dest, Broadcasted{DefaultArrayStyle{M}}(f, as))
         _broadcast!(f, destsize, dest, argsizes, as...)
     end
 end
