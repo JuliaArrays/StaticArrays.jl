@@ -2,7 +2,7 @@
 ## broadcast! ##
 ################
 
-@static if VERSION < v"0.7.0-DEV.2638"
+@static if VERSION < v"0.7.0-DEV.5096"
     ## Old Broadcast API ##
     import Base.Broadcast:
     _containertype, promote_containertype, broadcast_indices, containertype,
@@ -46,7 +46,7 @@
 else
     ## New Broadcast API ##
     import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, broadcast
+    BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
 
     # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
     # A constructor that changes the style parameter N (array dimension) is also required
@@ -58,25 +58,30 @@ else
     BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticMatrix}}) = StaticArrayStyle{2}()
 
     # Precedence rules
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{N}) where {M,N} =
-        Broadcast.DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
-    BroadcastStyle(::StaticArrayStyle{M}, ::Broadcast.DefaultArrayStyle{0}) where {M} =
+    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
+        DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
         StaticArrayStyle{M}()
 
-    # Add a specialized broadcast method that overrides the Base fallback
-     @inline function broadcast(f::Tf, ::StaticArrayStyle{M}, ::Nothing, ::Nothing, as::Vararg{Any, N}) where {Tf, M, N}
+    # copy overload
+    @inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
+        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes(argsizes)
-        # TODO: use the following to fall back to generic broadcast once the precedence rules are less conservative:
-        # Length(destsize) === Length{Dynamic()}() && return broadcast(f, Broadcast.DefaultArrayStyle{M}(), nothing, nothing, as...)
         _broadcast(f, destsize, argsizes, as...)
     end
 
-    # Add a specialized broadcast! method that overrides the Base fallback
-    @inline function broadcast!(f::Tf, dest, ::StaticArrayStyle{M}, as::Vararg{Any,N}) where {Tf, M, N}
+    # copyto! overloads
+    @inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+    @inline Base.copyto!(dest::AbstractArray, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+    @inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
+        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
         argsizes = broadcast_sizes(as...)
         destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && return broadcast!(f, dest, Broadcast.DefaultArrayStyle{M}(), as...)
+        if Length(destsize) === Length{Dynamic()}()
+            # destination dimension cannot be determined statically; fall back to generic broadcast!
+            return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
+        end
         _broadcast!(f, destsize, dest, argsizes, as...)
     end
 end
