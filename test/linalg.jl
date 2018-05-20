@@ -19,7 +19,7 @@ using StaticArrays, Base.Test
         # TODO Decide what to do about this stuff:
         #v3 = [2,4,6,8]
         #v4 = [4,3,2,1]
- 
+
         #@test @inferred(v1 + v4) === @SVector [6, 7, 8, 9]
         #@test @inferred(v3 + v2) === @SVector [6, 7, 8, 9]
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
@@ -193,5 +193,67 @@ using StaticArrays, Base.Test
         M1 = collect(1:20)
         M2 = collect(20:-1:1)'
         @test @inferred(kron(SMatrix{20,1}(M1),SMatrix{1,20}(M2)))::SizedMatrix{20,20} == kron(M1,M2)
+
+        # Tests for kron of two SVectors as well as between SVectors and SMatrices.
+        a = @SVector [1, 2, 3]
+        b = @SVector [4, 5, 6]
+        A = @SMatrix [1 2; 3 4]
+
+        p = [1,2,3]
+        q = [4,5,6]
+        P = [1 2; 3 4]
+
+        @test @inferred(kron(a,b)) ===  SVector{9}(kron(p,q))
+        @test @inferred(kron(b,a)) ===  SVector{9}(kron(q,p))
+        @test @inferred(kron(a',b')) ===  SMatrix{1,9}(kron(p',q'))
+        @test @inferred(kron(b',a')) ===  SMatrix{9,1}(kron(q',p'))'
+        @test @inferred(kron(b',a)) ===  SMatrix{3,3}(kron(q',p))
+        @test @inferred(kron(b,a')) ===  SMatrix{3,3}(kron(q,p'))
+        @test @inferred(kron(b,A)) ===  SMatrix{6,2}(kron(q,P))
+        @test @inferred(kron(b',A)) ===  SMatrix{2,6}(kron(q',P))
+        @test @inferred(kron(A,b)) ===  SMatrix{6,2}(kron(P,q))
+        @test @inferred(kron(A,b')) ===  SMatrix{2,6}(kron(P,q'))
+
+        # Tests for kron of two SVectors as well as between SVectors and
+        # SMatrices and verifies type promotion (e.g. Int to Float).
+        a = @SVector [1, 2, 3]
+        b = @SVector [4.5, 5.5, 6.5]
+        A = @SMatrix [1 2; 3 4]
+
+        p = [1,2,3]
+        q = [4.5, 5.5, 6.5]
+        P = [1 2; 3 4]
+
+        @test @inferred(kron(a,b)) ===  SVector{9}(kron(p,q))
+        @test @inferred(kron(b,a)) ===  SVector{9}(kron(q,p))
+        @test @inferred(kron(a',b')) ===  SMatrix{1,9}(kron(p',q'))
+        @test @inferred(kron(b',a')) ===  SMatrix{9,1}(kron(q',p'))'
+        @test @inferred(kron(b',a)) ===  SMatrix{3,3}(kron(q',p))
+        @test @inferred(kron(b,a')) ===  SMatrix{3,3}(kron(q,p'))
+        @test @inferred(kron(b,A)) ===  SMatrix{6,2}(kron(q,P))
+        @test @inferred(kron(b',A)) ===  SMatrix{2,6}(kron(q',P))
+        @test @inferred(kron(A,b)) ===  SMatrix{6,2}(kron(P,q))
+        @test @inferred(kron(A,b')) ===  SMatrix{2,6}(kron(P,q'))
+
+        # Output should be heap allocated into a SizedArray when it gets large
+        # enough.
+        p = collect(1:10)
+        q = collect(1:21)
+        P = randn(10,10)
+        a = SVector{10}(p)
+        b = SVector{21}(q)
+        A = SMatrix{10,10}(P)
+
+        @test @inferred(kron(a,b))::SizedVector{210} == kron(p,q)
+        @test @inferred(kron(b,a))::SizedVector{210} == kron(q,p)
+        @test @inferred(kron(b,a'))::SizedMatrix{21,10} == kron(q,p')
+        @test @inferred(kron(b',a))::SizedMatrix{10,21} == kron(q',p)
+        @test @inferred(kron(a',b'))::SizedMatrix{1,210} == kron(p',q')
+        @test @inferred(kron(b',a'))::SizedMatrix{1,210} == kron(q',p')
+        @test @inferred(kron(b',A))::SizedMatrix{10,210} == kron(q',P)
+        @test @inferred(kron(A,b'))::SizedMatrix{10,210} == kron(P,q')
+        @test @inferred(kron(b,A))::SizedMatrix{210,10} == kron(q,P)
+        @test @inferred(kron(A,b))::SizedMatrix{210,10} == kron(P,q)
+
     end
 end
