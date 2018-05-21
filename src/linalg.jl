@@ -423,7 +423,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type($a, Size($(outsize)))(tuple($(M...)))
+        @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
 
