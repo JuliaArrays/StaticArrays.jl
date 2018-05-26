@@ -67,7 +67,7 @@ macro MVector(ex)
             error("Use a one-dimensional comprehension for @MVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
@@ -86,7 +86,7 @@ macro MVector(ex)
             error("Use a one-dimensional comprehension for @MVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
