@@ -124,7 +124,9 @@ using StaticArrays, Compat.Test
         
         m = [1 2; 3 4] + im*[5 6; 7 8]
         @test @inferred(ctranspose(@SVector [m,m])) == ctranspose([m,m])
+        @test @inferred(transpose(@SVector [m,m])) == transpose([m,m])
         @test @inferred(ctranspose(@SMatrix [m m; m m])) == ctranspose([[m] [m]; [m] [m]])
+        @test @inferred(transpose(@SMatrix [m m; m m])) == transpose([[m] [m]; [m] [m]])
 
     end
 
