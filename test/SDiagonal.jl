@@ -1,8 +1,10 @@
+using Compat.LinearAlgebra: chol
+
 @testset "SDiagonal" begin
     @testset "Constructors" begin
         @test SDiagonal{1,Int64}((1,)).diag === SVector{1,Int64}((1,))
         @test SDiagonal{1,Float64}((1,)).diag === SVector{1,Float64}((1,))
-     
+
         @test SDiagonal{4,Float64}((1, 1.0, 1, 1)).diag.data === (1.0, 1.0, 1.0, 1.0)
         @test SDiagonal{4}((1, 1.0, 1, 1)).diag.data === (1.0, 1.0, 1.0, 1.0)
         @test SDiagonal((1, 1.0, 1, 1)).diag.data === (1.0, 1.0, 1.0, 1.0)
