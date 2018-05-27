@@ -127,6 +127,10 @@
             @test !Base.mightalias(m, copy(m))
             @test Base.mightalias(m, view(m, :, 1))
         end
+        
+        if isdefined(Base, :dataids) # v0.7-
+            @test Base.dataids(m) == (UInt(pointer(m)),) 
+        end
     end
 
     @testset "setindex!" begin
@@ -144,6 +148,9 @@
         @test m.data === (11, 12, 13, 14)
 
         @test_throws BoundsError setindex!(v, 4, -1)
+        mm = @MArray zeros(3,3,3,3)
+        @test_throws BoundsError setindex!(mm, 4, -1)
+        @test_throws BoundsError setindex!(mm, 4, 82)
 
         # setindex with non-elbits type
         m = MArray{Tuple{2,2,2}, String}()
