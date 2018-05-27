@@ -9,4 +9,6 @@
     a = Array{Float64, 0}(undef)
     a[] = 2
     @test Scalar(a)[] == 2
+    s = Scalar(a)
+    @test convert(typeof(s), s) === s
 end
