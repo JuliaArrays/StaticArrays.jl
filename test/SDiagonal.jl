@@ -15,13 +15,13 @@ using Compat.LinearAlgebra: chol
 
         # From SMatrix
         @test SDiagonal(SMatrix{2,2,Int}((1,2,3,4))).diag.data === (1,4)
-        
+
         @test SDiagonal{1,Int}(SDiagonal{1,Float64}((1,))).diag[1] === 1
 
     end
 
     @testset "Methods" begin
-    
+
         @test StaticArrays.scalem(@SMatrix([1 1 1;1 1 1; 1 1 1]), @SVector [1,2,3]) === @SArray [1 2 3; 1 2 3; 1 2 3]
         @test StaticArrays.scalem(@SVector([1,2,3]),@SMatrix [1 1 1;1 1 1; 1 1 1])' === @SArray [1 2 3; 1 2 3; 1 2 3]
 
@@ -45,9 +45,9 @@ using Compat.LinearAlgebra: chol
             @test sqrt(m) == sqrt(m2)
         end
         @test chol(m) == chol(m2)
-        
+
         # Aparently recursive chol never really worked
-        #@test_broken chol(reshape([1.0*m, 0.0*m, 0.0*m, 1.0*m], 2, 2)) == 
+        #@test_broken chol(reshape([1.0*m, 0.0*m, 0.0*m, 1.0*m], 2, 2)) ==
         #    reshape([chol(1.0*m), 0.0*m, 0.0*m, chol(1.0*m)], 2, 2)
 
         @test isimmutable(m) == true
@@ -56,18 +56,18 @@ using Compat.LinearAlgebra: chol
         @test m[2,2] === 12
         @test m[3,3] === 13
         @test m[4,4] === 14
-        
+
         for i in 1:4
             for j in 1:4
                 i == j || @test m[i,j] === 0
             end
         end
-        
+
         @test_throws Exception m[5,5]
-        
+
         @test_throws Exception m[1,5]
-        
-    
+
+
         @test size(m) === (4, 4)
         @test size(typeof(m)) === (4, 4)
         @test size(SDiagonal{4}) === (4, 4)
@@ -80,17 +80,19 @@ using Compat.LinearAlgebra: chol
         @test length(m) === 4*4
 
         @test_throws Exception m[1] = 1
-        
+
         b = @SVector [2,-1,2,1]
         b2 = Vector(b)
-  
-        
+
+
         @test m*b ==  @SVector [22,-12,26,14]
         @test (b'*m)' ==  @SVector [22,-12,26,14]
-        
+        @test transpose(transpose(b)*m) ==  @SVector [22,-12,26,14]
+
         @test m\b == m2\b
 
         @test b'/m == b'/m2
+        @test transpose(b)/m == transpose(b)/m2
         # @test_throws Exception b/m # Apparently this is now some kind of minimization problem
         @test m*m == m2*m
 
@@ -103,6 +105,7 @@ using Compat.LinearAlgebra: chol
         @test issymmetric(m) == issymmetric(m2)
 
         @test (2*m/2)' == m
+        @test transpose(2*m/2) == m
         @test 2m == m + m
         @test -(-m) == m
         @test m - SMatrix{4,4}(zeros(4,4)) == m

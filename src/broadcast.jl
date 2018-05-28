@@ -12,7 +12,7 @@
     # This isn't the precise output type, just a placeholder to return from
     # promote_containertype, which will control dispatch to our broadcast_c.
     _containertype(::Type{<:StaticArray}) = StaticArray
-    _containertype(::Type{<:Adjoint{<:Any,<:StaticVector}}) = StaticArray
+    _containertype(::Type{<:RowVector{<:Any,<:StaticVector}}) = StaticArray
 
     # issue #382; prevent infinite recursion in generic broadcast code:
     Base.Broadcast.broadcast_indices(::Type{StaticArray}, A) = indices(A)
@@ -54,8 +54,8 @@ else
     StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
 
     BroadcastStyle(::Type{<:StaticArray{<:Any, <:Any, N}}) where {N} = StaticArrayStyle{N}()
-    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticVector}}) = StaticArrayStyle{2}()
-    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticMatrix}}) = StaticArrayStyle{2}()
+    BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
+    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
 
     # Precedence rules
     BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =

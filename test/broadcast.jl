@@ -90,8 +90,10 @@ end
         @test @inferred(SVector{0,Int}() .+ SVector(1)) === SVector{0,Int}()
         # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
+        @test @inferred(v1 .+ transpose(v2)) === @SMatrix [2 5; 3 6]
         # Issue 382: infinite recursion in Base.Broadcast.broadcast_indices with Adjoint
         @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
+        @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
     end
 
     @testset "StaticVector with Scalar" begin

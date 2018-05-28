@@ -18,9 +18,11 @@
 
         # inner product
         @test @inferred(v'*v) === 5
+        @test @inferred(transpose(v)*v) === 5
 
         # outer product
         @test @inferred(v*v') === @SMatrix [1 2; 2 4]
+        @test @inferred(v*transpose(v)) === @SMatrix [1 2; 2 4]
 
         v3 = [1, 2]
         @test m*v3 === @SVector [5, 11]
@@ -65,10 +67,12 @@
         v2 = SVector(1, 2)
         v3 = SVector(3, 4)
         @test v2 * v3' === @SMatrix [3 4; 6 8]
+        @test v2 * transpose(v3) === @SMatrix [3 4; 6 8]
 
         v4 = SVector(1+0im, 2+0im)
         v5 = SVector(3+0im, 4+0im)
         @test v4 * v5' === @SMatrix [3+0im 4+0im; 6+0im 8+0im]
+        @test v4 * transpose(v5) === @SMatrix [3+0im 4+0im; 6+0im 8+0im]
     end
 
     @testset "Matrix-matrix" begin
@@ -83,9 +87,9 @@
         @test m'*n === @SMatrix [14 18; 20 26]
         @test m*n' === @SMatrix [8 14; 18 32]
         @test m'*n' === @SMatrix [11 19; 16 28]
-        @test m.'*n === @SMatrix [14 18; 20 26]
-        @test m*n.' === @SMatrix [8 14; 18 32]
-        @test m.'*n.' === @SMatrix [11 19; 16 28]
+        @test transpose(m)*n === @SMatrix [14 18; 20 26]
+        @test m*transpose(n) === @SMatrix [8 14; 18 32]
+        @test transpose(m)*transpose(n) === @SMatrix [11 19; 16 28]
 
         m = @MMatrix [1 2; 3 4]
         n = @MMatrix [2 3; 4 5]
