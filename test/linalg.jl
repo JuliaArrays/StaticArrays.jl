@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 @testset "Linear algebra" begin
 

@@ -1,8 +1,8 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 @testset "SVD factorization" begin
     m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
-    m3c = Complex128.(m3)
+    m3c = ComplexF64.(m3)
     m23 = @SMatrix Float64[3 9 4; 6 6 2]
 
     @testset "svd" begin
@@ -40,8 +40,8 @@ using StaticArrays, Base.Test
         @testinf svdfact(m3c).S  ≊ svdfact(Matrix(m3c))[:S]
         @testinf svdfact(m3c).Vt ≊ svdfact(Matrix(m3c))[:Vt]
 
-        @testinf svdfact(m3c).U  isa SMatrix{3,3,Complex128}
+        @testinf svdfact(m3c).U  isa SMatrix{3,3,ComplexF64}
         @testinf svdfact(m3c).S  isa SVector{3,Float64}
-        @testinf svdfact(m3c).Vt isa SMatrix{3,3,Complex128}
+        @testinf svdfact(m3c).Vt isa SMatrix{3,3,ComplexF64}
     end
 end

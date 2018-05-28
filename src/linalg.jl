@@ -209,7 +209,8 @@ end
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
     S1, S2 = S
-    rng = D ≤ 0 ? range(1-D, S1+1, min(S1+D, S2)) : range(D*S1+1, S1+1, min(S1, S2-D))
+    rng = D ≤ 0 ? Compat.range(1-D, step=S1+1, length=min(S1+D, S2)) :
+                  Compat.range(D*S1+1, step=S1+1, length=min(S1, S2-D))
     Snew = length(rng)
     T = eltype(m)
     exprs = [:(m[$i]) for i = rng]

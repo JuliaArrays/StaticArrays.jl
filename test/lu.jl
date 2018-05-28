@@ -1,4 +1,4 @@
-using StaticArrays, Base.Test
+using StaticArrays, Compat.Test
 
 @testset "LU decomposition (pivot=$pivot)" for pivot in (true, false)
     @testset "$m×$n" for m in [0:4..., 15, 50], n in [0:4..., 15, 50]
