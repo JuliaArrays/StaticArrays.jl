@@ -165,4 +165,4 @@ julia> arithmetic_closure(BigInt)
 BigFloat
 ```
 """
-arithmetic_closure(T) = typeof((one(T)*zero(T) + zero(T))/one(T))
+arithmetic_closure(::Type{T}) where T = typeof((one(T)*zero(T) + zero(T))/one(T))
