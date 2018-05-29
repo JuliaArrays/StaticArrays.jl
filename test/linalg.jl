@@ -110,22 +110,23 @@ using StaticArrays, Compat.Test
         @test @inferred(conj(SVector(1+im, 2+im))) === SVector(1-im, 2-im)
 
         if VERSION < v"0.7-"
-            @test @inferred(transpose(@SVector([1, 2, 3]))) === Adjoint(@SVector([1, 2, 3]))
+            @test @inferred(transpose(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
+            @test @inferred(adjoint(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
         else
             @test @inferred(transpose(@SVector([1, 2, 3]))) === Transpose(@SVector([1, 2, 3]))
+            @test @inferred(adjoint(@SVector([1, 2, 3]))) === Adjoint(@SVector([1, 2, 3]))
         end
         @test @inferred(transpose(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(transpose(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
 
-        @test @inferred(adjoint(@SVector([1, 2, 3]))) === Adjoint(@SVector([1, 2, 3]))
         @test @inferred(adjoint(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(adjoint(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
         @test @inferred(adjoint(@SMatrix([1 2*im 3; 4 5 6]))) === @SMatrix([1 4; -2*im 5; 3 6])
-        
+
         m = [1 2; 3 4] + im*[5 6; 7 8]
-        @test @inferred(adjoint(@SVector [m,m])) == ctranspose([m,m])
+        @test @inferred(adjoint(@SVector [m,m])) == adjoint([m,m])
         @test @inferred(transpose(@SVector [m,m])) == transpose([m,m])
-        @test @inferred(adjoint(@SMatrix [m m; m m])) == ctranspose([[m] [m]; [m] [m]])
+        @test @inferred(adjoint(@SMatrix [m m; m m])) == adjoint([[m] [m]; [m] [m]])
         @test @inferred(transpose(@SMatrix [m m; m m])) == transpose([[m] [m]; [m] [m]])
 
     end
