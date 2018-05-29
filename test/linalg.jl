@@ -121,6 +121,13 @@ using StaticArrays, Compat.Test
         @test @inferred(adjoint(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(adjoint(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
         @test @inferred(adjoint(@SMatrix([1 2*im 3; 4 5 6]))) === @SMatrix([1 4; -2*im 5; 3 6])
+        
+        m = [1 2; 3 4] + im*[5 6; 7 8]
+        @test @inferred(adjoint(@SVector [m,m])) == ctranspose([m,m])
+        @test @inferred(transpose(@SVector [m,m])) == transpose([m,m])
+        @test @inferred(adjoint(@SMatrix [m m; m m])) == ctranspose([[m] [m]; [m] [m]])
+        @test @inferred(transpose(@SMatrix [m m; m m])) == transpose([[m] [m]; [m] [m]])
+
     end
 
     @testset "vcat() and hcat()" begin

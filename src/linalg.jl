@@ -66,7 +66,7 @@ end
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
 
-    exprs = [:(m[$(LinearIndices(S)[j1, j2])]) for j2 = 1:S[2], j1 = 1:S[1]]
+    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
@@ -84,7 +84,7 @@ end
 @generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
 
-    exprs = [:(conj(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
+    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
 
     return quote
         $(Expr(:meta, :inline))
