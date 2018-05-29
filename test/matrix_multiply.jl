@@ -223,25 +223,25 @@
         @test_throws DimensionMismatch m*n
     end
 
-    @testset "A_mul_B!" begin
+    @testset "mul!" begin
         v = @SVector [2, 4]
         v2 = [2, 4]
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]
 
         outvec = MVector{2,Int}()
-        A_mul_B!(outvec, m, v)
+        mul!(outvec, m, v)
         @test outvec == @MVector [10,22]
-        outvec2 = Vector{Int}(2)
-        A_mul_B!(outvec2, m, v2)
+        outvec2 = Vector{Int}(undef, 2)
+        mul!(outvec2, m, v2)
         @test outvec2 == [10,22]
 
         # Bad dimensions
         outvec_bad = MVector{3,Int}()
-        @test_throws DimensionMismatch A_mul_B!(outvec_bad, m, v)
+        @test_throws DimensionMismatch mul!(outvec_bad, m, v)
 
         a = MMatrix{2,2,Int,4}()
-        A_mul_B!(a, m, n)
+        mul!(a, m, n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [10 13; 22 29]
 
         a = MMatrix{2,2,Int,4}()
@@ -259,7 +259,7 @@
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
 
         a2 = MArray{Tuple{2,2},Int,2,4}()
-        A_mul_B!(a2, m, n)
+        mul!(a2, m, n)
         @test a2::MArray{Tuple{2,2},Int,2,4} == @MArray [10 13; 22 29]
 
         # Alternative builtin method used for n > 8
@@ -270,7 +270,7 @@
         m_2 = MMatrix{10,10}(m_array_2)
         n_2 = MMatrix{10,10}(n_array_2)
         a_2 = MMatrix{10,10,Int}()
-        A_mul_B!(a_2, m_2, n_2)
+        mul!(a_2, m_2, n_2)
         @test a_2 == a_array_2
 
         # BLAS used for n > 14
@@ -281,7 +281,7 @@
         m_3 = MMatrix{4,4}(m_array_3)
         n_3 = MMatrix{4,4}(n_array_3)
         a_3 = MMatrix{4,4,Float64}()
-        A_mul_B!(a_3, m_3, n_3)
+        mul!(a_3, m_3, n_3)
         @test a_3 ≈ a_array_3
 
         m_array_4 = randn(10, 10)
@@ -291,7 +291,7 @@
         m_4 = MMatrix{10,10}(m_array_4)
         n_4 = MMatrix{10,10}(n_array_4)
         a_4 = MMatrix{10,10,Float64}()
-        A_mul_B!(a_4, m_4, n_4)
+        mul!(a_4, m_4, n_4)
         @test a_4 ≈ a_array_4
 
         m_array_5 = rand(1:10, 16, 16)
@@ -301,7 +301,7 @@
         m_5 = MMatrix{16,16}(m_array_5)
         n_5 = MMatrix{16,16}(n_array_5)
         a_5 = MMatrix{16,16,Int}()
-        A_mul_B!(a_5, m_5, n_5)
+        mul!(a_5, m_5, n_5)
         @test a_5 ≈ a_array_5
 
         m_array_6 = rand(1:10, 8, 10)
@@ -311,7 +311,7 @@
         m_6 = MMatrix{8,10}(m_array_6)
         n_6 = MMatrix{10,8}(n_array_6)
         a_6 = MMatrix{8,8,Int}()
-        A_mul_B!(a_6, m_6, n_6)
+        mul!(a_6, m_6, n_6)
         @test a_6 == a_array_6
 
         # Float64
@@ -320,10 +320,10 @@
         mf = @SMatrix [1.0 2.0; 3.0 4.0]
 
         outvecf = MVector{2,Float64}()
-        A_mul_B!(outvecf, mf, vf)
+        mul!(outvecf, mf, vf)
         @test outvecf ≈ @MVector [10.0, 22.0]
         outvec2f = Vector{Float64}(2)
-        A_mul_B!(outvec2f, mf, vf2)
+        mul!(outvec2f, mf, vf2)
         @test outvec2f ≈ [10.0, 22.0]
     end
 end
