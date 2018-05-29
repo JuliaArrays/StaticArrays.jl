@@ -58,6 +58,7 @@ end
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 if VERSION >= v"0.7-"
+    @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
     @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
     @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 end
@@ -77,6 +78,7 @@ end
 if VERSION >= v"0.7-"
     @inline adjoint(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
     @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
+    @inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 end
 
 @generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
@@ -383,7 +385,11 @@ end
     end
 end
 
-@inline kron(a::RowVector{<:Number,<:StaticArray}, b::RowVector{<:Number,<:StaticArray}) = _kron_tvec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@inline function kron(
+        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
+        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+    _kron_tvec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+end
 @generated function _kron_tvec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
     outsize = SA .* SB
     if prod(outsize) > length_limit
@@ -398,7 +404,11 @@ end
     end
 end
 
-@inline kron(a::RowVector{<:Number,<:StaticArray}, b::StaticVector) = _kron_tvec_x_vec(_length_limit, Size(a), Size(b), a, b)
+@inline function kron(
+        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
+        b::StaticVector)
+    _kron_tvec_x_vec(_length_limit, Size(a), Size(b), a, b)
+end
 @generated function _kron_tvec_x_vec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
     outsize = (SA[1] * SB[1], SA[2])
     if prod(outsize) > length_limit
@@ -413,7 +423,11 @@ end
     end
 end
 
-@inline kron(a::StaticVector, b::RowVector{<:Number,<:StaticArray}) = _kron_vec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@inline function kron(
+        a::StaticVector,
+        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+    _kron_vec_x_tvec(_length_limit, Size(a), Size(b), a, b)
+end
 @generated function _kron_vec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
     outsize = (SA[1] * SB[1], SB[2])
     if prod(outsize) > length_limit
@@ -458,7 +472,11 @@ end
     end
 end
 
-@inline kron(a::StaticMatrix, b::RowVector{<:Number,<:StaticArray}) = _kron_mat_x_tvec(_length_limit, Size(a), Size(b), a, b)
+@inline function kron(
+        a::StaticMatrix,
+        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+    _kron_mat_x_tvec(_length_limit, Size(a), Size(b), a, b)
+end
 @generated function _kron_mat_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
     outsize = SA .* SB
     if prod(outsize) > length_limit
@@ -473,7 +491,11 @@ end
     end
 end
 
-@inline kron(a::RowVector{<:Number,<:StaticArray}, b::StaticMatrix) = _kron_tvec_x_mat(_length_limit, Size(a), Size(b), a, b)
+@inline function kron(
+        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
+        b::StaticMatrix)
+    _kron_tvec_x_mat(_length_limit, Size(a), Size(b), a, b)
+end
 @generated function _kron_tvec_x_mat(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
     outsize = SA .* SB
     if prod(outsize) > length_limit
@@ -490,24 +512,14 @@ end
 
 
 if VERSION < v"0.7-"
-    @inline Size(::Union{Adjoint{T, SA}, Type{Adjoint{T, SA}}}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
-    @inline Size(::Union{Adjoint{T, CA}, Type{Adjoint{T, CA}}} where CA <: ConjVector{<:Any, SA}) where {T, SA <: StaticArray} = Size(1, Size(SA)[1])
-    @inline Size(::Union{Symmetric{T,SA}, Type{Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
-    @inline Size(::Union{Hermitian{T,SA}, Type{Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+    @inline Size(::Type{RowVector{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
+    @inline Size(::Type{RowVector{T, CV}} where CV <: ConjVector{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
 else
-    @inline Size(::Adjoint{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-    @inline Size(::Type{<:Adjoint{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-    @inline Size(::Transpose{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-    @inline Size(::Type{<:Transpose{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-
-    @inline Size(::Adjoint{T, SM}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
-    @inline Size(::Type{<:Adjoint{T, SM}}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
-    @inline Size(::Transpose{T, SM}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
-    @inline Size(::Type{<:Transpose{T, SM}}) where {T, SM <: StaticMatrix} = Size(Size(SM)[2], Size(SM)[1])
-
-    @inline Size(::Union{Symmetric{T,SA}, Type{<:Symmetric{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
-    @inline Size(::Union{Hermitian{T,SA}, Type{<:Hermitian{T,SA}}}) where {T,SA<:StaticArray} = Size(SA)
+    @inline Size(::Type{<:Adjoint{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
+    @inline Size(::Type{<:Transpose{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
 end
+@inline Size(::Type{Symmetric{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
+@inline Size(::Type{Hermitian{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
 
 # some micro-optimizations (TODO check these make sense for v0.6+)
 @inline LinearAlgebra.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))

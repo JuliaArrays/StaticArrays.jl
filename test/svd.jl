@@ -36,6 +36,10 @@ using StaticArrays, Compat.Test
         @testinf svdfact(m23').S  ≊ svdfact(Matrix(m23'))[:S]
         @testinf svdfact(m23').Vt ≊ svdfact(Matrix(m23'))[:Vt]
 
+        @testinf svdfact(transpose(m23)).U  ≊ svdfact(Matrix(transpose(m23)))[:U]
+        @testinf svdfact(transpose(m23)).S  ≊ svdfact(Matrix(transpose(m23)))[:S]
+        @testinf svdfact(transpose(m23)).Vt ≊ svdfact(Matrix(transpose(m23)))[:Vt]
+
         @testinf svdfact(m3c).U  ≊ svdfact(Matrix(m3c))[:U]
         @testinf svdfact(m3c).S  ≊ svdfact(Matrix(m3c))[:S]
         @testinf svdfact(m3c).Vt ≊ svdfact(Matrix(m3c))[:Vt]

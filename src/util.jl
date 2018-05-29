@@ -91,5 +91,11 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 # than the input.
 # """
 @inline drop_sdims(a::StaticArray) = TrivialView(a)
-@inline drop_sdims(a::RowVector{<:Number, <:StaticArray}) = TrivialView(a)
+@static if VERSION < v"0.7-"
+    @inline drop_sdims(a::RowVector{<:Number, <:StaticVector}) = TrivialView(a)
+    @inline drop_sdims(a::RowVector{T, ConjVector{T, <:StaticVector}}) where {T<:Number} = TrivialView(a)
+else
+    @inline drop_sdims(a::Transpose{<:Number, <:StaticArray}) = TrivialView(a)
+    @inline drop_sdims(a::Adjoint{<:Number, <:StaticArray}) = TrivialView(a)
+end
 @inline drop_sdims(a) = a

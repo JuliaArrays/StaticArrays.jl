@@ -23,8 +23,10 @@ if VERSION < v"0.7-"
                         isposdef, normalize, normalize!, Eigen, det, logdet, cross, diff, qr
     const LinearAlgebra = Base.LinAlg
 
+    const TransposeVector{T, V<:AbstractVector{T}} = RowVector{T, V}
+    const AdjointVector{T, V<:AbstractVector{T}} = RowVector{T, ConjVector{T, V}}
+
     const adjoint = ctranspose
-    const Adjoint = RowVector
     const tr = trace
 else
     using Compat
@@ -40,6 +42,9 @@ else
                           kron, diag, vecnorm, norm, dot, diagm, lu, svd, svdvals, svdfact,
                           factorize, ishermitian, issymmetric, isposdef, normalize,
                           normalize!, Eigen, det, logdet, cross, diff, qr
+
+    const TransposeVector{T, V<:AbstractVector{T}} = Transpose{T, V}
+    const AdjointVector{T, V<:AbstractVector{T}} = Adjoint{T, V}
 end
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
@@ -92,6 +97,7 @@ abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
 const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
 const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
 const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
+const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
 const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
 const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
