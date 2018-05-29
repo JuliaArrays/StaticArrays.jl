@@ -60,8 +60,13 @@
         m = @SMatrix [1 2; 3 4]
         bm = @SMatrix [m m; m m]
         bv = @SVector [v,v]
-        # Broken only because output turns into a normal array:
-        @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
+
+        if VERSION < v"0.7-"
+            # Broken only because output turns into a normal array:
+            @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
+        else
+            @test (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
+        end
 
         # Outer product
         v2 = SVector(1, 2)
