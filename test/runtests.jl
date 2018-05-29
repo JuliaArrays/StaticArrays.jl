@@ -1,10 +1,7 @@
-using StaticArrays, Compat, Compat.Test
+using StaticArrays, Compat, Compat.Test, Compat.Random, Compat.LinearAlgebra
 if VERSION > v"0.7-"
-    using Random
-    using LinearAlgebra
     using InteractiveUtils
 else
-    using Base.Random
     const LinearAlgebra = Base.LinAlg
     const tr = trace
     const mul! = A_mul_B!
