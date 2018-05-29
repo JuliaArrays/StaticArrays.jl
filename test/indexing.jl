@@ -165,10 +165,4 @@
         @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
         @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
     end
-
-    @testset "inferabilty of index_sizes helper" begin
-        # see JuliaLang/julia#21244
-        # it's not about inferring the correct type, but about inference throwing an error
-        @test code_warntype(devnull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
-    end
 end
