@@ -34,10 +34,39 @@ end
         A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
 end
 
-@inline function _det(::Size, A::StaticMatrix)
-    return det(Matrix(A))
+@inline function _parity(p)    # inefficient compared to computing cycle lengths, but non-allocating
+    s = 0
+    for i in 1:length(p), j in i+1:length(p)
+        s += p[i] > p[j]
+    end
+    -2*rem(s, 2) + 1
 end
 
-@inline logdet(a::StaticMatrix) = _logdet(Size(a), a)
-@inline _logdet(::Union{Size{(1,1)}, Size{(2,2)}, Size{(3,3)}}, a::StaticMatrix) = log(det(a))
-@inline _logdet(::Size, a::StaticMatrix) = logdet(drop_sdims(a))
+@generated function _det(::Size{S}, A::StaticMatrix) where S
+    LinearAlgebra.checksquare(A)
+    if prod(S) ≤ 14*14
+        quote
+            @_inline_meta
+            L, U, p = lu(A)
+            det(U)*_parity(p)
+        end
+    else
+        :(@_inline_meta; det(Matrix(A)))
+    end
+end
+
+@inline logdet(A::StaticMatrix) = _logdet(Size(A), A)
+@inline _logdet(::Union{Size{(1,1)}, Size{(2,2)}, Size{(3,3)}, Size{(4,4)}}, A::StaticMatrix) = log(det(A))
+@generated function _logdet(::Size{S}, A::StaticMatrix) where S
+    LinearAlgebra.checksquare(A)
+    if prod(S) ≤ 14*14
+        quote
+            @_inline_meta
+            L, U, p = lu(A)
+            d, s = logabsdet(U)
+            d + log(s*_parity(p))
+        end
+    else
+        :(@_inline_meta; logdet(drop_sdims(A)))
+    end
+end

@@ -24,5 +24,17 @@
         @test det(Mtag) == det(Array(Mtag))
     end
 
+    # lu-based (sz in 5:14) and fallback (sz > 15)
+    for sz in (5, 14, 15, 50), typ in (Float64, Complex{Float64})
+        A = rand(typ, sz, sz)
+        SA = SMatrix{sz,sz,typ}(A)
+        @test det(A) ≈ det(SA)
+        if typ == Float64 && det(A) < 0
+            A[:,1], A[:,2] = A[:,2], A[:,1]
+            SA = SMatrix{sz,sz,typ}(A)
+        end
+        @test logdet(A) ≈ logdet(SA)
+    end
+
     @test_throws DimensionMismatch det(@SMatrix [0; 1])
 end
