@@ -55,6 +55,15 @@ end
         return similar_type(A)(B)
 end
 
-@inline function _inv(::Size, A)
-    similar_type(A)(inv(Matrix(A)))
+@generated function _inv(::Size{S}, A) where S
+    LinearAlgebra.checksquare(A)
+    if prod(S) ≤ 14*14
+        quote
+            @_inline_meta
+            L, U, p = lu(A)
+            U \ (L \ eye(A)[p,:])
+        end
+    else
+        :(@_inline_meta; similar_type(A)(inv(Matrix(A))))
+    end
 end
