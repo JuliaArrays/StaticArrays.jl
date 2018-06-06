@@ -90,6 +90,14 @@ end
     @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
 end
 
+@testset "Matrix inverse NxN, N > 5" begin
+    for sz in (5, 14, 15, 50), typ in (Float64, Complex{Float64})
+        A = rand(typ, sz, sz)
+        SA = SMatrix{sz,sz,typ}(A)
+        @test inv(A) ≈ inv(SA)
+    end
+end
+
 #-------------------------------------------------------------------------------
 # More comprehensive but qualitiative testing for inv() accuracy
 #=
