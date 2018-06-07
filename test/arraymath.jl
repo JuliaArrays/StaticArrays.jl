@@ -19,6 +19,15 @@ import StaticArrays.arithmetic_closure
         @test @inferred(ones(MVector{3}))::MVector == @MVector [1.0, 1.0, 1.0]
         @test @inferred(ones(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 1.0; 1.0 1.0]
         @test @inferred(ones(MArray{Tuple{1,1,1}}))::MArray == MArray{Tuple{1,1,1}}((1.0,))
+
+        # https://github.com/JuliaArrays/StaticArrays.jl/issues/428
+        bigzeros = zeros(SVector{2, BigInt})
+        @test bigzeros == @SVector [big(0), big(0)]
+        @test bigzeros[1] !== bigzeros[2]
+
+        bigones = ones(SVector{2, BigInt})
+        @test bigones == @SVector [big(1), big(1)]
+        @test bigones[1] !== bigones[2]
     end
 
     @testset "zero()" begin
