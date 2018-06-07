@@ -1,32 +1,28 @@
 @inline zeros(::SA) where {SA <: StaticArray} = zeros(SA)
-@generated function zeros(::Type{SA}) where {SA <: StaticArray}
+@inline zeros(::Type{SA}) where {SA <: StaticArray} = _zeros(Size(SA), SA)
+@generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T === Any
-        return quote
-            @_inline_meta
-            _fill(zero(Float64), Size(SA), SA)
-        end
-    else
-        return quote
-            @_inline_meta
-            _fill(zero($T), Size(SA), SA)
-        end
+    if T == Any
+        T = Float64
+    end
+    v = [:(zero($T)) for i = 1:prod(s)]
+    return quote
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
 @inline ones(::SA) where {SA <: StaticArray} = ones(SA)
-@generated function ones(::Type{SA}) where {SA <: StaticArray}
+@inline ones(::Type{SA}) where {SA <: StaticArray} = _ones(Size(SA), SA)
+@generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T === Any
-        return quote
-            @_inline_meta
-            _fill(one(Float64), Size(SA), SA)
-        end
-    else
-        return quote
-            @_inline_meta
-            _fill(one($T), Size(SA), SA)
-        end
+    if T == Any
+        T = Float64
+    end
+    v = [:(one($T)) for i = 1:prod(s)]
+    return quote
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
