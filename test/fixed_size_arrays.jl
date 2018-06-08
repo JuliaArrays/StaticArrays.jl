@@ -385,8 +385,8 @@ const unaryOps = (
 
     trunc, round, ceil, floor,
     significand, lgamma,
-    gamma, lfact, frexp, modf, airy, airyai,
-    airyprime, airyaiprime, airybi, airybiprime,
+    gamma, lfact, frexp, modf, airyai,
+    airyaiprime, airybi, airybiprime,
     besselj0, besselj1, bessely0, bessely1,
     eta, zeta, digamma, real, imag
 )

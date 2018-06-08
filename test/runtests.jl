@@ -1,4 +1,4 @@
-using StaticArrays, Compat, Compat.Test, Compat.Random, Compat.LinearAlgebra
+using StaticArrays, Compat, Compat.Test, Compat.Random, Compat.LinearAlgebra, SpecialFunctions
 if VERSION > v"0.7-"
     using InteractiveUtils
 else

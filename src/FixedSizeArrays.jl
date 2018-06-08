@@ -111,20 +111,20 @@ macro fixed_vector(name, parent)
         # Array constructor
         @inline function (::Type{$(name){S}})(x::AbstractVector{T}) where {S, T}
             @assert S <= length(x)
-            $(name){S, T}(ntuple(i-> x[i], Val{S}))
+            $(name){S, T}(ntuple(i-> x[i], Val{S}()))
         end
         @inline function (::Type{$(name){S, T1}})(x::AbstractVector{T2}) where {S, T1, T2}
             @assert S <= length(x)
-            $(name){S, T1}(ntuple(i-> T1(x[i]), Val{S}))
+            $(name){S, T1}(ntuple(i-> T1(x[i]), Val{S}()))
         end
 
         @inline function (::Type{$(name){S, T}})(x) where {S, T}
-            $(name){S, T}(ntuple(i-> T(x), Val{S}))
+            $(name){S, T}(ntuple(i-> T(x), Val{S}()))
         end
 
 
         @inline function (::Type{$(name){S}})(x::T) where {S, T}
-            $(name){S, T}(ntuple(i-> x, Val{S}))
+            $(name){S, T}(ntuple(i-> x, Val{S}()))
         end
         @inline function (::Type{$(name){1, T}})(x::T) where T
             $(name){1, T}((x,))
