@@ -25,7 +25,7 @@ end
     @test inv(@SMatrix [1+im 2 0; 1 2-im 1; 1 1 2+im])::SMatrix ≈ [2-2im  -3+1im   1-1im
                                                          -1+0im   2+1im  -1+0im
                                                           0+1im   0-1im   1-0.0im]/2
-   
+
     m = randn(Float64, 10,10) + 10*I # well conditioned
     @test inv(SMatrix{10,10}(m))::StaticMatrix ≈ inv(m)
 
@@ -91,7 +91,7 @@ end
 end
 
 @testset "Matrix inverse NxN, N > 5" begin
-    for sz in (5, 14, 15, 50), typ in (Float64, Complex{Float64})
+    for sz in (5, 14, 15), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         SA = SMatrix{sz,sz,typ}(A)
         @test inv(A) ≈ inv(SA)
