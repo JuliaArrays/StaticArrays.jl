@@ -1,7 +1,7 @@
 using StaticArrays, Compat.Test
 
 @testset "Solving linear system" begin
-    @testset "Problem size: $n x $n. Matrix type: $m. Element type: $elty" for n in (1,2,3,4,5,14,15),
+    @testset "Problem size: $n x $n. Matrix type: $m. Element type: $elty" for n in (1,2,3,4,5,8,15),
             (m, v) in ((SMatrix{n,n}, SVector{n}), (MMatrix{n,n}, MVector{n})),
                 elty in (Float64, Int)
 
@@ -18,7 +18,7 @@ using StaticArrays, Compat.Test
 end
 
 @testset "Solving linear system (multiple RHS)" begin
-    @testset "Problem size: $n x $n. Matrix type: $m1. Element type: $elty" for n in (1,2,3,4,5,14,15),
+    @testset "Problem size: $n x $n. Matrix type: $m1. Element type: $elty" for n in (1,2,3,4,5,8,15),
             (m1, m2) in ((SMatrix{n,n}, SMatrix{n,2}), (MMatrix{n,n}, MMatrix{n,2})),
                 elty in (Float64, Int)
 

@@ -90,7 +90,7 @@ end
     @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
 end
 
-@testset "Matrix inverse ($typ, $sz×$sz)" for sz in (5, 14, 15), typ in (Float64, Complex{Float64})
+@testset "Matrix inverse ($typ, $sz×$sz)" for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
     A = rand(typ, sz, sz)
     SA = SMatrix{sz,sz,typ}(A)
     @test inv(A) ≈ inv(SA)

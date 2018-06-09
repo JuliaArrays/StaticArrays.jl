@@ -24,8 +24,8 @@
         @test det(Mtag) == det(Array(Mtag))
     end
 
-    # lu-based (sz in 5:14) and fallback (sz > 15)
-    for sz in (5, 14, 15), typ in (Float64, Complex{Float64})
+    # lu-based (sz up to 14) and fallback (sz >= 15)
+    for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         SA = SMatrix{sz,sz,typ}(A)
         @test det(A) ≈ det(SA)
