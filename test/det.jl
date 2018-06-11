@@ -4,7 +4,7 @@
     @test det(@SMatrix [0 1; 1 0]) == -1
     @test logdet(@SMatrix Complex{Float64}[0 1; 1 0]) == log(det(@SMatrix Complex{Float64}[0 1; 1 0]))
     @test det(one(SMatrix{3,3})*im) == det([1.0*im 0.0 0.0; 0.0 1.0*im 0.0; 0.0 0.0 1.0*im])
-    
+
     @test det(@SMatrix [0 1 0; 1 0 0; 0 0 1]) == -1
     m = [0.570085  0.667147  0.264427  0.561446
          0.115197  0.141744  0.83314   0.0457302
@@ -24,8 +24,8 @@
         @test det(Mtag) == det(Array(Mtag))
     end
 
-    # lu-based (sz in 5:14) and fallback (sz > 15)
-    for sz in (5, 14, 15, 50), typ in (Float64, Complex{Float64})
+    # lu-based (sz up to 14) and fallback (sz >= 15)
+    for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         SA = SMatrix{sz,sz,typ}(A)
         @test det(A) ≈ det(SA)
