@@ -201,7 +201,7 @@ end
 
     S = Size(sa[1], sb[2])
 
-    # Do a custom b[:, k2] to return a SVector (an isbits type) rather than (possibly) a mutable type. Avoids allocation == faster
+    # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than (possibly) a mutable type. Avoids allocation == faster
     tmp_type_in = :(SVector{$(sb[1]), T})
     tmp_type_out = :(SVector{$(sa[1]), T})
     vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(Size(a), Size($(sb[1])), a,
@@ -403,7 +403,7 @@ end
 
     #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
 
-    # Do a custom b[:, k2] to return a SVector (an isbits type) rather than a mutable type. Avoids allocation == faster
+    # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than a mutable type. Avoids allocation == faster
     tmp_type = SVector{sb[1], eltype(c)}
     vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size(sa)), $(Size(sb[1])), a, $(Expr(:call, tmp_type, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 

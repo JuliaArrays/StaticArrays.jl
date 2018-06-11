@@ -97,12 +97,12 @@ end
     end
 
     T = eltype(v)
-    if isbits(T)
+    if isbitstype(T)
         unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
     else
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
+        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
     return val

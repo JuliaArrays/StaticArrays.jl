@@ -85,7 +85,7 @@ import StaticArrays.arithmetic_closure
         @test (t*t) isa T
         @test (t/t) isa T
 
-        if isbits(T0)
+        if isbitstype(T0)
             @test @allocated(arithmetic_closure(T0)) == 0
         end
     end

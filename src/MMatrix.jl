@@ -73,7 +73,7 @@ end
     #end
 
     # This is nasty... but it turns out Julia will literally copy the whole tuple to the stack otherwise!
-    if isbits(T)
+    if isbitstype(T)
         unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), i)
     else
         # Not sure about this... slow option for now...
@@ -88,12 +88,12 @@ end
     #    throw(BoundsError(m,i))
     #end
 
-    if isbits(T)
+    if isbitstype(T)
         unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), val, i)
     else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(m.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
+        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
     return val
