@@ -297,7 +297,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "pages/api.html#StaticArrays.arithmetic_closure-Tuple{Any}",
+    "location": "pages/api.html#StaticArrays.arithmetic_closure-Union{Tuple{Type{T}}, Tuple{T}} where T",
     "page": "API",
     "title": "StaticArrays.arithmetic_closure",
     "category": "method",
