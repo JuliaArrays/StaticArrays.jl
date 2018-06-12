@@ -6,6 +6,7 @@ Base.:(+)(x::Number, y::ScalarTest) = x
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})
         x = rand(t)
         @test x == @inferred(x .+ ScalarTest())
+        @test x .+ 1 == @inferred(x .+ Ref(1))
     end
 end
 
