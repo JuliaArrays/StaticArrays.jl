@@ -23,7 +23,7 @@ diagtype(::Type{SDiagonal}) = SVector
 # this is to deal with convert.jl
 @inline (::Type{SD})(a::AbstractVector) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
 @inline (::Type{SD})(a::Tuple) where {SD <: SDiagonal} = SDiagonal(convert(diagtype(SD), a))
-@inline (::Type{SDiagonal})(a::SVector{N,T}) where {N,T} = SDiagonal{N,T}(a)
+@inline SDiagonal(a::SVector{N,T}) where {N,T} = SDiagonal{N,T}(a)
 
 @generated function SDiagonal(a::StaticMatrix{N,N,T}) where {N,T}
     expr = [:(a[$i,$i]) for i=1:N]

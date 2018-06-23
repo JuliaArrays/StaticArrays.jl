@@ -109,29 +109,29 @@ macro fixed_vector(name, parent)
         size_or(::Type{$(name){S, T} where T}, or) where {S} = Size{(S,)}()
         size_or(::Type{$(name){S, T}}, or) where {S, T} = (S,)
         # Array constructor
-        @inline function (::Type{$(name){S}})(x::AbstractVector{T}) where {S, T}
+        @inline function $(name){S}(x::AbstractVector{T}) where {S, T}
             @assert S <= length(x)
             $(name){S, T}(ntuple(i-> x[i], Val(S)))
         end
-        @inline function (::Type{$(name){S, T1}})(x::AbstractVector{T2}) where {S, T1, T2}
+        @inline function $(name){S, T1}(x::AbstractVector{T2}) where {S, T1, T2}
             @assert S <= length(x)
             $(name){S, T1}(ntuple(i-> T1(x[i]), Val(S)))
         end
 
-        @inline function (::Type{$(name){S, T}})(x) where {S, T}
+        @inline function $(name){S, T}(x) where {S, T}
             $(name){S, T}(ntuple(i-> T(x), Val(S)))
         end
 
 
-        @inline function (::Type{$(name){S}})(x::T) where {S, T}
+        @inline function $(name){S}(x::T) where {S, T}
             $(name){S, T}(ntuple(i-> x, Val(S)))
         end
-        @inline function (::Type{$(name){1, T}})(x::T) where T
+        @inline function $(name){1, T}(x::T) where T
             $(name){1, T}((x,))
         end
-        @inline (::Type{$(name)})(x::NTuple{S}) where {S} = $(name){S}(x)
-        @inline (::Type{$(name)})(x::T) where {S, T <: Tuple{Vararg{Any, S}}} = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
-        @inline function (::Type{$(name){S}})(x::T) where {S, T <: Tuple}
+        @inline $(name)(x::NTuple{S}) where {S} = $(name){S}(x)
+        @inline $(name)(x::T) where {S, T <: Tuple{Vararg{Any, S}}} = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
+        @inline function $(name){S}(x::T) where {S, T <: Tuple}
             $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         end
         $(name){S, T}(x::StaticVector) where {S, T} = $(name){S, T}(Tuple(x))
