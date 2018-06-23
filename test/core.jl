@@ -133,6 +133,13 @@
         @test @inferred(convert(Array, ma)) == a
         @test @inferred(convert(Array{Int}, ma)) == a
         @test @inferred(convert(Array{Int,2}, ma)) == a
+
+        try
+            convert(SVector, [1,2,3])
+        catch err
+            @test isa(err, ErrorException)
+            @test startswith(err.msg, "The size of type `StaticArrays.SArray{Tuple{S},T,1,S} where T where S` is not known.")
+        end
     end
     @test_throws Exception Length{2.5}()
     @test Length(2) == Length{2}()
