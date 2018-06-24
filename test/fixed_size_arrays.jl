@@ -419,6 +419,7 @@ const binaryOps = (
                                 @test r[j] == op(v1[j], v2[j])
                             end
                         end
+                    catch
                     end
                 end
             end
@@ -436,6 +437,7 @@ const binaryOps = (
                                 @test v[i] == op(t[i])
                             end
                         end
+                    catch
                     end
                 end
             end

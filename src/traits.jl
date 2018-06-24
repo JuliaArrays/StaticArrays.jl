@@ -68,7 +68,7 @@ end
 
 Base.show(io::IO, ::Size{S}) where {S} = print(io, "Size", S)
 
-#= There seems to be a subtyping/specialization bug...
+Size(a::T) where {T<:AbstractArray} = Size(T)
 function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error message for when S not defined
     error("""
         The size of type `$SA` is not known.
@@ -82,9 +82,8 @@ function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error mess
             SMatrix(m)      # this error
             SMatrix{3,3}(m) # correct - size is inferrable
         """)
-end =#
-Size(a::T) where {T<:AbstractArray} = Size(T)
-Size(::Type{<:StaticArray{S}}) where {S} = Size(S)
+end
+Size(::Type{SA}) where {SA <: StaticArray{S}} where {S<:Tuple} = Size(S)  # S defined as a Tuple
 @pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
 struct Length{L}
