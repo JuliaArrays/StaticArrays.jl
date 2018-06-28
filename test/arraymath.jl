@@ -1,4 +1,6 @@
+using StaticArrays, Test
 import StaticArrays.arithmetic_closure
+
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]

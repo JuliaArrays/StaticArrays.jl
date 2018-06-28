@@ -1,3 +1,5 @@
+using StaticArrays, Test, LinearAlgebra
+
 @testset "Triangular-matrix multiplication" begin
     for n in (1, 2, 3, 4),
         eltyA in (Float64, ComplexF64, Int),
@@ -20,23 +22,15 @@
         @test (transpose(SA)*SB)::SMatrix{n,n} ≈ transpose(A)*B
         @test (transpose(SA)*transpose(SB))::SMatrix{n,n} ≈ transpose(A)*transpose(B)
         @test (SB*SA)::SMatrix{n,n} ≈ B*A
-        if VERSION < v"0.7-"
-            @test (transpose(SB[:,1])*SA)::RowVector{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*A
-        else
-            @test (SB[:,1]'*SA)::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1]'*A
-            @test (transpose(SB[:,1])*SA)::Transpose{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*A
-        end
+        @test (SB[:,1]'*SA)::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1]'*A
+        @test (transpose(SB[:,1])*SA)::Transpose{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*A
         @test (transpose(SB)*SA)::SMatrix{n,n} ≈ transpose(B)*A
         @test SB[:,1]'*SA ≈ B[:,1]'*A
         @test (SB'*SA)::SMatrix{n,n} ≈ B'*A
         @test (SB*SA')::SMatrix{n,n} ≈ B*A'
         @test (SB*transpose(SA))::SMatrix{n,n} ≈ B*transpose(A)
-        if VERSION < v"0.7-"
-            @test (transpose(SB[:,1])*transpose(SA))::RowVector{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*transpose(A)
-        else
-            @test (SB[:,1]'*transpose(SA))::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1]'*transpose(A)
-            @test (transpose(SB[:,1])*transpose(SA))::Transpose{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*transpose(A)
-        end
+        @test (SB[:,1]'*transpose(SA))::Adjoint{<:Any,<:SVector{n}} ≈ B[:,1]'*transpose(A)
+        @test (transpose(SB[:,1])*transpose(SA))::Transpose{<:Any,<:SVector{n}} ≈ transpose(B[:,1])*transpose(A)
         @test (transpose(SB)*transpose(SA))::SMatrix{n,n} ≈ transpose(B)*transpose(A)
         @test (SB[:,1]'*SA') ≈ SB[:,1]'*SA'
         @test (SB'*SA')::SMatrix{n,n} ≈ B'*A'
@@ -94,7 +88,7 @@ end
             (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
                 eltyB in (Float64, ComplexF64)
 
-        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> chol(t't) |> t -> uplo == :U ? t : adjoint(t)))
+        A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> cholesky(t't).U |> t -> uplo == :U ? t : adjoint(t)))
         B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
         SA = t(SMatrix{n,n}(A.data))
         SB = SMatrix{n,n}(B)

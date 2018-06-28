@@ -2,88 +2,39 @@
 ## broadcast! ##
 ################
 
-@static if VERSION < v"0.7.0-DEV.5096"
-    ## Old Broadcast API ##
-    import Base.Broadcast:
-    _containertype, promote_containertype, broadcast_indices, containertype,
-    broadcast_c, broadcast_c!
-
-    # Add StaticArray as a new output type in Base.Broadcast promotion machinery.
-    # This isn't the precise output type, just a placeholder to return from
-    # promote_containertype, which will control dispatch to our broadcast_c.
-    _containertype(::Type{<:StaticArray}) = StaticArray
-    _containertype(::Type{<:RowVector{<:Any,<:StaticVector}}) = StaticArray
-
-    # issue #382; prevent infinite recursion in generic broadcast code:
-    Base.Broadcast.broadcast_indices(::Type{StaticArray}, A) = indices(A)
-
-    # With the above, the default promote_containertype gives reasonable defaults:
-    #   StaticArray, StaticArray -> StaticArray
-    #   Array, StaticArray       -> Array
-    #
-    # We could be more precise about the latter, but this isn't really possible
-    # without using Array{N} rather than Array in Base's promote_containertype.
-    #
-    # Base also has broadcast with tuple + Array, but while implementing this would
-    # be consistent with Base, it's not exactly clear it's a good idea when you can
-    # just use an SVector instead?
-    promote_containertype(::Type{StaticArray}, ::Type{Any}) = StaticArray
-    promote_containertype(::Type{Any}, ::Type{StaticArray}) = StaticArray
-
-    # Override for when output type is deduced to be a StaticArray.
-    @inline function broadcast_c(f, ::Type{StaticArray}, as...)
-        argsizes = broadcast_sizes(as...)
-        destsize = combine_sizes(argsizes)
-        _broadcast(f, destsize, argsizes, as...)
+import Base.Broadcast:
+BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
+# Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
+# A constructor that changes the style parameter N (array dimension) is also required
+struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
+StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:StaticArray{<:Any, <:Any, N}}) where {N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
+# Precedence rules
+BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
+    DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
+    StaticArrayStyle{M}()
+# copy overload
+@inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
+    flat = Broadcast.flatten(B); as = flat.args; f = flat.f
+    argsizes = broadcast_sizes(as...)
+    destsize = combine_sizes(argsizes)
+    _broadcast(f, destsize, argsizes, as...)
+end
+# copyto! overloads
+@inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+@inline Base.copyto!(dest::AbstractArray, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
+@inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
+    flat = Broadcast.flatten(B); as = flat.args; f = flat.f
+    argsizes = broadcast_sizes(as...)
+    destsize = combine_sizes((Size(dest), argsizes...))
+    if Length(destsize) === Length{Dynamic()}()
+        # destination dimension cannot be determined statically; fall back to generic broadcast!
+        return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
     end
-
-    @inline function broadcast_c!(f, ::Type, ::Type{StaticArray}, dest, as...)
-        argsizes = broadcast_sizes(as...)
-        destsize = combine_sizes((Size(dest), argsizes...))
-        Length(destsize) === Length{Dynamic()}() && return broadcast_c!(f, containertype(dest), Array, dest, as...)
-        _broadcast!(f, destsize, dest, argsizes, as...)
-    end
-else
-    ## New Broadcast API ##
-    import Base.Broadcast:
-    BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
-
-    # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
-    # A constructor that changes the style parameter N (array dimension) is also required
-    struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
-    StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
-
-    BroadcastStyle(::Type{<:StaticArray{<:Any, <:Any, N}}) where {N} = StaticArrayStyle{N}()
-    BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
-    BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
-
-    # Precedence rules
-    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
-        DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
-    BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
-        StaticArrayStyle{M}()
-
-    # copy overload
-    @inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
-        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
-        argsizes = broadcast_sizes(as...)
-        destsize = combine_sizes(argsizes)
-        _broadcast(f, destsize, argsizes, as...)
-    end
-
-    # copyto! overloads
-    @inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
-    @inline Base.copyto!(dest::AbstractArray, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
-    @inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
-        flat = Broadcast.flatten(B); as = flat.args; f = flat.f
-        argsizes = broadcast_sizes(as...)
-        destsize = combine_sizes((Size(dest), argsizes...))
-        if Length(destsize) === Length{Dynamic()}()
-            # destination dimension cannot be determined statically; fall back to generic broadcast!
-            return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
-        end
-        _broadcast!(f, destsize, dest, argsizes, as...)
-    end
+    _broadcast!(f, destsize, dest, argsizes, as...)
 end
 
 
@@ -180,13 +131,6 @@ scalar_getindex(x::Tuple{<: Any}) = x[1]
     return quote
         @_inline_meta
         @inbounds return similar_type($first_staticarray, $newtype_expr, Size(newsize))(tuple($(exprs...)))
-    end
-end
-
-if VERSION < v"0.7.0-DEV"
-# Workaround for #329
-    @inline function Base.broadcast(f, ::Type{T}, a::StaticArray) where {T}
-        map(x->f(T,x), a)
     end
 end
 

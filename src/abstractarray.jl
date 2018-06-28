@@ -125,42 +125,9 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 
 # TODO permutedims?
 
-# TODO perhaps could move `Symmetric`, etc into seperate files.
-
-# This is used in Base.LinAlg quite a lot, and it impacts type stability
-# since some functions like expm() branch on a check for Hermitian or Symmetric
-# TODO much more work on type stability. Base functions are using similar() with
-# size, which poses difficulties!!
-@inline Base.full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), sym)
-
-@generated function _full(::Size{S}, sym::Symmetric{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(LinearIndices(S)[i, j])]) : :(m[$(LinearIndices(S)[j, i])]) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(LinearIndices(S)[i, j])]) : :(m[$(LinearIndices(S)[j, i])]) for i = 1:S[1], j=1:S[2]]
-
-    return quote
-        @_inline_meta
-        m = sym.data
-        if sym.uplo == 'U'
-            @inbounds return SM(tuple($(exprs_up...)))
-        else
-            @inbounds return SM(tuple($(exprs_lo...)))
-        end
-    end
-end
-
-@inline Base.full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), herm)
-
-@generated function _full(::Size{S}, herm::Hermitian{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(LinearIndices(S)[i, j])]) : :(conj(m[$(LinearIndices(S)[j, i])])) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(LinearIndices(S)[i, j])]) : :(conj(m[$(LinearIndices(S)[j, i])])) for i = 1:S[1], j=1:S[2]]
-
-    return quote
-        @_inline_meta
-        m = herm.data
-        if herm.uplo == 'U'
-            @inbounds return SM(tuple($(exprs_up...)))
-        else
-            @inbounds return SM(tuple($(exprs_lo...)))
-        end
-    end
+# full deprecated in Base
+if isdefined(Base, :full)
+    import Base: full
+    @deprecate full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
+    @deprecate full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
 end

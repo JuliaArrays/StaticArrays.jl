@@ -1,4 +1,4 @@
-using Compat.LinearAlgebra: chol
+using StaticArrays, Test, LinearAlgebra
 
 @testset "SDiagonal" begin
     @testset "Constructors" begin
@@ -35,16 +35,10 @@ using Compat.LinearAlgebra: chol
         @test logdet(im*m) ≈ logdet(im*m2)
         @test det(m) == det(m2)
         @test tr(m) == tr(m2)
-        if VERSION < v"0.7-"
-            @test logm(m) == logm(m2)
-            @test expm(m) == expm(m2)
-            @test sqrtm(m) == sqrtm(m2)
-        else
-            @test log(m) == log(m2)
-            @test exp(m) == exp(m2)
-            @test sqrt(m) == sqrt(m2)
-        end
-        @test chol(m) == chol(m2)
+        @test log(m) == log(m2)
+        @test exp(m) == exp(m2)
+        @test sqrt(m) == sqrt(m2)
+        @test cholesky(m).U == cholesky(m2).U
 
         # Aparently recursive chol never really worked
         #@test_broken chol(reshape([1.0*m, 0.0*m, 0.0*m, 1.0*m], 2, 2)) ==

@@ -1,8 +1,4 @@
-if VERSION < v"0.7-"
-    @inline expm(A::StaticMatrix) = _exp(Size(A), A)
-else
-    @inline exp(A::StaticMatrix) = _exp(Size(A), A)
-end
+@inline exp(A::StaticMatrix) = _exp(Size(A), A)
 
 @inline function _exp(::Size{(1,1)}, A::StaticMatrix)
     T = typeof(exp(zero(eltype(A))))

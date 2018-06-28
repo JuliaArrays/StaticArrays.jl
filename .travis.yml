@@ -4,7 +4,7 @@ os:
   - linux
   - osx
 julia:
-  - 0.6
+  - 0.7
   - nightly
 notifications:
   email: false
@@ -12,9 +12,9 @@ branches:
   only:
     - master
     - /^v[0-9]+\.[0-9]+\.[0-9]+$/ # version tags for Documenter.jl, see # 298
-matrix:
-  allow_failures:
-    - julia: nightly
+# matrix:
+#   allow_failures:
+#     - julia: nightly
     # - os: osx
 # uncomment the following lines to override the default test script
 #script:

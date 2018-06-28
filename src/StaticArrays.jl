@@ -10,42 +10,17 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              iszero, sum, prod, count, any, all, minimum, maximum, extrema, mean,
              copy, read, read!, write
 
-if VERSION < v"0.7-"
-    using Compat
-
-    using Base.Random
-    import Base: rand, randn, randexp, rand!, randn!, randexp!
-    using Core.Inference.return_type
-
-    import Base.LinAlg: transpose, ctranspose, eye, vecdot, eig, eigvals, eigfact, expm,
-                        logm, sqrtm, lyap, trace, kron, diag, vecnorm, norm, dot, diagm, lu,
-                        svd, svdvals, svdfact, factorize, ishermitian, issymmetric,
-                        isposdef, normalize, normalize!, Eigen, det, logdet, cross, diff, qr
-    const LinearAlgebra = Base.LinAlg
-
-    const TransposeVector{T, V<:AbstractVector{T}} = RowVector{T, V}
-    const AdjointVector{T, V<:AbstractVector{T}} = RowVector{T, ConjVector{T, V}}
-
-    const adjoint = ctranspose
-    const tr = trace
-else
-    using Compat
-
-    using Random
-    import Random: rand, randn, randexp, rand!, randn!, randexp!
-    using Core.Compiler: return_type
-
-    import Base: sqrt, exp, log
-
-    using LinearAlgebra
-    import LinearAlgebra: transpose, adjoint, eye, vecdot, eig, eigvals, eigfact, lyap, tr,
-                          kron, diag, vecnorm, norm, dot, diagm, lu, svd, svdvals, svdfact,
-                          factorize, ishermitian, issymmetric, isposdef, normalize,
-                          normalize!, Eigen, det, logdet, cross, diff, qr
-
-    const TransposeVector{T, V<:AbstractVector{T}} = Transpose{T, V}
-    const AdjointVector{T, V<:AbstractVector{T}} = Adjoint{T, V}
-end
+using Random
+import Random: rand, randn, randexp, rand!, randn!, randexp!
+using Core.Compiler: return_type
+import Base: sqrt, exp, log
+using LinearAlgebra
+import LinearAlgebra: transpose, adjoint, eye, vecdot, eigvals, eigen, lyap, tr,
+                      kron, diag, norm, dot, diagm, lu, svd, svdvals, svdfact,
+                      factorize, ishermitian, issymmetric, isposdef, normalize,
+                      normalize!, Eigen, det, logdet, cross, diff, qr
+const TransposeVector{T, V<:AbstractVector{T}} = Transpose{T, V}
+const AdjointVector{T, V<:AbstractVector{T}} = Adjoint{T, V}
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
@@ -60,7 +35,7 @@ export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
 export similar_type
-export push, pop, shift, unshift, insert, deleteat, setindex
+export push, pop, pushfirst, popfirst, insert, deleteat, setindex
 
 const _module_arg = isdefined(Base, Symbol("@__MODULE__"))
 

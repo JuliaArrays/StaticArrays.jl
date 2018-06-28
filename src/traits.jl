@@ -123,13 +123,11 @@ Length(::Size{S}) where {S} = _Length(S...)
 
 @pure Base.prod(::Size{S}) where {S} = prod(S)
 
-if !isdefined(Base, :LinearIndices) # VERSION < v"0.7-"
-    @pure @inline Base.sub2ind(::Size{S}, x::Int...) where {S} = sub2ind(S, x...)
-elseif isdefined(Base, :sub2ind)
+if isdefined(Base, :sub2ind)
     import Base: sub2ind
     @deprecate sub2ind(s::Size, x::Int...) LinearIndices(s)[x...]
 end
-Compat.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
+Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 @pure size_tuple(::Size{S}) where {S} = Tuple{S...}
 

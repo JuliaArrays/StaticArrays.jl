@@ -1,3 +1,4 @@
+using StaticArrays, Test, LinearAlgebra
 @testset "Determinant" begin
     @test det(@SMatrix [1]) == 1
     @test logdet(@SMatrix [1]) == 0.0

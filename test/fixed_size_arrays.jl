@@ -1,6 +1,5 @@
-using StaticArrays
+using StaticArrays, Test, LinearAlgebra, SpecialFunctions
 using StaticArrays.FixedSizeArrays
-using Compat.Test
 
 import StaticArrays.FixedSizeArrays: @fixed_vector
 
@@ -135,14 +134,6 @@ rand(Mat{4,2, Int})
 
 
 #end
-
-if VERSION < v"0.7-"
-    @testset "eye" begin
-        @test typeof(eye(Mat4d)) == Mat4d
-        @test typeof(eye(Mat{4,2, Int})) == Mat{4,2, Int, 8}
-    end
-    @test sum(eye(Mat4d)) == 4.0
-end
 
 @testset "one" begin
     x = Mat{4,2, Int}(1, 1, 1, 1, 1, 1, 1, 1)
@@ -385,7 +376,7 @@ const unaryOps = (
 
     trunc, round, ceil, floor,
     significand, lgamma,
-    gamma, lfact, frexp, modf, airyai,
+    gamma, lfactorial, frexp, modf, airyai,
     airyaiprime, airybi, airybiprime,
     besselj0, besselj1, bessely0, bessely1,
     eta, zeta, digamma, real, imag
@@ -397,7 +388,7 @@ const binaryOps = (
     +, -, *, /, \,
     ==, !=, <, <=, >, >=,
     min, max,
-    atan2, besselj, bessely, hankelh1, hankelh2,
+    atan, besselj, bessely, hankelh1, hankelh2,
     besseli, besselk, beta, lbeta
 )
 
@@ -409,14 +400,14 @@ const binaryOps = (
 
         for op in binaryOps
             for i=1:length(test1)
-                v1 = test1[i]
-                v2 = test2[i]
-                @testset "$op with $v1 and $v2" begin
+                x1 = test1[i]
+                x2 = test2[i]
+                @testset "$op with $x1 and $x2" begin
                     try # really bad tests, but better than nothing...
-                        if applicable(op, v1[1], v2[1]) && typeof(op(v1[1], v2[1])) == eltype(v1)
-                            r = op.(v1, v2)
-                            for j=1:length(v1)
-                                @test r[j] == op(v1[j], v2[j])
+                        if applicable(op, x1[1], x2[1]) && typeof(op(x1[1], x2[1])) == eltype(x1)
+                            r = op.(x1, x2)
+                            for j=1:length(x1)
+                                @test r[j] == op(x1[j], x2[j])
                             end
                         end
                     catch

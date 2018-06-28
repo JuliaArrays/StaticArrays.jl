@@ -1,9 +1,5 @@
 
-if VERSION < v"0.7-"
-    @inline sqrtm(A::StaticMatrix) = _sqrt(Size(A),A)
-else
-    @inline sqrt(A::StaticMatrix) = _sqrt(Size(A),A)
-end
+@inline sqrt(A::StaticMatrix) = _sqrt(Size(A),A)
 
 @inline function _sqrt(::Size{(1,1)}, A::SA) where {SA<:StaticArray}
     s = sqrt(A[1,1])
@@ -21,8 +17,4 @@ end
     end
 end
 
-if VERSION < v"0.7-"
-    @inline _sqrt(s::Size, A::StaticArray) = s(sqrtm(Array(A)))
-else
-    @inline _sqrt(s::Size, A::StaticArray) = s(sqrt(Array(A)))
-end
+@inline _sqrt(s::Size, A::StaticArray) = s(sqrt(Array(A)))

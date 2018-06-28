@@ -63,7 +63,7 @@ the dimensions of a static array. An array `sa::SA` of size `(dims...)` is
 associated with `Size{(dims...)}()`. The following are equivalent (`@pure`)
 constructors:
 ```julia
-Size{(dims...)}()
+Size{(dims...,)}()
 Size(dims...)
 Size(sa::StaticArray)
 Size(SA) # SA <: StaticArray

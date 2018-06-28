@@ -57,11 +57,9 @@ end
 @inline conj(a::StaticArray) = map(conj, a)
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
-if VERSION >= v"0.7-"
-    @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
-    @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
-    @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
-end
+@inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
+@inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
+@inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
 @generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
@@ -75,11 +73,9 @@ end
 end
 
 @inline adjoint(m::StaticMatrix) = _adjoint(Size(m), m)
-if VERSION >= v"0.7-"
-    @inline adjoint(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
-    @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
-    @inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
-end
+@inline adjoint(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
+@inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
+@inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
 @generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
     Snew = (S[2], S[1])
@@ -202,17 +198,13 @@ end
     end
 end
 
-if VERSION < v"v0.7.0-DEV.2161"
-    @inline diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D} = diagm(k() => v)
-else
-    @deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
-end
+@deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
     S1, S2 = S
-    rng = D ≤ 0 ? Compat.range(1-D, step=S1+1, length=min(S1+D, S2)) :
-                  Compat.range(D*S1+1, step=S1+1, length=min(S1, S2-D))
+    rng = D ≤ 0 ? range(1-D, step=S1+1, length=min(S1+D, S2)) :
+                  range(D*S1+1, step=S1+1, length=min(S1, S2-D))
     Snew = length(rng)
     T = eltype(m)
     exprs = [:(m[$i]) for i = rng]
@@ -272,13 +264,10 @@ end
     end
 end
 
-@inline norm(v::StaticVector) = vecnorm(v)
-@inline norm(v::StaticVector, p::Real) = vecnorm(v, p)
-
 @inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
 
-@inline vecnorm(a::StaticArray) = _vecnorm(Size(a), a)
-@generated function _vecnorm(::Size{S}, a::StaticArray) where {S}
+@inline norm(a::StaticArray) = _norm(Size(a), a)
+@generated function _norm(::Size{S}, a::StaticArray) where {S}
     if prod(S) == 0
         return zero(real(eltype(a)))
     end
@@ -296,8 +285,8 @@ end
 
 _norm_p0(x) = x == 0 ? zero(x) : one(x)
 
-@inline vecnorm(a::StaticArray, p::Real) = _vecnorm(Size(a), a, p)
-@generated function _vecnorm(::Size{S}, a::StaticArray, p::Real) where {S}
+@inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
+@generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
     if prod(S) == 0
         return zero(real(eltype(a)))
     end
@@ -319,7 +308,7 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
         elseif p == 1
             @inbounds return $expr_p1
         elseif p == 2
-            return vecnorm(a)
+            return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, $(zero(real(eltype(a)))), a)
         else
@@ -328,11 +317,11 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
     end
 end
 
-@inline normalize(a::StaticVector) = inv(vecnorm(a))*a
-@inline normalize(a::StaticVector, p::Real) = inv(vecnorm(a, p))*a
+@inline normalize(a::StaticVector) = inv(norm(a))*a
+@inline normalize(a::StaticVector, p::Real) = inv(norm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(vecnorm(a)); return a)
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(vecnorm(a, p)); return a)
+@inline normalize!(a::StaticVector) = (a .*= inv(norm(a)); return a)
+@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(norm(a, p)); return a)
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}
@@ -511,13 +500,8 @@ end
 end
 
 
-if VERSION < v"0.7-"
-    @inline Size(::Type{RowVector{T, SV}}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-    @inline Size(::Type{RowVector{T, CV}} where CV <: ConjVector{T, SV}) where {T, SV <: StaticVector} = Size(1, Size(SV)[1])
-else
-    @inline Size(::Type{<:Adjoint{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
-    @inline Size(::Type{<:Transpose{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
-end
+@inline Size(::Type{<:Adjoint{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
+@inline Size(::Type{<:Transpose{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
 @inline Size(::Type{Symmetric{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
 @inline Size(::Type{Hermitian{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
 

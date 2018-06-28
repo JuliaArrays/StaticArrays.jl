@@ -4,24 +4,14 @@
 ## map / map! ##
 ################
 
-if VERSION < v"0.7.0-"
-    # The following type signature for map() matches any list of AbstractArrays,
-    # provided at least one is a static array.
-    @inline function map(f, as::Union{SA,AbstractArray}...) where {SA<:StaticArray}
-        _map(f, same_size(as...), as...)
-    end
-else
-    # In 0.7, the above construction can no longer be used due to https://github.com/JuliaLang/julia/pull/23117.
-    # Instead, only dispatch to StaticArrays._map if one of the first two arguments is a StaticArray.
-    @inline function map(f, a1::StaticArray, as::AbstractArray...)
-        _map(f, same_size(a1, as...), a1, as...)
-    end
-    @inline function map(f, a1::AbstractArray, a2::StaticArray, as::AbstractArray...)
-        _map(f, same_size(a1, a2, as...), a1, a2, as...)
-    end
-    @inline function map(f, a1::StaticArray, a2::StaticArray, as::AbstractArray...)
-        _map(f, same_size(a1, a2, as...), a1, a2, as...)
-    end
+@inline function map(f, a1::StaticArray, as::AbstractArray...)
+    _map(f, same_size(a1, as...), a1, as...)
+end
+@inline function map(f, a1::AbstractArray, a2::StaticArray, as::AbstractArray...)
+    _map(f, same_size(a1, a2, as...), a1, a2, as...)
+end
+@inline function map(f, a1::StaticArray, a2::StaticArray, as::AbstractArray...)
+    _map(f, same_size(a1, a2, as...), a1, a2, as...)
 end
 
 @generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
