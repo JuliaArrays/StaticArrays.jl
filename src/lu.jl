@@ -1,14 +1,27 @@
+# define our own LU type, since LinearAlgebra.LU requires p::Vector
+struct LU{L,U,p}
+    L::L
+    U::U
+    p::p
+end
+
+# iteration for destructuring into components
+Base.iterate(S::LU) = (S.L, Val(:U))
+Base.iterate(S::LU, ::Val{:U}) = (S.U, Val(:p))
+Base.iterate(S::LU, ::Val{:p}) = (S.p, Val(:done))
+Base.iterate(S::LU, ::Val{:done}) = nothing
+
 # LU decomposition
 function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true))
-    L,U,p = _lu(A, pivot)
-    (L,U,p)
+    L, U, p = _lu(A, pivot)
+    LU(L, U, p)
 end
 
 # For the square version, return explicit lower and upper triangular matrices.
 # We would do this for the rectangular case too, but Base doesn't support that.
 function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true)) where {N}
-    L,U,p = _lu(A, pivot)
-    (LowerTriangular(L), UpperTriangular(U), p)
+    L, U, p = _lu(A, pivot)
+    LU(LowerTriangular(L), UpperTriangular(U), p)
 end
 
 @generated function _lu(A::StaticMatrix{M,N,T}, pivot) where {M,N,T}

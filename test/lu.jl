@@ -1,6 +1,5 @@
 using StaticArrays, Test, LinearAlgebra
 
-@testset "LU decomposition" begin
 @testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
     a = SMatrix{m,n,Int}(1:(m*n))
     l, u, p = @inferred(lu(a, Val{pivot}()))
@@ -37,5 +36,4 @@ using StaticArrays, Test, LinearAlgebra
 
     # decomposition is correct
     @test l*u ≈ a[p,:]
-end
 end
