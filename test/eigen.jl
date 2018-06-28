@@ -104,7 +104,7 @@ using StaticArrays, Test, LinearAlgebra
         v = randn(SVector{3,Float64})
         m = v*v'
         vv = sum(abs2, v)
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(0.0, 0.0, vv)
@@ -115,7 +115,7 @@ using StaticArrays, Test, LinearAlgebra
         v2 -= dot(v,v2)*v/(vv)
         v2v2 = sum(abs2, v2)
         m += v2*v2'
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         if vv < v2v2
@@ -127,7 +127,7 @@ using StaticArrays, Test, LinearAlgebra
 
         # Degeneracy (2 large)
         m = -99*(v*v')/vv + 100*one(SMatrix{3,3,Float64})
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(1.0, 100.0, 100.0)
@@ -135,7 +135,7 @@ using StaticArrays, Test, LinearAlgebra
 
         # Degeneracy (2 small)
         m = (v*v')/vv + 1e-2*one(SMatrix{3,3,Float64})
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vecs'*vecs ≈ one(SMatrix{3,3,Float64})
         @test vals ≈ SVector(1e-2, 1e-2, 1.01)
@@ -145,7 +145,7 @@ using StaticArrays, Test, LinearAlgebra
         m = @SMatrix [1.0 0.0 0.0;
                       0.0 1.0 1.0;
                       0.0 1.0 1.0]
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vals ≈ [0.0, 1.0, 2.0]
         @test vecs*diagm(Val(0) => vals)*vecs' ≈ m
@@ -154,7 +154,7 @@ using StaticArrays, Test, LinearAlgebra
         m = @SMatrix [1.0 0.0 1.0;
                       0.0 1.0 0.0;
                       1.0 0.0 1.0]
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vals ≈ [0.0, 1.0, 2.0]
         @test vecs*diagm(Val(0) => vals)*vecs' ≈ m
@@ -163,7 +163,7 @@ using StaticArrays, Test, LinearAlgebra
         m = @SMatrix [1.0 1.0 0.0;
                       1.0 1.0 0.0;
                       0.0 0.0 1.0]
-        vals, vecs = eigen(m)
+        vals, vecs = eigen(m)::Eigen{<:Any,<:Any,<:SMatrix,<:SVector}
 
         @test vals ≈ [0.0, 1.0, 2.0]
         @test vecs*diagm(Val(0) => vals)*vecs' ≈ m

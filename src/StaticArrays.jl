@@ -19,8 +19,6 @@ import LinearAlgebra: transpose, adjoint, eye, vecdot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals, svdfact,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr
-const TransposeVector{T, V<:AbstractVector{T}} = Transpose{T, V}
-const AdjointVector{T, V<:AbstractVector{T}} = Adjoint{T, V}
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

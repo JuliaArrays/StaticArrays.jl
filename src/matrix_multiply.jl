@@ -8,14 +8,14 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 @inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
-@inline *(A::StaticVector, B::TransposeVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::AdjointVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
 
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = mul!(dest, reshape(A, Size(Size(A)[1], 1)), B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::TransposeVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::AdjointVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 
 #@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
@@ -59,7 +59,7 @@ end
 
 # outer product
 @generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta},
-        b::Union{TransposeVector{Tb, <:StaticVector}, AdjointVector{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
+        b::Union{Transpose{Tb, <:StaticVector}, Adjoint{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -228,7 +228,7 @@ end
 end
 
 @generated function _mul!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector,
-        b::Union{TransposeVector{<:Any, <:StaticVector}, AdjointVector{<:Any, <:StaticVector}}) where {sa, sb, sc}
+        b::Union{Transpose{<:Any, <:StaticVector}, Adjoint{<:Any, <:StaticVector}}) where {sa, sb, sc}
     if sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end

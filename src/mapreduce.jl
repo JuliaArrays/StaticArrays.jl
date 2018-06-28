@@ -4,6 +4,9 @@
 ## map / map! ##
 ################
 
+# In 0.6 the three methods below could be replaced with
+# `map(f, as::Union{<:StaticArray,AbstractArray}...)` which included at least one `StaticArray`
+# this is not the case on 0.7 and we instead hope to find a StaticArray in the first two arguments.
 @inline function map(f, a1::StaticArray, as::AbstractArray...)
     _map(f, same_size(a1, as...), a1, as...)
 end

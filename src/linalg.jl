@@ -375,8 +375,8 @@ end
 end
 
 @inline function kron(
-        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
-        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+        a::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}},
+        b::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}})
     _kron_tvec_x_tvec(_length_limit, Size(a), Size(b), a, b)
 end
 @generated function _kron_tvec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
@@ -394,7 +394,7 @@ end
 end
 
 @inline function kron(
-        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
+        a::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}},
         b::StaticVector)
     _kron_tvec_x_vec(_length_limit, Size(a), Size(b), a, b)
 end
@@ -414,7 +414,7 @@ end
 
 @inline function kron(
         a::StaticVector,
-        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+        b::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}})
     _kron_vec_x_tvec(_length_limit, Size(a), Size(b), a, b)
 end
 @generated function _kron_vec_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
@@ -463,7 +463,7 @@ end
 
 @inline function kron(
         a::StaticMatrix,
-        b::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}})
+        b::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}})
     _kron_mat_x_tvec(_length_limit, Size(a), Size(b), a, b)
 end
 @generated function _kron_mat_x_tvec(::Length{length_limit}, ::Size{SA}, ::Size{SB}, a, b) where {length_limit,SA,SB}
@@ -481,7 +481,7 @@ end
 end
 
 @inline function kron(
-        a::Union{TransposeVector{<:Number,<:StaticVector}, AdjointVector{<:Number,<:StaticVector}},
+        a::Union{Transpose{<:Number,<:StaticVector}, Adjoint{<:Number,<:StaticVector}},
         b::StaticMatrix)
     _kron_tvec_x_mat(_length_limit, Size(a), Size(b), a, b)
 end

@@ -44,7 +44,7 @@ end
     end
 end
 
-@deprecate shirt popfirst
+@deprecate shift popfirst
 @inline popfirst(vec::StaticVector) = _popfirst(Size(vec), vec)
 @generated function _popfirst(::Size{s}, vec::StaticVector) where {s}
     newlen = s[1] - 1
