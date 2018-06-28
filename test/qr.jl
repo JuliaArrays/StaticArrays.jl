@@ -13,36 +13,17 @@ srand(42)
 
         T = eltype(arr)
 
-        # thin=true case
         QR = @inferred qr(arr)
-        @test QR isa Tuple
-        @test length(QR) == 2
-        Q, R = QR
+        @test QR isa StaticArrays.QR
+        Q, R = QR # destructing via iteration
         @test Q isa StaticMatrix
         @test R isa StaticMatrix
         @test eltype(Q) == eltype(R) == typeof((one(T)*zero(T) + zero(T))/norm([one(T)]))
 
-        Q_ref,R_ref = qr(Matrix(arr))
-        @test abs.(Q) ≈ abs.(Q_ref) # QR is unique up to diag(Q) signs
+        Q_ref, R_ref = qr(Matrix(arr))
+        @test abs.(Q) ≈ abs.(Matrix(Q_ref)) # QR is unique up to diag(Q) signs
         @test abs.(R) ≈ abs.(R_ref)
         @test Q*R ≈ arr
-        @test Q'*Q ≈ one(Q'*Q)
-        @test istriu(R)
-
-        # fat (thin=false) case
-        QR = @inferred qr(arr, Val(false), Val(false))
-        @test QR isa Tuple
-        @test length(QR) == 2
-        Q, R = QR
-        @test Q isa StaticMatrix
-        @test R isa StaticMatrix
-        @test eltype(Q) == eltype(R) == typeof((one(T)*zero(T) + zero(T))/norm([one(T)]))
-
-        Q_ref,R_ref = qr(Matrix(arr))
-        @test abs.(Q) ≈ abs.(Q_ref) # QR is unique up to diag(Q) signs
-        @test abs.(R) ≈ abs.(R_ref)
-        R0 = vcat(R, @SMatrix(zeros(size(arr)[1]-size(R)[1], size(R)[2])) )
-        @test Q*R0 ≈ arr
         @test Q'*Q ≈ one(Q'*Q)
         @test istriu(R)
 
@@ -61,8 +42,6 @@ srand(42)
         # @test R ≈ R_ref
         # @test p == p_ref
     end
-
-    @test_throws ArgumentError qr(@SMatrix randn(1,2); thin=false)
 
     for eltya in (Float32, Float64, BigFloat, Int),
             rel in (real, complex),

@@ -37,7 +37,7 @@ include("expm.jl")
 include("sqrtm.jl")
 include("lyap.jl")
 include("lu.jl")
-# srand(42); include("qr.jl") # hmm ...
+srand(42); include("qr.jl")
 srand(42); include("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
 include("deque.jl")
 include("io.jl")
