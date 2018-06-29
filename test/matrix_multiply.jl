@@ -1,3 +1,5 @@
+using StaticArrays, Test, LinearAlgebra
+
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
@@ -61,12 +63,7 @@
         bm = @SMatrix [m m; m m]
         bv = @SVector [v,v]
 
-        if VERSION < v"0.7-"
-            # Broken only because output turns into a normal array:
-            @test_broken (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
-        else
-            @test (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
-        end
+        @test (bv'*bm)'::SVector{2,SVector{2,Int}} == @SVector [[14,20],[14,20]]
 
         # Outer product
         v2 = SVector(1, 2)
@@ -245,17 +242,17 @@
         @test a::MMatrix{2,2,Int,4} == @MMatrix [10 13; 22 29]
 
         a = MMatrix{2,2,Int,4}()
-        Ac_mul_B!(a, m, n)
+        mul!(a, m', n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [14 18; 20 26]
-        A_mul_Bc!(a, m, n)
+        mul!(a, m, n')
         @test a::MMatrix{2,2,Int,4} == @MMatrix [8 14; 18 32]
-        Ac_mul_Bc!(a, m, n)
+        mul!(a, m', n')
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
-        At_mul_B!(a, m, n)
+        mul!(a, transpose(m), n)
         @test a::MMatrix{2,2,Int,4} == @MMatrix [14 18; 20 26]
-        A_mul_Bt!(a, m, n)
+        mul!(a, m, transpose(n))
         @test a::MMatrix{2,2,Int,4} == @MMatrix [8 14; 18 32]
-        At_mul_Bt!(a, m, n)
+        mul!(a, transpose(m), transpose(n))
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
 
         a2 = MArray{Tuple{2,2},Int,2,4}()
@@ -322,7 +319,7 @@
         outvecf = MVector{2,Float64}()
         mul!(outvecf, mf, vf)
         @test outvecf ≈ @MVector [10.0, 22.0]
-        outvec2f = Vector{Float64}(2)
+        outvec2f = Vector{Float64}(undef, 2)
         mul!(outvec2f, mf, vf2)
         @test outvec2f ≈ [10.0, 22.0]
     end

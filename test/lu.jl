@@ -1,8 +1,8 @@
-using StaticArrays, Compat.Test
+using StaticArrays, Test, LinearAlgebra
 
 @testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
     a = SMatrix{m,n,Int}(1:(m*n))
-    l, u, p = @inferred(lu(a, Val{pivot}))
+    l, u, p = @inferred(lu(a, Val{pivot}()))
 
     # expected types
     @test p isa SVector{m,Int}

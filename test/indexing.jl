@@ -1,3 +1,5 @@
+using StaticArrays, Test
+
 @testset "Indexing" begin
     @testset "Linear getindex() on SVector" begin
         sv = SVector{4}(4,5,6,7)

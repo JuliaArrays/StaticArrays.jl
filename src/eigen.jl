@@ -111,15 +111,6 @@ end
 end
 
 
-
-@inline function eig(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
-    _eig(Size(A), A, permute, scale)
-end
-
-@inline function eig(A::LinearAlgebra.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
-    _eig(Size(SM), A, permute, scale)
-end
-
 @inline function _eig(s::Size, A::StaticMatrix, permute, scale)
     # Only cover the hermitian branch, for now ast least
     # This also solves some type-stability issues such as arise in Base
@@ -131,8 +122,8 @@ end
 end
 
 @inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    eigen = eigfact(Hermitian(Array(parent(A))))
-    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], eltype(A)}(eigen.vectors))
+    E = eigen(Hermitian(Array(parent(A))))
+    return (SVector{s[1], T}(E.values), SMatrix{s[1], s[2], eltype(A)}(E.vectors))
 end
 
 
@@ -378,12 +369,18 @@ end
     return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
-@inline function eigfact(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
+@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
 
-@inline function eigfact(A::LinearAlgebra.HermOrSym{T, SM}; permute::Bool=true, scale::Bool=true) where SM <: StaticMatrix where T<:Real
+# to avoid method ambiguity with LinearAlgebra
+@inline eigen(A::Hermitian{<:Real,<:StaticMatrix}; kwargs...)    = _eigen(A; kwargs...)
+@inline eigen(A::Hermitian{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
+@inline eigen(A::Symmetric{<:Real,<:StaticMatrix}; kwargs...)    = _eigen(A; kwargs...)
+@inline eigen(A::Symmetric{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
+
+@inline function _eigen(A::LinearAlgebra.HermOrSym; permute::Bool=true, scale::Bool=true)
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end

@@ -1,4 +1,4 @@
-using StaticArrays, Compat.Test
+using StaticArrays, Test
 
 import StaticArrays: drop_sdims
 

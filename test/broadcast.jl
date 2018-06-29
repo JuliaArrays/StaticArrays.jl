@@ -1,6 +1,7 @@
-using StaticArrays, Base.Test
+using StaticArrays, Test
 struct ScalarTest end
 Base.:(+)(x::Number, y::ScalarTest) = x
+Broadcast.broadcastable(x::ScalarTest) = Ref(x)
 
 @testset "Scalar Broadcast" begin
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})

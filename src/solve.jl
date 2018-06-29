@@ -34,8 +34,8 @@ end
     if prod(Sa) ≤ 14*14
         quote
             @_inline_meta
-            L, U, p = lu(a)
-            U \ (L \ $(length(Sb) > 1 ? :(b[p,:]) : :(b[p])))
+            LUp = lu(a)
+            LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
         end
     else
         quote

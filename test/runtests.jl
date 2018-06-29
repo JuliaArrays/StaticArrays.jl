@@ -1,11 +1,5 @@
-using StaticArrays, Compat, Compat.Test, Compat.Random, Compat.LinearAlgebra, SpecialFunctions
-if VERSION > v"0.7-"
-    using InteractiveUtils
-else
-    const LinearAlgebra = Base.LinAlg
-    const tr = trace
-    const mul! = A_mul_B!
-end
+using StaticArrays, Test, Random, LinearAlgebra, SpecialFunctions
+using InteractiveUtils
 
 # We generate a lot of matrices using rand(), but unit tests should be
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
@@ -44,7 +38,7 @@ include("sqrtm.jl")
 include("lyap.jl")
 include("lu.jl")
 srand(42); include("qr.jl")
-srand(42); include("chol.jl")
+srand(42); include("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
 include("deque.jl")
 include("io.jl")
 include("svd.jl")

@@ -38,13 +38,9 @@ end
 
 # Also consider randcycle, randperm? Also faster rand!(staticarray, collection)
 
-@static if VERSION >= v"0.7.0-DEV.3406"
-    using Random: SamplerType
-    @inline rand(rng::AbstractRNG, ::Type{SA}, dims::Dims) where {SA <: StaticArray} = rand!(rng, Array{SA}(undef, dims), SA)
-    @inline rand(rng::AbstractRNG, ::SamplerType{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
-else
-    @inline rand(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
-end
+using Random: SamplerType
+@inline rand(rng::AbstractRNG, ::Type{SA}, dims::Dims) where {SA <: StaticArray} = rand!(rng, Array{SA}(undef, dims), SA)
+@inline rand(rng::AbstractRNG, ::SamplerType{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
 
 @generated function _rand(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)

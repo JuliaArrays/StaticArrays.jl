@@ -47,8 +47,8 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            L, U, p = lu(A)
-            det(U)*_parity(p)
+            LUp = lu(A)
+            det(LUp.U)*_parity(LUp.p)
         end
     else
         :(@_inline_meta; det(Matrix(A)))
@@ -62,9 +62,9 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            L, U, p = lu(A)
-            d, s = logabsdet(U)
-            d + log(s*_parity(p))
+            LUp = lu(A)
+            d, s = logabsdet(LUp.U)
+            d + log(s*_parity(LUp.p))
         end
     else
         :(@_inline_meta; logdet(drop_sdims(A)))

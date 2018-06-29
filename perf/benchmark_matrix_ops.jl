@@ -1,7 +1,7 @@
 using StaticArrays, BenchmarkTools, DataFrames, DataStructures
 
 Nmax = 20
-unary = (det, inv, expm)
+unary = (det, inv, exp)
 binary = (\,)
 
 data = OrderedDict{Symbol,Any}()

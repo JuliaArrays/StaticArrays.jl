@@ -1,33 +1,4 @@
-@static if VERSION < v"0.7-"
-    import Base:           Ac_mul_B,  A_mul_Bc,  Ac_mul_Bc,  At_mul_B,  A_mul_Bt,  At_mul_Bt
-    import Base: A_mul_B!, Ac_mul_B!, A_mul_Bc!, Ac_mul_Bc!, At_mul_B!, A_mul_Bt!, At_mul_Bt!
-
-    const mul! = Base.A_mul_B!
-
-    import Base.LinAlg: BlasFloat, matprod
-
-    # TODO Potentially a loop version for rather large arrays? Or try and figure out inference problems?
-
-    # Deal with A_mul_Bc, etc...
-    # TODO make faster versions of A*_mul_B*
-    @inline A_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = A * adjoint(B)
-    @inline Ac_mul_Bc(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * adjoint(B)
-    @inline Ac_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = adjoint(A) * B
-
-    @inline A_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = A * transpose(B)
-    @inline At_mul_Bt(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * transpose(B)
-    @inline At_mul_B(A::StaticVecOrMat, B::StaticVecOrMat) = transpose(A) * B
-
-    @inline A_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, A, adjoint(B))
-    @inline Ac_mul_Bc!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, adjoint(A), adjoint(B))
-    @inline Ac_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, adjoint(A), B)
-
-    @inline A_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, A, transpose(B))
-    @inline At_mul_Bt!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), transpose(B))
-    @inline At_mul_B!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul!(dest, transpose(A), B)
-else
-    import LinearAlgebra: BlasFloat, matprod, mul!
-end
+import LinearAlgebra: BlasFloat, matprod, mul!
 
 
 # Manage dispatch of * and mul!
@@ -37,14 +8,14 @@ end
 @inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
-@inline *(A::StaticVector, B::TransposeVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::AdjointVector{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
 
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticVector) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticMatrix, B::StaticMatrix) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = mul!(dest, reshape(A, Size(Size(A)[1], 1)), B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::TransposeVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
-@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::AdjointVector{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
+@inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 
 #@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
 
@@ -88,7 +59,7 @@ end
 
 # outer product
 @generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta},
-        b::Union{TransposeVector{Tb, <:StaticVector}, AdjointVector{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
+        b::Union{Transpose{Tb, <:StaticVector}, Adjoint{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
@@ -257,7 +228,7 @@ end
 end
 
 @generated function _mul!(::Size{sc}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticVector,
-        b::Union{TransposeVector{<:Any, <:StaticVector}, AdjointVector{<:Any, <:StaticVector}}) where {sa, sb, sc}
+        b::Union{Transpose{<:Any, <:StaticVector}, Adjoint{<:Any, <:StaticVector}}) where {sa, sb, sc}
     if sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -333,14 +304,14 @@ end
         if VERSION < v"0.7-"
             blascall = quote
                 ccall((Base.BLAS.@blasfunc($gemm), Base.BLAS.libblas), Nothing,
-                    (Ptr{UInt8}, Ptr{UInt8}, Ptr{Base.BLAS.BlasInt}, Ptr{Base.BLAS.BlasInt},
-                     Ptr{Base.BLAS.BlasInt}, Ptr{$T}, Ptr{$T}, Ptr{Base.BLAS.BlasInt},
-                     Ptr{$T}, Ptr{Base.BLAS.BlasInt}, Ptr{$T}, Ptr{$T},
-                     Ptr{Base.BLAS.BlasInt}),
-                     &transA, &transB, &m, &n,
-                     &ka, &alpha, a, &strideA,
-                     b, &strideB, &beta, c,
-                     &strideC)
+                    (Ref{UInt8}, Ref{UInt8}, Ref{Base.BLAS.BlasInt}, Ref{Base.BLAS.BlasInt},
+                     Ref{Base.BLAS.BlasInt}, Ref{$T}, Ptr{$T}, Ref{Base.BLAS.BlasInt},
+                     Ptr{$T}, Ref{Base.BLAS.BlasInt}, Ref{$T}, Ptr{$T},
+                     Ref{Base.BLAS.BlasInt}),
+                     transA, transB, m, n,
+                     ka, alpha, a, strideA,
+                     b, strideB, beta, c,
+                     strideC)
              end
          else
              blascall = quote

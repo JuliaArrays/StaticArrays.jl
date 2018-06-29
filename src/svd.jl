@@ -9,7 +9,19 @@ struct SVD{T,TU,TS,TVt} <: Factorization{T}
 end
 SVD(U::AbstractArray{T}, S::AbstractVector, Vt::AbstractArray{T}) where {T} = SVD{T,typeof(U),typeof(S),typeof(Vt)}(U, S, Vt)
 
-getindex(::SVD, ::Symbol) = error("In order to avoid type instability, StaticArrays.SVD doesn't support indexing the output of svdfact with a symbol.  Instead, you can access the fields of the factorization directly as f.U, f.S, and f.Vt")
+@inline function Base.getproperty(F::SVD, s::Symbol)
+    if s === :V
+        return getfield(F, :Vt)'
+    else
+        return getfield(F, s)
+    end
+end
+
+# iteration for destructuring into components
+Base.iterate(S::SVD) = (S.U, Val(:S))
+Base.iterate(S::SVD, ::Val{:S}) = (S.S, Val(:V))
+Base.iterate(S::SVD, ::Val{:V}) = (S.V, Val(:done))
+Base.iterate(S::SVD, ::Val{:done}) = nothing
 
 function svdvals(A::StaticMatrix)
     sv = svdvals(Matrix(A))
@@ -20,18 +32,11 @@ function svdvals(A::StaticMatrix)
     similar_type(A, T2, Size(diagsize(A)))(sv)
 end
 
-function svdfact(A::StaticMatrix)
+function svd(A::StaticMatrix)
     # "Thin" SVD only for now.
-    f = svdfact(Matrix(A))
+    f = svd(Matrix(A))
     U = similar_type(A, eltype(f.U), Size(Size(A)[1], diagsize(A)))(f.U)
     S = similar_type(A, eltype(f.S), Size(diagsize(A)))(f.S)
     Vt = similar_type(A, eltype(f.Vt), Size(diagsize(A), Size(A)[2]))(f.Vt)
     SVD(U,S,Vt)
-end
-
-function svd(A::StaticMatrix)
-    # Need our own version of `svd()`, as `Base` passes the `thin` argument
-    # which makes the resulting dimensions uninferrable.
-    f = svdfact(A)
-    (f.U, f.S, f.Vt')
 end

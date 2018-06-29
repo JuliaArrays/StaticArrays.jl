@@ -1,4 +1,4 @@
-using StaticArrays, Compat.Test
+using StaticArrays, Test, LinearAlgebra
 
 @testset "Linear algebra" begin
 
@@ -44,12 +44,6 @@ using StaticArrays, Compat.Test
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
         @test @inferred(diagm(Val(-2) => SVector(1,2,3)))::SMatrix == diagm(-2 => [1,2,3])
         @test @inferred(diagm(Val(-2) => SVector(1,2,3), Val(1) => SVector(4,5)))::SMatrix == diagm(-2 => [1,2,3], 1 => [4,5])
-	if VERSION < v"0.7.0-DEV.2161"
-            # old interface, deprecated in Julia 0.7
-            @test @inferred(diagm(SVector(1,2))) === @SMatrix [1 0; 0 2]
-            @test @inferred(diagm(SVector(1,2,3), Val{2}))::SMatrix == diagm(2 => [1,2,3])
-            @test @inferred(diagm(SVector(1,2,3), Val{-2}))::SMatrix == diagm(-2 => [1,2,3])
-	end
     end
 
     @testset "diag()" begin
@@ -73,22 +67,6 @@ using StaticArrays, Compat.Test
         @test_throws ErrorException one(MMatrix{2,4})
     end
 
-    if VERSION < v"0.7-"
-        @testset "eye()" begin
-            @test @inferred(eye(SMatrix{2,2,Int})) === @SMatrix [1 0; 0 1]
-            @test @inferred(eye(SMatrix{2,2})) === @SMatrix [1.0 0.0; 0.0 1.0]
-            @test @inferred(eye(SMatrix{2})) === @SMatrix [1.0 0.0; 0.0 1.0]
-            @test @inferred(eye(eye(SMatrix{2,2,Int}))) === @SMatrix [1 0; 0 1]
-
-            @test @inferred(eye(SMatrix{2,3,Int})) === @SMatrix [1 0 0; 0 1 0]
-            @test @inferred(eye(SMatrix{2,3})) === @SMatrix [1.0 0.0 0.0; 0.0 1.0 0.0]
-
-            @test @inferred(eye(MMatrix{2,2,Int}))::MMatrix == @MMatrix [1 0; 0 1]
-            @test @inferred(eye(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
-            @test @inferred(eye(MMatrix{2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
-        end
-    end
-
     @testset "cross()" begin
         @test @inferred(cross(SVector(1,2,3), SVector(4,5,6))) === SVector(-3, 6, -3)
         @test @inferred(cross(SVector(1,2), SVector(4,5))) === -3
@@ -109,13 +87,8 @@ using StaticArrays, Compat.Test
     @testset "transpose() and conj()" begin
         @test @inferred(conj(SVector(1+im, 2+im))) === SVector(1-im, 2-im)
 
-        if VERSION < v"0.7-"
-            @test @inferred(transpose(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
-            @test @inferred(adjoint(@SVector([1, 2, 3]))) === RowVector(@SVector([1, 2, 3]))
-        else
-            @test @inferred(transpose(@SVector([1, 2, 3]))) === Transpose(@SVector([1, 2, 3]))
-            @test @inferred(adjoint(@SVector([1, 2, 3]))) === Adjoint(@SVector([1, 2, 3]))
-        end
+        @test @inferred(transpose(@SVector([1, 2, 3]))) === Transpose(@SVector([1, 2, 3]))
+        @test @inferred(adjoint(@SVector([1, 2, 3]))) === Adjoint(@SVector([1, 2, 3]))
         @test @inferred(transpose(@SMatrix([1 2; 0 3]))) === @SMatrix([1 0; 2 3])
         @test @inferred(transpose(@SMatrix([1 2 3; 4 5 6]))) === @SMatrix([1 4; 2 5; 3 6])
 
@@ -163,11 +136,11 @@ using StaticArrays, Compat.Test
         @test norm(SVector(1.0,2.0,2.0),1) ≈ 5.0
         @test norm(SVector(1.0,2.0,0.0),0) ≈ 2.0
 
-        @test vecnorm(SVector(1.0,2.0)) ≈ vecnorm([1.0,2.0])
-        @test vecnorm(@SMatrix [1 2; 3 4.0+im]) ≈ vecnorm([1 2; 3 4.0+im])
+        @test norm(SVector(1.0,2.0)) ≈ norm([1.0,2.0])
+        @test norm(@SMatrix [1 2; 3 4.0+im]) ≈ norm([1 2; 3 4.0+im])
         sm = @SMatrix [1 2; 3 4.0+im]
-        @test vecnorm(sm, 3.) ≈ vecnorm([1 2; 3 4.0+im], 3.)
-        @test LinearAlgebra.norm_sqr(SVector(1.0,2.0)) ≈ vecnorm([1.0,2.0])^2
+        @test norm(sm, 3.) ≈ norm([1 2; 3 4.0+im], 3.)
+        @test LinearAlgebra.norm_sqr(SVector(1.0,2.0)) ≈ norm([1.0,2.0])^2
 
         @test normalize(SVector(1,2,3)) ≈ normalize([1,2,3])
         @test normalize(SVector(1,2,3), 1) ≈ normalize([1,2,3], 1)
@@ -183,8 +156,8 @@ using StaticArrays, Compat.Test
     @testset "size zero" begin
         @test vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test StaticArrays.bilinear_vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
-        @test vecnorm(SVector{0, Float64}(())) === 0.
-        @test vecnorm(SVector{0, Float64}(()), 1) === 0.
+        @test norm(SVector{0, Float64}(())) === 0.
+        @test norm(SVector{0, Float64}(()), 1) === 0.
         @test tr(SMatrix{0,0,Float64}(())) === 0.
     end
 

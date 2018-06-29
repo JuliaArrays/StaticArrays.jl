@@ -8,8 +8,9 @@
     end
 end
 
-@inline unshift(vec::StaticVector, x) = _unshift(Size(vec), vec, x)
-@generated function _unshift(::Size{s}, vec::StaticVector, x) where {s}
+Base.@deprecate unshift pushfirst
+@inline pushfirst(vec::StaticVector, x) = _pushfirst(Size(vec), vec, x)
+@generated function _pushfirst(::Size{s}, vec::StaticVector, x) where {s}
     newlen = s[1] + 1
     exprs = vcat(:x, [:(vec[$i]) for i = 1:s[1]])
     return quote
@@ -43,8 +44,9 @@ end
     end
 end
 
-@inline shift(vec::StaticVector) = _shift(Size(vec), vec)
-@generated function _shift(::Size{s}, vec::StaticVector) where {s}
+@deprecate shift popfirst
+@inline popfirst(vec::StaticVector) = _popfirst(Size(vec), vec)
+@generated function _popfirst(::Size{s}, vec::StaticVector) where {s}
     newlen = s[1] - 1
     exprs = [:(vec[$i]) for i = 2:s[1]]
     return quote
@@ -86,8 +88,4 @@ import Base.setindex
 end
 
 # TODO proper multidimension boundscheck
-if VERSION < v"0.7-"
-    @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))
-else
-    @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])
-end
+@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])

@@ -60,8 +60,8 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            L, U, p = lu(A)
-            U \ (L \ eye(A)[p,:])
+            LUp = lu(A)
+            LUp.U \ (LUp.L \ eye(A)[LUp.p,:])
         end
     else
         :(@_inline_meta; similar_type(A)(inv(Matrix(A))))

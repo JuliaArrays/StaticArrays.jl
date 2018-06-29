@@ -1,3 +1,5 @@
+using StaticArrays, Test
+
 @testset "Map, reduce, mapreduce, broadcast" begin
     @testset "map and map!" begin
         v1 = @SVector [2,4,6,8]
@@ -29,14 +31,14 @@
         v2 = [4,3,2,1]; sv2 = SVector{4}(v2)
         @test reduce(+, sv1) === reduce(+, v1)
         @test reduce(+, 0, sv1) === reduce(+, 0, v1)
-        @test reducedim(max, sa, Val{1}, -1.) === SMatrix{1,J}(reducedim(max, a, 1, -1.))
-        @test reducedim(max, sa, Val{2}, -1.) === SMatrix{I,1}(reducedim(max, a, 2, -1.))
+        @test reducedim(max, sa, Val{1}, -1.) === SMatrix{1,J}(reduce(max, -1., a, dims=1))
+        @test reducedim(max, sa, Val{2}, -1.) === SMatrix{I,1}(reduce(max, -1., a, dims=2))
         @test mapreduce(-, +, sv1) === mapreduce(-, +, v1)
         @test mapreduce(-, +, 0, sv1) === mapreduce(-, +, 0, v1)
         @test mapreduce(*, +, sv1, sv2) === 40
         @test mapreduce(*, +, 0, sv1, sv2) === 40
-        @test mapreducedim(x->x^2, max, sa, Val{1}, -1.) == SMatrix{1,J}(mapreducedim(x->x^2, max, a, 1, -1.))
-        @test mapreducedim(x->x^2, max, sa, Val{2}, -1.) == SMatrix{I,1}(mapreducedim(x->x^2, max, a, 2, -1.))
+        @test mapreducedim(x->x^2, max, sa, Val{1}, -1.) == SMatrix{1,J}(mapreduce(x->x^2, max, -1., a, dims=1))
+        @test mapreducedim(x->x^2, max, sa, Val{2}, -1.) == SMatrix{I,1}(mapreduce(x->x^2, max, -1., a, dims=2))
     end
 
     @testset "implemented by [map]reduce and [map]reducedim" begin
@@ -53,13 +55,13 @@
 
         @test sum(sa) === sum(a)
         @test sum(abs2, sa) === sum(abs2, a)
-        @test sum(sa, Val{2}) === RSArray2(sum(a, 2))
-        @test sum(abs2, sa, Val{2}) === RSArray2(sum(abs2, a, 2))
+        @test sum(sa, Val{2}) === RSArray2(sum(a, dims=2))
+        @test sum(abs2, sa, Val{2}) === RSArray2(sum(abs2, a, dims=2))
 
         @test prod(sa) === prod(a)
         @test prod(abs2, sa) === prod(abs2, a)
-        @test prod(sa, Val{2}) === RSArray2(prod(a, 2))
-        @test prod(abs2, sa, Val{2}) === RSArray2(prod(abs2, a, 2))
+        @test prod(sa, Val{2}) === RSArray2(prod(a, dims=2))
+        @test prod(abs2, sa, Val{2}) === RSArray2(prod(abs2, a, dims=2))
 
         @test count(sb) === count(b)
         @test count(x->x>0, sa) === count(x->x>0, a)
@@ -68,28 +70,28 @@
 
         @test all(sb) === all(b)
         @test all(x->x>0, sa) === all(x->x>0, a)
-        @test all(sb, Val{2}) === RSArray2(all(b, 2))
-        @test all(x->x>0, sa, Val{2}) === RSArray2(all(x->x>0, a, 2))
+        @test all(sb, Val{2}) === RSArray2(all(b, dims=2))
+        @test all(x->x>0, sa, Val{2}) === RSArray2(all(x->x>0, a, dims=2))
 
         @test any(sb) === any(b)
         @test any(x->x>0, sa) === any(x->x>0, a)
-        @test any(sb, Val{2}) === RSArray2(any(b, 2))
-        @test any(x->x>0, sa, Val{2}) === RSArray2(any(x->x>0, a, 2))
+        @test any(sb, Val{2}) === RSArray2(any(b, dims=2))
+        @test any(x->x>0, sa, Val{2}) === RSArray2(any(x->x>0, a, dims=2))
 
         @test mean(sa) === mean(a)
         @test mean(abs2, sa) === mean(abs2, a)
-        @test mean(sa, Val{2}) === RSArray2(mean(a, 2))
-        @test mean(abs2, sa, Val{2}) === RSArray2(mean(abs2.(a), 2))
+        @test mean(sa, Val{2}) === RSArray2(mean(a, dims=2))
+        @test mean(abs2, sa, Val{2}) === RSArray2(mean(abs2.(a), dims=2))
 
         @test minimum(sa) === minimum(a)
         @test minimum(abs2, sa) === minimum(abs2, a)
-        @test minimum(sa, Val{2}) === RSArray2(minimum(a, 2))
-        @test minimum(abs2, sa, Val{2}) === RSArray2(minimum(abs2, a, 2))
+        @test minimum(sa, Val{2}) === RSArray2(minimum(a, dims=2))
+        @test minimum(abs2, sa, Val{2}) === RSArray2(minimum(abs2, a, dims=2))
 
         @test maximum(sa) === maximum(a)
         @test maximum(abs2, sa) === maximum(abs2, a)
-        @test maximum(sa, Val{2}) === RSArray2(maximum(a, 2))
-        @test maximum(abs2, sa, Val{2}) === RSArray2(maximum(abs2, a, 2))
+        @test maximum(sa, Val{2}) === RSArray2(maximum(a, dims=2))
+        @test maximum(abs2, sa, Val{2}) === RSArray2(maximum(abs2, a, dims=2))
 
         @test diff(sa, Val{1}) === RSArray1(a[2:end,:,:] - a[1:end-1,:,:])
         @test diff(sa, Val{2}) === RSArray2(a[:,2:end,:] - a[:,1:end-1,:])
@@ -97,8 +99,8 @@
 
         # as of Julia v0.6, diff() for regular Array is defined only for vectors and matrices
         m = randn(4,3); sm = SMatrix{4,3}(m)
-        @test diff(sm, Val{1}) == diff(m, 1) == diff(sm) == diff(m)
-        @test diff(sm, Val{2}) == diff(m, 2)
+        @test diff(sm, Val{1}) == diff(m, dims=1) == diff(sm)
+        @test diff(sm, Val{2}) == diff(m, dims=2)
     end
 
     @testset "broadcast and broadcast!" begin

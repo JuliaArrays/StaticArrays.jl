@@ -1,3 +1,5 @@
+using StaticArrays, Test, LinearAlgebra
+
 @testset "AbstractArray interface" begin
     @testset "size and length" begin
         m = @SMatrix [1 2 3; 4 5 6; 7 8 9; 10 11 12]
@@ -83,20 +85,5 @@
     @testset "copy" begin
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
         @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
-    end
-
-    @testset "full" begin
-        m_a = [0.831333 -1.91207; 0.200986  -0.69399]
-        m_a = m_a*m_a'
-        m = SMatrix{2,2}(m_a)
-        @test @inferred(full(Symmetric(m))) == m_a
-        @test @inferred(full(Symmetric(m, :L))) == m_a
-
-        m_a = [0.34911-2.08735im   -0.438891-0.446692im;
-               -0.666533-0.652323im   0.834871-2.10413im]
-        m_a = m_a*m_a'
-        m = SMatrix{2,2}(m_a)
-        @test @inferred(full(Hermitian(m))) == m_a
-        @test @inferred(full(Hermitian(m, :L))) == m_a
     end
 end
