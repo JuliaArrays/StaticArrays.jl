@@ -9,7 +9,7 @@ struct SVD{T,TU,TS,TVt} <: Factorization{T}
 end
 SVD(U::AbstractArray{T}, S::AbstractVector, Vt::AbstractArray{T}) where {T} = SVD{T,typeof(U),typeof(S),typeof(Vt)}(U, S, Vt)
 
-function Base.getproperty(F::SVD, s::Symbol)
+@inline function Base.getproperty(F::SVD, s::Symbol)
     if s === :V
         return getfield(F, :Vt)'
     else
