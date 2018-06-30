@@ -1,4 +1,7 @@
 using StaticArrays, Test
+if VERSION >= v"0.7.0-beta.85"
+    import Statistics: mean
+end
 
 @testset "Map, reduce, mapreduce, broadcast" begin
     @testset "map and map!" begin

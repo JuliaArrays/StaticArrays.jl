@@ -7,8 +7,14 @@ import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_i
 import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
              promote_rule, map, map!, reduce, reducedim, mapreducedim, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
-             iszero, sum, prod, count, any, all, minimum, maximum, extrema, mean,
+             iszero, sum, prod, count, any, all, minimum, maximum, extrema,
              copy, read, read!, write
+
+if VERSION >= v"0.7.0-beta.85"
+    import Statistics: mean
+else
+    import Base: mean
+end
 
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
