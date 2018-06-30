@@ -27,20 +27,20 @@ srand(42)
         @test Q'*Q ≈ one(Q'*Q)
         @test istriu(R)
 
-        # # pivot=true cases are not released yet
-        # pivot = Val(true)
-        # QRp = @inferred qr(arr, pivot)
-        # @test QRp isa Tuple
-        # @test length(QRp) == 3
-        # Q, R, p = QRp
-        # @test Q isa StaticMatrix
-        # @test R isa StaticMatrix
-        # @test p isa StaticVector
+        # pivot=true cases has no StaticArrays specific version yet
+        # but fallbacks to LAPACK
+        pivot = Val(true)
+        QRp = @inferred qr(arr, pivot)
+        @test QRp isa StaticArrays.QR
+        Q, R, p = QRp
+        @test Q isa StaticMatrix
+        @test R isa StaticMatrix
+        @test p isa StaticVector
 
-        # Q_ref,R_ref, p_ref = qr(Matrix(arr), pivot)
-        # @test Q ≈ Q_ref
-        # @test R ≈ R_ref
-        # @test p == p_ref
+        Q_ref, R_ref, p_ref = qr(Matrix(arr), pivot)
+        @test Q ≈ Matrix(Q_ref)
+        @test R ≈ R_ref
+        @test p == p_ref
     end
 
     for eltya in (Float32, Float64, BigFloat, Int),

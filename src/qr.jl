@@ -1,12 +1,14 @@
 # define our own struct since LinearAlgebra.QR are restricted to Matrix
-struct QR{Q,R}
+struct QR{Q,R,P}
     Q::Q
     R::R
+    p::P
 end
 
 # iteration for destructuring into components
 Base.iterate(S::QR) = (S.Q, Val(:R))
-Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:done))
+Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:p))
+Base.iterate(S::QR, ::Val{:p}) = (S.p, Val(:done))
 Base.iterate(S::QR, ::Val{:done}) = nothing
 
 """
@@ -33,8 +35,20 @@ true
 ```
 """
 @inline function qr(A::StaticMatrix, pivot::Union{Val{false}, Val{true}} = Val(false))
-    Q, R = _qr(Size(A), A, pivot)
-    return QR(Q, R)
+    QRp = _qr(Size(A), A, pivot)
+    if length(QRp) === 2
+        # create an identity permutation since that is cheap,
+        # and much safer since, in the case of isbits types, we can't
+        # safely leave the field undefined.
+        p = identity_perm(QRp[2])
+        return QR(QRp[1], QRp[2], p)
+    else # length(QRp) === 3
+        return QR(QRp[1], QRp[2], QRp[3])
+    end
+end
+
+function identity_perm(R::StaticMatrix{N,M,T}) where {N,M,T}
+    return similar_type(R, Int, Size((M,)))(ntuple(x -> x, Val{M}()))
 end
 
 _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
@@ -45,12 +59,12 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
     SizeQ = Size( sA[1], diagsize(Size(A)) )
     SizeR = Size( diagsize(Size(A)), sA[2] )
 
-    if pivot == Val(true)
+    if pivot === Val{true}
         return quote
             @_inline_meta
             Q0, R0, p0 = qr(Matrix(A), pivot)
             T = _qreltype(TA)
-            return similar_type(A, T, $(SizeQ))(Q0),
+            return similar_type(A, T, $(SizeQ))(Matrix(Q0)),
                    similar_type(A, T, $(SizeR))(R0),
                    similar_type(A, Int, $(Size(sA[2])))(p0)
         end
