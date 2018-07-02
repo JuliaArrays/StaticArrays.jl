@@ -30,9 +30,15 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         new{S,T,N,L}(convert_ntuple(T, x))
     end
 
-    function MArray{S,T,N,L}() where {S,T,N,L}
+    function MArray{S,T,N,L}(::UndefInitializer) where {S,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
+    end
+
+    # deprecated empty constructor
+    function MArray{S,T,N,L}() where {S,T,N,L}
+        Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
+        return MArray{S,T,N,L}(undef)
     end
 end
 
@@ -57,17 +63,25 @@ end
     end
 end
 
-@generated function (::Type{MArray{S,T,N}})() where {S,T,N}
+function (::Type{MArray{S,T,N}})() where {S,T,N}
+    Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
+    return MArray{S,T,N}(undef)
+end
+@generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S, T, N, $(tuple_prod(S))}()
+        MArray{S, T, N, $(tuple_prod(S))}(undef)
     end
 end
 
-@generated function (::Type{MArray{S,T}})() where {S,T}
+function (::Type{MArray{S,T}})() where {S,T}
+    Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
+    return MArray{S,T}(undef)
+end
+@generated function (::Type{MArray{S,T}})(::UndefInitializer) where {S,T}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}()
+        MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}(undef)
     end
 end
 

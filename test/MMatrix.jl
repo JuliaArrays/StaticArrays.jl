@@ -3,8 +3,8 @@
         @test MMatrix{1,1,Int,1}((1,)).data === (1,)
         @test MMatrix{1,1,Float64,1}((1,)).data === (1.0,)
         @test MMatrix{2,2,Float64,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(MMatrix{1,1,Int,1}(), MMatrix{1,1,Int,1})
-        @test isa(MMatrix{1,1,Int}(), MMatrix{1,1,Int,1})
+        @test isa(MMatrix{1,1,Int,1}(undef), MMatrix{1,1,Int,1})
+        @test isa(MMatrix{1,1,Int}(undef), MMatrix{1,1,Int,1})
 
         # Bad input
         @test_throws Exception MMatrix{2,1,Int,2}((1,))
@@ -111,7 +111,7 @@
         @test m.data === (11, 12, 13, 14)
 
         # setindex with non-elbits type
-        m = MMatrix{2,2,String}()
+        m = MMatrix{2,2,String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1)
     end
 end

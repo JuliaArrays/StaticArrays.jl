@@ -7,7 +7,7 @@ end
     @testset "map and map!" begin
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
-        mv = MVector{4, Int}()
+        mv = MVector{4, Int}(undef)
 
         normal_v1 = [2,4,6,8]
         normal_v2 = [4,3,2,1]
@@ -19,10 +19,10 @@ end
 
         map!(+, mv, v1, v2)
         @test mv == @MVector [6, 7, 8, 9]
-        mv2 = MVector{4, Int}()
+        mv2 = MVector{4, Int}(undef)
         map!(x->x^2, mv2, v1)
         @test mv2 == @MVector [4, 16, 36, 64]
-        mv3 = MVector{4, Int}()
+        mv3 = MVector{4, Int}(undef)
         v3 = @SVector [1, 2, 3, 4]
         map!(+, mv3, v1, v2, v3)
         @test mv3 == @MVector [7, 9, 11, 13]
@@ -110,8 +110,8 @@ end
         c = 2
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
-        mv = MVector{4, Int}()
-        mm = MMatrix{4, 2, Int}()
+        mv = MVector{4, Int}(undef)
+        mm = MMatrix{4, 2, Int}(undef)
         M = @SMatrix [1 2; 3 4; 5 6; 7 8]
 
         @test_throws DimensionMismatch broadcast(+, v1, @SMatrix [4 3 2 1; 5 6 7 8])
@@ -126,7 +126,7 @@ end
         @test @inferred(broadcast(+, v1, v2)) === map(+, v1, v2)
         @test @inferred(broadcast(+, v1, M)) === @SMatrix [3 4; 7 8; 11 12; 15 16]
 
-        @test_throws DimensionMismatch broadcast!(-, MVector{5, Int}(), v1)
+        @test_throws DimensionMismatch broadcast!(-, MVector{5, Int}(undef), v1)
 
         broadcast!(-, mv, v1)
         @test mv == @MVector [-2, -4, -6, -8]

@@ -3,9 +3,9 @@
         @test MArray{Tuple{1},Int,1,1}((1,)).data === (1,)
         @test MArray{Tuple{1},Float64,1,1}((1,)).data === (1.0,)
         @test MArray{Tuple{2,2},Float64,2,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(MArray{Tuple{1},Int,1,1}(), MArray{Tuple{1},Int,1,1})
-        @test isa(MArray{Tuple{1},Int,1}(), MArray{Tuple{1},Int,1,1})
-        @test isa(MArray{Tuple{1},Int}(), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int,1,1}(undef), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int,1}(undef), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int}(undef), MArray{Tuple{1},Int,1,1})
 
         # Bad input
         @test_throws Exception MArray{Tuple{2},Int,1,2}((1,))
@@ -127,9 +127,9 @@
             @test !Base.mightalias(m, copy(m))
             @test Base.mightalias(m, view(m, :, 1))
         end
-        
+
         if isdefined(Base, :dataids) # v0.7-
-            @test Base.dataids(m) == (UInt(pointer(m)),) 
+            @test Base.dataids(m) == (UInt(pointer(m)),)
         end
     end
 
@@ -153,7 +153,7 @@
         @test_throws BoundsError setindex!(mm, 4, 82)
 
         # setindex with non-elbits type
-        m = MArray{Tuple{2,2,2}, String}()
+        m = MArray{Tuple{2,2,2}, String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1, 1)
     end
 

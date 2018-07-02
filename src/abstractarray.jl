@@ -92,7 +92,7 @@ similar(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s
 similar(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar(A,T,s)
 
 # defaults to built-in mutable types
-similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))()
+similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))(undef)
 
 # both SizedArray and Array return SizedArray
 similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))()
