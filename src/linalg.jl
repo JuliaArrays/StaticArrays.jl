@@ -166,13 +166,13 @@ end
 
 # deprecate eye, keep around for as long as LinearAlgebra.eye exists
 @static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(A::SM) where {SM<:StaticMatrix} eye(typeof(A))
+    @deprecate eye(A::SM) where {SM<:StaticMatrix} typeof(A)(I)
+    @deprecate eye(::Type{SM}) where {SM<:StaticMatrix} SM(1.0I)
 end
 
 # StaticMatrix(I::UniformScaling) methods to replace eye
 (::Type{SM})(I::UniformScaling) where {N,M,SM<:StaticMatrix{N,M}} = _eye(Size(SM), SM, I)
 
-@inline eye(::Type{SM}) where {SM<:StaticMatrix} = _eye(Size(SM), SM, 1.0I)
 @generated function _eye(::Size{S}, ::Type{SM}, I::UniformScaling{T}) where {S, SM <: StaticArray, T}
     exprs = [i == j ? :(I.λ) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
     return quote

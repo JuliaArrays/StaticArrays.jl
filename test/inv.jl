@@ -101,7 +101,7 @@ end
 #=
 using PyPlot
 
-inv_residual(A::AbstractMatrix) = norm(A*inv(A) - eye(size(A,1)))
+inv_residual(A::AbstractMatrix) = norm(A*inv(A) - Matrix(I, size(A)...))
 
 """
     plot_residuals(N, rank, ϵ)
@@ -115,8 +115,8 @@ function plot_residuals(N, rank, ϵ)
     for i=1:10000
         A = almost_singular_matrix(N, rank, ϵ)
         SA = SMatrix{N,N}(A)
-        SA_residual = norm(Matrix(SA*inv(SA) - eye(N)))
-        A_residual = norm(A*inv(A) - eye(N))
+        SA_residual = norm(Matrix(SA*inv(SA) - Matrix(I, N, N)))
+        A_residual = norm(A*inv(A) - Matrix(I, N, N))
         push!(SA_residuals, SA_residual)
         push!(A_residuals, A_residual)
         #= if SA_residual/A_residual > 10000 =#

@@ -57,12 +57,15 @@ end
 
 # Some more advanced constructor-like functions
 @inline one(::Type{SArray{S}}) where {S} = one(SArray{S, Float64, tuple_length(S)})
-@inline eye(::Type{SArray{S}}) where {S} = eye(SArray{S, Float64, tuple_length(S)})
 @inline one(::Type{SArray{S, T}}) where {S, T} = one(SArray{S, T, tuple_length(S)})
-@inline eye(::Type{SArray{S, T}}) where {S, T} = eye(SArray{S, T, tuple_length(S)})
 
 # SArray(I::UniformScaling) methods to replace eye
 (::Type{SA})(I::UniformScaling) where {SA<:SArray} = _eye(Size(SA), SA, I)
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{SArray{S}}) where {S} SArray{S}(1.0I)
+    @deprecate eye(::Type{SArray{S,T}}) where {S,T} SArray{S,T}(I)
+end
 
 ####################
 ## SArray methods ##
@@ -234,20 +237,20 @@ macro SArray(ex)
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    eye(SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))}})
+                    SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))},Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))})
+                        SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))}(I)
                     else
-                        eye(SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}})
+                        SArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}, Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))})
+                    SArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @SArray")

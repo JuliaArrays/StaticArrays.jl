@@ -21,10 +21,14 @@ import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
 import Base: sqrt, exp, log
 using LinearAlgebra
-import LinearAlgebra: transpose, adjoint, eye, vecdot, eigvals, eigen, lyap, tr,
+import LinearAlgebra: transpose, adjoint, vecdot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals, svdfact,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr
+# import eye for deprecation warnings
+@static if isdefined(LinearAlgebra, :eye)
+    import LinearAlgebra: eye
+end
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

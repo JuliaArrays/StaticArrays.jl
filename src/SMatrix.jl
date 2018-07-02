@@ -61,7 +61,11 @@ end
 
 # Some more advanced constructor-like functions
 @inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
-@inline eye(::Type{SMatrix{N}}) where {N} = eye(SMatrix{N,N})
+
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{SMatrix{N}}) where {N} SMatrix{N,N}(1.0I)
+end
 
 #####################
 ## SMatrix methods ##
@@ -182,20 +186,20 @@ macro SMatrix(ex)
         elseif ex.args[1] == :eye
             if length(ex.args) == 2
                 return quote
-                    eye(SMatrix{$(esc(ex.args[2]))})
+                    SMatrix{$(esc(ex.args[2])),$(esc(ex.args[2])),Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(SMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))})
+                        SMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))}(I)
                     else
-                        eye(SMatrix{$(esc(ex.args[2])), $(esc(ex.args[3]))})
+                        SMatrix{$(esc(ex.args[2])), $(esc(ex.args[3])), Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(SMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                    SMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @SMatrix")
