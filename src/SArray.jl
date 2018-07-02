@@ -61,6 +61,9 @@ end
 @inline one(::Type{SArray{S, T}}) where {S, T} = one(SArray{S, T, tuple_length(S)})
 @inline eye(::Type{SArray{S, T}}) where {S, T} = eye(SArray{S, T, tuple_length(S)})
 
+# SArray(I::UniformScaling) methods to replace eye
+(::Type{SA})(I::UniformScaling) where {SA<:SArray} = _eye(Size(SA), SA, I)
+
 ####################
 ## SArray methods ##
 ####################

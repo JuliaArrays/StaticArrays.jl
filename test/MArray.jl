@@ -127,9 +127,9 @@
             @test !Base.mightalias(m, copy(m))
             @test Base.mightalias(m, view(m, :, 1))
         end
-        
+
         if isdefined(Base, :dataids) # v0.7-
-            @test Base.dataids(m) == (UInt(pointer(m)),) 
+            @test Base.dataids(m) == (UInt(pointer(m)),)
         end
     end
 

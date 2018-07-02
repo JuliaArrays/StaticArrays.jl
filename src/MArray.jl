@@ -82,6 +82,9 @@ end
 @inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,tuple_length(S)})
 @inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,tuple_length(S)})
 
+# MArray(I::UniformScaling) methods to replace eye
+(::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
+
 ####################
 ## MArray methods ##
 ####################

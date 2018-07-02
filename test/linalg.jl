@@ -39,6 +39,40 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(I \ @SMatrix([0 1; 2 3])) === @SMatrix [0.0 1.0; 2.0 3.0]
     end
 
+    @testset "Constructors from UniformScaling" begin
+        I3x3 = Matrix(I, 3, 3)
+        I3x2 = Matrix(I, 3, 2)
+        # SArray
+        ## eltype from I
+        @test @inferred(SArray{Tuple{3,3}}(I))::SMatrix{3,3,Bool,9} == I3x3
+        @test @inferred(SArray{Tuple{3,3}}(2.0I))::SMatrix{3,3,Float64,9} == 2I3x3
+        ## eltype from constructor
+        @test @inferred(SArray{Tuple{3,3},Float64}(I))::SMatrix{3,3,Float64,9} == I3x3
+        @test @inferred(SArray{Tuple{3,3},Float32}(2.0I))::SMatrix{3,3,Float32,9} == 2I3x3
+        ## non-square
+        @test @inferred(SArray{Tuple{3,2}}(I))::SMatrix{3,2,Bool,6} == I3x2
+        # SMatrix
+        @test @inferred(SMatrix{3,3}(I))::SMatrix{3,3,Bool,9} == I3x3
+        @test @inferred(SMatrix{3,3}(2.0I))::SMatrix{3,3,Float64,9} == 2I3x3
+        # MArray
+        ## eltype from I
+        @test @inferred(MArray{Tuple{3,3}}(I))::MMatrix{3,3,Bool,9} == I3x3
+        @test @inferred(MArray{Tuple{3,3}}(2.0I))::MMatrix{3,3,Float64,9} == 2I3x3
+        ## eltype from constructor
+        @test @inferred(MArray{Tuple{3,3},Float64}(I))::MMatrix{3,3,Float64,9} == I3x3
+        @test @inferred(MArray{Tuple{3,3},Float32}(2.0I))::MMatrix{3,3,Float32,9} == 2I3x3
+        ## non-square
+        @test @inferred(MArray{Tuple{3,2}}(I))::MMatrix{3,2,Bool,6} == I3x2
+        # MMatrix
+        @test @inferred(MMatrix{3,3}(I))::MMatrix{3,3,Bool,9} == I3x3
+        @test @inferred(MMatrix{3,3}(2.0I))::MMatrix{3,3,Float64,9} == 2I3x3
+        # SDiagonal
+        @test @inferred(SDiagonal{3}(I))::SDiagonal{3,Bool} == I3x3
+        @test @inferred(SDiagonal{3}(2.0I))::SDiagonal{3,Float64} == 2I3x3
+        @test @inferred(SDiagonal{3,Float64}(I))::SDiagonal{3,Float64} == I3x3
+        @test @inferred(SDiagonal{3,Float32}(2.0I))::SDiagonal{3,Float32} == 2I3x3
+    end
+
     @testset "diagm()" begin
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
