@@ -43,7 +43,7 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "fill!()" begin
-        m = MMatrix{4,16,Float64}()
+        m = MMatrix{4,16,Float64}(undef)
         fill!(m, 3)
         @test all(m .== 3.)
     end

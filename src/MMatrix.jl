@@ -46,10 +46,14 @@ end
     end
 end
 
-@generated function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
+function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
+    Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
+    return MMatrix{S1,S2,T}(undef)
+end
+@generated function (::Type{MMatrix{S1,S2,T}})(::UndefInitializer) where {S1,S2,T}
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, S2, T, $(S1*S2)}()
+        MMatrix{S1, S2, T, $(S1*S2)}(undef)
     end
 end
 

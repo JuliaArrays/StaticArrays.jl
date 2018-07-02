@@ -3,7 +3,7 @@
         @test MVector{1,Int}((1,)).data === (1,)
         @test MVector{1,Float64}((1,)).data === (1.0,)
         @test MVector{2,Float64}((1,1.0)).data === (1.0,1.0)
-        @test isa(MVector{1,Int}(), MVector{1,Int})
+        @test isa(MVector{1,Int}(undef), MVector{1,Int})
 
         @test_throws Exception MVector{2,Int}((1,))
         @test_throws Exception MVector{1,Int}(())
@@ -85,7 +85,7 @@
         @test_throws BoundsError setindex!(v, 4., 4)
 
         # setindex with non-elbits type
-        v = MVector{2,String}()
+        v = MVector{2,String}(undef)
         @test_throws ErrorException setindex!(v, "a", 1)
     end
 end

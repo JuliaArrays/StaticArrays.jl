@@ -26,15 +26,15 @@ using StaticArrays, Test
         vec = @SVector [4,5,6,7]
 
         # SVector
-        mv = MVector{4,Int}()
+        mv = MVector{4,Int}(undef)
         @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
 
-        mv = MVector{4,Int}()
+        mv = MVector{4,Int}(undef)
         @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
         @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((2,2,2,2)))
 
         # Colon
-        mv = MVector{4,Int}()
+        mv = MVector{4,Int}(undef)
         @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
         @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
         @test (mv[:] = 2; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((2,2,2,2)))
@@ -49,11 +49,11 @@ using StaticArrays, Test
         vec = @SVector [4,5,6,7]
 
         # SVector
-        mm = MMatrix{2,2,Int}()
+        mm = MMatrix{2,2,Int}(undef)
         @test (mm[SVector(1,2,3,4)] = vec; (@inferred getindex(mm, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
 
         # Colon
-        mm = MMatrix{2,2,Int}()
+        mm = MMatrix{2,2,Int}(undef)
         @test (mm[:] = vec; (@inferred getindex(mm, :))::SVector{4,Int} == SVector((4,5,6,7)))
     end
 
@@ -93,16 +93,16 @@ using StaticArrays, Test
         sm = @MMatrix [1 3; 2 4]
 
         # Tuple, scalar
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),SVector(2,1)] = sm[SVector(2,1),SVector(2,1)]; (@inferred getindex(mm, SVector(2,1), SVector(2,1)))::SMatrix == @SMatrix [4 2; 3 1])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,SVector(1,2)] = sm[1,SVector(1,2)]; (@inferred getindex(mm, 1, SVector(1,2)))::SVector == @SVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(1,2),1] = sm[SVector(1,2),1]; (@inferred getindex(mm, SVector(1,2), 1))::SVector == @SVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(2,1),SVector(2,1)] = sm[SVector(2,1),SVector(2,1)]; (@inferred getindex(mm, SVector(2,1), SVector(2,1)))::SMatrix == @SMatrix [4 2; 3 1])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[1,SVector(1,2)] = sm[1,SVector(1,2)]; (@inferred getindex(mm, 1, SVector(1,2)))::SVector == @SVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(1,2),1] = sm[SVector(1,2),1]; (@inferred getindex(mm, SVector(1,2), 1))::SVector == @SVector [1,2])
 
         # Colon
-        @test (mm = MMatrix{2,2,Int}(); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::SMatrix == @MMatrix [1 3; 2 4])
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),:] = sm[SVector(2,1),:]; (@inferred getindex(mm, SVector(2,1), :))::SMatrix == @SMatrix [2 4; 1 3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::SMatrix == @SMatrix [3 1; 4 2])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::SVector == @SVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::SVector == @SVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::SMatrix == @MMatrix [1 3; 2 4])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(2,1),:] = sm[SVector(2,1),:]; (@inferred getindex(mm, SVector(2,1), :))::SMatrix == @SMatrix [2 4; 1 3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::SMatrix == @SMatrix [3 1; 4 2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::SVector == @SVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::SVector == @SVector [1,2])
     end
 
     @testset "3D scalar indexing" begin
@@ -112,7 +112,7 @@ using StaticArrays, Test
         @test sa[1,2,1] === 9
         @test sa[2,1,1] === 12
 
-        ma = MArray{Tuple{2,2,2}, Int}()
+        ma = MArray{Tuple{2,2,2}, Int}(undef)
         @test (ma[1,1,2] = 8; ma[1,1,2] === 8)
         @test (ma[1,2,1] = 9; ma[1,2,1] === 9)
         @test (ma[2,1,1] = 12; ma[2,1,1] === 12)
@@ -126,7 +126,7 @@ using StaticArrays, Test
         @test sa[1,2,1,1] === 36
         @test sa[2,1,1,1] === 48
 
-        ma = MArray{Tuple{2,2,2,2}, Int}()
+        ma = MArray{Tuple{2,2,2,2}, Int}(undef)
         @test (ma[1,1,1,2] = 30; ma[1,1,1,2] === 30)
         @test (ma[1,1,2,1] = 32; ma[1,1,2,1] === 32)
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)
