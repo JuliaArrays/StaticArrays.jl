@@ -132,8 +132,8 @@ macro SMatrix(ex)
             error("Use a 2-dimensional comprehension for @SMatrix")
         end
 
-        rng1 = Core.eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
-        rng2 = Core.eval(_module_arg ? __module__ : current_module(), ex.args[3].args[2])
+        rng1 = Core.eval(__module__, ex.args[2].args[2])
+        rng2 = Core.eval(__module__, ex.args[3].args[2])
         f = gensym()
         f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
@@ -152,8 +152,8 @@ macro SMatrix(ex)
             error("Use a 2-dimensional comprehension for @SMatrix")
         end
 
-        rng1 = Core.eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
-        rng2 = Core.eval(_module_arg ? __module__ : current_module(), ex.args[3].args[2])
+        rng1 = Core.eval(__module__, ex.args[2].args[2])
+        rng2 = Core.eval(__module__, ex.args[3].args[2])
         f = gensym()
         f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
