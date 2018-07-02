@@ -271,29 +271,33 @@ macro MArray(ex)
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
             end
-        elseif ex.args[1] == :eye
+        elseif ex.args[1] == :eye # deprecated
             if length(ex.args) == 2
                 return quote
+                    Base.depwarn("`@MArray eye(m)` is deprecated, use `MArray{m,m}(1.0I)` instead", :eye)
                     MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))},Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
+                        Base.depwarn("`@MArray eye(T, m)` is deprecated, use `MArray{m,m,T}(I)` instead", :eye)
                         MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))}(I)
                     else
+                        Base.depwarn("`@MArray eye(m, n)` is deprecated, use `MArray{m,n}(1.0I)` instead", :eye)
                         MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}, Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
+                    Base.depwarn("`@MArray eye(T, m, n)` is deprecated, use `MArray{m,n,T}(I)` instead", :eye)
                     MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @MArray")
             end
         else
-            error("@MArray only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@MArray only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @MArray")
