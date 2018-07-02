@@ -135,7 +135,7 @@ macro SArray(ex)
         ex = ex.args[1]
         n_rng = length(ex.args) - 1
         rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
-        rngs = Any[Core.eval(_module_arg ? __module__ : current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rngs = Any[Core.eval(__module__, ex.args[i+1].args[2]) for i = 1:n_rng]
         rng_lengths = map(length, rngs)
 
         f = gensym()
@@ -174,7 +174,7 @@ macro SArray(ex)
         ex = ex.args[2]
         n_rng = length(ex.args) - 1
         rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
-        rngs = [Core.eval(_module_arg ? __module__ : current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rngs = [Core.eval(__module__, ex.args[i+1].args[2]) for i = 1:n_rng]
         rng_lengths = map(length, rngs)
 
         f = gensym()

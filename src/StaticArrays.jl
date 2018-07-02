@@ -41,8 +41,6 @@ export @MVector, @MMatrix, @MArray
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
 
-const _module_arg = isdefined(Base, Symbol("@__MODULE__"))
-
 """
     abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
     StaticScalar{T}     = StaticArray{Tuple{}, T, 0}
