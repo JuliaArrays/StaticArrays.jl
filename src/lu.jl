@@ -85,7 +85,7 @@ function __lu(A::StaticMatrix{M,1}, ::Val{Pivot}) where {M,Pivot}
         Akkinv = inv(A[kp,1])
         Ls = A[ps,1] * Akkinv
         if !isfinite(Akkinv)
-            Ls = zeros(Ls)
+            Ls = zeros(typeof(Ls))
         end
         L = [SVector{1}(one(eltype(Ls))); Ls]
         p = [SVector{1,Int}(kp); ps]
@@ -115,15 +115,15 @@ function __lu(A::StaticMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
         Akkinv = inv(A[kp,1])
         Ls = A[ps,1] * Akkinv
         if !isfinite(Akkinv)
-            Ls = zeros(Ls)
+            Ls = zeros(typeof(Ls))
         end
 
         # Update the rest
         Arest = A[ps,tailindices(Val{N})] - Ls*Ufirst[:,tailindices(Val{N})]
         Lrest, Urest, prest = __lu(Arest, Val(Pivot))
         p = [SVector{1,Int}(kp); ps[prest]]
-        L = [[SVector{1}(one(eltype(Ls))); Ls[prest]] [zeros(SMatrix{1}(Lrest[1,:])); Lrest]]
-        U = [Ufirst; [zeros(Urest[:,1]) Urest]]
+        L = [[SVector{1}(one(eltype(Ls))); Ls[prest]] [zeros(typeof(SMatrix{1}(Lrest[1,:]))); Lrest]]
+        U = [Ufirst; [zeros(typeof(Urest[:,1])) Urest]]
     end
     return (L, U, p)
 end
