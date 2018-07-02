@@ -61,7 +61,7 @@ end
         quote
             @_inline_meta
             LUp = lu(A)
-            LUp.U \ (LUp.L \ eye(A)[LUp.p,:])
+            LUp.U \ (LUp.L \ eye(typeof(A))[LUp.p,:])
         end
     else
         :(@_inline_meta; similar_type(A)(inv(Matrix(A))))

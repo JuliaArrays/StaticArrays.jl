@@ -164,8 +164,12 @@ end
     end
 end
 
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(A::SM) where {SM<:StaticMatrix} eye(typeof(A))
+end
+
 #if VERSION < v"0.7-"
-    @inline eye(::SM) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
     @inline eye(::Type{SM}) where {SM <: StaticMatrix} = _eye(Size(SM), SM)
     @generated function _eye(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
         T = eltype(SM) # should be "hyperpure"
