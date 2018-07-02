@@ -174,7 +174,7 @@ end
 #function qr_unrolled(A::StaticMatrix{<:Any, <:Any, TA}) where {TA}
 #    m, n = size(A)
 #    T = _qreltype(TA)
-#    Q = eye(MMatrix{m,m,T,m*m})
+#    Q = MMatrix{m,m,T,m*m}(I)
 #    R = MMatrix{m,n,T,m*n}(A)
 #    for k = 1:min(m - 1 + !(TA<:Real), n)
 #        #x = view(R, k:m, k)

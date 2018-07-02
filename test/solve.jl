@@ -10,8 +10,8 @@ using StaticArrays, Test, LinearAlgebra
         @test m(A)\v(b) ≈ A\b
     end
 
-    m1 = @SMatrix eye(5)
-    m2 = @SMatrix eye(2)
+    m1 = SMatrix{5,5}(1.0I)
+    m2 = SMatrix{2,2}(1.0I)
     v = @SVector ones(4)
     @test_throws DimensionMismatch m1\v
     @test_throws DimensionMismatch m1\m2

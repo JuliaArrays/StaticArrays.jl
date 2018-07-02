@@ -78,9 +78,15 @@ end
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
-@inline eye(::Type{MArray{S}}) where {S} = eye(MArray{S,Float64,tuple_length(S)})
 @inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,tuple_length(S)})
-@inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,tuple_length(S)})
+
+# MArray(I::UniformScaling) methods to replace eye
+(::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{MArray{S}}) where {S} MArray{S}(1.0I)
+    @deprecate eye(::Type{MArray{S,T}}) where {S,T} MArray{S,T}(I)
+end
 
 ####################
 ## MArray methods ##
@@ -265,29 +271,33 @@ macro MArray(ex)
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
             end
-        elseif ex.args[1] == :eye
+        elseif ex.args[1] == :eye # deprecated
             if length(ex.args) == 2
                 return quote
-                    eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))}})
+                    Base.depwarn("`@MArray eye(m)` is deprecated, use `MArray{m,m}(1.0I)` instead", :eye)
+                    MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))},Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))})
+                        Base.depwarn("`@MArray eye(T, m)` is deprecated, use `MArray{m,m,T}(I)` instead", :eye)
+                        MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))}(I)
                     else
-                        eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}})
+                        Base.depwarn("`@MArray eye(m, n)` is deprecated, use `MArray{m,n}(1.0I)` instead", :eye)
+                        MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}, Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))})
+                    Base.depwarn("`@MArray eye(T, m, n)` is deprecated, use `MArray{m,n,T}(I)` instead", :eye)
+                    MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @MArray")
             end
         else
-            error("@MArray only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@MArray only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @MArray")

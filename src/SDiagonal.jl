@@ -55,7 +55,7 @@ factorize(D::SDiagonal) = D
 -(A::SDiagonal) = SDiagonal(-A.diag)
 +(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag + Db.diag)
 -(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag - Db.diag)
--(A::SDiagonal, B::SMatrix) = eye(typeof(B))*A - B
+-(A::SDiagonal, B::SMatrix) = typeof(B)(I)*A - B
 
 *(x::T, D::SDiagonal) where {T<:Number} = SDiagonal(x * D.diag)
 *(D::SDiagonal, x::T) where {T<:Number} = SDiagonal(D.diag * x)
@@ -81,7 +81,13 @@ function logdet(D::SDiagonal{N,T}) where {N,T<:Complex} #Make sure branch cut is
     -pi<imag(x)<pi ? x : real(x)+(mod2pi(imag(x)+pi)-pi)*im
 end
 
-eye(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
+# SDiagonal(I::UniformScaling) methods to replace eye
+(::Type{SD})(I::UniformScaling) where {N,SD<:SDiagonal{N}} = SD(ntuple(x->I.λ, Val(N)))
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{SDiagonal{N,T}}) where {N,T} SDiagonal{N,T}(I)
+end
+
 one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 Base.zero(::SDiagonal{N,T}) where {N,T} = SDiagonal(zeros(SVector{N,T}))
