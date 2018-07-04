@@ -161,6 +161,25 @@ using StaticArrays, Test, LinearAlgebra
 
         vcat(SVector(1.0f0), SVector(1.0)) === SVector(1.0, 1.0)
         hcat(SVector(1.0f0), SVector(1.0)) === SMatrix{1,2}(1.0, 1.0)
+
+        # issue #388
+        let x = SVector(1, 2, 3)
+            # current limit: 34 arguments
+            hcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            allocs = @allocated hcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            @test allocs == 0
+            vcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            allocs = @allocated vcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            @test allocs == 0
+        end
     end
 
     @testset "normalization" begin

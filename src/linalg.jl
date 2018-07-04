@@ -88,9 +88,11 @@ end
     end
 end
 
-@inline vcat(a::Union{StaticVector,StaticMatrix}) = a
-@inline vcat(a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix}) = _vcat(Size(a), Size(b), a, b)
-@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::Union{StaticVector, StaticMatrix}, b::Union{StaticVector,StaticMatrix}) where {Sa, Sb}
+@inline vcat(a::StaticVecOrMat) = a
+@inline vcat(a::Union{StaticVector, StaticMatrix}, b::StaticVecOrMat) = _vcat(Size(a), Size(b), a, b)
+@inline vcat(a::StaticVecOrMat, b::StaticVecOrMat, c::StaticVecOrMat...) =
+    vcat(vcat(a,b), vcat(c...))
+@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMat, b::StaticVecOrMat) where {Sa, Sb}
     if Size(Sa)[2] != Size(Sb)[2]
         throw(DimensionMismatch("Tried to vcat arrays of size $Sa and $Sb"))
     end
@@ -112,18 +114,14 @@ end
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
-# TODO make these more efficient
-@inline vcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}) =
-    vcat(vcat(a,b), c)
-@inline vcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
-    vcat(vcat(a,b), c...)
-
 
 @inline hcat(a::StaticVector) = similar_type(a, Size(Size(a)[1],1))(a)
 @inline hcat(a::StaticMatrix) = a
-@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}) = _hcat(Size(a), Size(b), a, b)
+@inline hcat(a::StaticVecOrMat, b::StaticVecOrMat) = _hcat(Size(a), Size(b), a, b)
+@inline hcat(a::StaticVecOrMat, b::StaticVecOrMat, c::StaticVecOrMat...) =
+    hcat(hcat(a,b), hcat(c...))
 
-@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}) where {Sa, Sb}
+@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMat, b::StaticVecOrMat) where {Sa, Sb}
     if Sa[1] != Sb[1]
         throw(DimensionMismatch("Tried to hcat arrays of size $Sa and $Sb"))
     end
@@ -138,11 +136,6 @@ end
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
-# TODO make these more efficient
-@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}) =
-    hcat(hcat(a,b), c)
-@inline hcat(a::Union{StaticVector,StaticMatrix}, b::Union{StaticVector,StaticMatrix}, c::Union{StaticVector,StaticMatrix}...) =
-    hcat(hcat(a,b), c...)
 
 @inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
 @inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
