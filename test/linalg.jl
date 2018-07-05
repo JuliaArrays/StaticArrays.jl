@@ -164,21 +164,31 @@ using StaticArrays, Test, LinearAlgebra
 
         # issue #388
         let x = SVector(1, 2, 3)
-            # current limit: 34 arguments
-            hcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            allocs = @allocated hcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            @test allocs == 0
-            vcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            allocs = @allocated vcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            @test allocs == 0
+            if VERSION >= v"0.7.0-beta.47"
+                # current limit: 34 arguments
+                hcat(
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                allocs = @allocated hcat(
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                @test allocs == 0
+                vcat(
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                allocs = @allocated vcat(
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                @test allocs == 0
+            else
+                # current limit: 14 arguments
+                hcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                allocs = @allocated hcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                @test allocs == 0
+                vcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                allocs = @allocated vcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+                @test allocs == 0
+            end
         end
     end
 
