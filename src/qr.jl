@@ -1,3 +1,7 @@
+using LinearAlgebra
+import LinearAlgebra: qr
+export qr
+
 # define our own struct since LinearAlgebra.QR are restricted to Matrix
 struct QR{Q,R,P}
     Q::Q
