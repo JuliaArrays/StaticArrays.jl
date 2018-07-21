@@ -9,10 +9,8 @@
 @inline convert(::Type{SA}, sa::SA) where {SA<:StaticArray} = sa
 @inline convert(::Type{SA}, x::Tuple) where {SA<:StaticArray} = SA(x) # convert -> constructor. Hopefully no loops...
 
-# A general way of going back to a tuple
-@inline function convert(::Type{Tuple}, a::StaticArray)
-    unroll_tuple(a, Length(a))
-end
+# Constructing a Tuple from a StaticArray
+@inline Tuple(a::StaticArray) = unroll_tuple(a, Length(a))
 
 @noinline function dimension_mismatch_fail(SA::Type, a::AbstractArray)
     error("Dimension mismatch. Expected input array of length $(length(SA)), got length $(length(a))")

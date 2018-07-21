@@ -74,7 +74,7 @@
         @test m[3] === 13
         @test m[4] === 14
 
-        @test Tuple(m) === (11, 12, 13, 14)
+        @testinf Tuple(m) === (11, 12, 13, 14)
 
         @test size(m) === (2, 2)
         @test size(typeof(m)) === (2, 2)

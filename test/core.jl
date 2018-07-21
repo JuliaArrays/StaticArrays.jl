@@ -149,8 +149,6 @@
     @test StaticArrays.check_length(2) == nothing
     @test StaticArrays.check_length(StaticArrays.Dynamic()) == nothing
 
-    @test convert(Tuple, @SVector [2]) == (2,)
-
     @testset "dimmatch" begin
         @test StaticArrays.dimmatch(3, 3)
         @test StaticArrays.dimmatch(3, StaticArrays.Dynamic())

@@ -18,6 +18,8 @@
         @test length(p) === 3
         @test eltype(p) === Float64
 
+        @testinf Tuple(p) === (1.0, 2.0, 3.0)
+
         @test (p + p) === Point3D(2.0, 4.0, 6.0)
 
         @test (p[1], p[2], p[3]) === (p.x, p.y, p.z)
@@ -58,6 +60,8 @@
         @test size(p) === (2,)
         @test length(p) === 2
         @test eltype(p) === Float64
+
+        @testinf Tuple(p) === (1.0, 2.0)
 
         @test (p[1], p[2]) === (p.x, p.y)
         @test (p[1], p[2]) === (1.0, 2.0)

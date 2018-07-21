@@ -4,8 +4,8 @@
     @test (Scalar(1) + Scalar(1.0))::Scalar{Float64} ≈ Scalar(2.0)
     @test_throws ErrorException Scalar(2)[2]
     @test Scalar(2)[] == 2
-    @test Tuple(Scalar(2)) == (2,)
-    @test Tuple(convert(Scalar{Float64}, [2.0])) == (2.0,)
+    @testinf Tuple(Scalar(2)) === (2,)
+    @testinf Tuple(convert(Scalar{Float64}, [2.0])) === (2.0,)
     a = Array{Float64, 0}(undef)
     a[] = 2
     @test Scalar(a)[] == 2
