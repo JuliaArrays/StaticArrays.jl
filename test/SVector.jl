@@ -55,7 +55,7 @@
         @test v[2] === 12
         @test v[3] === 13
 
-        @test Tuple(v) === (11, 12, 13)
+        @testinf Tuple(v) === (11, 12, 13)
 
         @test size(v) === (3,)
         @test size(typeof(v)) === (3,)
