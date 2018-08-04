@@ -1,5 +1,3 @@
-__precompile__()
-
 module StaticArrays
 
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure

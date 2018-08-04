@@ -7,7 +7,7 @@ Base.randn(::Type{Int}, I::Integer) = [randn(Int) for i=1:I]
 Base.randn(::Type{Complex{T}}) where T = Complex{T}(randn(T,2)...)
 Base.randn(::Type{Complex}) = randn(Complex{Float64})
 
-srand(42)
+Random.seed!(42)
 @testset "QR decomposition" begin
     function test_qr(arr)
 
