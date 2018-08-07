@@ -19,8 +19,8 @@ import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
 import Base: sqrt, exp, log
 using LinearAlgebra
-import LinearAlgebra: transpose, adjoint, vecdot, eigvals, eigen, lyap, tr,
-                      kron, diag, norm, dot, diagm, lu, svd, svdvals, svdfact,
+import LinearAlgebra: transpose, adjoint, eigvals, eigen, lyap, tr,
+                      kron, diag, norm, dot, diagm, lu, svd, svdvals,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr
 # import eye for deprecation warnings

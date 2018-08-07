@@ -217,7 +217,7 @@ using StaticArrays, Test, LinearAlgebra
     end
 
     @testset "size zero" begin
-        @test vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
+        @test dot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test StaticArrays.bilinear_vecdot(SVector{0, Float64}(()), SVector{0, Float64}(())) === 0.
         @test norm(SVector{0, Float64}(())) === 0.
         @test norm(SVector{0, Float64}(()), 1) === 0.

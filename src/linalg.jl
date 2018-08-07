@@ -222,8 +222,7 @@ end
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
-@inline vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b)
+@inline dot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b)
 @generated function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
     if prod(S) == 0
         return :(zero(promote_op(*, eltype(a), eltype(b))))
@@ -257,7 +256,7 @@ end
     end
 end
 
-@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, zero(real(eltype(v))), v)
+@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v, init=zero(real(eltype(v))))
 
 @inline norm(a::StaticArray) = _norm(Size(a), a)
 @generated function _norm(::Size{S}, a::StaticArray) where {S}
@@ -297,13 +296,13 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
     return quote
         $(Expr(:meta, :inline))
         if p == Inf
-            return mapreduce(abs, max, $(zero(real(eltype(a)))), a)
+            return mapreduce(abs, max, a, init=$(zero(real(eltype(a)))))
         elseif p == 1
             @inbounds return $expr_p1
         elseif p == 2
             return norm(a)
         elseif p == 0
-            return mapreduce(_norm_p0, +, $(zero(real(eltype(a)))), a)
+            return mapreduce(_norm_p0, +, a, init=$(zero(real(eltype(a)))))
         else
             @inbounds return ($expr)^(inv(p))
         end
