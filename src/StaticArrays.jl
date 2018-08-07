@@ -3,7 +3,7 @@ module StaticArrays
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
-             promote_rule, map, map!, reduce, reducedim, mapreducedim, mapreduce, broadcast,
+             promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
              copy, read, read!, write
