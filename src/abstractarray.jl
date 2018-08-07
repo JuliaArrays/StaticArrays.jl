@@ -8,6 +8,8 @@ length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
 end
 @inline size(a::StaticArray) = size(typeof(a))
 @inline size(a::StaticArray, d::Int) = size(typeof(a), d)
+@inline size(a::StaticArray, ::Val{D}) where D = size(a, D)
+@inline size(a::StaticArray, ::Colon) = length(a)
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
