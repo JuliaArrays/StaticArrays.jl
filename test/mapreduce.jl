@@ -33,15 +33,15 @@ end
         v1 = [2,4,6,8]; sv1 = SVector{4}(v1)
         v2 = [4,3,2,1]; sv2 = SVector{4}(v2)
         @test reduce(+, sv1) === reduce(+, v1)
-        @test reduce(+, 0, sv1) === reduce(+, 0, v1)
-        @test reducedim(max, sa, Val{1}, -1.) === SMatrix{1,J}(reduce(max, -1., a, dims=1))
-        @test reducedim(max, sa, Val{2}, -1.) === SMatrix{I,1}(reduce(max, -1., a, dims=2))
+        @test reduce(+, sv1; init=0) === reduce(+, v1; init=0)
+        @test reducedim(max, sa, Val{1}, -1.) === SMatrix{1,J}(reduce(max, a, dims=1, init=-1.))
+        @test reducedim(max, sa, Val{2}, -1.) === SMatrix{I,1}(reduce(max, a, dims=2, init=-1.))
         @test mapreduce(-, +, sv1) === mapreduce(-, +, v1)
-        @test mapreduce(-, +, 0, sv1) === mapreduce(-, +, 0, v1)
+        @test mapreduce(-, +, 0, sv1) === mapreduce(-, +, v1, init=0)
         @test mapreduce(*, +, sv1, sv2) === 40
         @test mapreduce(*, +, 0, sv1, sv2) === 40
-        @test mapreducedim(x->x^2, max, sa, Val{1}, -1.) == SMatrix{1,J}(mapreduce(x->x^2, max, -1., a, dims=1))
-        @test mapreducedim(x->x^2, max, sa, Val{2}, -1.) == SMatrix{I,1}(mapreduce(x->x^2, max, -1., a, dims=2))
+        @test mapreducedim(x->x^2, max, sa, Val{1}, -1.) == SMatrix{1,J}(mapreduce(x->x^2, max, a, dims=1, init=-1.))
+        @test mapreducedim(x->x^2, max, sa, Val{2}, -1.) == SMatrix{I,1}(mapreduce(x->x^2, max, a, dims=2, init=-1.))
     end
 
     @testset "implemented by [map]reduce and [map]reducedim" begin
