@@ -26,7 +26,7 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
 end
 
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
-export Scalar, SArray, SVector, SMatrix
+export Scalar, SArray, SVector, SMatrix, SUnitRange
 export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
