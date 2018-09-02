@@ -106,8 +106,13 @@ end
 ## MArray methods ##
 ####################
 
-function getindex(v::MArray, i::Int)
-    Base.@_inline_meta
+@propagate_inbounds function getindex(v::MArray, i::Int)
+    if isbitstype(T)
+        @boundscheck if i < 1 || i > length(v)
+            throw(BoundsError())
+        end
+        return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
+    end
     v.data[i]
 end
 

@@ -32,6 +32,12 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 #####################
 
 @propagate_inbounds function getindex(v::MVector, i::Int)
+    if false #isbitstype(T)
+        @boundscheck if i < 1 || i > length(v)
+            throw(BoundsError())
+        end
+        return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
+    end
     v.data[i]
 end
 

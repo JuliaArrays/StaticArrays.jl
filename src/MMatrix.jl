@@ -75,19 +75,14 @@ end
 ## MMatrix methods ##
 #####################
 
-@propagate_inbounds function getindex(m::MMatrix{S1,S2,T}, i::Int) where {S1,S2,T}
-    #@boundscheck if i < 1 || i > length(m)
-    #    throw(BoundsError(m,i))
-    #end
-
-    # This is nasty... but it turns out Julia will literally copy the whole tuple to the stack otherwise!
+@propagate_inbounds function getindex(v::MMatrix{S1,S2,T}, i::Int) where {S1,S2,T}
     if isbitstype(T)
-        unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), i)
-    else
-        # Not sure about this... slow option for now...
-        m.data[i]
-        #unsafe_load(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(m.data)), i)
+        @boundscheck if i < 1 || i > length(v)
+            throw(BoundsError())
+        end
+        return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
     end
+    v.data[i]
 end
 
 @propagate_inbounds setindex!(m::MMatrix{S1,S2,T}, val, i::Int) where {S1,S2,T} = setindex!(m, convert(T, val), i)
