@@ -107,9 +107,10 @@ end
 ####################
 
 @propagate_inbounds function getindex(v::MArray, i::Int)
+    T = eltype(v)
     if isbitstype(T)
         @boundscheck if i < 1 || i > length(v)
-            throw(BoundsError())
+            throw(BoundsError(v,i))
         end
         return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
     end
@@ -118,7 +119,7 @@ end
 
 @inline function setindex!(v::MArray, val, i::Int)
     @boundscheck if i < 1 || i > length(v)
-        throw(BoundsError())
+        throw(BoundsError(v,i))
     end
 
     T = eltype(v)

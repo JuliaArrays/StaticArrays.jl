@@ -31,34 +31,6 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 ## MVector methods ##
 #####################
 
-@propagate_inbounds function getindex(v::MVector, i::Int)
-    if false #isbitstype(T)
-        @boundscheck if i < 1 || i > length(v)
-            throw(BoundsError())
-        end
-        return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
-    end
-    v.data[i]
-end
-
-# Mutating setindex!
-@propagate_inbounds setindex!(v::MVector{S,T}, val, i::Int) where {S,T} = setindex!(v, convert(T, val), i)
-@inline function setindex!(v::MVector{S,T}, val::T, i::Int) where {S,T}
-    @boundscheck if i < 1 || i > length(v)
-        throw(BoundsError())
-    end
-
-    if isbitstype(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), val, i)
-    else
-        # This one is unsafe (#27)
-        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
-    end
-
-    return val
-end
-
 macro MVector(ex)
     if isa(ex, Expr) && ex.head == :vect
         return esc(Expr(:call, MVector{length(ex.args)}, Expr(:tuple, ex.args...)))

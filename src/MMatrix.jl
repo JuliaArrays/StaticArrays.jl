@@ -75,33 +75,6 @@ end
 ## MMatrix methods ##
 #####################
 
-@propagate_inbounds function getindex(v::MMatrix{S1,S2,T}, i::Int) where {S1,S2,T}
-    if isbitstype(T)
-        @boundscheck if i < 1 || i > length(v)
-            throw(BoundsError())
-        end
-        return unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
-    end
-    v.data[i]
-end
-
-@propagate_inbounds setindex!(m::MMatrix{S1,S2,T}, val, i::Int) where {S1,S2,T} = setindex!(m, convert(T, val), i)
-@propagate_inbounds function setindex!(m::MMatrix{S1,S2,T}, val::T, i::Int) where {S1,S2,T}
-    #@boundscheck if i < 1 || i > length(m)
-    #    throw(BoundsError(m,i))
-    #end
-
-    if isbitstype(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(m)), val, i)
-    else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
-        # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(m.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
-    end
-
-    return val
-end
-
 macro MMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @MMatrix")
