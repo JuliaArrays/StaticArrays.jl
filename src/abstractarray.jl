@@ -35,7 +35,7 @@ be *constructed* with its data.
 Note that the (optional) size *must* be specified as a static `Size` object (so the compiler
 can infer the result statically).
 
-New types should define the signature `similar_type{A<:MyType,T,S}(::Type{A},::Type{T},::Size{S})`
+New types should define the signature `similar_type(::Type{A},::Type{T},::Size{S}) where {A<:MyType,T,S}`
 if they wish to overload the default behavior.
 """
 function similar_type end
