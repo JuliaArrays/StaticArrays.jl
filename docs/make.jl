@@ -13,7 +13,7 @@ makedocs(
 
 deploydocs(
     repo = "github.com/JuliaArrays/StaticArrays.jl.git",
-    julia = "0.6",
+    julia = "0.7",
     target = "build",
     deps   = nothing,
     make   = nothing
