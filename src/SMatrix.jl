@@ -71,8 +71,7 @@ end
 ## SMatrix methods ##
 #####################
 
-function getindex(v::SMatrix, i::Int)
-    Base.@_inline_meta
+@propagate_inbounds function getindex(v::SMatrix, i::Int)
     v.data[i]
 end
 
