@@ -5,6 +5,7 @@ os:
   - osx
 julia:
   - 0.7
+  - 1.0
   - nightly
 notifications:
   email: false
@@ -21,8 +22,8 @@ branches:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("StaticArrays"); Pkg.test("StaticArrays"; coverage=true)'
 after_success:
-  - if [ $TRAVIS_JULIA_VERSION = "0.6" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
-      julia -e 'cd(Pkg.dir("StaticArrays")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())';
+  - if [ $TRAVIS_JULIA_VERSION = "0.7" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
+      julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())';
     fi
-  - julia -e 'Pkg.add("Documenter")'
-  - julia -e 'cd(Pkg.dir("StaticArrays")); include(joinpath("docs", "make.jl"))'
+  - julia -e 'using Pkg; Pkg.add("Documenter")'
+  - julia docs/make.jl
