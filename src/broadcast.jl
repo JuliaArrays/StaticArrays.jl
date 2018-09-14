@@ -125,12 +125,17 @@ scalar_getindex(x::Tuple{<: Any}) = x[1]
         end
     end
 
-    eltype_exprs = [t <: Union{AbstractArray, Ref} ? :(eltype($t)) : :($t) for t ∈ a]
-    newtype_expr = :(return_type(f, Tuple{$(eltype_exprs...)}))
+    if isempty(exprs)
+        eltype_exprs = [t <: Union{AbstractArray, Ref} ? :(eltype($t)) : :($t) for t ∈ a]
+        newtype_expr = :(return_type(f, Tuple{$(eltype_exprs...)}))
+    else
+        newtype_expr = :(eltype(vals))
+    end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type($first_staticarray, $newtype_expr, Size(newsize))(tuple($(exprs...)))
+        vals = tuple($(exprs...))
+        @inbounds return similar_type($first_staticarray, $newtype_expr, Size(newsize))(vals)
     end
 end
 

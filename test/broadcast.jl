@@ -151,22 +151,22 @@ end
     @testset "eltype after broadcast" begin
         # test cases issue #198
         let a = SVector{4, Number}(2, 2.0, 4//2, 2+0im)
-            @test_broken eltype(a + 2) == Number
-            @test_broken eltype(a - 2) == Number
-            @test_broken eltype(a * 2) == Number
-            @test_broken eltype(a / 2) == Number
+            @test eltype(a + 2) == Number
+            @test eltype(a - 2) == Number
+            @test eltype(a * 2) == Number
+            @test eltype(a / 2) == Number
         end
         let a = SVector{3, Real}(2, 2.0, 4//2)
-            @test_broken eltype(a + 2) == Real
-            @test_broken eltype(a - 2) == Real
-            @test_broken eltype(a * 2) == Real
-            @test_broken eltype(a / 2) == Real
+            @test eltype(a + 2) == Real
+            @test eltype(a - 2) == Real
+            @test eltype(a * 2) == Real
+            @test eltype(a / 2) == Real
         end
         let a = SVector{3, Real}(2, 2.0, 4//2)
-            @test_broken eltype(a + 2.0) == Float64
-            @test_broken eltype(a - 2.0) == Float64
-            @test_broken eltype(a * 2.0) == Float64
-            @test_broken eltype(a / 2.0) == Float64
+            @test eltype(a + 2.0) == Float64
+            @test eltype(a - 2.0) == Float64
+            @test eltype(a * 2.0) == Float64
+            @test eltype(a / 2.0) == Float64
         end
         let a = broadcast(Float32, SVector(3, 4, 5))
             @test eltype(a) == Float32
@@ -195,5 +195,11 @@ end
 
         d = SVector(1, 2, 3, 4)
         @test_throws DimensionMismatch a .= d
+    end
+
+    @testset "issue #493" begin
+        X = rand(SVector{3,SVector{2,Float64}})
+        foo493(X) = normalize.(X)
+        @test foo493(X) isa Core.Compiler.return_type(foo493, Tuple{typeof(X)})
     end
 end
