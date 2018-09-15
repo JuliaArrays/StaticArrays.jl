@@ -270,3 +270,75 @@ end
 function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) where {S,T,U,N,L}
     SArray{S,promote_type(T,U),N,L}
 end
+
+"""
+unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon))
+    Gives an Array of SArrays referencing the same memory as A. The first K dimensions are squashed.
+    This operation may be unsafe in terms of aliasing analysis:
+    The compiler might mistakenly assume that the two arrays do not overlap, even though they do. See 
+    also `reinterpret`, `reshape` and `unsafe_squashdims`.
+
+# Examples
+```jldoctest
+julia> A=reshape(collect(1:8), (2,2,2))
+2×2×2 Array{Int64,3}:
+[:, :, 1] =
+ 1  3
+ 2  4
+
+[:, :, 2] =
+ 5  7
+ 6  8
+
+ julia> Asv = unsafe_squashdims(A,(:,:))
+2-element Array{SArray{Tuple{2,2},Int64,2,4},1}:
+ [1 3; 2 4]
+ [5 7; 6 8]
+
+ julia> A[2,2,1]=-1; A[2,2,1]==Asv[1][2,2]
+true
+```
+"""
+@noinline function unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon) where {T,N,K}
+    isbitstype(T) || error("$(T) is not a bitstype")
+    K<N || error("Cannot squash $(K) dims of an $(N)-dim Array")
+    sz = size(a)
+    sz_sa = ntuple(i->sz[i], K)
+    satype = SArray{Tuple{sz_sa...}, T, K, prod(sz_sa)}
+    sz_rest = ntuple(i->sz[K+i], N-K)
+    restype = Array{satype, N-K}
+    ccall(:jl_reshape_array, Any, (Any, Any, Any),restype, a, sz_rest)::restype
+end
+
+
+"""
+    unsafe_unsquash(A::Array{SArray})
+Gives an Array referencing the same memory as A. Its dimension is the sum of the 
+SArray dimension and dimension of A. This operation may be unsafe in terms of aliasing analysis:
+The compiler might mistakenly assume that the two arrays do not overlap, even though they do. See 
+also `reinterpret`, `reshape` and `unsafe_squashdims`.  
+
+# Examples
+```jldoctest
+julia> MM=zeros(SVector{2,Int32},2)
+2-element Array{SArray{Tuple{2},Int32,1,2},1}:
+ [0, 0]
+ [0, 0]
+
+ julia> M=unsafe_unsquash(MM); M[1,1]=-1; M[2,1]=-2; M
+2×2 Array{Int32,2}:
+ -1  0
+ -2  0
+
+julia> MM
+2-element Array{SArray{Tuple{2},Int32,1,2},1}:
+ [-1, -2]
+ [0, 0]  
+```
+"""
+@noinline function unsafe_unsquash(a::Array{SArray{SZT, T, NDIMS, L},N}) where {T,N,SZT,NDIMS,L}
+    isbitstype(T) || error("$(T) is not a bitstype")    
+    dimres = N+NDIMS
+    szres = (size(eltype(a))..., size(a)...)
+    ccall(:jl_reshape_array, Any, (Any, Any, Any),Array{T,dimres}, a, szres)::Array{T, dimres}
+end
