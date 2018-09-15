@@ -299,7 +299,7 @@ julia> A=reshape(collect(1:8), (2,2,2))
 true
 ```
 """
-@noinline function unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon) where {T,N,K}
+@noinline function unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon}) where {T,N,K}
     isbitstype(T) || error("$(T) is not a bitstype")
     K<N || error("Cannot squash $(K) dims of an $(N)-dim Array")
     sz = size(a)
