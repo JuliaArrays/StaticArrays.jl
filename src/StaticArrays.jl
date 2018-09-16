@@ -39,7 +39,7 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
-export unsafe_squashdims, unsafe_unsquash
+export packdims, unpackdims, unsafe_packdims, unsafe_unpackdims
 
 """
     abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end

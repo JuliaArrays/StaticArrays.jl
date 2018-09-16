@@ -272,15 +272,20 @@ function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) wher
 end
 
 """
-unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon))
-    Gives an Array of SArrays referencing the same memory as A. The first K dimensions are squashed.
-    This operation may be unsafe in terms of aliasing analysis:
-    The compiler might mistakenly assume that the two arrays do not overlap, even though they do. See 
-    also `reinterpret`, `reshape` and `unsafe_squashdims`.
+    unsafe_packdims(a::Array{T,N}; dims::Integer=1)
+Gives an  `N-dims`-dimensional Array of `dims`-dimensional SArrays
+referencing the same memory as A. The first `dims`` dimensions are packed.
+This operation may be unsafe in terms of aliasing analysis:
+The compiler might mistakenly assume that the memory holding the two arrays'
+contents does not overlap, even though they in fact do alias. 
+On Julia 1.0.*, this operation is perfectly safe, but this is expected
+to change in the future. 
+
+See  also `reinterpret`, `reshape`, `packdims`, `unpackdims` and `unsafe_unpackdims`.
 
 # Examples
 ```jldoctest
-julia> A=reshape(collect(1:8), (2,2,2))
+julia> A = reshape(collect(1:8), (2,2,2))
 2×2×2 Array{Int64,3}:
 [:, :, 1] =
  1  3
@@ -290,55 +295,135 @@ julia> A=reshape(collect(1:8), (2,2,2))
  5  7
  6  8
 
- julia> Asv = unsafe_squashdims(A,(:,:))
+julia> A_pack = unsafe_packdims(A; dims=2)
 2-element Array{SArray{Tuple{2,2},Int64,2,4},1}:
  [1 3; 2 4]
  [5 7; 6 8]
 
- julia> A[2,2,1]=-1; A[2,2,1]==Asv[1][2,2]
+julia> A[2,2,1]=-1; A[2,2,1]==A_pack[1][2,2]
 true
 ```
 """
-@noinline function unsafe_squashdims(a::Array{T,N}, ::NTuple{K,Colon}) where {T,N,K}
+@noinline function unsafe_packdims(a::Array{T,N}; dims::Integer=1) where {T,N}
     isbitstype(T) || error("$(T) is not a bitstype")
-    K<N || error("Cannot squash $(K) dims of an $(N)-dim Array")
+    0<dims<N || error("Cannot pack $(dims) dimensions of an $(N)-dim Array")
+    dims=Int(dims)
     sz = size(a)
-    sz_sa = ntuple(i->sz[i], K)
-    satype = SArray{Tuple{sz_sa...}, T, K, prod(sz_sa)}
-    sz_rest = ntuple(i->sz[K+i], N-K)
-    restype = Array{satype, N-K}
+    sz_sa = ntuple(i->sz[i], dims)
+    satype = SArray{Tuple{sz_sa...}, T, dims, prod(sz_sa)}
+    sz_rest = ntuple(i->sz[dims+i], N-dims)
+    restype = Array{satype, N-dims}
     ccall(:jl_reshape_array, Any, (Any, Any, Any),restype, a, sz_rest)::restype
 end
 
 
 """
-    unsafe_unsquash(A::Array{SArray})
+    unsafe_unpackdims(A::Array{SArray})
 Gives an Array referencing the same memory as A. Its dimension is the sum of the 
-SArray dimension and dimension of A. This operation may be unsafe in terms of aliasing analysis:
-The compiler might mistakenly assume that the two arrays do not overlap, even though they do. See 
-also `reinterpret`, `reshape` and `unsafe_squashdims`.  
+SArray dimension and dimension of A, where the SArray dimensions are added in front.
+The compiler might mistakenly assume that the memory holding the two arrays'
+contents does not overlap, even though they in fact do alias. 
+On Julia 1.0.*, this operation is perfectly safe, but this is expected
+to change in the future. 
+
+See  also `reinterpret`, `reshape`, `packdims`, `unpackdims` and `unsafe_packdims`. 
 
 # Examples
 ```jldoctest
-julia> MM=zeros(SVector{2,Int32},2)
+julia> A_pack = zeros(SVector{2,Int32},2)
 2-element Array{SArray{Tuple{2},Int32,1,2},1}:
  [0, 0]
  [0, 0]
 
- julia> M=unsafe_unsquash(MM); M[1,1]=-1; M[2,1]=-2; M
-2×2 Array{Int32,2}:
- -1  0
- -2  0
-
-julia> MM
+julia> A = unsafe_unpackdims(A_pack); A[1,1]=-1; A[2,1]=-2; A_pack
 2-element Array{SArray{Tuple{2},Int32,1,2},1}:
  [-1, -2]
  [0, 0]  
+
+julia> A_pack
+2-element Array{SArray{Tuple{2},Int32,1,2},1}:
+ [-1, -2]
+ [0, 0]   
 ```
 """
-@noinline function unsafe_unsquash(a::Array{SArray{SZT, T, NDIMS, L},N}) where {T,N,SZT,NDIMS,L}
+@noinline function unsafe_unpackdims(a::Array{SArray{SZT, T, NDIMS, L},N}) where {T,N,SZT,NDIMS,L}
     isbitstype(T) || error("$(T) is not a bitstype")    
     dimres = N+NDIMS
     szres = (size(eltype(a))..., size(a)...)
     ccall(:jl_reshape_array, Any, (Any, Any, Any),Array{T,dimres}, a, szres)::Array{T, dimres}
+end
+
+"""
+    packdims(a::AbstractArray{T,N}; dims::Integer=1)
+Gives an  `N-dims`-dimensional AbstractArray of `dims`-dimensional SArrays
+referencing the same memory as A. The first `dims`` dimensions are packed.
+In some contexts, the result may have suboptimal performance characteristics.
+
+See  also `reinterpret`, `reshape`, `unsafe_packdims`, `unpackdims` and `unsafe_unpackdims`.
+
+# Examples
+```jldoctest
+julia> A = reshape(collect(1:8), (2,2,2))
+2×2×2 Array{Int64,3}:
+[:, :, 1] =
+ 1  3
+ 2  4
+
+[:, :, 2] =
+ 5  7
+ 6  8
+
+julia> A_pack = packdims(A; dims=2)
+2-element reinterpret(SArray{Tuple{2,2},Int64,2,4}, ::Array{Int64,1}):
+ [1 3; 2 4]
+ [5 7; 6 8]
+
+julia> A[2,2,1]=-1; A[2,2,1]==A_pack[1][2,2]
+true
+```
+"""
+@noinline function packdims(a::AbstractArray{T,N}; dims::Integer=1) where {T,N}
+    isbitstype(T) || error("$(T) is not a bitstype")    
+    0<dims<N || error("Cannot pack $(dims) dimensions of an $(N)-dim Array")
+    dims=Int(dims)
+    sz = size(a)
+    sz_sa = ntuple(i->sz[i], dims)
+    satype = SArray{Tuple{sz_sa...}, T, dims, prod(sz_sa)}
+    sz_rest = ntuple(i->sz[dims+i], N-dims)
+    return reshape(reinterpret(satype, reshape(a, length(a))), sz_rest)
+end
+
+
+"""
+   unpackdims(A::AbstractArray{SArray})
+Gives an Array referencing the same memory as A. Its dimension is the sum of the 
+SArray dimension and dimension of A, where the SArray dimensions are added in front.
+In some contexts, the result may have suboptimal performance characteristics.
+
+
+See  also `reinterpret`, `reshape`, `packdims`, `unpackdims` and `unsafe_packdims`. 
+
+# Examples
+```jldoctest
+julia> A_pack = zeros(SVector{2,Int32},2)
+2-element Array{SArray{Tuple{2},Int32,1,2},1}:
+ [0, 0]
+ [0, 0]
+
+julia> A = unpackdims(A_pack); A[1,1]=-1; A[2,1]=-2; A_pack
+2-element Array{SArray{Tuple{2},Int32,1,2},1}:
+ [-1, -2]
+ [0, 0]  
+
+julia> A
+2×2 reshape(reinterpret(Int32, ::Array{SArray{Tuple{2},Int32,1,2},1}), 2, 2) with eltype Int32:
+ -1  0
+ -2  0
+```
+"""
+@noinline function unpackdims(a::AbstractArray{SArray{SZT, T, NDIMS, L},N}) where {T,N,SZT,NDIMS,L}
+    isbitstype(T) || error("$(T) is not a bitstype")
+    dimres = N+NDIMS
+    szres = (size(eltype(a))..., size(a)...)
+    return reshape(reinterpret(T, a),szres)
 end
