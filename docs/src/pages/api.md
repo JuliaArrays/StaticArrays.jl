@@ -283,6 +283,16 @@ julia> svectors(M, Val{2}())
  [3, 4]
  [5, 6]
 ```
+If you absolutely insist on obtaining a `Vector{<:SVector}` referencing the same memory 
+and don't mind a maintenance nightmare and data-corrupting tbaa-related bugs appearing in 
+julia 1.1 or later, then you can obtain this by
+```julia
+function unmaintainable_svectors(x::Matrix{T}, ::Val{N}) where {T,N}
+    size(x,1) == N || throw("sizes mismatch")
+    isbitstype(T) || throw("use for bitstypes only")
+    ccall(:jl_reshape_array, Vector{SVector{N,T}}, (Any,Any,Any), Vector{SVector{N,T}}, x, (size(x,2),))
+end
+```
 
 
 ### Working with mutable and immutable arrays
