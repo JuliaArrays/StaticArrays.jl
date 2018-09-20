@@ -283,9 +283,12 @@ julia> svectors(M, Val{2}())
  [3, 4]
  [5, 6]
 ```
-If you absolutely insist on obtaining a `Vector{<:SVector}` referencing the same memory 
-and don't mind a maintenance nightmare and data-corrupting tbaa-related bugs appearing in 
-julia 1.1 or later, then you can obtain this by
+If applications absolutely insist on obtaining a `Vector{<:SVector}` referencing the same memory,
+then this is possible by directly calling into the runtime. However, starting from 
+Julia 0.7 and 1.0, this violates the language specifications about aliasing 
+(Arrays with different `eltype` must not share memory), and is to be considered a dirty hack.
+This is nevertheless safe on 1.0.* or earlier versions of the Julia compiler, but will violate
+compiler assumptions on Julia 1.1 or later, and cause subtle data-corrupting miscompilation bugs.
 ```julia
 function unmaintainable_svectors(x::Matrix{T}, ::Val{N}) where {T,N}
     size(x,1) == N || throw("sizes mismatch")
