@@ -45,14 +45,13 @@ end
 
 
 @generated function _map!(f, dest, ::Size{S}, a::StaticArray...) where {S}
-    exprs = Vector{Expr}(undef, prod(S))
-    for i ∈ 1:prod(S)
-        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
-        exprs[i] = :(dest[$i] = f($(tmp...)))
-    end
+    tmp = [:(a[$j][i]) for j ∈ 1:length(a)]
     return quote
         @_inline_meta
-        @inbounds $(Expr(:block, exprs...))
+        @inbounds @simd for i ∈ 1:$(prod(S))
+            dest[i] = f($(tmp...))
+        end
+        return dest
     end
 end
 
@@ -66,28 +65,28 @@ end
 
 @generated function _mapreduce(f, op, dims::Colon, nt::NamedTuple{()},
                                ::Size{S}, a::StaticArray...) where {S}
-    tmp = [:(a[$j][1]) for j ∈ 1:length(a)]
-    expr = :(f($(tmp...)))
-    for i ∈ 2:prod(S)
-        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
-        expr = :(op($expr, f($(tmp...))))
-    end
+    tmp = [:(a[$j][i]) for j ∈ 1:length(a)]
     return quote
         @_inline_meta
-        @inbounds return $expr
+        i = 1
+        @inbounds s = f($(tmp...))
+        @inbounds @simd for i = 2:$(prod(S))
+            s = op(s, f($(tmp...)))
+        end
+        return s
     end
 end
-    
+
 @generated function _mapreduce(f, op, dims::Colon, nt::NamedTuple{(:init,)},
-                               ::Size{S}, a::StaticArray...) where {S}    
-    expr = :(nt.init)
-    for i ∈ 1:prod(S)
-        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
-        expr = :(op($expr, f($(tmp...))))
-    end
+                               ::Size{S}, a::StaticArray...) where {S}
+    tmp = [:(a[$j][i]) for j ∈ 1:length(a)]
     return quote
         @_inline_meta
-        @inbounds return $expr
+        s = nt.init
+        @inbounds @simd for i = 1:$(prod(S))
+            s = op(s, f($(tmp...)))
+        end
+        return s
     end
 end
 
@@ -98,7 +97,7 @@ end
 @inline _mapreduce(f, op, D::Int, nt::NamedTuple, sz::Size{S}, a::StaticArray) where {S} =
     _mapreduce(f, op, Val(D), nt, sz, a)
 
-    
+
 @generated function _mapreduce(f, op, dims::Val{D}, nt::NamedTuple{()},
                                ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)

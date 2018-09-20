@@ -58,7 +58,7 @@ end
 
         @test iszero(sz) == iszero(z)
 
-        @test sum(sa) === sum(a)
+        @test sum(sa) ≈ sum(a)
         @test sum(abs2, sa) === sum(abs2, a)
         @test sum(sa, dims=2) === RSArray2(sum(a, dims=2))
         @test sum(sa, dims=Val(2)) === RSArray2(sum(a, dims=2))
@@ -85,7 +85,7 @@ end
         @test any(sb, dims=Val(2)) === RSArray2(any(b, dims=2))
         @test any(x->x>0, sa, dims=Val(2)) === RSArray2(any(x->x>0, a, dims=2))
 
-        @test mean(sa) === mean(a)
+        @test mean(sa) ≈ mean(a)
         @test mean(abs2, sa) === mean(abs2, a)
         @test mean(sa, dims=Val(2)) === RSArray2(mean(a, dims=2))
         @test mean(abs2, sa, dims=Val(2)) === RSArray2(mean(abs2.(a), dims=2))

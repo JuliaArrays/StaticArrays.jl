@@ -228,14 +228,13 @@ end
         return :(zero(promote_op(*, eltype(a), eltype(b))))
     end
 
-    expr = :(conj(a[1]) * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + conj(a[$j]) * b[$j])
-    end
-
     return quote
         @_inline_meta
-        @inbounds return $expr
+        s = conj(a[1]) * b[1]
+        @inbounds @simd for j = 2:$(prod(S))
+            s += conj(a[j]) * b[j]
+        end
+        return s
     end
 end
 
@@ -244,15 +243,13 @@ end
     if prod(S) == 0
         return :(zero(promote_op(*, eltype(a), eltype(b))))
     end
-
-    expr = :(a[1] * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + a[$j] * b[$j])
-    end
-
     return quote
         @_inline_meta
-        @inbounds return $expr
+        s = a[1] * b[1]
+        @inbounds @simd for j = 2:$(prod(S))
+            s += a[j] * b[j]
+        end
+        return s
     end
 end
 
@@ -264,14 +261,13 @@ end
         return :(zero(real(eltype(a))))
     end
 
-    expr = :(abs2(a[1]))
-    for j = 2:prod(S)
-        expr = :($expr + abs2(a[$j]))
-    end
-
     return quote
-        $(Expr(:meta, :inline))
-        @inbounds return sqrt($expr)
+        @_inline_meta
+        s = abs2(a[1])
+        @inbounds @simd for j = 2:$(prod(S))
+            s += abs2(a[j])
+        end
+        return sqrt(s)
     end
 end
 
@@ -283,28 +279,27 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
         return :(zero(real(eltype(a))))
     end
 
-    expr = :(abs(a[1])^p)
-    for j = 2:prod(S)
-        expr = :($expr + abs(a[$j])^p)
-    end
-
-    expr_p1 = :(abs(a[1]))
-    for j = 2:prod(S)
-        expr_p1 = :($expr_p1 + abs(a[$j]))
-    end
-
     return quote
-        $(Expr(:meta, :inline))
+        @_inline_meta
+        s = zero(real(eltype(a)))
         if p == Inf
             return mapreduce(abs, max, a; init=$(zero(real(eltype(a)))))
         elseif p == 1
-            @inbounds return $expr_p1
+            s = abs(a[1])
+            @inbounds @simd for j = 2:$(prod(S))
+                s += abs(a[j])
+            end
+            return s
         elseif p == 2
             return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, a; init=$(zero(real(eltype(a)))))
         else
-            @inbounds return ($expr)^(inv(p))
+            s = abs(a[1])^p
+            @inbounds @simd for j = 2:$(prod(S))
+                s += abs(a[j])^p
+            end
+            return s^(inv(p))
         end
     end
 end
@@ -325,12 +320,13 @@ end
         return :(zero(eltype(a)))
     end
 
-    exprs = [:(a[$(LinearIndices(S)[i, i])]) for i = 1:S[1]]
-    total = reduce((ex1, ex2) -> :($ex1 + $ex2), exprs)
-
     return quote
         @_inline_meta
-        @inbounds return $total
+        s = a[1,1]
+        @inbounds @simd for 2 in 1:$(S[1])
+            s += a[i,i]
+        end
+        return s
     end
 end
 
