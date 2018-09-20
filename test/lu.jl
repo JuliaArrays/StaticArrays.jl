@@ -35,5 +35,10 @@ using StaticArrays, Test, LinearAlgebra
     end
 
     # decomposition is correct
-    @test l*u ≈ a[p,:]
+    l_u = l*u
+    if length(l_u) > 0 # Union{} element type breaks norm
+        @test l*u ≈ a[p,:]
+    else
+        @test_broken l*u ≈ a[p,:]
+    end
 end

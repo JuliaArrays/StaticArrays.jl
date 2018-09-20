@@ -21,28 +21,27 @@ const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
     end
-    T = promote_tuple_eltype(x)
 
     return quote
         $(Expr(:meta, :inline))
-        SMatrix{S1, $S2, $T, L}(x)
+        T = promote_tuple_eltype(typeof(x))
+        SMatrix{S1, $S2, T, L}(x)
     end
 end
 
 @generated function (::Type{SMatrix{S1,S2}})(x::NTuple{L,Any}) where {S1,S2,L}
-    T = promote_tuple_eltype(x)
-
     return quote
         $(Expr(:meta, :inline))
-        SMatrix{S1, S2, $T, L}(x)
+        T = promote_tuple_eltype(typeof(x))
+        SMatrix{S1, S2, T, L}(x)
     end
 end
 SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
 @generated function (::Type{SMatrixNoType{S1, S2, L}})(x::NTuple{L,Any}) where {S1,S2,L}
-    T = promote_tuple_eltype(x)
     return quote
         $(Expr(:meta, :inline))
-        SMatrix{S1, S2, $T, L}(x)
+        T = promote_tuple_eltype(typeof(x))
+        SMatrix{S1, S2, T, L}(x)
     end
 end
 

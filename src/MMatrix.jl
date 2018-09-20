@@ -22,20 +22,18 @@ const MMatrix{S1, S2, T, L} = MArray{Tuple{S1, S2}, T, 2, L}
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
     end
-    T = promote_tuple_eltype(x)
-
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, $S2, $T, L}(x)
+        T = eltype(typeof(x))
+        MMatrix{S1, $S2, T, L}(x)
     end
 end
 
 @generated function (::Type{MMatrix{S1,S2}})(x::NTuple{L}) where {S1,S2,L}
-    T = promote_tuple_eltype(x)
-
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, S2, $T, L}(x)
+        T = eltype(typeof(x))
+        MMatrix{S1, S2, T, L}(x)
     end
 end
 
@@ -46,9 +44,11 @@ end
     end
 end
 
-function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
-    Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
-    return MMatrix{S1,S2,T}(undef)
+@static if VERSION < v"1.0"
+    function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
+        Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
+        return MMatrix{S1,S2,T}(undef)
+    end
 end
 @generated function (::Type{MMatrix{S1,S2,T}})(::UndefInitializer) where {S1,S2,T}
     return quote
