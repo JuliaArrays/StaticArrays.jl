@@ -35,10 +35,12 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         new{S,T,N,L}()
     end
 
-    # deprecated empty constructor
-    function MArray{S,T,N,L}() where {S,T,N,L}
-        Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
-        return MArray{S,T,N,L}(undef)
+    @static if VERSION < v"1.0"
+        # deprecated empty constructor
+        function MArray{S,T,N,L}() where {S,T,N,L}
+            Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
+            return MArray{S,T,N,L}(undef)
+        end
     end
 end
 
@@ -59,13 +61,15 @@ end
 @generated function (::Type{MArray{S}})(x::T) where {S, T <: Tuple}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S,$(promote_tuple_eltype(T)),$(tuple_length(S)),$(tuple_prod(S))}(x)
+        MArray{S,promote_tuple_eltype(T),$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-function (::Type{MArray{S,T,N}})() where {S,T,N}
-    Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
-    return MArray{S,T,N}(undef)
+@static if VERSION < v"1.0"
+    function (::Type{MArray{S,T,N}})() where {S,T,N}
+        Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
+        return MArray{S,T,N}(undef)
+    end
 end
 @generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
@@ -74,9 +78,11 @@ end
     end
 end
 
-function (::Type{MArray{S,T}})() where {S,T}
-    Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
-    return MArray{S,T}(undef)
+@static if VERSION < v"1.0"
+    function (::Type{MArray{S,T}})() where {S,T}
+        Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
+        return MArray{S,T}(undef)
+    end
 end
 @generated function (::Type{MArray{S,T}})(::UndefInitializer) where {S,T}
     return quote

@@ -23,11 +23,11 @@ end
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
     end
-    eltypes = [eltype(a[j]) for j ∈ 1:length(a)] # presumably, `eltype` is "hyperpure"?
-    newT = :(return_type(f, Tuple{$(eltypes...)}))
+
     return quote
         @_inline_meta
-        @inbounds return similar_type(typeof(_first(a...)), $newT, Size(S))(tuple($(exprs...)))
+        @inbounds elements = tuple($(exprs...))
+        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), Size(S))(elements)
     end
 end
 
@@ -103,9 +103,7 @@ end
                                ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
-    T0 = eltype(a)
-    T = :((T1 = return_type(f, Tuple{$T0}); return_type(op, Tuple{T1,T1})))
-
+    
     exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n ∈ Snew]
     for i ∈ Base.product(itr...)
@@ -121,12 +119,13 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, $T, Size($Snew))(tuple($(exprs...)))
+        @inbounds elements = tuple($(exprs...))
+        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
 end
 
-@generated function _mapreduce(f, op, dims::Val{D}, nt::NamedTuple{(:init,),Tuple{T}},
-                                  ::Size{S}, a::StaticArray) where {S,D,T}
+@generated function _mapreduce(f, op, dims::Val{D}, nt::NamedTuple{(:init,)},
+                                  ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
 
@@ -145,7 +144,8 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
+        @inbounds elements = tuple($(exprs...))
+        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
 end
 

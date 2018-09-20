@@ -19,7 +19,14 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
         new{S,T,N,M}(a)
     end
 
-    function SizedArray{S, T, N, M}() where {S, T, N, M}
+    @static if VERSION < v"1.0"
+        function SizedArray{S, T, N, M}() where {S, T, N, M}
+            Base.depwarn("`SizedArray{S,T,N,M}()` is deprecated, use `SizedArray{S,T,N,M}(undef)` instead", :SizedArray)
+            new{S, T, N, M}(Array{T, M}(undef, S.parameters...))
+        end
+    end
+
+    function SizedArray{S, T, N, M}(::UndefInitializer) where {S, T, N, M}
         new{S, T, N, M}(Array{T, M}(undef, S.parameters...))
     end
 end
@@ -28,8 +35,19 @@ end
 @inline SizedArray{S,T}(a::Array{T,M}) where {S,T,M} = SizedArray{S,T,tuple_length(S),M}(a)
 @inline SizedArray{S}(a::Array{T,M}) where {S,T,M} = SizedArray{S,T,tuple_length(S),M}(a)
 
-@inline SizedArray{S,T,N}() where {S,T,N} = SizedArray{S,T,N,N}()
-@inline SizedArray{S,T}() where {S,T} = SizedArray{S,T,tuple_length(S),tuple_length(S)}()
+@inline SizedArray{S,T,N}(::UndefInitializer) where {S,T,N} = SizedArray{S,T,N,N}(undef)
+@inline SizedArray{S,T}(::UndefInitializer) where {S,T} = SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
+
+@static if VERSION < v"1.0"
+    @inline function SizedArray{S,T,N}(::UndefInitializer) where {S,T,N}
+        Base.depwarn("`SizedArray{S,T,N}()` is deprecated, use `SizedArray{S,T,N}(undef)` instead", :SizedArray)
+        SizedArray{S,T,N,N}(undef)
+    end
+    @inline function SizedArray{S,T}(::UndefInitializer) where {S,T}
+        Base.depwarn("`SizedArray{S,T}()` is deprecated, use `SizedArray{S,T}(undef)` instead", :SizedArray)
+        SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
+    end
+end
 
 @generated function (::Type{SizedArray{S,T,N,M}})(x::NTuple{L,Any}) where {S,T,N,M,L}
     if L != tuple_prod(S)
@@ -38,7 +56,7 @@ end
     exprs = [:(a[$i] = x[$i]) for i = 1:L]
     return quote
         $(Expr(:meta, :inline))
-        a = SizedArray{S,T,N,M}()
+        a = SizedArray{S,T,N,M}(undef)
         @inbounds $(Expr(:block, exprs...))
         return a
     end

@@ -261,7 +261,7 @@ end
 @inline norm(a::StaticArray) = _norm(Size(a), a)
 @generated function _norm(::Size{S}, a::StaticArray) where {S}
     if prod(S) == 0
-        return zero(real(eltype(a)))
+        return :(zero(real(eltype(a))))
     end
 
     expr = :(abs2(a[1]))
@@ -280,7 +280,7 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
 @inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
 @generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
     if prod(S) == 0
-        return zero(real(eltype(a)))
+        return :(zero(real(eltype(a))))
     end
 
     expr = :(abs(a[1])^p)
@@ -322,7 +322,7 @@ end
     end
 
     if S[1] == 0
-        return zero(eltype(a))
+        return :(zero(eltype(a)))
     end
 
     exprs = [:(a[$(LinearIndices(S)[i, i])]) for i = 1:S[1]]
