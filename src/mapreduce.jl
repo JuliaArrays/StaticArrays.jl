@@ -43,15 +43,15 @@ end
     _map!(f, dest, same_size(dest, a, b), a, b)
 end
 
-
 @generated function _map!(f, dest, ::Size{S}, a::StaticArray...) where {S}
-    tmp = [:(a[$j][i]) for j ∈ 1:length(a)]
+    exprs = Vector{Expr}(undef, prod(S))
+    for i ∈ 1:prod(S)
+        tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
+        exprs[i] = :(dest[$i] = f($(tmp...)))
+    end
     return quote
         @_inline_meta
-        @inbounds @simd for i ∈ 1:$(prod(S))
-            dest[i] = f($(tmp...))
-        end
-        return dest
+        @inbounds $(Expr(:block, exprs...))
     end
 end
 
