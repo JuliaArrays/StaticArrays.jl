@@ -10,4 +10,6 @@ using StaticArrays, Test
         @test collect(Iterators.flatten(typeof(x)[])) == []
         @test collect(Iterators.flatten(X)) == [x..., x..., x...]
     end
+    @test collect(Iterators.flatten([SVector(1,1), SVector(1)])) == [1,1,1]
+    @test_throws ArgumentError length(Iterators.flatten([SVector(1,1), SVector(1)]))
 end
