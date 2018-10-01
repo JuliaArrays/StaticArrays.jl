@@ -2,7 +2,7 @@ module StaticArrays
 
 import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
 
-import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
+import Base: getindex, setindex!, size, strides, similar, vec, show, length, convert, promote_op,
              promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
@@ -18,7 +18,7 @@ using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
-                      normalize!, Eigen, det, logdet, cross, diff, qr
+                      normalize!, Eigen, det, logdet, cross, diff, qr, schur
 
 # import eye for deprecation warnings
 @static if isdefined(LinearAlgebra, :eye)
@@ -106,6 +106,7 @@ include("inv.jl")
 include("solve.jl")
 include("eigen.jl")
 include("expm.jl")
+include("logm.jl")
 include("sqrtm.jl")
 include("lyap.jl")
 include("triangular.jl")
@@ -113,6 +114,7 @@ include("cholesky.jl")
 include("svd.jl")
 include("lu.jl")
 include("qr.jl")
+include("schur.jl")
 include("deque.jl")
 include("io.jl")
 
