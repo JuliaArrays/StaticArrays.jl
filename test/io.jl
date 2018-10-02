@@ -11,28 +11,24 @@ function write_buf(xs...)
 end
 
 @testset "Binary IO" begin
-    @testset "read!" begin
+    for (T, data,Shape) in [
+                   (UInt8, (1,2,3), Tuple{3}),
+                   (Int32, (-1,2,3), Tuple{3}),
+                   (Float64, (1,2,3,4), Tuple{2,2})]
         # Read static arrays from a stream which was serialized elementwise
-        @test read!(write_buf(UInt8, 1,2,3), SVector{3,UInt8})         === SVector{3,UInt8}(1,2,3)
-        @test read!(write_buf(Int32, -1,2,3), SVector{3,Int32})        === SVector{3,Int32}(-1,2,3)
-        @test read!(write_buf(Float64, 1,2,3), SVector{3,Float64})     === SVector{3,Float64}(1,2,3)
-        @test read!(write_buf(Float64, 1,2,3,4), SMatrix{2,2,Float64}) === @SMatrix [1.0 3.0; 2.0 4.0]
-    end
+        io = write_buf(T, data...)
+        @test read(io, SArray{Shape,T}) === SArray{Shape,T}(data...)
 
-    @testset "write" begin
+        io = write_buf(T, data...)
+        out = MArray{Shape,T}(zeros(length(data))...)
+        expected = MArray{Shape,T}(data...)
+        @test read!(io, out) == expected
+        @test out == expected
+        @test typeof(out) == typeof(expected)
+
         # Compare serialized bytes
-        @test take!(write_buf(UInt8, 1,2,3))     == take!(write_buf(SVector{3,UInt8}(1,2,3)))
-        @test take!(write_buf(Int32, -1,2,3))    == take!(write_buf(SVector{3,Int32}(-1,2,3)))
-        @test take!(write_buf(Float64, 1,2,3))   == take!(write_buf(SVector{3,Float64}(1,2,3)))
-        @test take!(write_buf(Float64, 1,2,3,4)) == take!(write_buf(@SMatrix [1.0 3.0; 2.0 4.0]))
-    end
-
-    @testset "read!" begin
-        # Read static arrays from a stream which was serialized elementwise
-        @test read!(write_buf(UInt8, 1,2,3),     zeros(MVector{3,UInt8}))     == MVector{3,UInt8}(1,2,3)
-        @test read!(write_buf(Int32, -1,2,3),    zeros(MVector{3,Int32}))     == MVector{3,Int32}(-1,2,3)
-        @test read!(write_buf(Float64, 1,2,3),   zeros(MVector{3,Float64}))   == MVector{3,Float64}(1,2,3)
-        @test read!(write_buf(Float64, 1,2,3,4), zeros(MMatrix{2,2,Float64})) == @MMatrix [1.0 3.0; 2.0 4.0]
+        io = write_buf(T, data...)
+        arr = SArray{Shape, T}(data...)
+        @test take!(io) == take!(write_buf(arr))
     end
 end
-
