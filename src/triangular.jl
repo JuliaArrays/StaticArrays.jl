@@ -34,7 +34,7 @@ const StaticULT = Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
@@ -62,7 +62,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
@@ -90,7 +90,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
@@ -118,7 +118,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
@@ -146,7 +146,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
@@ -174,7 +174,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
@@ -206,7 +206,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
@@ -238,7 +238,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
@@ -265,7 +265,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
@@ -297,7 +297,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
@@ -329,7 +329,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
@@ -356,7 +356,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
@@ -385,7 +385,7 @@ end
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             if k == 1
@@ -417,7 +417,7 @@ end
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             if k == 1
@@ -448,7 +448,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -479,7 +479,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -510,7 +510,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -541,7 +541,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -574,7 +574,7 @@ end
     TAB = promote_op(*, eltype(TA), eltype(TB))
     z = zero(TAB)
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:n
             if i > j
@@ -608,7 +608,7 @@ end
     TAB = promote_op(*, eltype(TA), eltype(TB))
     z = zero(TAB)
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:n
             if i < j
@@ -640,7 +640,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:n
             k1 = max(i,j)
@@ -669,7 +669,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:n
             ex = :(A.data[$(LinearIndices(sa)[i,1])] * B.data[$(LinearIndices(sb)[1,j])])
