@@ -72,21 +72,9 @@ end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
-    if sa[1]*sa[2]*sb[2] <= 8*8*8
-        return quote
-            @_inline_meta
-            return mul_unrolled(Sa, Sb, a, b)
-        end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
-        return quote
-            @_inline_meta
-            return mul_unrolled_chunks(Sa, Sb, a, b)
-        end
-    else
-        return quote
-            @_inline_meta
-            return mul_loop(Sa, Sb, a, b)
-        end
+    return quote
+        @_inline_meta
+        return mul_loop(Sa, Sb, a, b)
     end
 end
 
