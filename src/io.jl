@@ -1,5 +1,5 @@
 
-@inline function read!(io::IO, ::Type{SA}) where {SA<:StaticArray}
+@inline function read(io::IO, ::Type{SA}) where {SA<:StaticArray}
     elements = Ref{NTuple{length(SA),eltype(SA)}}()
     read!(io, elements)
     SA(elements[])
@@ -9,6 +9,8 @@ end
     unsafe_read(io, Base.unsafe_convert(Ptr{eltype(SA)}, a), sizeof(a))
     a
 end
+
+@deprecate read!(io::IO, SA::Type{<:StaticArray}) read(io, SA)
 
 @inline function write(io::IO, a::SA) where {SA<:StaticArray}
     write(io, Ref(Tuple(a)))
