@@ -82,6 +82,29 @@ end
     end
 end
 
+@testset "Triangular-triangular multiplication" begin
+    for n in (1, 2, 3, 4),
+        eltyA in (Float64, ComplexF64, Int),
+            eltyB in (Float64, ComplexF64, Int),
+                (ta, uploa) in ((UpperTriangular, :U), (LowerTriangular, :L)),
+                    (tb, uplob) in ((UpperTriangular, :U), (LowerTriangular, :L))
+ 
+        A = ta(eltyA == Int ? rand(1:7, n, n) : rand(eltyA, n, n))
+        B = tb(eltyB == Int ? rand(1:7, n, n) : rand(eltyB, n, n))
+
+        SA = ta(SMatrix{n,n}(A.data))
+        SB = tb(SMatrix{n,n}(B.data))
+
+        eltyAB = Base.promote_op(*, eltyA, eltyB)
+
+        @test SA*SB ≈ A*B
+        @test eltype(SA*SB) == eltyAB
+        @test SA*SB isa (ta===tb ? ta : SMatrix)
+
+    end
+
+end
+
 @testset "Triangular-matrix division" begin
     for n in (1, 2, 3, 4),
         eltyA in (Float64, ComplexF64, Int),

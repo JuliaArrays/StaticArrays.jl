@@ -17,9 +17,12 @@
 @inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVecOrMat}) =
     transpose(transpose(B) * transpose(A))
 
+const StaticULT = Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}
+
 @inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
 @inline Base.:*(A::StaticVecOrMat, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_B(Size(A), Size(B), A, B)
-@inline Base.:\(A::Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
+@inline Base.:*(A::StaticULT, B::StaticULT) = _A_mul_B(Size(A), Size(B), A, B)
+@inline Base.:\(A::StaticULT, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
 
 
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
@@ -31,7 +34,7 @@
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
@@ -59,7 +62,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
@@ -87,7 +90,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
@@ -115,7 +118,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = m:-1:1
             ex = :(A.data[$(LinearIndices(sa)[i, i])]*B[$(LinearIndices(sb)[i, j])])
@@ -143,7 +146,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(A.data[$(LinearIndices(sa)[i, i])]'*B[$(LinearIndices(sb)[i, j])])
@@ -171,7 +174,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for j = 1:n
         for i = 1:m
             ex = :(transpose(A.data[$(LinearIndices(sa)[i, i])])*B[$(LinearIndices(sb)[i, j])])
@@ -203,7 +206,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
@@ -235,7 +238,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
@@ -262,7 +265,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
@@ -294,7 +297,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = 1:n
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])])
@@ -326,7 +329,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*B[$(LinearIndices(sb)[j, j])]')
@@ -353,7 +356,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for i = 1:m
         for j = n:-1:1
             ex = :(A[$(LinearIndices(sa)[i, j])]*transpose(B[$(LinearIndices(sb)[j, j])]))
@@ -382,7 +385,7 @@ end
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             if k == 1
@@ -414,7 +417,7 @@ end
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
     init = [:($(X[i,j]) = B[$(LinearIndices(sb)[i, j])]) for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             if k == 1
@@ -445,7 +448,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -476,7 +479,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = 1:m
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -507,7 +510,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -538,7 +541,7 @@ end
 
     X = [Symbol("X_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    code = quote end
+    code = Expr(:block)
     for k = 1:n
         for j = m:-1:1
             ex = :(B[$(LinearIndices(sb)[j, k])])
@@ -558,4 +561,130 @@ end
         TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
         @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
+end
+
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::UpperTriangular{<:TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    n = sa[1]
+    if n != sb[1]
+        throw(DimensionMismatch("left and right-hand must have same sizes, got $(n) and $(sb[1])"))
+    end
+
+    X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
+
+    TAB = promote_op(*, eltype(TA), eltype(TB))
+    z = zero(TAB)
+
+    code = Expr(:block)
+    for j = 1:n
+        for i = 1:n
+            if i > j
+                push!(code.args, :($(X[i,j]) = $z))
+            else
+                ex = :(A.data[$(LinearIndices(sa)[i,i])] * B.data[$(LinearIndices(sb)[i,j])])
+                for k = i+1:j
+                    ex = :($ex + A.data[$(LinearIndices(sa)[i,k])] * B.data[$(LinearIndices(sb)[k,j])])
+                end
+                push!(code.args, :($(X[i,j]) = $ex))
+            end
+        end
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds $code
+        return UpperTriangular(similar_type(B.data, $TAB)(tuple($(X...))))
+    end
+
+end
+
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::LowerTriangular{<:TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    n = sa[1]
+    if n != sb[1]
+        throw(DimensionMismatch("left and right-hand must have same sizes, got $(n) and $(sb[1])"))
+    end
+
+    X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
+
+    TAB = promote_op(*, eltype(TA), eltype(TB))
+    z = zero(TAB)
+
+    code = Expr(:block)
+    for j = 1:n
+        for i = 1:n
+            if i < j
+                push!(code.args, :($(X[i,j]) = $z))
+            else
+                ex = :(A.data[$(LinearIndices(sa)[i,j])] * B.data[$(LinearIndices(sb)[j,j])])
+                for k = j+1:i
+                    ex = :($ex + A.data[$(LinearIndices(sa)[i,k])] * B.data[$(LinearIndices(sb)[k,j])])
+                end
+                push!(code.args, :($(X[i,j]) = $ex))
+            end
+        end
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds $code
+        return LowerTriangular(similar_type(B.data, $TAB)(tuple($(X...))))
+    end
+
+end
+
+
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{<:TA,<:StaticMatrix}, B::LowerTriangular{<:TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    n = sa[1]
+    if n != sb[1]
+        throw(DimensionMismatch("left and right-hand must have same sizes, got $(n) and $(sb[1])"))
+    end
+
+    X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
+
+    code = Expr(:block)
+    for j = 1:n
+        for i = 1:n
+            k1 = max(i,j)
+            ex = :(A.data[$(LinearIndices(sa)[i,k1])] * B.data[$(LinearIndices(sb)[k1,j])])
+            for k = k1+1:n
+                ex = :($ex + A.data[$(LinearIndices(sa)[i,k])] * B.data[$(LinearIndices(sb)[k,j])])
+            end
+            push!(code.args, :($(X[i,j]) = $ex))
+        end
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds $code
+        TAB = promote_op(*, eltype(TA), eltype(TB))
+        return similar_type(B.data, TAB)(tuple($(X...)))
+    end
+
+end
+
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::LowerTriangular{<:TA,<:StaticMatrix}, B::UpperTriangular{<:TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+    n = sa[1]
+    if n != sb[1]
+        throw(DimensionMismatch("left and right-hand must have same sizes, got $(n) and $(sb[1])"))
+    end
+
+    X = [Symbol("X_$(i)_$(j)") for i = 1:n, j = 1:n]
+
+    code = Expr(:block)
+    for j = 1:n
+        for i = 1:n
+            ex = :(A.data[$(LinearIndices(sa)[i,1])] * B.data[$(LinearIndices(sb)[1,j])])
+            for k = 2:min(i,j)
+                ex = :($ex + A.data[$(LinearIndices(sa)[i,k])] * B.data[$(LinearIndices(sb)[k,j])])
+            end
+            push!(code.args, :($(X[i,j]) = $ex))
+        end
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds $code
+        TAB = promote_op(*, eltype(TA), eltype(TB))
+        return similar_type(B.data, TAB)(tuple($(X...)))
+    end
+
 end
