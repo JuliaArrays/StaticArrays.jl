@@ -40,6 +40,7 @@ include("lu.jl")
 Random.seed!(42); include("qr.jl")
 Random.seed!(42); include("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
 include("deque.jl")
+include("flatten.jl")
 include("io.jl")
 include("svd.jl")
 Random.seed!(42); include("fixed_size_arrays.jl")

@@ -114,6 +114,7 @@ include("svd.jl")
 include("lu.jl")
 include("qr.jl")
 include("deque.jl")
+include("flatten.jl")
 include("io.jl")
 
 include("FixedSizeArrays.jl")
