@@ -68,8 +68,7 @@ end
 
 Base.show(io::IO, ::Size{S}) where {S} = print(io, "Size", S)
 
-Size(a::T) where {T<:AbstractArray} = Size(T)
-function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error message for when S not defined
+function missing_size_error(::Type{SA}) where SA
     error("""
         The size of type `$SA` is not known.
 
@@ -83,7 +82,10 @@ function Size(::Type{SA}) where {SA <: StaticArray} # A nice, default error mess
             SMatrix{3,3}(m) # correct - size is inferrable
         """)
 end
-Size(::Type{SA}) where {SA <: StaticArray{S}} where {S<:Tuple} = Size(S)  # S defined as a Tuple
+
+Size(a::T) where {T<:AbstractArray} = Size(T)
+Size(::Type{SA}) where {SA <: StaticArray} = missing_size_error(SA)
+Size(::Type{SA}) where {SA <: StaticArray{S}} where {S<:Tuple} = @isdefined(S) ? Size(S) : missing_size_error(SA)
 @pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
 struct Length{L}

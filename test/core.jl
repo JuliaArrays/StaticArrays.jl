@@ -138,8 +138,8 @@
         try
             convert(SVector, [1,2,3])
         catch err
-            @test_broken isa(err, ErrorException)
-            @test_broken startswith(err.msg, "The size of type `StaticArrays.SArray{Tuple{S},T,1,S} where T where S` is not known.")
+            @test isa(err, ErrorException)
+            @test startswith(err.msg, "The size of type")
         end
     end
     @test_throws Exception Length{2.5}()
