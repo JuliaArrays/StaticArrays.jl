@@ -1,4 +1,4 @@
-module ImmutableArrays
+module ImmutableArraysWillBeRemoved
 
 using ..StaticArrays
 
@@ -34,3 +34,6 @@ export Vector1,   Vector2,   Vector3,   Vector4,
        Matrix4x1, Matrix4x2, Matrix4x3, Matrix4x4
 
 end # module
+
+Base.@deprecate_binding ImmutableArrays ImmutableArraysWillBeRemoved #=
+    =# false "StaticArrays.ImmutableArrays is deprecated. Use StaticArrays directly."
