@@ -133,52 +133,73 @@ end
 
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
+    TA = eltype(A)
 
-    if A.uplo == 'U'
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[3]'*a[3]) # Should be real
-
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        vals = SVector(t_half - tmp, t_half + tmp)
-
-        @inbounds if a[3] == 0
-            vecs = SMatrix{2,2,eltype(A)}(I)
+    @inbounds if A.uplo == 'U'
+        if a[3] == 0
+            A11 = a[1]
+            A22 = a[4]
+            if A11 < A22
+                vals = SVector(A11, A22)
+                vecs = @SMatrix [TA(1) TA(0);
+                                 TA(0) TA(1)]
+            else # A22 <= A11
+                vals = SVector(A22, A11)
+                vecs = @SMatrix [TA(0) TA(1);
+                                 TA(1) TA(0)]
+            end
         else
-            @inbounds v11 = vals[1]-a[4]
-            @inbounds n1 = sqrt(v11'*v11 + a[3]'*a[3])
-            v11 = v11 / n1
-            @inbounds v12 = a[3]' / n1
+            t_half = real(a[1] + a[4]) / 2
+            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
 
-            @inbounds v21 = vals[2]-a[4]
-            @inbounds n2 = sqrt(v21'*v21 + a[3]'*a[3])
+            tmp2 = t_half * t_half - d
+            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            vals = SVector(t_half - tmp, t_half + tmp)
+
+            v11 = vals[1] - a[4]
+            n1 = sqrt(v11' * v11 + a[3]' * a[3])
+            v11 = v11 / n1
+            v12 = a[3]' / n1
+
+            v21 = vals[2] - a[4]
+            n2 = sqrt(v21' * v21 + a[3]' * a[3])
             v21 = v21 / n2
-            @inbounds v22 = a[3]' / n2
+            v22 = a[3]' / n2
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
         end
-        return (vals,vecs)
-    else
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[2]'*a[2]) # Should be real
-
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        vals = SVector(t_half - tmp, t_half + tmp)
-
-        @inbounds if a[2] == 0
-            vecs = SMatrix{2,2,eltype(A)}(I)
+        return (vals, vecs)
+    else # A.uplo == 'L'
+        if a[2] == 0
+            A11 = a[1]
+            A22 = a[4]
+            if A11 < A22
+                vals = SVector(A11, A22)
+                vecs = @SMatrix [TA(1) TA(0);
+                                 TA(0) TA(1)]
+            else # A22 <= A11
+                vals = SVector(A22, A11)
+                vecs = @SMatrix [TA(0) TA(1);
+                                 TA(1) TA(0)]
+            end
         else
-            @inbounds v11 = vals[1]-a[4]
-            @inbounds n1 = sqrt(v11'*v11 + a[2]'*a[2])
-            v11 = v11 / n1
-            @inbounds v12 = a[2] / n1
+            t_half = real(a[1] + a[4]) / 2
+            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
 
-            @inbounds v21 = vals[2]-a[4]
-            @inbounds n2 = sqrt(v21'*v21 + a[2]'*a[2])
+            tmp2 = t_half * t_half - d
+            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            vals = SVector(t_half - tmp, t_half + tmp)
+
+            v11 = vals[1] - a[4]
+            n1 = sqrt(v11' * v11 + a[2]' * a[2])
+            v11 = v11 / n1
+            v12 = a[2] / n1
+
+            v21 = vals[2] - a[4]
+            n2 = sqrt(v21' * v21 + a[2]' * a[2])
             v21 = v21 / n2
-            @inbounds v22 = a[2] / n2
+            v22 = a[2] / n2
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
