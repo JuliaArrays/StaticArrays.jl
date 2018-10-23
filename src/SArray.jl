@@ -61,11 +61,6 @@ end
 
 # SArray(I::UniformScaling) methods to replace eye
 (::Type{SA})(I::UniformScaling) where {SA<:SArray} = _eye(Size(SA), SA, I)
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{SArray{S}}) where {S} SArray{S}(1.0I)
-    @deprecate eye(::Type{SArray{S,T}}) where {S,T} SArray{S,T}(I)
-end
 
 ####################
 ## SArray methods ##
@@ -77,9 +72,7 @@ end
 
 @inline Tuple(v::SArray) = v.data
 
-if isdefined(Base, :dataids) # v0.7-
-    Base.dataids(::SArray) = ()
-end
+Base.dataids(::SArray) = ()
 
 # See #53
 Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)

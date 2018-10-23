@@ -4,7 +4,6 @@ os:
   - linux
   - osx
 julia:
-  - 0.7
   - 1.0
   - nightly
 notifications:
@@ -22,7 +21,7 @@ branches:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("StaticArrays"); Pkg.test("StaticArrays"; coverage=true)'
 after_success:
-  - if [ $TRAVIS_JULIA_VERSION = "0.7" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
+  - if [ $TRAVIS_JULIA_VERSION = "1.0" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
       julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())';
     fi
   - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps)'

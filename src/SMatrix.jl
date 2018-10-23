@@ -61,11 +61,6 @@ end
 # Some more advanced constructor-like functions
 @inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
 
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{SMatrix{N}}) where {N} SMatrix{N,N}(1.0I)
-end
-
 #####################
 ## SMatrix methods ##
 #####################

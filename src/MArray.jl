@@ -34,14 +34,6 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
     end
-
-    @static if VERSION < v"1.0"
-        # deprecated empty constructor
-        function MArray{S,T,N,L}() where {S,T,N,L}
-            Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
-            return MArray{S,T,N,L}(undef)
-        end
-    end
 end
 
 @generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
@@ -65,12 +57,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MArray{S,T,N}})() where {S,T,N}
-        Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
-        return MArray{S,T,N}(undef)
-    end
-end
 @generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
@@ -78,12 +64,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MArray{S,T}})() where {S,T}
-        Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
-        return MArray{S,T}(undef)
-    end
-end
 @generated function (::Type{MArray{S,T}})(::UndefInitializer) where {S,T}
     return quote
         $(Expr(:meta, :inline))
@@ -102,11 +82,6 @@ end
 
 # MArray(I::UniformScaling) methods to replace eye
 (::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{MArray{S}}) where {S} MArray{S}(1.0I)
-    @deprecate eye(::Type{MArray{S,T}}) where {S,T} MArray{S,T}(I)
-end
 
 ####################
 ## MArray methods ##
@@ -139,9 +114,7 @@ end
 
 @inline Tuple(v::MArray) = v.data
 
-if isdefined(Base, :dataids) # v0.7-
-    Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
-end
+Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
 
 @inline function Base.unsafe_convert(::Type{Ptr{T}}, a::MArray{S,T}) where {S,T}
     Base.unsafe_convert(Ptr{T}, pointer_from_objref(a))

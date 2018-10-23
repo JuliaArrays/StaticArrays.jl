@@ -44,12 +44,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
-        Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
-        return MMatrix{S1,S2,T}(undef)
-    end
-end
 @generated function (::Type{MMatrix{S1,S2,T}})(::UndefInitializer) where {S1,S2,T}
     return quote
         $(Expr(:meta, :inline))
@@ -65,11 +59,6 @@ end
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MMatrix{N}}) where {N} = one(MMatrix{N,N})
-
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{MMatrix{N}}) where {N} MMatrix{N,N}(1.0I)
-end
 
 #####################
 ## MMatrix methods ##

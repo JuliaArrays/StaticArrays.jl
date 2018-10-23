@@ -20,11 +20,6 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr
 
-# import eye for deprecation warnings
-@static if isdefined(LinearAlgebra, :eye)
-    import LinearAlgebra: eye
-end
-
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix

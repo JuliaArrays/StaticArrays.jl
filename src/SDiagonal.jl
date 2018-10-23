@@ -83,10 +83,6 @@ end
 
 # SDiagonal(I::UniformScaling) methods to replace eye
 (::Type{SD})(I::UniformScaling) where {N,SD<:SDiagonal{N}} = SD(ntuple(x->I.λ, Val(N)))
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if VERSION < v"1.0"
-    @deprecate eye(::Type{SDiagonal{N,T}}) where {N,T} SDiagonal{N,T}(I)
-end
 
 one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
