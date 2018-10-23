@@ -10,6 +10,9 @@ module FixedSizeArraysWillBeRemoved
 
 using ..StaticArrays
 
+const FixedSizeArrays = FixedSizeArraysWillBeRemoved
+export FixedSizeArrays # Ensure deprecated module name is in scope after import
+
 export FixedArray
 export FixedVector
 export FixedMatrix
@@ -189,4 +192,4 @@ end
 end
 
 Base.@deprecate_binding FixedSizeArrays FixedSizeArraysWillBeRemoved #=
-    =# false "StaticArrays.FixedSizeArrays is deprecated. Use StaticArrays directly."
+    =# false ".  Use StaticArrays directly."
