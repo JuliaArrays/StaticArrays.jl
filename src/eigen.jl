@@ -136,7 +136,7 @@ end
     TA = eltype(A)
 
     @inbounds if A.uplo == 'U'
-        if a[3] == 0 # A is diagonal
+        if a[3] == zero(TA) # A is diagonal
             A11 = a[1]
             A22 = a[4]
             if A11 < A22
@@ -171,7 +171,7 @@ end
         end
         return (vals, vecs)
     else # A.uplo == 'L'
-        if a[2] == 0 # A is diagonal
+        if a[2] == zero(TA) # A is diagonal
             A11 = a[1]
             A22 = a[4]
             if A11 < A22
