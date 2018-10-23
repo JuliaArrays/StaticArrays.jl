@@ -6,7 +6,7 @@ etc, using StaticArrays as a backend.
 The type definitions are not "perfect" matches because the type parameters are
 different. However, it should cover common method signatures and constructors.
 """
-module FixedSizeArrays
+module FixedSizeArraysWillBeRemoved
 
 using ..StaticArrays
 
@@ -187,3 +187,6 @@ end
 @fixed_vector Point StaticVector
 
 end
+
+Base.@deprecate_binding FixedSizeArrays FixedSizeArraysWillBeRemoved #=
+    =# false "StaticArrays.FixedSizeArrays is deprecated. Use StaticArrays directly."
