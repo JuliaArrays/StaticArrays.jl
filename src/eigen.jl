@@ -136,19 +136,19 @@ end
     TA = eltype(A)
 
     @inbounds if A.uplo == 'U'
-        if a[3] == 0
+        if a[3] == 0 # A is diagonal
             A11 = a[1]
             A22 = a[4]
             if A11 < A22
                 vals = SVector(A11, A22)
-                vecs = @SMatrix [TA(1) TA(0);
-                                 TA(0) TA(1)]
+                vecs = @SMatrix [one(TA) zero(TA);
+                                 zero(TA) one(TA)]
             else # A22 <= A11
                 vals = SVector(A22, A11)
-                vecs = @SMatrix [TA(0) TA(1);
-                                 TA(1) TA(0)]
+                vecs = @SMatrix [zero(TA) one(TA);
+                                 one(TA) zero(TA)]
             end
-        else
+        else # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
             d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
 
@@ -171,19 +171,19 @@ end
         end
         return (vals, vecs)
     else # A.uplo == 'L'
-        if a[2] == 0
+        if a[2] == 0 # A is diagonal
             A11 = a[1]
             A22 = a[4]
             if A11 < A22
                 vals = SVector(A11, A22)
-                vecs = @SMatrix [TA(1) TA(0);
-                                 TA(0) TA(1)]
+                vecs = @SMatrix [one(TA) zero(TA);
+                                 zero(TA) one(TA)]
             else # A22 <= A11
                 vals = SVector(A22, A11)
-                vecs = @SMatrix [TA(0) TA(1);
-                                 TA(1) TA(0)]
+                vecs = @SMatrix [zero(TA) one(TA);
+                                 one(TA) zero(TA)]
             end
-        else
+        else # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
             d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
 
