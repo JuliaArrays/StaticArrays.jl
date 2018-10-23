@@ -67,6 +67,13 @@ using StaticArrays, Test, LinearAlgebra
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
+
+        # issue #523
+        for (i, j) in ((1, 2), (2, 1)), uplo in (:U, :L)
+            A = SMatrix{2,2,Float64}((i, 0, 0, j))
+            E = eigen(Symmetric(A, uplo))
+            @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
+        end
     end
 
     @testset "3×3" for i = 1:100
