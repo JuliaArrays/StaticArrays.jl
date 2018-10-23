@@ -134,11 +134,14 @@ end
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
     TA = eltype(A)
+    lower = A.uplo === 'L'
 
-    @inbounds if A.uplo == 'U'
-        if a[3] == 0 # A is diagonal
-            A11 = a[1]
-            A22 = a[4]
+    @inbounds begin
+        A11 = a[1]
+        A22 = a[4]
+        A2112 = lower ? a[2] : a[3]
+
+        if A2112 == 0 # A is diagonal
             if A11 < A22
                 vals = SVector(A11, A22)
                 vecs = @SMatrix [one(TA) zero(TA);
@@ -149,63 +152,28 @@ end
                                  one(TA) zero(TA)]
             end
         else # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
+            t_half = real(A11 + A22) / 2
+            d = real(A11 * A22 - A2112' * A2112) # Should be real
 
             tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            tmp  = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
             vals = SVector(t_half - tmp, t_half + tmp)
 
-            v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[3]' * a[3])
+            v11 = vals[1] - A22
+            n1  = sqrt(v11' * v11 + A2112' * A2112)
             v11 = v11 / n1
-            v12 = a[3]' / n1
+            v12 = (lower ? A2112 : A2112') / n1
 
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[3]' * a[3])
+            v21 = vals[2] - A22
+            n2  = sqrt(v21' * v21 + A2112' * A2112)
             v21 = v21 / n2
-            v22 = a[3]' / n2
+            v22 = (lower ? A2112 : A2112') / n2
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
         end
-        return (vals, vecs)
-    else # A.uplo == 'L'
-        if a[2] == 0 # A is diagonal
-            A11 = a[1]
-            A22 = a[4]
-            if A11 < A22
-                vals = SVector(A11, A22)
-                vecs = @SMatrix [one(TA) zero(TA);
-                                 zero(TA) one(TA)]
-            else # A22 <= A11
-                vals = SVector(A22, A11)
-                vecs = @SMatrix [zero(TA) one(TA);
-                                 one(TA) zero(TA)]
-            end
-        else # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
-
-            tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
-            vals = SVector(t_half - tmp, t_half + tmp)
-
-            v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[2]' * a[2])
-            v11 = v11 / n1
-            v12 = a[2] / n1
-
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[2]' * a[2])
-            v21 = v21 / n2
-            v22 = a[2] / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
-        end
-        return (vals,vecs)
     end
+    return (vals, vecs)
 end
 
 # A small part of the code in the following method was inspired by works of David
