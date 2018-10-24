@@ -39,11 +39,11 @@ end
 @inline SizedArray{S,T}(::UndefInitializer) where {S,T} = SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
 
 @static if VERSION < v"1.0"
-    @inline function SizedArray{S,T,N}(::UndefInitializer) where {S,T,N}
+    @inline function SizedArray{S,T,N}() where {S,T,N}
         Base.depwarn("`SizedArray{S,T,N}()` is deprecated, use `SizedArray{S,T,N}(undef)` instead", :SizedArray)
         SizedArray{S,T,N,N}(undef)
     end
-    @inline function SizedArray{S,T}(::UndefInitializer) where {S,T}
+    @inline function SizedArray{S,T}() where {S,T}
         Base.depwarn("`SizedArray{S,T}()` is deprecated, use `SizedArray{S,T}(undef)` instead", :SizedArray)
         SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
     end
