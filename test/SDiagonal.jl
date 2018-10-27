@@ -22,9 +22,6 @@ using StaticArrays, Test, LinearAlgebra
 
     @testset "Methods" begin
 
-        @test StaticArrays.scalem(@SMatrix([1 1 1;1 1 1; 1 1 1]), @SVector [1,2,3]) === @SArray [1 2 3; 1 2 3; 1 2 3]
-        @test StaticArrays.scalem(@SVector([1,2,3]),@SMatrix [1 1 1;1 1 1; 1 1 1])' === @SArray [1 2 3; 1 2 3; 1 2 3]
-
         m = SDiagonal(@SVector [11, 12, 13, 14])
 
         @test diag(m) === m.diag

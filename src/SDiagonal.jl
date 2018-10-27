@@ -3,15 +3,6 @@
 
 import Base: ==, -, +, *, /, \, abs, real, imag, conj
 
-@generated function scalem(a::StaticMatrix{M,N}, b::StaticVector{N}) where {M, N}
-    expr = vec([:(a[$j,$i]*b[$i]) for j=1:M, i=1:N])
-    :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
-end
-@generated function scalem(a::StaticVector{M}, b::StaticMatrix{M, N}) where {M, N}
-    expr = vec([:(b[$j,$i]*a[$j]) for j=1:M, i=1:N])
-    :(@_inline_meta; let val1 = ($(expr[1])); similar_type(SMatrix{M,N},typeof(val1))(val1, $(expr[2:end]...)); end)
-end
-
 const SDiagonal = Diagonal{T,SVector{N,T}} where {N,T}
 SDiagonal(x...) = Diagonal(SVector(x...))
 
