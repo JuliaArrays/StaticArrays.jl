@@ -9,6 +9,16 @@ end
 @inline size(a::StaticArray) = size(typeof(a))
 @inline size(a::StaticArray, d::Int) = size(typeof(a), d)
 
+Base.axes(s::StaticArray) = _axes(Size(s))
+@pure function _axes(::Size{sizes}) where {sizes}
+    map(SOneTo, sizes)
+end
+
+function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
+    print(io, Base.dims2string(length.(inds)), " ")
+    Base.showarg(io, a, true)
+end
+
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
     ii = LinearIndices(size(a))[i...]
@@ -50,6 +60,17 @@ similar_type(::A,s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(
 similar_type(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
 
 similar_type(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar_type(A,T,s)
+
+# We should be able to deal with SOneTo axes
+similar_type(s::SOneTo) = similar_type(typeof(s))
+similar_type(::Type{SOneTo{n}}) where {n} = similar_type(SOneTo{n}, Int, Size(n))
+
+similar_type(::A, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar_type(A, eltype(A), shape)
+similar_type(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar_type(A, eltype(A), shape)
+
+similar_type(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
+similar_type(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
+
 
 # Default types
 # Generally, use SArray
@@ -97,6 +118,17 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_s
 # both SizedArray and Array return SizedArray
 similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
 similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
+
+# We should be able to deal with SOneTo axes
+similar(::A, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
+similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
+
+similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
+similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
+
+# Handle mixtures of SOneTo and other ranges (probably should make Base more robust here)
+similar(::Type{A}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray} = similar(A, length.(shape)) # Jumps back to 2-argument form in Base
+similar(::Type{A},::Type{T}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray,T} = similar(A, length.(shape))
 
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
