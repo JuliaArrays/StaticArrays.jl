@@ -25,6 +25,7 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
     import LinearAlgebra: eye
 end
 
+export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
@@ -39,6 +40,8 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
+
+include("SOneTo.jl")
 
 """
     abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
