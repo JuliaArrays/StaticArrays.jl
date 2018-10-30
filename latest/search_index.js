@@ -217,6 +217,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "pages/api.html#StaticArrays.SOneTo",
+    "page": "API",
+    "title": "StaticArrays.SOneTo",
+    "category": "type",
+    "text": "SOneTo(n)\n\nReturn a statically-sized AbstractUnitRange starting at 1, functioning as the axes of a StaticArray.\n\n\n\n\n\n"
+},
+
+{
     "location": "pages/api.html#StaticArrays.SVector",
     "page": "API",
     "title": "StaticArrays.SVector",
