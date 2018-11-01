@@ -27,13 +27,13 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(v*transpose(v)) === @SMatrix [1 2; 2 4]
 
         v3 = [1, 2]
-        @test m*v3 === @SVector [5, 11]
+        @test m*v3 == @MVector [5, 11]
         v3_bad = [1, 2, 3]
         @test_throws DimensionMismatch m*v3_bad
 
         m2 = @MMatrix [1 2; 3 4]
         v4 = @MVector [1, 2]
-        @test (m2*v4)::SVector == @SVector [5, 11]
+        @test (m2*v4)::MVector == @MVector [5, 11]
 
         m3 = @SArray [1 2; 3 4]
         v5 = @SArray [1, 2]
@@ -41,7 +41,7 @@ using StaticArrays, Test, LinearAlgebra
 
         m4 = @MArray [1 2; 3 4]
         v6 = @MArray [1, 2]
-        @test (m4*v6) === @SVector [5, 11]
+        @test (m4*v6) == @MVector [5, 11]
 
         m5 = @SMatrix [1.0 2.0; 3.0 4.0]
         v7 = [1.0, 2.0]
@@ -95,7 +95,7 @@ using StaticArrays, Test, LinearAlgebra
 
         m = @MMatrix [1 2; 3 4]
         n = @MMatrix [2 3; 4 5]
-        @test (m*n) === @SMatrix [10 13; 22 29]
+        @test (m*n) == @MMatrix [10 13; 22 29]
 
         m = @SArray [1 2; 3 4]
         n = @SArray [2 3; 4 5]
@@ -107,8 +107,8 @@ using StaticArrays, Test, LinearAlgebra
 
         # block matrices
         bm = @SMatrix [m m; m m]
-        bm2 = @SMatrix [14 20; 30 44]
-        @test (bm*bm)::SMatrix{2,2,SMatrix{2,2,Int,4}} == @SMatrix [bm2 bm2; bm2 bm2]
+        bm2 = @MMatrix [14 20; 30 44]
+        @test (bm*bm)::SMatrix{2,2,MMatrix{2,2,Int,4}} == @SMatrix [bm2 bm2; bm2 bm2]
 
         # Alternative methods used between 8 < n <= 14 and n > 14
         m_array = rand(1:10, 10, 10)
@@ -142,7 +142,7 @@ using StaticArrays, Test, LinearAlgebra
 
         m = MMatrix{10,10}(m_array)
         n = MMatrix{10,10}(n_array)
-        @test (m*n)::SMatrix == a_array
+        @test (m*n)::MMatrix == a_array
 
         m_array = rand(1:10, 16, 16)
         n_array = rand(1:10, 16, 16)
@@ -150,7 +150,7 @@ using StaticArrays, Test, LinearAlgebra
 
         m = MMatrix{16,16}(m_array)
         n = MMatrix{16,16}(n_array)
-        @test (m*n)::SMatrix == a_array
+        @test (m*n)::MMatrix == a_array
 
         # Mutating BLAS types follow yet different behaviour
         m_array = randn(4, 4)
