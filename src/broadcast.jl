@@ -13,7 +13,7 @@ BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where
 BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
 # Precedence rules
 BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
-    DefaultArrayStyle(Broadcast._max(Val(M), Val(N)))
+    DefaultArrayStyle(Val(max(M, N)))
 BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{0}) where {M} =
     StaticArrayStyle{M}()
 # copy overload
