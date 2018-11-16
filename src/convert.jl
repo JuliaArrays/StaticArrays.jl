@@ -13,7 +13,7 @@
 @inline Tuple(a::StaticArray) = unroll_tuple(a, Length(a))
 
 @noinline function dimension_mismatch_fail(SA::Type, a::AbstractArray)
-    error("Dimension mismatch. Expected input array of length $(length(SA)), got length $(length(a))")
+    throw(DimensionMismatch("expected input array of length $(length(SA)), got length $(length(a))"))
 end
 
 @inline function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
