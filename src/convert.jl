@@ -1,4 +1,5 @@
-(::Type{SA})(x::Tuple{Tuple{Tuple{<:Tuple}}}) where {SA <: StaticArray} = error("No precise constructor for $SA found. Length of input was $(length(x[1][1][1])).")
+(::Type{SA})(x::Tuple{Tuple{Tuple{<:Tuple}}}) where {SA <: StaticArray} =
+    throw(DimensionMismatch("No precise constructor for $SA found. Length of input was $(length(x[1][1][1]))."))
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
 @inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
