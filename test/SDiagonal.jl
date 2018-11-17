@@ -54,9 +54,9 @@ using StaticArrays, Test, LinearAlgebra
             end
         end
 
-        @test_throws Exception m[5,5]
+        @test_throws BoundsError m[5,5]
 
-        @test_throws Exception m[1,5]
+        @test_throws BoundsError m[1,5]
 
 
         @test size(m) === (4, 4)
