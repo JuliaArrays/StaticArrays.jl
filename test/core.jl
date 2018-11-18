@@ -183,4 +183,11 @@
         @test !StaticArrays.sizematch(Size(2, 2), a)
         @test !StaticArrays.sizematch(Size(3, StaticArrays.Dynamic()), a)
     end
+
+    @testset "SOneTo" begin
+        a = Base.OneTo(3)
+        b = StaticArrays.SOneTo{2}()
+        @test @inferred(promote(a, b)) === (a, Base.OneTo(2))
+        @test @inferred(promote(b, a)) === (Base.OneTo(2), a)
+    end
 end

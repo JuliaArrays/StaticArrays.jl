@@ -58,3 +58,6 @@ end
 Base.@pure function Base.checkindex(::Type{Bool}, ::SOneTo{n1}, ::SOneTo{n2}) where {n1, n2}
     return n1::Int >= n2::Int
 end
+
+Base.promote_rule(a::Type{Base.OneTo{T}}, ::Type{SOneTo{n}}) where {T,n} =
+    Base.OneTo{promote_type(T, Int)}
