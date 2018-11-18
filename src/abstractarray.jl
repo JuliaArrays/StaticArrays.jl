@@ -13,6 +13,8 @@ Base.axes(s::StaticArray) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}
     map(SOneTo, sizes)
 end
+Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
+Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
 function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
     print(io, Base.dims2string(length.(inds)), " ")
