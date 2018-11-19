@@ -260,8 +260,8 @@ function svectorscopy(x::Matrix{T}, ::Val{N}) where {T,N}
     size(x,1) == N || throw("sizes mismatch")
     isbitstype(T) || throw("use for bitstypes only")
     res = Vector{SVector{N,T}}(undef, size(x,2))
-    ccall(:memcpy, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Csize_t), pointer(res), pointer(x), sizeof(x))
-    res
+    GC.@preserve res x ccall(:memcpy, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Csize_t), pointer(res), pointer(x), sizeof(x))
+    return res
 end
 ```
 For example:
