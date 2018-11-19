@@ -49,6 +49,10 @@ end
         @test @inferred(v .- m) === @SMatrix [0 -1; 1 0]
         @test @inferred(m .^ v) === @SMatrix [1 2; 81 256]
         @test @inferred(v .^ m) === @SMatrix [1 1; 64 256]
+        # Issue #546
+        @test @inferred(m ./ (v .* v')) === @SMatrix [1.0 0.5; 0.75 0.25]
+        testinf(m, v) = m ./ (v .* v')
+        @test @inferred(testinf(m, v)) === @SMatrix [1.0 0.5; 0.75 0.25]
     end
 
     @testset "2x2 StaticMatrix with 1x2 StaticMatrix" begin

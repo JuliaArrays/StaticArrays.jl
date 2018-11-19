@@ -4,6 +4,8 @@
 
 import Base.Broadcast:
 BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
+import Base.Broadcast: _bcs1  # for SOneTo axis information
+using Base.Broadcast: _bcsm
 # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
 # A constructor that changes the style parameter N (array dimension) is also required
 struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
@@ -37,6 +39,10 @@ end
     _broadcast!(f, destsize, dest, argsizes, as...)
 end
 
+# Resolving priority between dynamic and static axes
+_bcs1(a::SOneTo, b::SOneTo) = _bcsm(b, a) ? b : (_bcsm(a, b) ? a : throw(DimensionMismatch("arrays could not be broadcast to a common size")))
+_bcs1(a::SOneTo, b::Base.OneTo) = _bcs1(Base.OneTo(a), b)
+_bcs1(a::Base.OneTo, b::SOneTo) = _bcs1(a, Base.OneTo(b))
 
 ###################################################
 ## Internal broadcast machinery for StaticArrays ##
