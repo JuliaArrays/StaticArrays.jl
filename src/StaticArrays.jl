@@ -32,6 +32,7 @@ export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
+export SVecMat
 
 export Size, Length
 
@@ -122,5 +123,6 @@ include("io.jl")
 
 include("FixedSizeArrays.jl")
 include("ImmutableArrays.jl")
+include("SVecMat.jl")
 
 end # module
