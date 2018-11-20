@@ -1,19 +1,22 @@
-import Base: +, -, *, /, \
+import Base: +, -, *, /, \, &, |, xor, ~
 
 # TODO: more operators, like AbstractArray
 
 # Unary ops
 @inline -(a::StaticArray) = map(-, a)
+@inline ~(a::StaticArray) = map(~, a)
 
 # Binary ops
 # Between arrays
-@inline +(a::StaticArray, b::StaticArray) = map(+, a, b)
-@inline +(a::AbstractArray, b::StaticArray) = map(+, a, b)
-@inline +(a::StaticArray, b::AbstractArray) = map(+, a, b)
-
-@inline -(a::StaticArray, b::StaticArray) = map(-, a, b)
-@inline -(a::AbstractArray, b::StaticArray) = map(-, a, b)
-@inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
+let
+    ops = [:+, :-, :&, :|, :xor]
+    type_combinations = [(StaticArray, StaticArray), (StaticArray, AbstractArray), (AbstractArray, StaticArray)]
+    for op in ops
+        for (_L, _R) in type_combinations
+            @eval @inline $op(a::$(_L), b::$(_R) )=map($op, a, b) 
+        end
+    end
+end
 
 # Scalar-array
 @inline +(a::Number, b::StaticArray) = broadcast(+, a, b)

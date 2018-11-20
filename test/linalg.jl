@@ -7,6 +7,9 @@ using StaticArrays, Test, LinearAlgebra
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
 
+        @test @inferred(-v1) === @SVector [-2,-4,-6,-8]
+        @test @inferred(~v1) === @SVector [-3,-5,-7,-9]
+
         @test @inferred(v1 + c) === @SVector [4,6,8,10]
         @test @inferred(v1 - c) === @SVector [0,2,4,6]
         @test @inferred(v1 * c) === @SVector [4,8,12,16]
@@ -15,6 +18,11 @@ using StaticArrays, Test, LinearAlgebra
 
         @test @inferred(v1 + v2) === @SVector [6, 7, 8, 9]
         @test @inferred(v1 - v2) === @SVector [-2, 1, 4, 7]
+        @test @inferred(v1 & v2) === @SVector [0,0,2,0]
+        @test @inferred(v1 | v2) === @SVector [6,7,6,9]
+        @test @inferred(v1 ⊻ v2) === @SVector [6,7,4,9]
+
+
 
         # TODO Decide what to do about this stuff:
         #v3 = [2,4,6,8]

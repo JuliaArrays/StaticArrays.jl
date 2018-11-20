@@ -6,7 +6,7 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
-             copy, read, read!, write
+             copy, read, read!, write, count_ones
 
 import Statistics: mean
 
@@ -24,6 +24,12 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
 @static if isdefined(LinearAlgebra, :eye)
     import LinearAlgebra: eye
 end
+#needed for SBitSet
+@static if isdefined(Base, :_blsr)
+    import Base: _blsr
+else
+    @inline _blsr(x::UInt64) = x & (x-1)
+end
 
 export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
@@ -32,6 +38,7 @@ export MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
+export SBitSet
 
 export Size, Length
 
@@ -96,6 +103,7 @@ include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+include("SBitSet.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")

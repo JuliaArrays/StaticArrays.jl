@@ -188,6 +188,7 @@ end
 
 @inline count(a::StaticArray{<:Any,Bool}; dims=:) = reduce(+, a; dims=dims)
 @inline count(f, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, +, a; dims=dims)
+@inline count_ones(a::StaticArray{<:Any, <:Union{Int128, Int16, Int32, Int64, Int8, UInt128, UInt16, UInt32, UInt64, UInt8}}; dims=:) = mapreduce(count_ones, +, a; dims=dims)
 
 @inline all(a::StaticArray{<:Any,Bool}; dims=:) = reduce(&, a; dims=dims, init=true)  # non-branching versions
 @inline all(f::Function, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, &, a; dims=dims, init=true)

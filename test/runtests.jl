@@ -8,6 +8,7 @@ Random.seed!(42)
 
 include("testutil.jl")
 include("SVector.jl")
+include("SBitSet.jl")
 include("MVector.jl")
 include("SMatrix.jl")
 include("MMatrix.jl")
