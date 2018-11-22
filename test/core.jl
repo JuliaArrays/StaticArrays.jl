@@ -189,5 +189,10 @@
         b = StaticArrays.SOneTo{2}()
         @test @inferred(promote(a, b)) === (a, Base.OneTo(2))
         @test @inferred(promote(b, a)) === (Base.OneTo(2), a)
+
+        @test StaticArrays.SOneTo{2}(1:2) === StaticArrays.SOneTo{2}()
+        @test convert(StaticArrays.SOneTo{2}, 1:2) === StaticArrays.SOneTo{2}()
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:3)
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:1)
     end
 end
