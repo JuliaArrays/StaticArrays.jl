@@ -8,12 +8,18 @@ struct SOneTo{n} <: AbstractUnitRange{Int}
 end
 
 SOneTo(n::Int) = SOneTo{n}()
+function SOneTo{n}(r::AbstractUnitRange) where n
+    ((first(r) == 1) & (last(r) == n)) && return SOneTo{n}()
+
+    errmsg(r) = throw(DimensionMismatch("$r is inconsistent with SOneTo{$n}")) # avoid GC frame
+    errmsg(r)
+end
 
 Base.axes(s::SOneTo) = (s,)
 Base.size(s::SOneTo) = (length(s),)
 Base.length(s::SOneTo{n}) where {n} = n
 
-function Base.getindex(s::SOneTo, i::Int) 
+function Base.getindex(s::SOneTo, i::Int)
     @boundscheck checkbounds(s, i)
     return i
 end
