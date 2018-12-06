@@ -116,6 +116,10 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(dot(v1, -v2)) === -40
         @test @inferred(dot(v1*im, v2*im)) === 40*im*conj(im)
         @test @inferred(StaticArrays.bilinear_vecdot(v1*im, v2*im)) === 40*im*im
+        # inner product, whether via `dot` or written out as `x'*y`, should be recursive like Base:
+        @test @inferred(dot(@SVector[[1,2],[3,4]], @SVector[[1,2],[3,4]])) === 30
+        @test @inferred(@SVector[[1,2],[3,4]]' * @SVector[[1,2],[3,4]]) === 30
+
     end
 
     @testset "transpose() and conj()" begin

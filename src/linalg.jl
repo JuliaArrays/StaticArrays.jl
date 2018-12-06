@@ -228,9 +228,9 @@ end
         return :(zero(promote_op(*, eltype(a), eltype(b))))
     end
 
-    expr = :(conj(a[1]) * b[1])
+    expr = :(adjoint(a[1]) * b[1])
     for j = 2:prod(S)
-        expr = :($expr + conj(a[$j]) * b[$j])
+        expr = :($expr + adjoint(a[$j]) * b[$j])
     end
 
     return quote
