@@ -3,7 +3,7 @@
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
 @inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
-@inline (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
+@propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
@@ -17,7 +17,7 @@
     throw(DimensionMismatch("expected input array of length $(length(SA)), got length $(length(a))"))
 end
 
-@inline function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
+@propagate_inbounds function convert(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
     @boundscheck if length(a) != length(SA)
         dimension_mismatch_fail(SA, a)
     end

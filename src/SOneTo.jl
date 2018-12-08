@@ -19,11 +19,11 @@ Base.axes(s::SOneTo) = (s,)
 Base.size(s::SOneTo) = (length(s),)
 Base.length(s::SOneTo{n}) where {n} = n
 
-function Base.getindex(s::SOneTo, i::Int)
+@propagate_inbounds function Base.getindex(s::SOneTo, i::Int)
     @boundscheck checkbounds(s, i)
     return i
 end
-function Base.getindex(s::SOneTo, s2::SOneTo)
+@propagate_inbounds function Base.getindex(s::SOneTo, s2::SOneTo)
     @boundscheck checkbounds(s, s2)
     return s2
 end

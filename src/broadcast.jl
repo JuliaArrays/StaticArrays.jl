@@ -182,7 +182,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @_propagate_inbounds_meta
         @boundscheck sizematch($(Size{newsize}()), dest) || throw(DimensionMismatch("array could not be broadcast to match destination"))
         @inbounds $(Expr(:block, exprs...))
         return dest
