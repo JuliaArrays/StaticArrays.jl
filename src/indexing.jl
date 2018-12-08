@@ -157,7 +157,7 @@ end
 end
 
 @generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
         if length(v) != L
@@ -168,7 +168,7 @@ end
 end
 
 @generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
         if Length(typeof(v)) != L
