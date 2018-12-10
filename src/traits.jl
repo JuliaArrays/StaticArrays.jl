@@ -86,6 +86,13 @@ end
 Size(a::T) where {T<:AbstractArray} = Size(T)
 Size(::Type{SA}) where {SA <: StaticArray} = missing_size_error(SA)
 Size(::Type{SA}) where {SA <: StaticArray{S}} where {S<:Tuple} = @isdefined(S) ? Size(S) : missing_size_error(SA)
+
+Size(::Type{Adjoint{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)[2], Size(A)[1])
+Size(::Type{Transpose{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)[2], Size(A)[1])
+Size(::Type{Symmetric{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
+Size(::Type{Hermitian{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
+Size(::Type{Diagonal{T, A}}) where {T, A <: AbstractVector{T}} = Size(Size(A)[1], Size(A)[1])
+
 @pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
 struct Length{L}

@@ -25,8 +25,8 @@ end
     return SA(unroll_tuple(a, Length(SA)))
 end
 
-length_val(a::T) where {T <: StaticArray} = length_val(Size(T))
-length_val(a::Type{T}) where {T<:StaticArray} = length_val(Size(T))
+length_val(a::T) where {T <: StaticallySizedArray} = length_val(Size(T))
+length_val(a::Type{T}) where {T<:StaticallySizedArray} = length_val(Size(T))
 
 @generated function unroll_tuple(a::AbstractArray, ::Length{L}) where {L}
     exprs = [:(a[$j]) for j = 1:L]

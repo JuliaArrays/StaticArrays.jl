@@ -78,6 +78,19 @@ const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
 const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
 const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
+# Being a member of StaticallySizedMatrix, StaticallySizedVecOrMat, or StaticallySizedArray implies that Size(A)
+# returns a static Size instance. The converse may not be true.
+const StaticallySizedMatrix{T} = Union{
+    StaticMatrix{<:Any, <:Any, T},
+    Transpose{T, <:StaticVecOrMat{T}},
+    Adjoint{T, <:StaticVecOrMat{T}},
+    Symmetric{T, <:StaticMatrix{T}},
+    Hermitian{T, <:StaticMatrix{T}},
+    Diagonal{T, <:StaticVector{<:Any, T}}
+}
+const StaticallySizedVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticallySizedMatrix{T}}
+const StaticallySizedArray{T} = Union{StaticallySizedVecOrMat{T}, StaticArray{<:Any, T}}
+
 const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
 const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
 
