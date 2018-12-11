@@ -88,11 +88,11 @@ end
     end
 end
 
-@inline vcat(a::StaticallySizedVecOrMat) = a
-@inline vcat(a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat) = _vcat(Size(a), Size(b), a, b)
-@inline vcat(a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat, c::StaticallySizedVecOrMat...) = vcat(vcat(a,b), vcat(c...))
+@inline vcat(a::StaticVecOrMatLike) = a
+@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _vcat(Size(a), Size(b), a, b)
+@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = vcat(vcat(a,b), vcat(c...))
 
-@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat) where {Sa, Sb}
+@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Size(Sa)[2] != Size(Sb)[2]
         throw(DimensionMismatch("Tried to vcat arrays of size $Sa and $Sb"))
     end
@@ -116,11 +116,11 @@ end
 end
 
 @inline hcat(a::StaticVector) = similar_type(a, Size(Size(a)[1],1))(a)
-@inline hcat(a::StaticallySizedMatrix) = a
-@inline hcat(a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat) = _hcat(Size(a), Size(b), a, b)
-@inline hcat(a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat, c::StaticallySizedVecOrMat...) = hcat(hcat(a,b), hcat(c...))
+@inline hcat(a::StaticMatrixLike) = a
+@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _hcat(Size(a), Size(b), a, b)
+@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = hcat(hcat(a,b), hcat(c...))
 
-@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticallySizedVecOrMat, b::StaticallySizedVecOrMat) where {Sa, Sb}
+@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Sa[1] != Sb[1]
         throw(DimensionMismatch("Tried to hcat arrays of size $Sa and $Sb"))
     end
