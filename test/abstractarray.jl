@@ -1,4 +1,5 @@
 using StaticArrays, Test, LinearAlgebra
+using StaticArrays: IdentityUnitRange
 
 @testset "AbstractArray interface" begin
     @testset "size and length" begin
@@ -68,9 +69,9 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
     end
 
-    @testset "similar and Base.Slice (issue #548)" begin
+    @testset "similar and Base.Slice/IdentityUnitRange (issues #548, #556)" begin
         v = @SVector [1]
-        b = similar(v, Int, Base.Slice(SOneTo(3)))
+        b = similar(v, Int, IdentityUnitRange(SOneTo(3)))
         @test b isa MVector{3,Int}
     end
 

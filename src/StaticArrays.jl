@@ -25,6 +25,13 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
     import LinearAlgebra: eye
 end
 
+# bring in of define IdentityUnitRange
+@static if !isdefined(Base, :IdentityUnitRange)
+    const IdentityUnitRange = Base.Slice
+else
+    using Base: IdentityUnitRange
+end
+
 export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix

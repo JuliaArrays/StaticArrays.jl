@@ -126,9 +126,10 @@ similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray
 similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 
-const SOneToLike{n} = Union{SOneTo{n}, Base.Slice{SOneTo{n}}}
+const SOneToLike{n} = Union{Integer, SOneTo{n}, IdentityUnitRange{SOneTo{n}}}
+deslice(ax::Integer) = Int(ax)
 deslice(ax::SOneTo) = ax
-deslice(ax::Base.Slice) = ax.indices
+deslice(ax::IdentityUnitRange) = ax.indices
 similar(::A,::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
 similar(::Type{A},::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
 
