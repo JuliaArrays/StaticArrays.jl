@@ -92,4 +92,10 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
         @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
     end
+
+    @testset "reverse" begin
+        @test @inferred(reverse(SVector(1, 2, 3))) ≡ SVector(3, 2, 1)
+        m = MVector(1, 2, 3)
+        @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
+    end
 end

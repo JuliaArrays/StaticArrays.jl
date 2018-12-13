@@ -6,7 +6,7 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
-             copy, read, read!, write
+             copy, read, read!, write, reverse
 
 import Statistics: mean
 

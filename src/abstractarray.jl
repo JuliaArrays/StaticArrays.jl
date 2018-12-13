@@ -161,6 +161,8 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
 
+@inline reverse(v::StaticVector) = typeof(v)(reverse(Tuple(v)))
+
 # TODO permutedims?
 
 # full deprecated in Base
