@@ -1,13 +1,13 @@
-length(a::SA) where {SA <: StaticArray} = prod(Size(SA))
-length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
+length(a::SA) where {SA <: StaticArrayLike} = length(SA)
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
 
-@pure size(::Type{<:StaticArray{S}}) where S = tuple(S.parameters...)
-@inline function size(t::Type{<:StaticArray}, d::Int)
+@pure size(::Type{SA}) where {SA <: StaticArrayLike} = get(Size(SA))
+@inline function size(t::Type{<:StaticArrayLike}, d::Int)
     S = size(t)
     d > length(S) ? 1 : S[d]
 end
-@inline size(a::StaticArray) = size(typeof(a))
-@inline size(a::StaticArray, d::Int) = size(typeof(a), d)
+@inline size(a::StaticArrayLike) = size(typeof(a))
+@inline size(a::StaticArrayLike, d::Int) = size(typeof(a), d)
 
 Base.axes(s::StaticArray) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}

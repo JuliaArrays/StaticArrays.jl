@@ -194,6 +194,23 @@ using StaticArrays, Test, LinearAlgebra
                 @test allocs == 0
             end
         end
+
+        # issue #561
+        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
+            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
+        end
+
+        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
+            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
+        end
+
+        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
+            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
+        end
+
+        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
+            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
+        end
     end
 
     @testset "normalization" begin
