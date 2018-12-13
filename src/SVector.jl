@@ -15,15 +15,15 @@ compiler (the element type may optionally also be specified).
 """
 const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 
-@inline (::Type{SVector})(x::NTuple{S,Any}) where {S} = SVector{S}(x)
-@inline (::Type{SVector{S}})(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
-@inline (::Type{SVector{S}})(x::T) where {S, T <: Tuple} = SVector{S,promote_tuple_eltype(T)}(x)
+@inline SVector(x::NTuple{S,Any}) where {S} = SVector{S}(x)
+@inline SVector{S}(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
+@inline SVector{S}(x::T) where {S, T <: Tuple} = SVector{S,promote_tuple_eltype(T)}(x)
 
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))
 
 # Simplified show for the type
-show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}")
+# show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}") # TODO reinstate
 
 # Some more advanced constructor-like functions
 @inline zeros(::Type{SVector{N}}) where {N} = zeros(SVector{N,Float64})
@@ -58,7 +58,7 @@ macro SVector(ex)
             error("Use a one-dimensional comprehension for @SVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(__module__, ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
@@ -77,7 +77,7 @@ macro SVector(ex)
             error("Use a one-dimensional comprehension for @SVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(__module__, ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]

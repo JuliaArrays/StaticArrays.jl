@@ -63,7 +63,7 @@ the dimensions of a static array. An array `sa::SA` of size `(dims...)` is
 associated with `Size{(dims...)}()`. The following are equivalent (`@pure`)
 constructors:
 ```julia
-Size{(dims...)}()
+Size{(dims...,)}()
 Size(dims...)
 Size(sa::StaticArray)
 Size(SA) # SA <: StaticArray
@@ -105,10 +105,10 @@ behaving just like `similar`, except that it returns a type. Relevant methods
 are:
 
 ```julia
-similar_type{A <: StaticArray}(::Type{A}) # defaults to A
-similar_type{A <: StaticArray, ElType}(::Type{A}, ::Type{ElType}) # Change element type
-similar_type{A <: AbstractArray}(::Type{A}, size::Size) # Change size
-similar_type{A <: AbstractArray, ElType}(::Type{A}, ::Type{ElType}, size::Size) # Change both
+similar_type(::Type{A}) where {A <: StaticArray} # defaults to A
+similar_type(::Type{A}, ::Type{ElType}) where {A <: StaticArray, ElType} # Change element type
+similar_type(::Type{A}, size::Size) where {A <: AbstractArray} # Change size
+similar_type(::Type{A}, ::Type{ElType}, size::Size) where {A <: AbstractArray, ElType} # Change both
 ```
 
 These setting will affect everything, from indexing, to matrix multiplication

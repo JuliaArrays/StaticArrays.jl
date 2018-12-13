@@ -9,6 +9,7 @@ setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), valu
 # Note: all indexing behavior defaults to dense, linear indexing
 
 @propagate_inbounds function getindex(a::StaticArray, inds::Int...)
+    @boundscheck checkbounds(a, inds...) 
     _getindex_scalar(Size(a), a, inds...)
 end
 
@@ -30,6 +31,7 @@ end
 end
 
 @propagate_inbounds function setindex!(a::StaticArray, value, inds::Int...)
+    @boundscheck checkbounds(a, inds...) 
     _setindex!_scalar(Size(a), a, value, inds...)
 end
 
@@ -155,7 +157,7 @@ end
 end
 
 @generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
         if length(v) != L
@@ -166,7 +168,7 @@ end
 end
 
 @generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[$i] = v[$i]) for i = 1:L]
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
         if Length(typeof(v)) != L
@@ -224,12 +226,12 @@ end
 @generated function _getindex(a::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)
     newsize = out_index_size(ind_sizes.parameters...)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(linearsizes))
-    more = linearsizes[1] != 0
+    more = !isempty(exprs)
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(linearsizes)]
         exprs[current_ind...] = :(getindex(a, $(exprs_tmp...)))
@@ -326,12 +328,12 @@ end
 # setindex! from a scalar
 @generated function _setindex!(a::AbstractArray, value, ind_sizes::Tuple{Vararg{Size}}, inds)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters
     current_ind = ones(Int,length(ind_types))
-    more = linearsizes[1] != 0
+    more = !isempty(exprs)
     while more
         exprs_tmp = [_ind(i, current_ind[i], ind_types[i]) for i = 1:length(ind_types)]
         exprs[current_ind...] = :(setindex!(a, value, $(exprs_tmp...)))
@@ -363,7 +365,7 @@ end
 # setindex! from an array
 @generated function _setindex!(a::AbstractArray, v::AbstractArray, ind_sizes::Tuple{Vararg{Size}}, inds)
     linearsizes = linear_index_size(ind_sizes.parameters...)
-    exprs = Array{Expr}(linearsizes)
+    exprs = Array{Expr}(undef, linearsizes)
 
     # Iterate over input indices
     ind_types = inds.parameters

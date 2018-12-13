@@ -1,5 +1,5 @@
 
-@inline function eigvals(a::Base.LinAlg.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) where {T <: Real, SA <: StaticArray}
+@inline function eigvals(a::LinearAlgebra.RealHermSymComplexHerm{T,SA},; permute::Bool=true, scale::Bool=true) where {T <: Real, SA <: StaticArray}
     _eigvals(Size(SA), a, permute, scale)
 end
 
@@ -14,9 +14,9 @@ end
 end
 
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
-@inline _eigvals(::Size{(1, 1)}, a::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
+@inline _eigvals(::Size{(1, 1)}, a::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
-@inline function _eigvals(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
 
     if A.uplo == 'U'
@@ -36,7 +36,7 @@ end
     end
 end
 
-@inline function _eigvals(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
@@ -100,25 +100,16 @@ end
 
     eig3 = q + 2 * p * cos(phi)
     eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
-    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+    eig2 = 3 * q - eig1 - eig3     # since tr(A) = eig1 + eig2 + eig3
 
     return SVector(eig1, eig2, eig3)
 end
 
-@inline function _eigvals(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eigvals(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     vals = eigvals(Hermitian(Array(parent(A))))
     return SVector{s[1], T}(vals)
 end
 
-
-
-@inline function eig(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
-    _eig(Size(A), A, permute, scale)
-end
-
-@inline function eig(A::Base.LinAlg.HermOrSym{<:Any, SM}; permute::Bool=true, scale::Bool=true) where {SM <: StaticMatrix}
-    _eig(Size(SM), A, permute, scale)
-end
 
 @inline function _eig(s::Size, A::StaticMatrix, permute, scale)
     # Only cover the hermitian branch, for now ast least
@@ -130,65 +121,85 @@ end
     end
 end
 
-@inline function _eig(s::Size, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    eigen = eigfact(Hermitian(Array(parent(A))))
-    return (SVector{s[1], T}(eigen.values), SMatrix{s[1], s[2], T}(eigen.vectors)) # Return a SizedArray
+@inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+    E = eigen(Hermitian(Array(parent(A))))
+    return (SVector{s[1], T}(E.values), SMatrix{s[1], s[2], eltype(A)}(E.vectors))
 end
 
 
-@inline function _eig(::Size{(1,1)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    @inbounds return (SVector{1,T}((A[1],)), eye(SMatrix{1,1,T}))
+@inline function _eig(::Size{(1,1)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+    @inbounds return (SVector{1,T}((real(A[1]),)), SMatrix{1,1,eltype(A)}(I))
 end
 
-# TODO adapt the below to be complex-safe?
-@inline function _eig(::Size{(2,2)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+@inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
+    TA = eltype(A)
 
-    if A.uplo == 'U'
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[3]'*a[3]) # Should be real
+    @inbounds if A.uplo == 'U'
+        if a[3] == 0 # A is diagonal
+            A11 = a[1]
+            A22 = a[4]
+            if A11 < A22
+                vals = SVector(A11, A22)
+                vecs = @SMatrix [convert(TA, 1) convert(TA, 0);
+                                 convert(TA, 0) convert(TA, 1)]
+            else # A22 <= A11
+                vals = SVector(A22, A11)
+                vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
+                                 convert(TA, 1) convert(TA, 0)]
+            end
+        else # A is not diagonal
+            t_half = real(a[1] + a[4]) / 2
+            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
 
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        vals = SVector(t_half - tmp, t_half + tmp)
+            tmp2 = t_half * t_half - d
+            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            vals = SVector(t_half - tmp, t_half + tmp)
 
-        @inbounds if a[3] == 0
-            vecs = eye(SMatrix{2,2,T})
-        else
-            @inbounds v11 = vals[1]-a[4]
-            @inbounds n1 = sqrt(v11'*v11 + a[3]'*a[3])
+            v11 = vals[1] - a[4]
+            n1 = sqrt(v11' * v11 + a[3]' * a[3])
             v11 = v11 / n1
-            @inbounds v12 = a[3]' / n1
+            v12 = a[3]' / n1
 
-            @inbounds v21 = vals[2]-a[4]
-            @inbounds n2 = sqrt(v21'*v21 + a[3]'*a[3])
+            v21 = vals[2] - a[4]
+            n2 = sqrt(v21' * v21 + a[3]' * a[3])
             v21 = v21 / n2
-            @inbounds v22 = a[3]' / n2
+            v22 = a[3]' / n2
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
         end
-        return (vals,vecs)
-    else
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[2]'*a[2]) # Should be real
+        return (vals, vecs)
+    else # A.uplo == 'L'
+        if a[2] == 0 # A is diagonal
+            A11 = a[1]
+            A22 = a[4]
+            if A11 < A22
+                vals = SVector(A11, A22)
+                vecs = @SMatrix [convert(TA, 1) convert(TA, 0);
+                                 convert(TA, 0) convert(TA, 1)]
+            else # A22 <= A11
+                vals = SVector(A22, A11)
+                vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
+                                 convert(TA, 1) convert(TA, 0)]
+            end
+        else # A is not diagonal
+            t_half = real(a[1] + a[4]) / 2
+            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
 
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        vals = SVector(t_half - tmp, t_half + tmp)
+            tmp2 = t_half * t_half - d
+            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            vals = SVector(t_half - tmp, t_half + tmp)
 
-        @inbounds if a[2] == 0
-            vecs = eye(SMatrix{2,2,T})
-        else
-            @inbounds v11 = vals[1]-a[4]
-            @inbounds n1 = sqrt(v11'*v11 + a[2]'*a[2])
+            v11 = vals[1] - a[4]
+            n1 = sqrt(v11' * v11 + a[2]' * a[2])
             v11 = v11 / n1
-            @inbounds v12 = a[2] / n1
+            v12 = a[2] / n1
 
-            @inbounds v21 = vals[2]-a[4]
-            @inbounds n2 = sqrt(v21'*v21 + a[2]'*a[2])
+            v21 = vals[2] - a[4]
+            n2 = sqrt(v21' * v21 + a[2]' * a[2])
             v21 = v21 / n2
-            @inbounds v22 = a[2] / n2
+            v22 = a[2] / n2
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
@@ -200,7 +211,8 @@ end
 # A small part of the code in the following method was inspired by works of David
 # Eberly, Geometric Tools LLC, in code released under the Boost Software
 # License (included at the end of this file).
-@inline function _eig(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
+# TODO extend the method to complex hermitian
+@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
     S = arithmetic_closure(T)
     Sreal = real(S)
 
@@ -268,7 +280,7 @@ end
 
     eig3 = q + 2 * p * cos(phi)
     eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
-    eig2 = 3 * q - eig1 - eig3     # since trace(A) = eig1 + eig2 + eig3
+    eig2 = 3 * q - eig1 - eig3     # since tr(A) = eig1 + eig2 + eig3
 
     if r > 0 # Helps with conditioning the eigenvector calculation
         (eig1, eig3) = (eig3, eig1)
@@ -378,18 +390,24 @@ end
     return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
-@inline function eigfact(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
+@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
 
-@inline function eigfact(A::Base.LinAlg.HermOrSym{T, SM}; permute::Bool=true, scale::Bool=true) where SM <: StaticMatrix where T<:Real
+# to avoid method ambiguity with LinearAlgebra
+@inline eigen(A::Hermitian{<:Real,<:StaticMatrix}; kwargs...)    = _eigen(A; kwargs...)
+@inline eigen(A::Hermitian{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
+@inline eigen(A::Symmetric{<:Real,<:StaticMatrix}; kwargs...)    = _eigen(A; kwargs...)
+@inline eigen(A::Symmetric{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
+
+@inline function _eigen(A::LinearAlgebra.HermOrSym; permute::Bool=true, scale::Bool=true)
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
 
 # NOTE: The following Boost Software License applies to parts of the method:
-#     _eig{T<:Real}(::Size{(3,3)}, A::Base.LinAlg.RealHermSymComplexHerm{T}, permute, scale)
+#     _eig{T<:Real}(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale)
 
 #=
 Boost Software License - Version 1.0 - August 17th, 2003

@@ -1,3 +1,5 @@
+using StaticArrays, Test
+
 @testset "Indexing" begin
     @testset "Linear getindex() on SVector" begin
         sv = SVector{4}(4,5,6,7)
@@ -24,18 +26,24 @@
         vec = @SVector [4,5,6,7]
 
         # SVector
-        mv = MVector{4,Int}()
-        @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+        mv = MVector{4,Int}(undef)
+        @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
 
-        mv = MVector{4,Int}()
-        @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
-        @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::SVector{4,Int} == SVector((2,2,2,2)))
+        mv = MVector{4,Int}(undef)
+        @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
+        @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((2,2,2,2)))
+
+        mv = MVector(0,0,0)
+        @test (mv[SVector(1,3)] = [4, 5]; (@inferred mv == MVector(4,0,5)))
+
+        mv = MVector(0,0,0)
+        @test (mv[SVector(1,3)] = SVector(4, 5); (@inferred mv == MVector(4,0,5)))
 
         # Colon
-        mv = MVector{4,Int}()
-        @test (mv[:] = vec; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
-        @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((4,5,6,7)))
-        @test (mv[:] = 2; (@inferred getindex(mv, :))::SVector{4,Int} == SVector((2,2,2,2)))
+        mv = MVector{4,Int}(undef)
+        @test (mv[:] = vec; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
+        @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
+        @test (mv[:] = 2; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((2,2,2,2)))
 
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), SVector(1,2,3,4))
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), :)
@@ -47,12 +55,12 @@
         vec = @SVector [4,5,6,7]
 
         # SVector
-        mm = MMatrix{2,2,Int}()
-        @test (mm[SVector(1,2,3,4)] = vec; (@inferred getindex(mm, SVector(4,3,2,1)))::SVector{4,Int} == SVector((7,6,5,4)))
+        mm = MMatrix{2,2,Int}(undef)
+        @test (mm[SVector(1,2,3,4)] = vec; (@inferred getindex(mm, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
 
         # Colon
-        mm = MMatrix{2,2,Int}()
-        @test (mm[:] = vec; (@inferred getindex(mm, :))::SVector{4,Int} == SVector((4,5,6,7)))
+        mm = MMatrix{2,2,Int}(undef)
+        @test (mm[:] = vec; (@inferred getindex(mm, :))::MVector{4,Int} == MVector((4,5,6,7)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
@@ -91,16 +99,16 @@
         sm = @MMatrix [1 3; 2 4]
 
         # Tuple, scalar
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),SVector(2,1)] = sm[SVector(2,1),SVector(2,1)]; (@inferred getindex(mm, SVector(2,1), SVector(2,1)))::SMatrix == @SMatrix [4 2; 3 1])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,SVector(1,2)] = sm[1,SVector(1,2)]; (@inferred getindex(mm, 1, SVector(1,2)))::SVector == @SVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(1,2),1] = sm[SVector(1,2),1]; (@inferred getindex(mm, SVector(1,2), 1))::SVector == @SVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(2,1),SVector(2,1)] = sm[SVector(2,1),SVector(2,1)]; (@inferred getindex(mm, SVector(2,1), SVector(2,1)))::MMatrix == @MMatrix [4 2; 3 1])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[1,SVector(1,2)] = sm[1,SVector(1,2)]; (@inferred getindex(mm, 1, SVector(1,2)))::MVector == @MVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(1,2),1] = sm[SVector(1,2),1]; (@inferred getindex(mm, SVector(1,2), 1))::MVector == @MVector [1,2])
 
         # Colon
-        @test (mm = MMatrix{2,2,Int}(); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::SMatrix == @MMatrix [1 3; 2 4])
-        @test (mm = MMatrix{2,2,Int}(); mm[SVector(2,1),:] = sm[SVector(2,1),:]; (@inferred getindex(mm, SVector(2,1), :))::SMatrix == @SMatrix [2 4; 1 3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::SMatrix == @SMatrix [3 1; 4 2])
-        @test (mm = MMatrix{2,2,Int}(); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::SVector == @SVector [1,3])
-        @test (mm = MMatrix{2,2,Int}(); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::SVector == @SVector [1,2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,:] = sm[:,:]; (@inferred getindex(mm, :, :))::MMatrix == @MMatrix [1 3; 2 4])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SVector(2,1),:] = sm[SVector(2,1),:]; (@inferred getindex(mm, SVector(2,1), :))::MMatrix == @MMatrix [2 4; 1 3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::MMatrix == @MMatrix [3 1; 4 2])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::MVector == @MVector [1,3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::MVector == @MVector [1,2])
     end
 
     @testset "3D scalar indexing" begin
@@ -110,7 +118,7 @@
         @test sa[1,2,1] === 9
         @test sa[2,1,1] === 12
 
-        ma = MArray{Tuple{2,2,2}, Int}()
+        ma = MArray{Tuple{2,2,2}, Int}(undef)
         @test (ma[1,1,2] = 8; ma[1,1,2] === 8)
         @test (ma[1,2,1] = 9; ma[1,2,1] === 9)
         @test (ma[2,1,1] = 12; ma[2,1,1] === 12)
@@ -124,7 +132,7 @@
         @test sa[1,2,1,1] === 36
         @test sa[2,1,1,1] === 48
 
-        ma = MArray{Tuple{2,2,2,2}, Int}()
+        ma = MArray{Tuple{2,2,2,2}, Int}(undef)
         @test (ma[1,1,1,2] = 30; ma[1,1,1,2] === 30)
         @test (ma[1,1,2,1] = 32; ma[1,1,2,1] === 32)
         @test (ma[1,2,1,1] = 36; ma[1,2,1,1] === 36)
@@ -153,9 +161,16 @@
         @test b == a
     end
 
-    @testset "inferabilty of index_sizes helper" begin
-        # see JuliaLang/julia#21244
-        # it's not about inferring the correct type, but about inference throwing an error
-        @test code_warntype(DevNull, StaticArrays.index_sizes, Tuple{Vararg{Any}}) == nothing
+    @testset "Indexing empty arrays" begin
+        @test size(SVector{0,Float64}()[:]) == (0,)
+        @test size(SMatrix{0,0,Float64}()[:,:]) == (0,0)
+        @test size(SMatrix{5,0,Float64}()[1,:]) == (0,)
+        @test size(SMatrix{5,0,Float64}()[:,:]) == (5,0)
+        @test size(SMatrix{0,5,Float64}()[:,1]) == (0,)
+        @test size(SMatrix{0,5,Float64}()[:,:]) == (0,5)
+
+        @test (zeros(0)[SVector{0,Int}()] = 0) == 0
+        @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
+        @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
     end
 end

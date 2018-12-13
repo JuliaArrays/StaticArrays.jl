@@ -1,3 +1,16 @@
+using StaticArrays, Test
+struct ScalarTest end
+Base.:(+)(x::Number, y::ScalarTest) = x
+Broadcast.broadcastable(x::ScalarTest) = Ref(x)
+
+@testset "Scalar Broadcast" begin
+    for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})
+        x = rand(t)
+        @test x == @inferred(x .+ ScalarTest())
+        @test x .+ 1 == @inferred(x .+ Ref(1))
+    end
+end
+
 @testset "Broadcast sizes" begin
     @test @inferred(StaticArrays.broadcast_sizes(1, 1, 1)) === (Size(), Size(), Size())
     for t in (SVector{2}, MVector{2}, SMatrix{2, 2}, MMatrix{2, 2})
@@ -36,6 +49,10 @@ end
         @test @inferred(v .- m) === @SMatrix [0 -1; 1 0]
         @test @inferred(m .^ v) === @SMatrix [1 2; 81 256]
         @test @inferred(v .^ m) === @SMatrix [1 1; 64 256]
+        # Issue #546
+        @test @inferred(m ./ (v .* v')) === @SMatrix [1.0 0.5; 0.75 0.25]
+        testinf(m, v) = m ./ (v .* v')
+        @test @inferred(testinf(m, v)) === @SMatrix [1.0 0.5; 0.75 0.25]
     end
 
     @testset "2x2 StaticMatrix with 1x2 StaticMatrix" begin
@@ -86,10 +103,14 @@ end
         @test @inferred(v1 .^ v2) === SVector(1, 16)
         @test @inferred(v2 .^ v1) === SVector(1, 16)
         # Issue #199: broadcast with empty SArray
-        @test @inferred(SVector(1) .+ SVector()) === SVector()
-        @test @inferred(SVector() .+ SVector(1)) === SVector()
-        # Issue #200: broadcast with RowVector
+        @test @inferred(SVector(1) .+ SVector{0,Int}()) === SVector{0,Union{}}()
+        @test @inferred(SVector{0,Int}() .+ SVector(1)) === SVector{0,Union{}}()
+        # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
+        @test @inferred(v1 .+ transpose(v2)) === @SMatrix [2 5; 3 6]
+        # Issue 382: infinite recursion in Base.Broadcast.broadcast_indices with Adjoint
+        @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
+        @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
     end
 
     @testset "StaticVector with Scalar" begin
@@ -118,9 +139,9 @@ end
 
     @testset "Mutating broadcast!" begin
         # No setindex! error
-        A = eye(SMatrix{2, 2}); @test_throws ErrorException broadcast!(+, A, A, SVector(1, 4))
-        A = eye(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, SVector(1, 4))) == @MMatrix [2 1; 4 5]
-        A = eye(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, @SMatrix([1  4]))) == @MMatrix [2 4; 1 5]
+        A = one(SMatrix{2, 2}); @test_throws ErrorException broadcast!(+, A, A, SVector(1, 4))
+        A = one(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, SVector(1, 4))) == @MMatrix [2 1; 4 5]
+        A = one(MMatrix{2, 2}); @test @inferred(broadcast!(+, A, A, @SMatrix([1  4]))) == @MMatrix [2 4; 1 5]
         A = @MMatrix([1 0]); @test_throws DimensionMismatch broadcast!(+, A, A, SVector(1, 4))
         A = @MMatrix([1 0]); @test @inferred(broadcast!(+, A, A, @SMatrix([1 4]))) == @MMatrix [2 4]
         A = @MMatrix([1 0]); @test @inferred(broadcast!(+, A, A, 2)) == @MMatrix [3 2]
@@ -134,22 +155,22 @@ end
     @testset "eltype after broadcast" begin
         # test cases issue #198
         let a = SVector{4, Number}(2, 2.0, 4//2, 2+0im)
-            @test_broken eltype(a + 2) == Number
-            @test_broken eltype(a - 2) == Number
-            @test_broken eltype(a * 2) == Number
-            @test_broken eltype(a / 2) == Number
+            @test eltype(a .+ 2) == Number
+            @test eltype(a .- 2) == Number
+            @test eltype(a * 2) == Number
+            @test eltype(a / 2) == Number
         end
         let a = SVector{3, Real}(2, 2.0, 4//2)
-            @test_broken eltype(a + 2) == Real
-            @test_broken eltype(a - 2) == Real
-            @test_broken eltype(a * 2) == Real
-            @test_broken eltype(a / 2) == Real
+            @test eltype(a .+ 2) == Real
+            @test eltype(a .- 2) == Real
+            @test eltype(a * 2) == Real
+            @test eltype(a / 2) == Real
         end
         let a = SVector{3, Real}(2, 2.0, 4//2)
-            @test_broken eltype(a + 2.0) == Float64
-            @test_broken eltype(a - 2.0) == Float64
-            @test_broken eltype(a * 2.0) == Float64
-            @test_broken eltype(a / 2.0) == Float64
+            @test eltype(a .+ 2.0) == Float64
+            @test eltype(a .- 2.0) == Float64
+            @test eltype(a * 2.0) == Float64
+            @test eltype(a / 2.0) == Float64
         end
         let a = broadcast(Float32, SVector(3, 4, 5))
             @test eltype(a) == Float32
@@ -159,9 +180,30 @@ end
     @testset "broadcast general scalars" begin
         # Issue #239 - broadcast with non-numeric element types
         @eval @enum Axis aX aY aZ
-        @testinf (SVector(aX,aY,aZ) .== aX) == SVector(true,false,false)
+        @testinf (SVector(aX,aY,aZ) .== Ref(aX)) == SVector(true,false,false)
         mv = MVector(aX,aY,aZ)
-        @testinf broadcast!(identity, mv, aX) == MVector(aX,aX,aX)
+        @testinf broadcast!(identity, mv, Ref(aX)) == MVector(aX,aX,aX)
         @test mv == SVector(aX,aX,aX)
+    end
+
+    @testset "broadcast! with Array destination" begin
+        # Issue #385
+        a = zeros(3, 3)
+        b = @SMatrix [1 2 3; 4 5 6; 7 8 9]
+        a .= b
+        @test a == b
+
+        c = SVector(1, 2, 3)
+        a .= c
+        @test a == [1 1 1; 2 2 2; 3 3 3]
+
+        d = SVector(1, 2, 3, 4)
+        @test_throws DimensionMismatch a .= d
+    end
+
+    @testset "issue #493" begin
+        X = rand(SVector{3,SVector{2,Float64}})
+        foo493(X) = normalize.(X)
+        @test foo493(X) isa Core.Compiler.return_type(foo493, Tuple{typeof(X)})
     end
 end

@@ -8,8 +8,9 @@
     end
 end
 
-@inline unshift(vec::StaticVector, x) = _unshift(Size(vec), vec, x)
-@generated function _unshift(::Size{s}, vec::StaticVector, x) where {s}
+Base.@deprecate unshift pushfirst
+@inline pushfirst(vec::StaticVector, x) = _pushfirst(Size(vec), vec, x)
+@generated function _pushfirst(::Size{s}, vec::StaticVector, x) where {s}
     newlen = s[1] + 1
     exprs = vcat(:x, [:(vec[$i]) for i = 1:s[1]])
     return quote
@@ -43,8 +44,9 @@ end
     end
 end
 
-@inline shift(vec::StaticVector) = _shift(Size(vec), vec)
-@generated function _shift(::Size{s}, vec::StaticVector) where {s}
+@deprecate shift popfirst
+@inline popfirst(vec::StaticVector) = _popfirst(Size(vec), vec)
+@generated function _popfirst(::Size{s}, vec::StaticVector) where {s}
     newlen = s[1] - 1
     exprs = [:(vec[$i]) for i = 2:s[1]]
     return quote
@@ -72,12 +74,13 @@ end
 
 # Immutable version of setindex!(). Seems similar in nature to the above, but
 # could also be justified to live in src/indexing.jl
-@inline setindex(a::StaticArray, x, index::Int) = _setindex(Size(a), a, convert(eltype(typeof(a)), x), index)
-@generated function _setindex(::Size{s}, a::StaticArray{<:Any,T}, x::T, index::Int) where {s, T}
-    exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:s[1]]
+import Base.setindex
+@propagate_inbounds setindex(a::StaticArray, x, index::Int) = _setindex(Length(a), a, convert(eltype(typeof(a)), x), index)
+@generated function _setindex(::Length{L}, a::StaticArray{<:Any,T}, x::T, index::Int) where {L, T}
+    exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:L]
     return quote
-        @_inline_meta
-        @boundscheck if (index < 1 || index > $(s[1]))
+        @_propagate_inbounds_meta
+        @boundscheck if (index < 1 || index > $(L))
             throw(BoundsError(a, index))
         end
         @inbounds return typeof(a)(tuple($(exprs...)))
@@ -85,4 +88,4 @@ end
 end
 
 # TODO proper multidimension boundscheck
-@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, sub2ind(size(typeof(a)), inds...))
+@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])

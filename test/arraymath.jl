@@ -1,4 +1,6 @@
+using StaticArrays, Test
 import StaticArrays.arithmetic_closure
+
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]
@@ -19,6 +21,15 @@ import StaticArrays.arithmetic_closure
         @test @inferred(ones(MVector{3}))::MVector == @MVector [1.0, 1.0, 1.0]
         @test @inferred(ones(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 1.0; 1.0 1.0]
         @test @inferred(ones(MArray{Tuple{1,1,1}}))::MArray == MArray{Tuple{1,1,1}}((1.0,))
+
+        # https://github.com/JuliaArrays/StaticArrays.jl/issues/428
+        bigzeros = zeros(SVector{2, BigInt})
+        @test bigzeros == @SVector [big(0), big(0)]
+        @test bigzeros[1] !== bigzeros[2]
+
+        bigones = ones(SVector{2, BigInt})
+        @test bigones == @SVector [big(1), big(1)]
+        @test bigones[1] !== bigones[2]
     end
 
     @testset "zero()" begin
@@ -32,7 +43,7 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "fill!()" begin
-        m = MMatrix{4,16,Float64}()
+        m = MMatrix{4,16,Float64}(undef)
         fill!(m, 3)
         @test all(m .== 3.)
     end
@@ -60,13 +71,13 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
-                                                   subtypes(Signed);
-                                                   subtypes(AbstractFloat);
-                                                   Bool;
-                                                   Complex{Int};
-                                                   Complex128;
-                                                   BigInt
-                                                   ]
+                                             subtypes(Signed);
+                                             subtypes(AbstractFloat);
+                                             Bool;
+                                             Complex{Int};
+                                             Complex{Float64};
+                                             BigInt
+                                             ]
         T = @inferred arithmetic_closure(T0)
         @test arithmetic_closure(T) == T
 
@@ -75,5 +86,9 @@ import StaticArrays.arithmetic_closure
         @test (t-t) isa T
         @test (t*t) isa T
         @test (t/t) isa T
+
+        if isbitstype(T0)
+            @test @allocated(arithmetic_closure(T0)) == 0
+        end
     end
 end

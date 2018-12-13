@@ -1,5 +1,5 @@
 using StaticArrays
-using BenchmarkTools, Compat
+using BenchmarkTools
 
 a = m = 0
 for K = 1:22

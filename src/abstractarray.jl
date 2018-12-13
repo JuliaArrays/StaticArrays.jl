@@ -1,17 +1,29 @@
-length(a::SA) where {SA <: StaticArray} = prod(Size(SA))
-length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
+length(a::SA) where {SA <: StaticArrayLike} = length(SA)
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
 
-@pure size(::Type{<:StaticArray{S}}) where S = tuple(S.parameters...)
-@inline function size(t::Type{<:StaticArray}, d::Int)
+@pure size(::Type{SA}) where {SA <: StaticArrayLike} = get(Size(SA))
+@inline function size(t::Type{<:StaticArrayLike}, d::Int)
     S = size(t)
     d > length(S) ? 1 : S[d]
 end
-@inline size(a::StaticArray) = size(typeof(a))
-@inline size(a::StaticArray, d::Int) = size(typeof(a), d)
+@inline size(a::StaticArrayLike) = size(typeof(a))
+@inline size(a::StaticArrayLike, d::Int) = size(typeof(a), d)
+
+Base.axes(s::StaticArray) = _axes(Size(s))
+@pure function _axes(::Size{sizes}) where {sizes}
+    map(SOneTo, sizes)
+end
+Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
+Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
+
+function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
+    print(io, Base.dims2string(length.(inds)), " ")
+    Base.showarg(io, a, true)
+end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
 @inline function Base.isassigned(a::StaticArray, i::Int...)
-    ii = sub2ind(size(a), i...)
+    ii = LinearIndices(size(a))[i...]
     1 <= ii <= length(a) ? true : false
 end
 
@@ -35,7 +47,7 @@ be *constructed* with its data.
 Note that the (optional) size *must* be specified as a static `Size` object (so the compiler
 can infer the result statically).
 
-New types should define the signature `similar_type{A<:MyType,T,S}(::Type{A},::Type{T},::Size{S})`
+New types should define the signature `similar_type(::Type{A},::Type{T},::Size{S}) where {A<:MyType,T,S}`
 if they wish to overload the default behavior.
 """
 function similar_type end
@@ -51,14 +63,23 @@ similar_type(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,e
 
 similar_type(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar_type(A,T,s)
 
+# We should be able to deal with SOneTo axes
+similar_type(s::SOneTo) = similar_type(typeof(s))
+similar_type(::Type{SOneTo{n}}) where {n} = similar_type(SOneTo{n}, Int, Size(n))
+
+similar_type(::A, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar_type(A, eltype(A), shape)
+similar_type(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar_type(A, eltype(A), shape)
+
+similar_type(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
+similar_type(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
+
+
 # Default types
 # Generally, use SArray
 similar_type(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = default_similar_type(T,s,length_val(s))
 default_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = SArray{Tuple{S...},T,D,prod(s)}
 
-
-# should mutable things stay mutable?
-#similar_type{SA<:Union{MVector,MMatrix,MArray},T,S}(::Type{SA},::Type{T},s::Size{S}) = mutable_similar_type(T,s,length_val(s))
+similar_type(::Type{SA},::Type{T},s::Size{S}) where {SA<:Union{MVector,MMatrix,MArray},T,S} = mutable_similar_type(T,s,length_val(s))
 
 mutable_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = MArray{Tuple{S...},T,D,prod(s)}
 
@@ -92,11 +113,28 @@ similar(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s
 similar(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar(A,T,s)
 
 # defaults to built-in mutable types
-similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))()
+similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))(undef)
 
 # both SizedArray and Array return SizedArray
-similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))()
-similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_similar_type(T,s,length_val(s))()
+similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
+similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
+
+# We should be able to deal with SOneTo axes
+similar(::A, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
+similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
+
+similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
+similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
+
+const SOneToLike{n} = Union{SOneTo{n}, Base.Slice{SOneTo{n}}}
+deslice(ax::SOneTo) = ax
+deslice(ax::Base.Slice) = ax.indices
+similar(::A,::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
+similar(::Type{A},::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
+
+# Handle mixtures of SOneTo and other ranges (probably should make Base more robust here)
+similar(::Type{A}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray} = similar(A, length.(shape)) # Jumps back to 2-argument form in Base
+similar(::Type{A},::Type{T}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray,T} = similar(A, length.(shape))
 
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
@@ -105,7 +143,7 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
     if indexstyle == IndexLinear
         exprs = [:(a[$i]) for i = 1:prod(S)]
     else
-        exprs = [:(a[$(inds)]) for inds ∈ CartesianRange(S)]
+        exprs = [:(a[$(inds)]) for inds ∈ CartesianIndices(S)]
     end
 
     return quote
@@ -125,42 +163,9 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 
 # TODO permutedims?
 
-# TODO perhaps could move `Symmetric`, etc into seperate files.
-
-# This is used in Base.LinAlg quite a lot, and it impacts type stability
-# since some functions like expm() branch on a check for Hermitian or Symmetric
-# TODO much more work on type stability. Base functions are using similar() with
-# size, which poses difficulties!!
-@inline Base.full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), sym)
-
-@generated function _full(::Size{S}, sym::Symmetric{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(m[$(sub2ind(S, j, i))]) for i = 1:S[1], j=1:S[2]]
-
-    return quote
-        @_inline_meta
-        m = sym.data
-        if sym.uplo == 'U'
-            @inbounds return SM(tuple($(exprs_up...)))
-        else
-            @inbounds return SM(tuple($(exprs_lo...)))
-        end
-    end
-end
-
-@inline Base.full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} = _full(Size(SM), herm)
-
-@generated function _full(::Size{S}, herm::Hermitian{T,SM}) where {S, T, SM <: StaticMatrix}
-    exprs_up = [i <= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
-    exprs_lo = [i >= j ? :(m[$(sub2ind(S, i, j))]) : :(conj(m[$(sub2ind(S, j, i))])) for i = 1:S[1], j=1:S[2]]
-
-    return quote
-        @_inline_meta
-        m = herm.data
-        if herm.uplo == 'U'
-            @inbounds return SM(tuple($(exprs_up...)))
-        else
-            @inbounds return SM(tuple($(exprs_lo...)))
-        end
-    end
+# full deprecated in Base
+if isdefined(Base, :full)
+    import Base: full
+    @deprecate full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
+    @deprecate full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
 end

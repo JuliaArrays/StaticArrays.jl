@@ -3,8 +3,8 @@
         @test MMatrix{1,1,Int,1}((1,)).data === (1,)
         @test MMatrix{1,1,Float64,1}((1,)).data === (1.0,)
         @test MMatrix{2,2,Float64,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(MMatrix{1,1,Int,1}(), MMatrix{1,1,Int,1})
-        @test isa(MMatrix{1,1,Int}(), MMatrix{1,1,Int,1})
+        @test isa(MMatrix{1,1,Int,1}(undef), MMatrix{1,1,Int,1})
+        @test isa(MMatrix{1,1,Int}(undef), MMatrix{1,1,Int,1})
 
         # Bad input
         @test_throws Exception MMatrix{2,1,Int,2}((1,))
@@ -47,22 +47,17 @@
         test_expand_error(:(@MMatrix ones(4, 5, 6, 7)))
         test_expand_error(:(@MMatrix ones))
         test_expand_error(:(@MMatrix sin(1:5)))
-        test_expand_error(:(@MMatrix eye(4, 5, 6, 7)))
         test_expand_error(:(@MMatrix [1; 2; 3; 4]...))
 
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)
         @test ((@MMatrix ones(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@MMatrix eye(2))::MMatrix{2, 2, Float64}).data === (1.0, 0.0, 0.0, 1.0)
-        @test ((@MMatrix eye(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
         @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
         @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
 
         @test ((@MMatrix zeros(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test ((@MMatrix eye(Float32, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
-        @test ((@MMatrix eye(Float32, 2, 2))::MMatrix{2, 2, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
@@ -81,7 +76,7 @@
         @test m[3] === 13
         @test m[4] === 14
 
-        @test Tuple(m) === (11, 12, 13, 14)
+        @testinf Tuple(m) === (11, 12, 13, 14)
 
         @test size(m) === (2, 2)
         @test size(typeof(m)) === (2, 2)
@@ -111,7 +106,7 @@
         @test m.data === (11, 12, 13, 14)
 
         # setindex with non-elbits type
-        m = MMatrix{2,2,String}()
+        m = MMatrix{2,2,String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1)
     end
 end

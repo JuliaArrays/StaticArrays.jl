@@ -1,32 +1,28 @@
-@inline zeros(::SA) where {SA <: StaticArray} = zeros(SA)
-@generated function zeros(::Type{SA}) where {SA <: StaticArray}
+@deprecate zeros(A::StaticArray) zeros(typeof(A))
+@inline zeros(::Type{SA}) where {SA <: StaticArray} = _zeros(Size(SA), SA)
+@generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T === Any
-        return quote
-            @_inline_meta
-            _fill(zero(Float64), Size(SA), SA)
-        end
-    else
-        return quote
-            @_inline_meta
-            _fill(zero($T), Size(SA), SA)
-        end
+    if T == Any
+        T = Float64
+    end
+    v = [:(zero($T)) for i = 1:prod(s)]
+    return quote
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
-@inline ones(::SA) where {SA <: StaticArray} = ones(SA)
-@generated function ones(::Type{SA}) where {SA <: StaticArray}
+@deprecate ones(A::StaticArray) ones(typeof(A))
+@inline ones(::Type{SA}) where {SA <: StaticArray} = _ones(Size(SA), SA)
+@generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T === Any
-        return quote
-            @_inline_meta
-            _fill(one(Float64), Size(SA), SA)
-        end
-    else
-        return quote
-            @_inline_meta
-            _fill(one($T), Size(SA), SA)
-        end
+    if T == Any
+        T = Float64
+    end
+    v = [:(one($T)) for i = 1:prod(s)]
+    return quote
+        @_inline_meta
+        $SA(tuple($(v...)))
     end
 end
 
@@ -42,7 +38,10 @@ end
 
 # Also consider randcycle, randperm? Also faster rand!(staticarray, collection)
 
-@inline rand(rng::AbstractRNG, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
+using Random: SamplerType
+@inline rand(rng::AbstractRNG, ::Type{SA}, dims::Dims) where {SA <: StaticArray} = rand!(rng, Array{SA}(undef, dims), SA)
+@inline rand(rng::AbstractRNG, ::SamplerType{SA}) where {SA <: StaticArray} = _rand(rng, Size(SA), SA)
+
 @generated function _rand(rng::AbstractRNG, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
     if T == Any
@@ -56,7 +55,7 @@ end
 end
 
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
-@inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Base.GLOBAL_RNG, range, Size(SA), SA)
+@inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Random.GLOBAL_RNG, range, Size(SA), SA)
 @generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, range)) for i = 1:prod(s)]
     return quote
@@ -165,4 +164,4 @@ julia> arithmetic_closure(BigInt)
 BigFloat
 ```
 """
-arithmetic_closure(T) = typeof((one(T)*zero(T) + zero(T))/one(T))
+arithmetic_closure(::Type{T}) where T = typeof((one(T)*zero(T) + zero(T))/one(T))

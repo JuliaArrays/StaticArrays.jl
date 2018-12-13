@@ -1,40 +1,70 @@
-_thin_must_hold(thin) =
-    thin || throw(ArgumentError("For the sake of type stability, `thin = true` must hold."))
-import Base.qr
-
-
-"""
-    qr(A::StaticMatrix, pivot=Val{false}; thin=true) -> Q, R, [p]
-
-Compute the QR factorization of `A` such that `A = Q*R` or `A[:,p] = Q*R`, see [`qr`](@ref).
-This function does not support `thin=false` keyword option due to type inference instability.
-To use this option call `qr(A, pivot, Val{false})` instead.
-"""
-@inline function qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}; thin::Bool=true)
-    _thin_must_hold(thin)
-    return _qr(Size(A), A, pivot, Val{true})
+# define our own struct since LinearAlgebra.QR are restricted to Matrix
+struct QR{Q,R,P}
+    Q::Q
+    R::R
+    p::P
 end
 
+# iteration for destructuring into components
+Base.iterate(S::QR) = (S.Q, Val(:R))
+Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:p))
+Base.iterate(S::QR, ::Val{:p}) = (S.p, Val(:done))
+Base.iterate(S::QR, ::Val{:done}) = nothing
 
-@inline qr(A::StaticMatrix, pivot::Union{Type{Val{false}}, Type{Val{true}}}, thin::Union{Type{Val{false}}, Type{Val{true}}}) = _qr(Size(A), A, pivot, thin)
+"""
+    qr(A::StaticMatrix, pivot=Val(false))
 
+Compute the QR factorization of `A`. The factors can be obtain by iteration:
+
+```julia
+julia> A = @SMatrix rand(3,4);
+
+julia> Q, R = qr(A);
+
+julia> Q * R ≈ A
+true
+```
+
+or by using `getfield`:
+
+```julia
+julia> F = qr(A);
+
+julia> F.Q * F.R ≈ A
+true
+```
+"""
+@inline function qr(A::StaticMatrix, pivot::Union{Val{false}, Val{true}} = Val(false))
+    QRp = _qr(Size(A), A, pivot)
+    if length(QRp) === 2
+        # create an identity permutation since that is cheap,
+        # and much safer since, in the case of isbits types, we can't
+        # safely leave the field undefined.
+        p = identity_perm(QRp[2])
+        return QR(QRp[1], QRp[2], p)
+    else # length(QRp) === 3
+        return QR(QRp[1], QRp[2], QRp[3])
+    end
+end
+
+function identity_perm(R::StaticMatrix{N,M,T}) where {N,M,T}
+    return similar_type(R, Int, Size((M,)))(ntuple(x -> x, Val{M}()))
+end
 
 _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
 
 
-@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Type{Val{false}}, Type{Val{true}}} = Val{false}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Val{false}, Val{true}} = Val(false)) where {sA, TA}
 
-    isthin = thin == Type{Val{true}}
-
-    SizeQ = Size( sA[1], isthin ? diagsize(Size(A)) : sA[1] )
+    SizeQ = Size( sA[1], diagsize(Size(A)) )
     SizeR = Size( diagsize(Size(A)), sA[2] )
 
-    if pivot == Type{Val{true}}
+    if pivot === Val{true}
         return quote
             @_inline_meta
-            Q0, R0, p0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+            Q0, R0, p0 = qr(Matrix(A), pivot)
             T = _qreltype(TA)
-            return similar_type(A, T, $(SizeQ))(Q0),
+            return similar_type(A, T, $(SizeQ))(Matrix(Q0)),
                    similar_type(A, T, $(SizeR))(R0),
                    similar_type(A, Int, $(Size(sA[2])))(p0)
         end
@@ -42,12 +72,13 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
         if (sA[1]*sA[1] + sA[1]*sA[2])÷2 * diagsize(Size(A)) < 17*17*17
             return quote
                 @_inline_meta
-                return qr_unrolled(Size(A), A, pivot, thin)
+                return qr_unrolled(Size(A), A, pivot)
             end
         else
             return quote
                 @_inline_meta
-                Q0, R0 = Base.qr(Matrix(A), pivot, thin=$isthin)
+                Q0R0 = qr(Matrix(A), pivot)
+                Q0, R0 = Matrix(Q0R0.Q), Q0R0.R
                 T = _qreltype(TA)
                 return similar_type(A, T, $(SizeQ))(Q0),
                        similar_type(A, T, $(SizeR))(R0)
@@ -60,11 +91,8 @@ end
 # Compute the QR decomposition of `A` such that `A = Q*R`
 # by Householder reflections without pivoting.
 #
-# `thin=true` (reduced) method will produce `Q` and `R` in truncated form,
-# in the case of `thin=false` Q is full, but R is still reduced, see [`qr`](@ref).
-#
 # For original source code see below.
-@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Type{Val{false}}, thin::Union{Type{Val{false}}, Type{Val{true}}} = Val{true}) where {sA, TA}
+@generated function qr_unrolled(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Val{false}) where {sA, TA}
     m, n = sA[1], sA[2]
 
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]
@@ -124,11 +152,7 @@ end
     end
 
     # truncate Q and R sizes in LAPACK consilient way
-    if thin == Type{Val{true}}
-        mQ, nQ = m, min(m, n)
-    else
-        mQ, nQ = m, m
-    end
+    mQ, nQ = m, min(m, n)
     mR, nR = min(m, n), n
 
     return quote
@@ -150,7 +174,7 @@ end
 #function qr_unrolled(A::StaticMatrix{<:Any, <:Any, TA}) where {TA}
 #    m, n = size(A)
 #    T = _qreltype(TA)
-#    Q = eye(MMatrix{m,m,T,m*m})
+#    Q = MMatrix{m,m,T,m*m}(I)
 #    R = MMatrix{m,n,T,m*n}(A)
 #    for k = 1:min(m - 1 + !(TA<:Real), n)
 #        #x = view(R, k:m, k)

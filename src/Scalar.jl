@@ -12,6 +12,7 @@ const Scalar{T} = SArray{Tuple{},T,0,1}
 @inline function convert(::Type{SA}, a::AbstractArray) where {SA <: Scalar}
     return SA((a[],))
 end
+@inline convert(::Type{SA}, sa::SA) where {SA <: Scalar} = sa
 
 getindex(v::Scalar) = v.data[1]
 @inline function getindex(v::Scalar, i::Int)

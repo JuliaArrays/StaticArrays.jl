@@ -3,9 +3,9 @@
         @test MArray{Tuple{1},Int,1,1}((1,)).data === (1,)
         @test MArray{Tuple{1},Float64,1,1}((1,)).data === (1.0,)
         @test MArray{Tuple{2,2},Float64,2,4}((1, 1.0, 1, 1)).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(MArray{Tuple{1},Int,1,1}(), MArray{Tuple{1},Int,1,1})
-        @test isa(MArray{Tuple{1},Int,1}(), MArray{Tuple{1},Int,1,1})
-        @test isa(MArray{Tuple{1},Int}(), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int,1,1}(undef), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int,1}(undef), MArray{Tuple{1},Int,1,1})
+        @test isa(MArray{Tuple{1},Int}(undef), MArray{Tuple{1},Int,1,1})
 
         # Bad input
         @test_throws Exception MArray{Tuple{2},Int,1,2}((1,))
@@ -69,14 +69,11 @@
         test_expand_error(:(@MArray fill()))
         test_expand_error(:(@MArray ones()))
         test_expand_error(:(@MArray fill(1)))
-        test_expand_error(:(@MArray eye(5,6,7,8,9)))
         test_expand_error(:(@MArray [1; 2; 3; 4]...))
 
         @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@MArray eye(2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
-        @test ((@MArray eye(2,2))::MArray{Tuple{2,2}, Float64}).data === (1.0, 0.0, 0.0, 1.0)
         @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
@@ -86,8 +83,6 @@
 
         @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MArray ones(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test ((@MArray eye(Float32, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
-        @test ((@MArray eye(Float32, 2, 2))::MArray{Tuple{2,2}, Float32}).data === (1.0f0, 0.0f0, 0.0f0, 1.0f0)
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
@@ -106,7 +101,7 @@
         @test m[3] === 13
         @test m[4] === 14
 
-        @test Tuple(m) === (11, 12, 13, 14)
+        @testinf Tuple(m) === (11, 12, 13, 14)
 
         @test size(m) === (2, 2)
         @test size(typeof(m)) === (2, 2)
@@ -120,6 +115,16 @@
         @test size(typeof(m), 2) === 2
 
         @test length(m) === 4
+
+        if isdefined(Base, :mightalias) # v0.7-
+            @test Base.mightalias(m, m)
+            @test !Base.mightalias(m, copy(m))
+            @test Base.mightalias(m, view(m, :, 1))
+        end
+
+        if isdefined(Base, :dataids) # v0.7-
+            @test Base.dataids(m) == (UInt(pointer(m)),)
+        end
     end
 
     @testset "setindex!" begin
@@ -137,9 +142,12 @@
         @test m.data === (11, 12, 13, 14)
 
         @test_throws BoundsError setindex!(v, 4, -1)
+        mm = @MArray zeros(3,3,3,3)
+        @test_throws BoundsError setindex!(mm, 4, -1)
+        @test_throws BoundsError setindex!(mm, 4, 82)
 
         # setindex with non-elbits type
-        m = MArray{Tuple{2,2,2}, String}()
+        m = MArray{Tuple{2,2,2}, String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1, 1)
     end
 
@@ -147,5 +155,6 @@
         @test @inferred(promote_type(MVector{1,Float64}, MVector{1,BigFloat})) == MVector{1,BigFloat}
         @test @inferred(promote_type(MVector{2,Int}, MVector{2,Float64})) === MVector{2,Float64}
         @test @inferred(promote_type(MMatrix{2,3,Float32,6}, MMatrix{2,3,Complex{Float64},6})) === MMatrix{2,3,Complex{Float64},6}
+        @test @inferred(promote_type(MArray{Tuple{2, 2, 2, 2},Float32, 4, 16}, MArray{Tuple{2, 2, 2, 2}, Complex{Float64}, 4, 16})) === MArray{Tuple{2, 2, 2, 2}, Complex{Float64}, 4, 16}
     end
 end

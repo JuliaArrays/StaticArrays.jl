@@ -1,16 +1,19 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
-@inline function Base.chol(A::StaticMatrix)
-    ishermitian(A) || Base.LinAlg.non_hermitian_error("chol")
-    _chol(Size(A), A)
+non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
+@inline function LinearAlgebra.cholesky(A::StaticMatrix)
+    ishermitian(A) || non_hermitian_error()
+    C = _cholesky(Size(A), A)
+    return Cholesky(C, 'U', 0)
 end
 
-@inline function Base.chol(A::Base.LinAlg.RealHermSymComplexHerm{<:Real, <:StaticMatrix})
-    _chol(Size(A), A.data)
+@inline function LinearAlgebra.cholesky(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix})
+    C = _cholesky(Size(A), A.data)
+    return Cholesky(C, 'U', 0)
 end
-@inline Base.LinAlg._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = chol(A)
+@inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (cholesky(A).U, 0)
 
 
-@generated function _chol(::Size{(1,1)}, A::StaticMatrix)
+@generated function _cholesky(::Size{(1,1)}, A::StaticMatrix)
     @assert size(A) == (1,1)
 
     quote
@@ -20,7 +23,7 @@ end
     end
 end
 
-@generated function _chol(::Size{(2,2)}, A::StaticMatrix)
+@generated function _cholesky(::Size{(2,2)}, A::StaticMatrix)
     @assert size(A) == (2,2)
 
     quote
@@ -33,7 +36,7 @@ end
     end
 end
 
-@generated function _chol(::Size{(3,3)}, A::StaticMatrix)
+@generated function _cholesky(::Size{(3,3)}, A::StaticMatrix)
     @assert size(A) == (3,3)
 
     quote
@@ -50,4 +53,5 @@ end
 end
 
 # Otherwise default algorithm returning wrapped SizedArray
-@inline _chol(s::Size, A::StaticArray) = s(full(chol(Hermitian(Array(A)))))
+@inline _cholesky(s::Size, A::StaticArray) = s(Matrix(cholesky(Hermitian(Matrix(A))).U))
+LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}

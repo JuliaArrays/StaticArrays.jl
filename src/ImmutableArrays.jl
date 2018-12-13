@@ -1,6 +1,9 @@
-module ImmutableArrays
+module ImmutableArraysWillBeRemoved
 
 using ..StaticArrays
+
+const ImmutableArrays = ImmutableArraysWillBeRemoved
+export ImmutableArrays # Ensure deprecated module name is in scope after import
 
 Vector1{T} = SVector{1,T}
 Vector2{T} = SVector{2,T}
@@ -34,3 +37,6 @@ export Vector1,   Vector2,   Vector3,   Vector4,
        Matrix4x1, Matrix4x2, Matrix4x3, Matrix4x4
 
 end # module
+
+Base.@deprecate_binding ImmutableArrays ImmutableArraysWillBeRemoved #=
+    =# false ".  Use StaticArrays directly."

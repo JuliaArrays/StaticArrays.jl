@@ -1,7 +1,4 @@
-@inline (\)(a::StaticMatrix, b::StaticVector) = solve(Size(a), Size(b), a, b)
-
-# TODO: Ineffecient but requires some infrastructure (e.g. LU or QR) to make efficient so we fall back on inv for now
-@inline solve(::Size, ::Size, a, b) = inv(a) * b
+@inline (\)(a::StaticMatrix, b::StaticVecOrMat) = solve(Size(a), Size(b), a, b)
 
 @inline function solve(::Size{(1,1)}, ::Size{(1,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
     @inbounds return similar_type(b, typeof(a[1] \ b[1]))(a[1] \ b[1])
@@ -27,4 +24,24 @@ end
         ((a[2,1]*a[3,2] - a[2,2]*a[3,1])*b[1] +
             (a[1,2]*a[3,1] - a[1,1]*a[3,2])*b[2] +
             (a[1,1]*a[2,2] - a[1,2]*a[2,1])*b[3]) / d )
+end
+
+@generated function solve(::Size{Sa}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVecOrMat{Tb}) where {Sa, Sb, Ta, Tb}
+    if Sa[end] != Sb[1]
+        throw(DimensionMismatch("right hand side B needs first dimension of size $(Sa[end]), has size $Sb"))
+    end
+    LinearAlgebra.checksquare(a)
+    if prod(Sa) ≤ 14*14
+        quote
+            @_inline_meta
+            LUp = lu(a)
+            LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
+        end
+    else
+        quote
+            @_inline_meta
+            T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/one(Ta))
+            similar_type(b, T)(Matrix(a) \ b)
+        end
+    end
 end

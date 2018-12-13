@@ -21,7 +21,7 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 @inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)
 
 # Simplified show for the type
-show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
+#show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 
 # Some more advanced constructor-like functions
 @inline zeros(::Type{MVector{N}}) where {N} = zeros(MVector{N,Float64})
@@ -30,28 +30,6 @@ show(io::IO, ::Type{MVector{N, T}}) where {N, T} = print(io, "MVector{$N,$T}")
 #####################
 ## MVector methods ##
 #####################
-
-@propagate_inbounds function getindex(v::MVector, i::Int)
-    v.data[i]
-end
-
-# Mutating setindex!
-@propagate_inbounds setindex!(v::MVector{S,T}, val, i::Int) where {S,T} = setindex!(v, convert(T, val), i)
-@inline function setindex!(v::MVector{S,T}, val::T, i::Int) where {S,T}
-    @boundscheck if i < 1 || i > length(v)
-        throw(BoundsError())
-    end
-
-    if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), val, i)
-    else
-        # This one is unsafe (#27)
-        #unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)
-        error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
-    end
-
-    return val
-end
 
 macro MVector(ex)
     if isa(ex, Expr) && ex.head == :vect
@@ -67,7 +45,7 @@ macro MVector(ex)
             error("Use a one-dimensional comprehension for @MVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(__module__, ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]
@@ -86,7 +64,7 @@ macro MVector(ex)
             error("Use a one-dimensional comprehension for @MVector")
         end
 
-        rng = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
+        rng = Core.eval(__module__, ex.args[2].args[2])
         f = gensym()
         f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
         exprs = [:($f($j)) for j in rng]

@@ -22,20 +22,18 @@ const MMatrix{S1, S2, T, L} = MArray{Tuple{S1, S2}, T, 2, L}
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
     end
-    T = promote_tuple_eltype(x)
-
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, $S2, $T, L}(x)
+        T = eltype(typeof(x))
+        MMatrix{S1, $S2, T, L}(x)
     end
 end
 
 @generated function (::Type{MMatrix{S1,S2}})(x::NTuple{L}) where {S1,S2,L}
-    T = promote_tuple_eltype(x)
-
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, S2, $T, L}(x)
+        T = eltype(typeof(x))
+        MMatrix{S1, S2, T, L}(x)
     end
 end
 
@@ -46,10 +44,16 @@ end
     end
 end
 
-@generated function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
+@static if VERSION < v"1.0"
+    function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
+        Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
+        return MMatrix{S1,S2,T}(undef)
+    end
+end
+@generated function (::Type{MMatrix{S1,S2,T}})(::UndefInitializer) where {S1,S2,T}
     return quote
         $(Expr(:meta, :inline))
-        MMatrix{S1, S2, T, $(S1*S2)}()
+        MMatrix{S1, S2, T, $(S1*S2)}(undef)
     end
 end
 
@@ -57,47 +61,19 @@ end
 @inline MMatrix(a::StaticMatrix) = MMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
 # Simplified show for the type
-show(io::IO, ::Type{MMatrix{N, M, T}}) where {N, M, T} = print(io, "MMatrix{$N,$M,$T}")
+#show(io::IO, ::Type{MMatrix{N, M, T}}) where {N, M, T} = print(io, "MMatrix{$N,$M,$T}")
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MMatrix{N}}) where {N} = one(MMatrix{N,N})
-@inline eye(::Type{MMatrix{N}}) where {N} = eye(MMatrix{N,N})
+
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{MMatrix{N}}) where {N} MMatrix{N,N}(1.0I)
+end
 
 #####################
 ## MMatrix methods ##
 #####################
-
-@propagate_inbounds function getindex(m::MMatrix{S1,S2,T}, i::Int) where {S1,S2,T}
-    #@boundscheck if i < 1 || i > length(m)
-    #    throw(BoundsError(m,i))
-    #end
-
-    # This is nasty... but it turns out Julia will literally copy the whole tuple to the stack otherwise!
-    if isbits(T)
-        unsafe_load(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), i)
-    else
-        # Not sure about this... slow option for now...
-        m.data[i]
-        #unsafe_load(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), i)
-    end
-end
-
-@propagate_inbounds setindex!(m::MMatrix{S1,S2,T}, val, i::Int) where {S1,S2,T} = setindex!(m, convert(T, val), i)
-@propagate_inbounds function setindex!(m::MMatrix{S1,S2,T}, val::T, i::Int) where {S1,S2,T}
-    #@boundscheck if i < 1 || i > length(m)
-    #    throw(BoundsError(m,i))
-    #end
-
-    if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(m)), val, i)
-    else # TODO check that this isn't crazy. Also, check it doesn't cause problems with GC...
-        # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(m.data)), Base.data_pointer_from_objref(val), i)
-        error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
-    end
-
-    return val
-end
 
 macro MMatrix(ex)
     if !isa(ex, Expr)
@@ -154,8 +130,8 @@ macro MMatrix(ex)
             error("Use a 2-dimensional comprehension for @MMatrx")
         end
 
-        rng1 = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
-        rng2 = eval(_module_arg ? __module__ : current_module(), ex.args[3].args[2])
+        rng1 = Core.eval(__module__, ex.args[2].args[2])
+        rng2 = Core.eval(__module__, ex.args[3].args[2])
         f = gensym()
         f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
@@ -174,8 +150,8 @@ macro MMatrix(ex)
             error("Use a 2-dimensional comprehension for @MMatrx")
         end
 
-        rng1 = eval(_module_arg ? __module__ : current_module(), ex.args[2].args[2])
-        rng2 = eval(_module_arg ? __module__ : current_module(), ex.args[3].args[2])
+        rng1 = Core.eval(__module__, ex.args[2].args[2])
+        rng2 = Core.eval(__module__, ex.args[3].args[2])
         f = gensym()
         f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
         exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
@@ -205,29 +181,33 @@ macro MMatrix(ex)
             else
                 error("@MMatrix expected a 2-dimensional array expression")
             end
-        elseif ex.args[1] == :eye
+        elseif ex.args[1] == :eye # deprecated
             if length(ex.args) == 2
                 return quote
-                    eye(MMatrix{$(esc(ex.args[2]))})
+                    Base.depwarn("`@MMatrix eye(m)` is deprecated, use `MMatrix{m,m}(1.0I)` instead", :eye)
+                    MMatrix{$(esc(ex.args[2])),$(esc(ex.args[2])),Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))})
+                        Base.depwarn("`@MMatrix eye(T, m)` is deprecated, use `MMatrix{m,m,T}(I)` instead", :eye)
+                        MMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))}(I)
                     else
-                        eye(MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3]))})
+                        Base.depwarn("`@MMatrix eye(m, n)` is deprecated, use `MMatrix{m,n}(1.0I)` instead", :eye)
+                        MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3])), Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
+                    Base.depwarn("`@MMatrix eye(T, m, n)` is deprecated, use `MMatrix{m,n,T}(I)` instead", :eye)
+                    MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @MMatrix")
             end
         else
-            error("@MMatrix only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@MMatrix only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @MMatrix")

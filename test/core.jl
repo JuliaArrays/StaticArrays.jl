@@ -19,7 +19,7 @@
     @testset "Type parameter errors" begin
         # (not sure what type of exception these should be?)
         @test_throws Exception SVector{1.0,Int}((1,))
-        @test_throws Exception SVector{2,Int}((1,))
+        @test_throws DimensionMismatch("No precise constructor for SArray{Tuple{2},$Int,1,2} found. Length of input was 1.") SVector{2,Int}((1,))
         @test_throws Exception SVector{1,3}((1,))
 
         @test_throws Exception SMatrix{1.0,1,Int,1}((1,))
@@ -133,12 +133,74 @@
         @test @inferred(convert(Array, ma)) == a
         @test @inferred(convert(Array{Int}, ma)) == a
         @test @inferred(convert(Array{Int,2}, ma)) == a
+
+        try
+            convert(SVector, [1,2,3])
+        catch err
+            @test isa(err, ErrorException)
+            @test startswith(err.msg, "The size of type")
+        end
+        @test_throws DimensionMismatch("expected input array of length 2, got length 3") convert(SVector{2}, [1,2,3])
     end
     @test_throws Exception Length{2.5}()
     @test Length(2) == Length{2}()
     @test Tuple{2, 3, 5} != StaticArrays.Size{(2, 3, 4)}
     @test StaticArrays.Size{(2, 3, 4)} != Tuple{2, 3, 5}
     @test StaticArrays.check_length(2) == nothing
+    @test StaticArrays.check_length(StaticArrays.Dynamic()) == nothing
 
-    @test convert(Tuple, @SVector [2]) == (2,)
+    @testset "Size" begin
+        @test Size(zero(SMatrix{2, 3})) == Size(2, 3)
+        @test Size(Transpose(zero(SMatrix{2, 3}))) == Size(3, 2)
+        @test Size(Adjoint(zero(SMatrix{2, 3}))) == Size(3, 2)
+        @test Size(Diagonal(SVector(1, 2, 3))) == Size(3, 3)
+        @test Size(Transpose(Diagonal(SVector(1, 2, 3)))) == Size(3, 3)
+    end
+
+    @testset "dimmatch" begin
+        @test StaticArrays.dimmatch(3, 3)
+        @test StaticArrays.dimmatch(3, StaticArrays.Dynamic())
+        @test StaticArrays.dimmatch(StaticArrays.Dynamic(), 3)
+        @test StaticArrays.dimmatch(StaticArrays.Dynamic(), StaticArrays.Dynamic())
+
+        @test !StaticArrays.dimmatch(3, 2)
+    end
+
+    @testset "sizematch" begin
+        @test StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2, 3))
+        @test StaticArrays.sizematch(Size(1, StaticArrays.Dynamic(), 3), Size(1, 2, 3))
+        @test StaticArrays.sizematch(Size(1, 2, 3), Size(1, StaticArrays.Dynamic(), 3))
+        @test StaticArrays.sizematch(Size(StaticArrays.Dynamic()), Size(StaticArrays.Dynamic()))
+
+        @test !StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2, 4))
+        @test !StaticArrays.sizematch(Size(2, 2, 3), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(2, 2, StaticArrays.Dynamic()), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(1, 2), Size(1, 2, 3))
+        @test !StaticArrays.sizematch(Size(1, 2, 3), Size(1, 2))
+
+        sa = SArray{Tuple{2,3}, Int}((3, 4, 5, 6, 7, 8))
+        a = [3 5 7; 4 6 8]
+
+        @test StaticArrays.sizematch(Size(2, 3), sa)
+        @test StaticArrays.sizematch(Size(2, StaticArrays.Dynamic()), sa)
+        @test StaticArrays.sizematch(Size(2, 3), a)
+        @test StaticArrays.sizematch(Size(2, StaticArrays.Dynamic()), a)
+
+        @test !StaticArrays.sizematch(Size(2, 2), sa)
+        @test !StaticArrays.sizematch(Size(3, StaticArrays.Dynamic()), sa)
+        @test !StaticArrays.sizematch(Size(2, 2), a)
+        @test !StaticArrays.sizematch(Size(3, StaticArrays.Dynamic()), a)
+    end
+
+    @testset "SOneTo" begin
+        a = Base.OneTo(3)
+        b = StaticArrays.SOneTo{2}()
+        @test @inferred(promote(a, b)) === (a, Base.OneTo(2))
+        @test @inferred(promote(b, a)) === (Base.OneTo(2), a)
+
+        @test StaticArrays.SOneTo{2}(1:2) === StaticArrays.SOneTo{2}()
+        @test convert(StaticArrays.SOneTo{2}, 1:2) === StaticArrays.SOneTo{2}()
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:3)
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:1)
+    end
 end

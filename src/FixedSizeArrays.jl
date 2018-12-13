@@ -6,9 +6,12 @@ etc, using StaticArrays as a backend.
 The type definitions are not "perfect" matches because the type parameters are
 different. However, it should cover common method signatures and constructors.
 """
-module FixedSizeArrays
+module FixedSizeArraysWillBeRemoved
 
 using ..StaticArrays
+
+const FixedSizeArrays = FixedSizeArraysWillBeRemoved
+export FixedSizeArrays # Ensure deprecated module name is in scope after import
 
 export FixedArray
 export FixedVector
@@ -66,7 +69,7 @@ end
 
 
 function unit(::Type{T}, i::Integer) where T <: StaticVector
-    T(ntuple(Val{length(T)}) do j
+    T(ntuple(Val(length(T))) do j
         ifelse(i == j, 1, 0)
     end)
 end
@@ -75,13 +78,13 @@ export unit
 
 function Base.extrema(a::AbstractVector{T}) where T <: StaticVector
     ET = eltype(T)
-    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), (T(typemax(ET)), T(typemin(ET))), a)
+    reduce((x, v)-> (min.(x[1], v), max.(x[2], v)), a; init = (T(typemax(ET)), T(typemin(ET))))
 end
 function Base.minimum(a::AbstractVector{T}) where T <: StaticVector
-    reduce((x, v)-> min.(x[1], v), T(typemax(eltype(T))), a)
+    reduce((x, v)-> min.(x[1], v), a; init=T(typemax(eltype(T))))
 end
 function Base.maximum(a::AbstractVector{T}) where T <: StaticVector
-    reduce((x, v)-> max.(x[1], v), T(typemin(eltype(T))), a)
+    reduce((x, v)-> max.(x[1], v), a; init=T(typemin(eltype(T))))
 end
 
 
@@ -109,29 +112,29 @@ macro fixed_vector(name, parent)
         size_or(::Type{$(name){S, T} where T}, or) where {S} = Size{(S,)}()
         size_or(::Type{$(name){S, T}}, or) where {S, T} = (S,)
         # Array constructor
-        @inline function (::Type{$(name){S}})(x::AbstractVector{T}) where {S, T}
+        @inline function $(name){S}(x::AbstractVector{T}) where {S, T}
             @assert S <= length(x)
-            $(name){S, T}(ntuple(i-> x[i], Val{S}))
+            $(name){S, T}(ntuple(i-> x[i], Val(S)))
         end
-        @inline function (::Type{$(name){S, T1}})(x::AbstractVector{T2}) where {S, T1, T2}
+        @inline function $(name){S, T1}(x::AbstractVector{T2}) where {S, T1, T2}
             @assert S <= length(x)
-            $(name){S, T1}(ntuple(i-> T1(x[i]), Val{S}))
+            $(name){S, T1}(ntuple(i-> T1(x[i]), Val(S)))
         end
 
-        @inline function (::Type{$(name){S, T}})(x) where {S, T}
-            $(name){S, T}(ntuple(i-> T(x), Val{S}))
+        @inline function $(name){S, T}(x) where {S, T}
+            $(name){S, T}(ntuple(i-> T(x), Val(S)))
         end
 
 
-        @inline function (::Type{$(name){S}})(x::T) where {S, T}
-            $(name){S, T}(ntuple(i-> x, Val{S}))
+        @inline function $(name){S}(x::T) where {S, T}
+            $(name){S, T}(ntuple(i-> x, Val(S)))
         end
-        @inline function (::Type{$(name){1, T}})(x::T) where T
+        @inline function $(name){1, T}(x::T) where T
             $(name){1, T}((x,))
         end
-        @inline (::Type{$(name)})(x::NTuple{S}) where {S} = $(name){S}(x)
-        @inline (::Type{$(name)})(x::T) where {S, T <: Tuple{Vararg{Any, S}}} = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
-        @inline function (::Type{$(name){S}})(x::T) where {S, T <: Tuple}
+        @inline $(name)(x::NTuple{S}) where {S} = $(name){S}(x)
+        @inline $(name)(x::T) where {S, T <: Tuple{Vararg{Any, S}}} = $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
+        @inline function $(name){S}(x::T) where {S, T <: Tuple}
             $(name){S, StaticArrays.promote_tuple_eltype(T)}(x)
         end
         $(name){S, T}(x::StaticVector) where {S, T} = $(name){S, T}(Tuple(x))
@@ -187,3 +190,6 @@ end
 @fixed_vector Point StaticVector
 
 end
+
+Base.@deprecate_binding FixedSizeArrays FixedSizeArraysWillBeRemoved #=
+    =# false ".  Use StaticArrays directly."

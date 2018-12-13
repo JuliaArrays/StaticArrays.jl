@@ -5,7 +5,7 @@
 
 
 Construct a statically-sized, mutable array `MArray`. The data may optionally be
-provided upon construction and cannot be mutated later. The `S` parameter is a Tuple-type
+provided upon construction and can be mutated later. The `S` parameter is a Tuple-type
 specifying the dimensions, or size, of the array - such as `Tuple{3,4,5}` for a 3×4×5-sized
 array. The `L` parameter is the `length` of the array and is always equal to `prod(S)`.
 Constructors may drop the `L` and `T` parameters if they are inferrable from the input
@@ -30,9 +30,17 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         new{S,T,N,L}(convert_ntuple(T, x))
     end
 
-    function MArray{S,T,N,L}() where {S,T,N,L}
+    function MArray{S,T,N,L}(::UndefInitializer) where {S,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
+    end
+
+    @static if VERSION < v"1.0"
+        # deprecated empty constructor
+        function MArray{S,T,N,L}() where {S,T,N,L}
+            Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
+            return MArray{S,T,N,L}(undef)
+        end
     end
 end
 
@@ -53,56 +61,77 @@ end
 @generated function (::Type{MArray{S}})(x::T) where {S, T <: Tuple}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S,$(promote_tuple_eltype(T)),$(tuple_length(S)),$(tuple_prod(S))}(x)
+        MArray{S,promote_tuple_eltype(T),$(tuple_length(S)),$(tuple_prod(S))}(x)
     end
 end
 
-@generated function (::Type{MArray{S,T,N}})() where {S,T,N}
+@static if VERSION < v"1.0"
+    function (::Type{MArray{S,T,N}})() where {S,T,N}
+        Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
+        return MArray{S,T,N}(undef)
+    end
+end
+@generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S, T, N, $(tuple_prod(S))}()
+        MArray{S, T, N, $(tuple_prod(S))}(undef)
     end
 end
 
-@generated function (::Type{MArray{S,T}})() where {S,T}
+@static if VERSION < v"1.0"
+    function (::Type{MArray{S,T}})() where {S,T}
+        Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
+        return MArray{S,T}(undef)
+    end
+end
+@generated function (::Type{MArray{S,T}})(::UndefInitializer) where {S,T}
     return quote
         $(Expr(:meta, :inline))
-        MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}()
+        MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}(undef)
     end
 end
 
 @inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type
-show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
+#show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
-@inline eye(::Type{MArray{S}}) where {S} = eye(MArray{S,Float64,tuple_length(S)})
 @inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,tuple_length(S)})
-@inline eye(::Type{MArray{S,T}}) where {S,T} = eye(MArray{S,T,tuple_length(S)})
+
+# MArray(I::UniformScaling) methods to replace eye
+(::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
+# deprecate eye, keep around for as long as LinearAlgebra.eye exists
+@static if isdefined(LinearAlgebra, :eye)
+    @deprecate eye(::Type{MArray{S}}) where {S} MArray{S}(1.0I)
+    @deprecate eye(::Type{MArray{S,T}}) where {S,T} MArray{S,T}(I)
+end
 
 ####################
 ## MArray methods ##
 ####################
 
-function getindex(v::MArray, i::Int)
-    Base.@_inline_meta
+@propagate_inbounds function getindex(v::MArray, i::Int)
+    @boundscheck checkbounds(v,i)
+    T = eltype(v)
+
+    if isbitstype(T)
+        return GC.@preserve v unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
+    end
     v.data[i]
 end
 
 @inline function setindex!(v::MArray, val, i::Int)
-    @boundscheck if i < 1 || i > length(v)
-        throw(BoundsError())
-    end
-
+    @boundscheck checkbounds(v,i)
     T = eltype(v)
-    if isbits(T)
-        unsafe_store!(Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(v)), convert(T, val), i)
+
+    if isbitstype(T)
+        GC.@preserve v unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
     else
         # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Void}}, Base.data_pointer_from_objref(v.data)), Base.data_pointer_from_objref(val), i)
-        error("setindex!() with non-isbits eltype is not supported by StaticArrays. Consider using SizedArray.")
+        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
+        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
     return val
@@ -110,8 +139,12 @@ end
 
 @inline Tuple(v::MArray) = v.data
 
+if isdefined(Base, :dataids) # v0.7-
+    Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
+end
+
 @inline function Base.unsafe_convert(::Type{Ptr{T}}, a::MArray{S,T}) where {S,T}
-    Base.unsafe_convert(Ptr{T}, Base.data_pointer_from_objref(a))
+    Base.unsafe_convert(Ptr{T}, pointer_from_objref(a))
 end
 
 macro MArray(ex)
@@ -168,7 +201,7 @@ macro MArray(ex)
         ex = ex.args[1]
         n_rng = length(ex.args) - 1
         rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
-        rngs = [eval(_module_arg ? __module__ : current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rngs = [Core.eval(__module__, ex.args[i+1].args[2]) for i = 1:n_rng]
         rng_lengths = map(length, rngs)
 
         f = gensym()
@@ -207,7 +240,7 @@ macro MArray(ex)
         ex = ex.args[2]
         n_rng = length(ex.args) - 1
         rng_args = [ex.args[i+1].args[1] for i = 1:n_rng]
-        rngs = [eval(_module_arg ? __module__ : current_module(), ex.args[i+1].args[2]) for i = 1:n_rng]
+        rngs = [Core.eval(__module__, ex.args[i+1].args[2]) for i = 1:n_rng]
         rng_lengths = map(length, rngs)
 
         f = gensym()
@@ -261,29 +294,33 @@ macro MArray(ex)
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
             end
-        elseif ex.args[1] == :eye
+        elseif ex.args[1] == :eye # deprecated
             if length(ex.args) == 2
                 return quote
-                    eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))}})
+                    Base.depwarn("`@MArray eye(m)` is deprecated, use `MArray{m,m}(1.0I)` instead", :eye)
+                    MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))},Float64}(I)
                 end
             elseif length(ex.args) == 3
                 # We need a branch, depending if the first argument is a type or a size.
                 return quote
                     if isa($(esc(ex.args[2])), DataType)
-                        eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))})
+                        Base.depwarn("`@MArray eye(T, m)` is deprecated, use `MArray{m,m,T}(I)` instead", :eye)
+                        MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))}(I)
                     else
-                        eye(MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}})
+                        Base.depwarn("`@MArray eye(m, n)` is deprecated, use `MArray{m,n}(1.0I)` instead", :eye)
+                        MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}, Float64}(I)
                     end
                 end
             elseif length(ex.args) == 4
                 return quote
-                    eye(MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))})
+                    Base.depwarn("`@MArray eye(T, m, n)` is deprecated, use `MArray{m,n,T}(I)` instead", :eye)
+                    MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))}(I)
                 end
             else
                 error("Bad eye() expression for @MArray")
             end
         else
-            error("@MArray only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@MArray only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @MArray")

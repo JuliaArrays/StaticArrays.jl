@@ -1,3 +1,5 @@
+using StaticArrays, Test, LinearAlgebra
+
 @testset "AbstractArray interface" begin
     @testset "size and length" begin
         m = @SMatrix [1 2 3; 4 5 6; 7 8 9; 10 11 12]
@@ -25,18 +27,18 @@
         @test @inferred(similar_type(SVector{2,Int}, Float64, Size(3,3,3))) == SArray{Tuple{3,3,3}, Float64, 3, 27}
 
         # Some specializations for the mutable case
-        @test @inferred(similar_type(MVector{3,Int}, Float64)) == SVector{3,Float64}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Size(2))) == SVector{2, Int}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == SVector{2, Float64}
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == SVector{2, Float64}
+        @test @inferred(similar_type(MVector{3,Int}, Float64)) == MVector{3,Float64}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Size(2))) == MVector{2, Int}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == MVector{2, Float64}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64, Size(2))) == MVector{2, Float64}
 
-        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64)) == SMatrix{3, 3, Float64, 9}
-        @test @inferred(similar_type(MVector{2,Int}, Size(3,3))) == SMatrix{3, 3, Int, 9}
-        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3))) == SMatrix{3, 3, Float64, 9}
+        @test @inferred(similar_type(MMatrix{3,3,Int,9}, Float64)) == MMatrix{3, 3, Float64, 9}
+        @test @inferred(similar_type(MVector{2,Int}, Size(3,3))) == MMatrix{3, 3, Int, 9}
+        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3))) == MMatrix{3, 3, Float64, 9}
 
-        @test @inferred(similar_type(MArray{Tuple{4,4,4},Int,3,64}, Float64)) == SArray{Tuple{4,4,4}, Float64, 3, 64}
-        @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == SArray{Tuple{3,3,3}, Int, 3, 27}
-        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == SArray{Tuple{3,3,3}, Float64, 3, 27}
+        @test @inferred(similar_type(MArray{Tuple{4,4,4},Int,3,64}, Float64)) == MArray{Tuple{4,4,4}, Float64, 3, 64}
+        @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == MArray{Tuple{3,3,3}, Int, 3, 27}
+        @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == MArray{Tuple{3,3,3}, Float64, 3, 27}
     end
 
     @testset "similar" begin
@@ -66,6 +68,12 @@
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
     end
 
+    @testset "similar and Base.Slice (issue #548)" begin
+        v = @SVector [1]
+        b = similar(v, Int, Base.Slice(SOneTo(3)))
+        @test b isa MVector{3,Int}
+    end
+
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
@@ -83,20 +91,5 @@
     @testset "copy" begin
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
         @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
-    end
-
-    @testset "full" begin
-        m_a = [0.831333 -1.91207; 0.200986  -0.69399]
-        m_a = m_a*m_a.'
-        m = SMatrix{2,2}(m_a)
-        @test @inferred(full(Symmetric(m))) == m_a
-        @test @inferred(full(Symmetric(m, :L))) == m_a
-
-        m_a = [0.34911-2.08735im   -0.438891-0.446692im;
-               -0.666533-0.652323im   0.834871-2.10413im]
-        m_a = m_a*m_a'
-        m = SMatrix{2,2}(m_a)
-        @test @inferred(full(Hermitian(m))) == m_a
-        @test @inferred(full(Hermitian(m, :L))) == m_a
     end
 end

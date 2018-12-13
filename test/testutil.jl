@@ -1,6 +1,3 @@
-using Base.Test, StaticArrays
-using Compat
-
 """
     x ≊ y
 
@@ -37,10 +34,5 @@ end
 end
 
 function test_expand_error(ex)
-    if VERSION >= v"0.7.0-DEV.1729"
-        @test_throws LoadError macroexpand(@__MODULE__, ex)
-    else
-        ex = macroexpand(@__MODULE__, ex)
-        @test isa(ex, Expr) && ex.head == :error
-    end
+    @test_throws LoadError macroexpand(@__MODULE__, ex)
 end
