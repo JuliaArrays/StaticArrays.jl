@@ -95,5 +95,7 @@ using StaticArrays, Test, LinearAlgebra
 
     @testset "reverse" begin
         @test @inferred(reverse(SVector(1, 2, 3))) ≡ SVector(3, 2, 1)
+        m = MVector(1, 2, 3)
+        @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
     end
 end
