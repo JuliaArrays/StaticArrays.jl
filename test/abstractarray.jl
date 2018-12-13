@@ -72,7 +72,11 @@ using StaticArrays: IdentityUnitRange
     @testset "similar and Base.Slice/IdentityUnitRange (issues #548, #556)" begin
         v = @SVector [1]
         b = similar(v, Int, IdentityUnitRange(SOneTo(3)))
+        m = @SMatrix [1 2; 3 4]
         @test b isa MVector{3,Int}
+        @test m[:, 1:2] isa MMatrix{2,1,Int}
+        @test m[:, [true, false]] isa MMatrix{2,1,Int}
+        @test m[:, 1] isa SVector{2,Int}
     end
 
     @testset "reshape" begin
