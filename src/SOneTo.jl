@@ -19,6 +19,11 @@ Base.axes(s::SOneTo) = (s,)
 Base.size(s::SOneTo) = (length(s),)
 Base.length(s::SOneTo{n}) where {n} = n
 
+# The axes of a Slice'd SOneTo use the SOneTo itself
+Base.axes(S::Base.Slice{<:SOneTo}) = (S.indices,)
+Base.unsafe_indices(S::Base.Slice{<:SOneTo}) = (S.indices,)
+Base.axes1(S::Base.Slice{<:SOneTo}) = S.indices
+
 @propagate_inbounds function Base.getindex(s::SOneTo, i::Int)
     @boundscheck checkbounds(s, i)
     return i
