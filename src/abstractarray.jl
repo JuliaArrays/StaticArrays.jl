@@ -126,11 +126,12 @@ similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray
 similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 
-const SOneToLike{n} = Union{Integer, SOneTo{n}, IdentityUnitRange{SOneTo{n}}}
+const SOneToLike = Union{Integer, SOneTo, IdentityUnitRange{<:SOneTo}}
+similar(::SA, ::Type{T}, shape::Base.Dims) where {SA<:StaticArray,T} = similar(SA, T, Size(shape))
 deslice(ax::Integer) = Int(ax)
 deslice(ax::SOneTo) = ax
 deslice(ax::IdentityUnitRange) = ax.indices
-similar(::A,::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
+similar(::A, ::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
 similar(::Type{A},::Type{T}, shape::Tuple{SOneToLike, Vararg{SOneToLike}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(deslice.(shape))))
 
 # Handle mixtures of SOneTo and other ranges (probably should make Base more robust here)
