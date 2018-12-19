@@ -73,6 +73,14 @@ using StaticArrays, Test
         @test @SVector([1,2,3,4])[@SMatrix([1 2; 3 4])] === @SMatrix([1 2; 3 4])
     end
 
+    @testset "2D getindex() on SVector" begin
+        v = @SVector [1,2]
+        @test v[1,1] == 1
+        @test v[2,1] == 2
+        @test_throws BoundsError v[1,2]
+        @test_throws BoundsError v[3,1]
+    end
+
     @testset "2D getindex() on SMatrix" begin
         sm = @SMatrix [1 3; 2 4]
 
