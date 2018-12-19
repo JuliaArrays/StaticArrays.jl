@@ -126,6 +126,11 @@ similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray
 similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
 
+# When all sizes are SOneTo, preserve
+Base.to_shape(shp::Tuple{SOneTo, Vararg{SOneTo}}) = shp
+# If you have a mixture of SOneTo and other ranges, fall back to Base types
+Base.to_shape(s::SOneTo{n}) where n = n
+
 const SOneToLike{n} = Union{SOneTo{n}, Base.Slice{SOneTo{n}}}
 deslice(ax::SOneTo) = ax
 deslice(ax::Base.Slice) = ax.indices

@@ -69,6 +69,12 @@ using StaticArrays, Test
         @test (v[SVector(2,3)] = [22,23]; (v[2] == 22) & (v[3] == 23))
     end
 
+    @testset "Cartesian getindex() with an SVector on an Array" begin
+        a = rand(2, 2)
+        p = @SVector([1,2])
+        @test a[p, :] == a[:, p] == a[p, p] == a[Vector(p), p] == a[p, Vector(p)] == a
+    end
+
     @testset "Fancy APL indexing" begin
         @test @SVector([1,2,3,4])[@SMatrix([1 2; 3 4])] === @SMatrix([1 2; 3 4])
     end
