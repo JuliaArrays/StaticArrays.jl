@@ -199,7 +199,7 @@ end
 
 # getindex
 
-@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Any, Int}, Colon}...)
+@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Tuple, Int}, Colon}...)
     _getindex(a, index_sizes(Size(a), inds...), inds)
 end
 
@@ -247,7 +247,7 @@ end
 
 # setindex!
 
-@propagate_inbounds function setindex!(a::StaticArray, value, inds::Union{Int, StaticArray{<:Any, Int}, Colon}...)
+@propagate_inbounds function setindex!(a::StaticArray, value, inds::Union{Int, StaticArray{<:Tuple, Int}, Colon}...)
     _setindex!(a, value, index_sizes(Size(a), inds...), inds)
 end
 

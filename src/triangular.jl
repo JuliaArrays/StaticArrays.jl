@@ -193,7 +193,7 @@ end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Tuple,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
     m = sa[1]
     if length(sa) == 1
         n = 1
@@ -225,7 +225,7 @@ end
     end
 end
 
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Tuple,TA}, B::UpperTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
     m = sa[1]
     if length(sa) == 1
         n = 1
@@ -284,7 +284,7 @@ end
     end
 end
 
-@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+@generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::StaticArray{<:Tuple,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
     m = sa[1]
     if length(sa) == 1
         n = 1
@@ -316,7 +316,7 @@ end
     end
 end
 
-@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Any,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
+@generated function _A_mul_Bc(::Size{sa}, ::Size{sb}, A::StaticArray{<:Tuple,TA}, B::LowerTriangular{TB,<:StaticMatrix}) where {sa,sb,TA,TB}
     m = sa[1]
     if length(sa) == 1
         n = 1

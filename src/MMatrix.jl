@@ -57,7 +57,7 @@ end
     end
 end
 
-@inline convert(::Type{MMatrix{S1,S2}}, a::StaticArray{<:Any, T}) where {S1,S2,T} = MMatrix{S1,S2,T}(Tuple(a))
+@inline convert(::Type{MMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = MMatrix{S1,S2,T}(Tuple(a))
 @inline MMatrix(a::StaticMatrix) = MMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
 
 # Simplified show for the type

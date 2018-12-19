@@ -76,7 +76,7 @@ end
 # could also be justified to live in src/indexing.jl
 import Base.setindex
 @propagate_inbounds setindex(a::StaticArray, x, index::Int) = _setindex(Length(a), a, convert(eltype(typeof(a)), x), index)
-@generated function _setindex(::Length{L}, a::StaticArray{<:Any,T}, x::T, index::Int) where {L, T}
+@generated function _setindex(::Length{L}, a::StaticArray{<:Tuple,T}, x::T, index::Int) where {L, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:L]
     return quote
         @_propagate_inbounds_meta

@@ -193,7 +193,7 @@ end
     end
 end
 
-@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticArray{<:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticArray{<:Tuple, Tb}) where {sa, sb, Ta, Tb}
     if sa[2] != sb[1]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
