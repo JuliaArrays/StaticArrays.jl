@@ -122,7 +122,7 @@ end
     v.data[i]
 end
 
-@inline function setindex!(v::MArray, val, i::Int)
+@propagate_inbounds function setindex!(v::MArray, val, i::Int)
     @boundscheck checkbounds(v,i)
     T = eltype(v)
 

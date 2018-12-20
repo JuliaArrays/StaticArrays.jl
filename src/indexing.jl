@@ -9,7 +9,7 @@ setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), valu
 # Note: all indexing behavior defaults to dense, linear indexing
 
 @propagate_inbounds function getindex(a::StaticArray, inds::Int...)
-    @boundscheck checkbounds(a, inds...) 
+    @boundscheck checkbounds(a, inds...)
     _getindex_scalar(Size(a), a, inds...)
 end
 
@@ -31,7 +31,7 @@ end
 end
 
 @propagate_inbounds function setindex!(a::StaticArray, value, inds::Int...)
-    @boundscheck checkbounds(a, inds...) 
+    @boundscheck checkbounds(a, inds...)
     _setindex!_scalar(Size(a), a, value, inds...)
 end
 
