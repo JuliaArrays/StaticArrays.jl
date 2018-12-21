@@ -10,9 +10,9 @@ using Base.Broadcast: _bcsm
 # A constructor that changes the style parameter N (array dimension) is also required
 struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
 StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
-BroadcastStyle(::Type{<:StaticArray{<:Any, <:Any, N}}) where {N} = StaticArrayStyle{N}()
-BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
-BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Any, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:StaticArray{<:Tuple, <:Any, N}}) where {N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray{<:Tuple, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
+BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray{<:Tuple, <:Any, N}}}) where {N} = StaticArrayStyle{N}()
 # Precedence rules
 BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
     DefaultArrayStyle(Val(max(M, N)))

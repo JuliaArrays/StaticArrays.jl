@@ -176,23 +176,23 @@ end
 # with an initial value v0 = true and false.
 #
 # TODO: change to use Base.reduce_empty/Base.reduce_first
-@inline iszero(a::StaticArray{<:Any,T}) where {T} = reduce((x,y) -> x && iszero(y), a, init=true)
+@inline iszero(a::StaticArray{<:Tuple,T}) where {T} = reduce((x,y) -> x && iszero(y), a, init=true)
 
-@inline sum(a::StaticArray{<:Any,T}; dims=:) where {T} = reduce(+, a; dims=dims)
-@inline sum(f, a::StaticArray{<:Any,T}; dims=:) where {T} = mapreduce(f, +, a; dims=dims)
-@inline sum(f::Union{Function, Type}, a::StaticArray{<:Any,T}; dims=:) where {T} = mapreduce(f, +, a; dims=dims) # avoid ambiguity
+@inline sum(a::StaticArray{<:Tuple,T}; dims=:) where {T} = reduce(+, a; dims=dims)
+@inline sum(f, a::StaticArray{<:Tuple,T}; dims=:) where {T} = mapreduce(f, +, a; dims=dims)
+@inline sum(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims=:) where {T} = mapreduce(f, +, a; dims=dims) # avoid ambiguity
 
-@inline prod(a::StaticArray{<:Any,T}; dims=:) where {T} = reduce(*, a; dims=dims)
-@inline prod(f, a::StaticArray{<:Any,T}; dims=:) where {T} = mapreduce(f, *, a; dims=dims)
-@inline prod(f::Union{Function, Type}, a::StaticArray{<:Any,T}; dims=:) where {T} = mapreduce(f, *, a; dims=dims)
+@inline prod(a::StaticArray{<:Tuple,T}; dims=:) where {T} = reduce(*, a; dims=dims)
+@inline prod(f, a::StaticArray{<:Tuple,T}; dims=:) where {T} = mapreduce(f, *, a; dims=dims)
+@inline prod(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims=:) where {T} = mapreduce(f, *, a; dims=dims)
 
-@inline count(a::StaticArray{<:Any,Bool}; dims=:) = reduce(+, a; dims=dims)
+@inline count(a::StaticArray{<:Tuple,Bool}; dims=:) = reduce(+, a; dims=dims)
 @inline count(f, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, +, a; dims=dims)
 
-@inline all(a::StaticArray{<:Any,Bool}; dims=:) = reduce(&, a; dims=dims, init=true)  # non-branching versions
+@inline all(a::StaticArray{<:Tuple,Bool}; dims=:) = reduce(&, a; dims=dims, init=true)  # non-branching versions
 @inline all(f::Function, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, &, a; dims=dims, init=true)
 
-@inline any(a::StaticArray{<:Any,Bool}; dims=:) = reduce(|, a; dims=dims, init=false) # (benchmarking needed)
+@inline any(a::StaticArray{<:Tuple,Bool}; dims=:) = reduce(|, a; dims=dims, init=false) # (benchmarking needed)
 @inline any(f::Function, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, |, a; dims=dims, init=false) # (benchmarking needed)
 
 _mean_denom(a, dims::Colon) = length(a)

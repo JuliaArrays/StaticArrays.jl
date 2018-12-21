@@ -91,7 +91,7 @@ const StaticMatrixLike{T} = Union{
     Diagonal{T, <:StaticVector{<:Any, T}}
 }
 const StaticVecOrMatLike{T} = Union{StaticVector{<:Any, T}, StaticMatrixLike{T}}
-const StaticArrayLike{T} = Union{StaticVecOrMatLike{T}, StaticArray{<:Any, T}}
+const StaticArrayLike{T} = Union{StaticVecOrMatLike{T}, StaticArray{<:Tuple, T}}
 
 const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
 const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
