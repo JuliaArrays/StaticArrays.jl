@@ -28,6 +28,8 @@ size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
 \(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Db.diag ./ Da.diag)
 /(Da::SDiagonal, Db::SDiagonal) = SDiagonal(Da.diag ./ Db.diag )
 
+\(D::Diagonal, B::StaticMatrix) = ldiv!(D, Matrix(B))
+
 # override to avoid copying
 diag(D::SDiagonal) = D.diag
 

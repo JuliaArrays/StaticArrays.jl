@@ -138,3 +138,6 @@ end
 
 # Base.lufact() interface is fairly inherently type unstable.  Punt on
 # implementing that, for now...
+
+\(F::LU, v::AbstractVector) = F.U \ (F.L \ v[F.p])
+\(F::LU, B::AbstractMatrix) = F.U \ (F.L \ B[F.p,:])
