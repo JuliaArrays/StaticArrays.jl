@@ -141,3 +141,5 @@ end
 
 \(F::LU, v::AbstractVector) = F.U \ (F.L \ v[F.p])
 \(F::LU, B::AbstractMatrix) = F.U \ (F.L \ B[F.p,:])
+
+/(vB::AbstractVecOrMat, F::LU) = ((vB/F.U)/F.L)[:,F.p]

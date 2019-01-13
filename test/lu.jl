@@ -41,4 +41,21 @@ using StaticArrays, Test, LinearAlgebra
     else
         @test_broken l*u ≈ a[p,:]
     end
+
+    # / and \ work with lu
+    b = SMatrix{m,n,Int}(rand(m*n))
+    @test a\b ≈ lu(a, Val{pivot}())\b
+    @test b/a ≈ b/lu(a, Val{pivot}())
+
+end
+
+@testset "LU division ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
+    a = SMatrix{m,n,Int}(1:(m*n))
+    a_lu = lu(a, Val{pivot}())
+    b = SMatrix{m,n,Int}([i+j for i in 1:m, j in 1:n])
+
+    # / and \ work with lu:
+    @test a\b ≈ a_lu\b
+    @test b/a ≈ b/a_lu
+
 end
