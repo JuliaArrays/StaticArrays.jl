@@ -142,4 +142,8 @@ end
 \(F::LU, v::AbstractVector) = F.U \ (F.L \ v[F.p])
 \(F::LU, B::AbstractMatrix) = F.U \ (F.L \ B[F.p,:])
 
-/(vB::AbstractVecOrMat, F::LU) = ((vB/F.U)/F.L)[:,F.p]
+function /(B::AbstractMatrix, F::LU)
+    pivot = similar(F.p)
+    pivot[F.p] = 1:length(F.p)
+    ((B/F.U)/F.L)[:,pivot]
+end
