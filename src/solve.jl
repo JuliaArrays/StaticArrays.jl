@@ -26,16 +26,16 @@ end
             (a[1,1]*a[2,2] - a[1,2]*a[2,1])*b[3]) / d )
 end
 
-for Dim in 2:3  # no improvements for Dim = 1 and if no specialized solve is available
+for Sa in 2:3  # not needed for Sa = 1;
     @eval begin
-    @inline function solve(::Size{($Dim,$Dim)}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {Sb, Ta, Tb}
+    @inline function solve(::Size{($Sa,$Sa)}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {Sb, Ta, Tb}
         d = det(a)
         T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/d)
         c = similar(b, T)
         for col = 1:Sb[2]
-            @inbounds c[:, col] = solve(Size($Dim,$Dim), Size($Dim,), a, b[:, col])
+            @inbounds c[:, col] = solve(Size($Sa,$Sa), Size($Sa,), a, b[:, col])
         end
-        return c
+        return similar_type(b, T)(c)
     end
     end # @eval
 end
