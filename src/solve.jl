@@ -28,15 +28,15 @@ end
 
 for Sa in 2:3  # not needed for Sa = 1;
     @eval begin
-    @inline function solve(::Size{($Sa,$Sa)}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {Sb, Ta, Tb}
-        d = det(a)
-        T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/d)
-        c = similar(b, T)
-        for col = 1:Sb[2]
-            @inbounds c[:, col] = solve(Size($Sa,$Sa), Size($Sa,), a, b[:, col])
+        @inline function solve(::Size{($Sa,$Sa)}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {Sb, Ta, Tb}
+            d = det(a)
+            T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/d)
+            c = similar(b, T)
+            for col = 1:Sb[2]
+                @inbounds c[:, col] = solve(Size($Sa,$Sa), Size($Sa,), a, b[:, col])
+            end
+            return similar_type(b, T)(c)
         end
-        return similar_type(b, T)(c)
-    end
     end # @eval
 end
 
