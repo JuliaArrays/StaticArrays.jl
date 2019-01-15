@@ -26,7 +26,7 @@ end
             (a[1,1]*a[2,2] - a[1,2]*a[2,1])*b[3]) / d )
 end
 
-for Sa in [(2,2), (3,3)]  # not needed for Sa = 1;
+for Sa in [(2,2), (3,3)]  # not needed for Sa = (1, 1);
     @eval begin
         @inline function solve(::Size{$Sa}, ::Size{Sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {Sb, Ta, Tb}
             d = det(a)
