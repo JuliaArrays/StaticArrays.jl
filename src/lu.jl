@@ -143,10 +143,3 @@ end
 \(F::LU, B::AbstractMatrix) = F.U \ (F.L \ B[F.p,:])
 
 /(B::AbstractMatrix, F::LU) = @inbounds ((B/F.U)/F.L)[:,invperm(F.p)]
-
-Base.@propagate_inbounds function Base.invperm(p::StaticVector)
-    # in difference to base, this does not check if p is a permutation (every value unique)
-     ip = similar(p)
-     ip[p] = 1:length(p)
-     similar_type(p)(ip)
-end
