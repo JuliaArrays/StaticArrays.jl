@@ -26,7 +26,7 @@ end
               i == newlen ? :(ifelse($i == index, x, vec[$i-1])) :
               :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:newlen]
     return quote
-        @_inline_meta
+        @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $newlen)
             throw(BoundsError(vec, index))
         end
@@ -60,7 +60,7 @@ end
     newlen = s[1] - 1
     exprs = [:(ifelse($i < index, vec[$i], vec[$i+1])) for i = 1:newlen]
     return quote
-        @_inline_meta
+        @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $(s[1]))
             throw(BoundsError(vec, index))
         end
@@ -76,7 +76,7 @@ end
 # could also be justified to live in src/indexing.jl
 import Base.setindex
 @propagate_inbounds setindex(a::StaticArray, x, index::Int) = _setindex(Length(a), a, convert(eltype(typeof(a)), x), index)
-@generated function _setindex(::Length{L}, a::StaticArray{<:Any,T}, x::T, index::Int) where {L, T}
+@generated function _setindex(::Length{L}, a::StaticArray{<:Tuple,T}, x::T, index::Int) where {L, T}
     exprs = [:(ifelse($i == index, x, a[$i])) for i = 1:L]
     return quote
         @_propagate_inbounds_meta

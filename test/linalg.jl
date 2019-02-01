@@ -116,6 +116,10 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(dot(v1, -v2)) === -40
         @test @inferred(dot(v1*im, v2*im)) === 40*im*conj(im)
         @test @inferred(StaticArrays.bilinear_vecdot(v1*im, v2*im)) === 40*im*im
+        # inner product, whether via `dot` or written out as `x'*y`, should be recursive like Base:
+        @test @inferred(dot(@SVector[[1,2],[3,4]], @SVector[[1,2],[3,4]])) === 30
+        @test @inferred(@SVector[[1,2],[3,4]]' * @SVector[[1,2],[3,4]]) === 30
+
     end
 
     @testset "transpose() and conj()" begin
@@ -189,6 +193,23 @@ using StaticArrays, Test, LinearAlgebra
                 allocs = @allocated vcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
                 @test allocs == 0
             end
+        end
+
+        # issue #561
+        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
+            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
+        end
+
+        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
+            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
+        end
+
+        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
+            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
+        end
+
+        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
+            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
         end
     end
 

@@ -90,7 +90,5 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 # certain algorithms where the number of elements of the output is a lot larger
 # than the input.
 # """
-@inline drop_sdims(a::StaticArray) = TrivialView(a)
-@inline drop_sdims(a::Transpose{<:Number, <:StaticArray}) = TrivialView(a)
-@inline drop_sdims(a::Adjoint{<:Number, <:StaticArray}) = TrivialView(a)
+@inline drop_sdims(a::StaticArrayLike) = TrivialView(a)
 @inline drop_sdims(a) = a

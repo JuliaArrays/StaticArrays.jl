@@ -68,6 +68,29 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
     end
 
+    @testset "similar and Base.Slice/IdentityUnitRange (issues #548, #556)" begin
+        v = @SVector [1,2,3]
+        m = @SMatrix [1 2 3; 4 5 6]
+        @test similar(v, Int, SOneTo(3)) isa MVector{3,Int}
+        @test similar(v, Int, SOneTo(3), SOneTo(4)) isa MMatrix{3,4,Int}
+        @test similar(v, Int, 3, SOneTo(4)) isa Matrix
+        @test similar(v, SOneTo(3)) isa MVector{3,Int}
+        @test similar(v, SOneTo(3), SOneTo(4)) isa MMatrix{3,4,Int}
+        @test similar(v, 3, SOneTo(4)) isa Matrix
+
+        @test m[:, 1:2] isa Matrix
+        @test m[:, [true, false, false]] isa Matrix
+        @test m[:, SOneTo(2)] isa MMatrix{2, 2, Int}
+        @test m[:, :] isa SMatrix{2, 3, Int}
+        @test m[:, 1] isa SVector{2, Int}
+        @test m[2, :] isa SVector{3, Int}
+
+        # Test case that failed in AstroLib.jl
+        r = @view(m[:, 2:3]) * @view(v[1:2])
+        @test r == m[:, 2:3] * v[1:2] == Array(m)[:, 2:3] * Array(v)[1:2]
+    end
+
+
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
@@ -85,5 +108,11 @@ using StaticArrays, Test, LinearAlgebra
     @testset "copy" begin
         @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
         @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
+    end
+
+    @testset "reverse" begin
+        @test @inferred(reverse(SVector(1, 2, 3))) ≡ SVector(3, 2, 1)
+        m = MVector(1, 2, 3)
+        @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
     end
 end

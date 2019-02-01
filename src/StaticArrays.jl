@@ -6,7 +6,7 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
-             copy, read, read!, write
+             copy, read, read!, write, reverse
 
 import Statistics: mean
 
@@ -77,6 +77,21 @@ const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
 const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
 const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
 const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
+
+# Being a member of StaticMatrixLike, StaticVecOrMatLike, or StaticArrayLike implies that Size(A)
+# returns a static Size instance (none of the dimensions are Dynamic). The converse may not be true.
+# These are akin to aliases like StridedArray and in similarly bad taste, but the current approach
+# in Base necessitates their existence.
+const StaticMatrixLike{T} = Union{
+    StaticMatrix{<:Any, <:Any, T},
+    Transpose{T, <:StaticVecOrMat{T}},
+    Adjoint{T, <:StaticVecOrMat{T}},
+    Symmetric{T, <:StaticMatrix{T}},
+    Hermitian{T, <:StaticMatrix{T}},
+    Diagonal{T, <:StaticVector{<:Any, T}}
+}
+const StaticVecOrMatLike{T} = Union{StaticVector{<:Any, T}, StaticMatrixLike{T}}
+const StaticArrayLike{T} = Union{StaticVecOrMatLike{T}, StaticArray{<:Tuple, T}}
 
 const AbstractScalar{T} = AbstractArray{T, 0} # not exported, but useful none-the-less
 const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}

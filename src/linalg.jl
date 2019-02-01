@@ -88,11 +88,11 @@ end
     end
 end
 
-@inline vcat(a::StaticVecOrMat) = a
-@inline vcat(a::StaticVecOrMat, b::StaticVecOrMat) = _vcat(Size(a), Size(b), a, b)
-@inline vcat(a::StaticVecOrMat, b::StaticVecOrMat, c::StaticVecOrMat...) = vcat(vcat(a,b), vcat(c...))
+@inline vcat(a::StaticVecOrMatLike) = a
+@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _vcat(Size(a), Size(b), a, b)
+@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = vcat(vcat(a,b), vcat(c...))
 
-@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMat, b::StaticVecOrMat) where {Sa, Sb}
+@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Size(Sa)[2] != Size(Sb)[2]
         throw(DimensionMismatch("Tried to vcat arrays of size $Sa and $Sb"))
     end
@@ -116,11 +116,11 @@ end
 end
 
 @inline hcat(a::StaticVector) = similar_type(a, Size(Size(a)[1],1))(a)
-@inline hcat(a::StaticMatrix) = a
-@inline hcat(a::StaticVecOrMat, b::StaticVecOrMat) = _hcat(Size(a), Size(b), a, b)
-@inline hcat(a::StaticVecOrMat, b::StaticVecOrMat, c::StaticVecOrMat...) = hcat(hcat(a,b), hcat(c...))
+@inline hcat(a::StaticMatrixLike) = a
+@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _hcat(Size(a), Size(b), a, b)
+@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = hcat(hcat(a,b), hcat(c...))
 
-@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMat, b::StaticVecOrMat) where {Sa, Sb}
+@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Sa[1] != Sb[1]
         throw(DimensionMismatch("Tried to hcat arrays of size $Sa and $Sb"))
     end
@@ -228,9 +228,9 @@ end
         return :(zero(promote_op(*, eltype(a), eltype(b))))
     end
 
-    expr = :(conj(a[1]) * b[1])
+    expr = :(adjoint(a[1]) * b[1])
     for j = 2:prod(S)
-        expr = :($expr + conj(a[$j]) * b[$j])
+        expr = :($expr + adjoint(a[$j]) * b[$j])
     end
 
     return quote
@@ -490,12 +490,6 @@ end
         @inbounds return  similar_type($b, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
-
-
-@inline Size(::Type{<:Adjoint{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
-@inline Size(::Type{<:Transpose{T, SA}}) where {T, SA <: StaticVecOrMat} = Size(Size(SA)[2], Size(SA)[1])
-@inline Size(::Type{Symmetric{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
-@inline Size(::Type{Hermitian{T, SA}}) where {T, SA<:StaticArray} = Size(SA)
 
 # some micro-optimizations (TODO check these make sense for v0.6+)
 @inline LinearAlgebra.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))

@@ -15,7 +15,20 @@ using StaticArrays, Test, LinearAlgebra
     v = @SVector ones(4)
     @test_throws DimensionMismatch m1\v
     @test_throws DimensionMismatch m1\m2
+
+    # Mixed static/dynamic arrays
+    # \ specializes for Diagonal, LowerTriangular, UpperTriangular, square, and non-square
+    # So try all of these
+    @testset "Mixed static/dynamic" begin
+        v = @SVector([0.2,0.3])
+        for m in (@SMatrix([1.0 0; 0 1.0]), @SMatrix([1.0 0; 1.0 1.0]),
+                  @SMatrix([1.0 1.0; 0 1.0]), @SMatrix([1.0 0.5; 0.25 1.0]))
+            # TODO: include @SMatrix([1.0 0.0 0.0; 1.0 2.0 0.5]), need qr methods
+            @test m \ v ≈ Array(m) \ v ≈ m \ Array(v) ≈ Array(m) \ Array(v)
+        end
+    end
 end
+
 
 @testset "Solving linear system (multiple RHS)" begin
     @testset "Problem size: $n x $n. Matrix type: $m1. Element type: $elty" for n in (1,2,3,4,5,8,15),
@@ -25,5 +38,15 @@ end
         A = elty.(rand(-99:2:99, n, n))
         b = A * elty.(rand(2:5, n, 2))
         @test m1(A)\m2(b) ≈ A\b
+
+    end
+
+    @testset "Mixed static/dynamic" begin
+        m2 = @SMatrix([0.2 0.3; 0.0 0.1])
+        for m1 in (@SMatrix([1.0 0; 0 1.0]), @SMatrix([1.0 0; 1.0 1.0]),
+                   @SMatrix([1.0 1.0; 0 1.0]), @SMatrix([1.0 0.5; 0.25 1.0]))
+            # TODO: include @SMatrix([1.0 0.0 0.0; 1.0 2.0 0.5]), need qr methods
+            @test m1 \ m2 ≈ Array(m1) \ m2 ≈ m1 \ Array(m2) ≈ Array(m1) \ Array(m2)
+        end
     end
 end

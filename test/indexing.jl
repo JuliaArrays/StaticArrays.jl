@@ -33,6 +33,12 @@ using StaticArrays, Test
         @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
         @test (mv[SVector(1,2,3,4)] = 2; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((2,2,2,2)))
 
+        mv = MVector(0,0,0)
+        @test (mv[SVector(1,3)] = [4, 5]; (@inferred mv == MVector(4,0,5)))
+
+        mv = MVector(0,0,0)
+        @test (mv[SVector(1,3)] = SVector(4, 5); (@inferred mv == MVector(4,0,5)))
+
         # Colon
         mv = MVector{4,Int}(undef)
         @test (mv[:] = vec; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
@@ -65,6 +71,14 @@ using StaticArrays, Test
 
     @testset "Fancy APL indexing" begin
         @test @SVector([1,2,3,4])[@SMatrix([1 2; 3 4])] === @SMatrix([1 2; 3 4])
+    end
+
+    @testset "2D getindex() on SVector" begin
+        v = @SVector [1,2]
+        @test v[1,1] == 1
+        @test v[2,1] == 2
+        @test_throws BoundsError v[1,2]
+        @test_throws BoundsError v[3,1]
     end
 
     @testset "2D getindex() on SMatrix" begin

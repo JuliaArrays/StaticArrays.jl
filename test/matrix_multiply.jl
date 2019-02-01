@@ -77,6 +77,41 @@ using StaticArrays, Test, LinearAlgebra
         @test v4 * transpose(v5) === @SMatrix [3+0im 4+0im; 6+0im 8+0im]
     end
 
+    @testset "Column vector-vector" begin
+        cv_array = rand(4,1)
+        rv_array = rand(4)
+        a_array = cv_array * rv_array'
+
+        cv = SMatrix{4,1}(cv_array)
+        rv = SVector{4}(rv_array)
+        @test (cv*adjoint(rv))::SMatrix ≈ a_array
+
+        cv = MMatrix{4,1}(cv_array)
+        rv = MVector{4}(rv_array)
+        @test (cv*adjoint(rv))::SMatrix ≈ a_array
+
+        cv = SMatrix{4,1}(cv_array)
+        rv = SVector{4}(rv_array)
+        @test (cv*transpose(rv))::SMatrix ≈ a_array
+
+        cv = MMatrix{4,1}(cv_array)
+        rv = MVector{4}(rv_array)
+        @test (cv*transpose(rv))::SMatrix ≈ a_array
+
+        cv_bad = @SMatrix rand(4,2)
+        rv = @SVector rand(4)
+        @test_throws DimensionMismatch cv_bad*transpose(rv)
+        @test_throws DimensionMismatch cv_bad*adjoint(rv)
+        @test_throws DimensionMismatch cv_bad*rv
+
+        cv_bad = @MMatrix rand(4,2)
+        rv = @MVector rand(4)
+
+        @test_throws DimensionMismatch cv_bad*transpose(rv)
+        @test_throws DimensionMismatch cv_bad*adjoint(rv)
+        @test_throws DimensionMismatch cv_bad*rv
+    end
+
     @testset "Matrix-matrix" begin
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]

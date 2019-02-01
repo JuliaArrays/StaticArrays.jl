@@ -1,13 +1,13 @@
-length(a::SA) where {SA <: StaticArray} = prod(Size(SA))
-length(a::Type{SA}) where {SA <: StaticArray} = prod(Size(SA))
+length(a::SA) where {SA <: StaticArrayLike} = length(SA)
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
 
-@pure size(::Type{<:StaticArray{S}}) where S = tuple(S.parameters...)
-@inline function size(t::Type{<:StaticArray}, d::Int)
+@pure size(::Type{SA}) where {SA <: StaticArrayLike} = get(Size(SA))
+@inline function size(t::Type{<:StaticArrayLike}, d::Int)
     S = size(t)
     d > length(S) ? 1 : S[d]
 end
-@inline size(a::StaticArray) = size(typeof(a))
-@inline size(a::StaticArray, d::Int) = size(typeof(a), d)
+@inline size(a::StaticArrayLike) = size(typeof(a))
+@inline size(a::StaticArrayLike, d::Int) = size(typeof(a), d)
 
 Base.axes(s::StaticArray) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}
@@ -107,6 +107,7 @@ similar(::Type{SA}) where {SA<:StaticArray} = similar(SA,eltype(SA))
 similar(::SA,::Type{T}) where {SA<:StaticArray,T} = similar(SA,T,Size(SA))
 similar(::Type{SA},::Type{T}) where {SA<:StaticArray,T} = similar(SA,T,Size(SA))
 
+# Cases where a Size is given as the dimensions
 similar(::A,s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s)
 similar(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s)
 
@@ -119,16 +120,19 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_s
 similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
 similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
 
-# We should be able to deal with SOneTo axes
-similar(::A, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
-similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, eltype(A), shape)
+# Support tuples of mixtures of `SOneTo`s alongside the normal `Integer` and `OneTo` options
+# by simply converting them to either a tuple of Ints or a Size, re-dispatching to either one
+# of the above methods (in the case of Size) or a base fallback (in the case of Ints).
+const HeterogeneousShape = Union{Integer, Base.OneTo, SOneTo}
 
-similar(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
-similar(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar(A, T, Size(last.(shape)))
+similar(A::AbstractArray, ::Type{T}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {T} = similar(A, T, homogenize_shape(shape))
+similar(::Type{A}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+# Use an Array for StaticArrays if we don't have a statically-known size
+similar(::Type{A}, shape::Tuple{Int, Vararg{Int}}) where {A<:StaticArray} = Array{eltype(A)}(undef, shape)
 
-# Handle mixtures of SOneTo and other ranges (probably should make Base more robust here)
-similar(::Type{A}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray} = similar(A, length.(shape)) # Jumps back to 2-argument form in Base
-similar(::Type{A},::Type{T}, shape::Tuple{AbstractUnitRange, Vararg{AbstractUnitRange}}) where {A<:AbstractArray,T} = similar(A, length.(shape))
+homogenize_shape(::Tuple{}) = ()
+homogenize_shape(shape::Tuple{Vararg{SOneTo}}) = Size(map(last, shape))
+homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
@@ -155,6 +159,8 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
 @inline copy(a::SizedArray) = typeof(a)(a)
+
+@inline reverse(v::StaticVector) = typeof(v)(reverse(Tuple(v)))
 
 # TODO permutedims?
 

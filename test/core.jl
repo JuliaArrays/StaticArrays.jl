@@ -149,6 +149,14 @@
     @test StaticArrays.check_length(2) == nothing
     @test StaticArrays.check_length(StaticArrays.Dynamic()) == nothing
 
+    @testset "Size" begin
+        @test Size(zero(SMatrix{2, 3})) == Size(2, 3)
+        @test Size(Transpose(zero(SMatrix{2, 3}))) == Size(3, 2)
+        @test Size(Adjoint(zero(SMatrix{2, 3}))) == Size(3, 2)
+        @test Size(Diagonal(SVector(1, 2, 3))) == Size(3, 3)
+        @test Size(Transpose(Diagonal(SVector(1, 2, 3)))) == Size(3, 3)
+    end
+
     @testset "dimmatch" begin
         @test StaticArrays.dimmatch(3, 3)
         @test StaticArrays.dimmatch(3, StaticArrays.Dynamic())
@@ -189,5 +197,10 @@
         b = StaticArrays.SOneTo{2}()
         @test @inferred(promote(a, b)) === (a, Base.OneTo(2))
         @test @inferred(promote(b, a)) === (Base.OneTo(2), a)
+
+        @test StaticArrays.SOneTo{2}(1:2) === StaticArrays.SOneTo{2}()
+        @test convert(StaticArrays.SOneTo{2}, 1:2) === StaticArrays.SOneTo{2}()
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:3)
+        @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:1)
     end
 end
