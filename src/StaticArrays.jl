@@ -98,7 +98,6 @@ const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
 
 include("util.jl")
 include("traits.jl")
-include("convert.jl")
 
 include("SUnitRange.jl")
 include("FieldVector.jl")
@@ -111,6 +110,8 @@ include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+
+include("convert.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")

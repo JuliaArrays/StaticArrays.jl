@@ -3,6 +3,7 @@
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
 @inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
+@inline (::Type{SA})(a::StaticArray) where {SA<:SizedArray} = SA(a.data)
 @propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
