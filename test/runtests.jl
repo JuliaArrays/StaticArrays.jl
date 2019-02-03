@@ -25,6 +25,7 @@ include("SizedArray.jl")
 include("SDiagonal.jl")
 
 include("custom_types.jl")
+include("convert.jl")
 include("core.jl")
 include("abstractarray.jl")
 include("indexing.jl")
