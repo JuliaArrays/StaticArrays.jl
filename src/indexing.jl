@@ -24,6 +24,9 @@ end
         end
         stride *= Size(S)[i]
     end
+    if length(inds) < 1
+        ind_expr = :(1)
+    end
     return quote
         @_propagate_inbounds_meta
         a[$ind_expr]
@@ -45,6 +48,9 @@ end
             ind_expr = :($ind_expr + $stride * (inds[$i] - 1))
         end
         stride *= S[i]
+    end
+    if length(inds) < 1
+        ind_expr = :(1)
     end
     return quote
         @_propagate_inbounds_meta

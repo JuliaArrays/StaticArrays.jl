@@ -28,7 +28,7 @@ end
 export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
-export MArray, MVector, MMatrix
+export MScalar, MArray, MVector, MMatrix
 export FieldVector
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
@@ -108,6 +108,7 @@ include("Scalar.jl")
 include("MArray.jl")
 include("MVector.jl")
 include("MMatrix.jl")
+include("MScalar.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
 
