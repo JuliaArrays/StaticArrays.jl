@@ -15,9 +15,6 @@ const MScalar{T} = MArray{Tuple{},T,0,1}
 end
 @inline convert(::Type{SA}, sa::SA) where {SA <: MScalar} = sa
 
-getindex(v::MScalar) = v[1]
-setindex!(v::MScalar, x) = v[1] = x
-
 # A lot more compact than the default array show
 Base.show(io::IO, ::MIME"text/plain", x::MScalar{T}) where {T} = print(io, "MScalar{$T}(", x.data, ")")
 
