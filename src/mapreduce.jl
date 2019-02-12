@@ -8,16 +8,21 @@
 # `map(f, as::Union{<:StaticArray,AbstractArray}...)` which included at least one `StaticArray`
 # this is not the case on 0.7 and we instead hope to find a StaticArray in the first two arguments.
 @inline function map(f, a1::StaticArray, as::AbstractArray...)
-    _map(f, same_size(a1, as...), a1, as...)
+    _map(f, a1, as...)
 end
 @inline function map(f, a1::AbstractArray, a2::StaticArray, as::AbstractArray...)
-    _map(f, same_size(a1, a2, as...), a1, a2, as...)
+    _map(f, a1, a2, as...)
 end
 @inline function map(f, a1::StaticArray, a2::StaticArray, as::AbstractArray...)
-    _map(f, same_size(a1, a2, as...), a1, a2, as...)
+    _map(f, a1, a2, as...)
 end
 
-@generated function _map(f, ::Size{S}, a::AbstractArray...) where {S}
+@generated function _map(f, a::AbstractArray...)
+    i = findfirst(ai -> ai <: StaticArray, a)
+    if i === nothing
+        return :(throw(ArgumentError("No StaticArray found in argument list")))
+    end
+    S = Size(a[i])
     exprs = Vector{Expr}(undef, prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
@@ -26,8 +31,9 @@ end
 
     return quote
         @_inline_meta
+        S = same_size(a...)
         @inbounds elements = tuple($(exprs...))
-        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), Size(S))(elements)
+        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), S)(elements)
     end
 end
 
