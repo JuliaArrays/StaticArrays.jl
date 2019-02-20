@@ -22,6 +22,12 @@ end
     if i === nothing
         return :(throw(ArgumentError("No StaticArray found in argument list")))
     end
+    # Passing the Size as an argument to _map leads to inference issues when
+    # recursively mapping over nested StaticArrays (see issue #593). Calling
+    # Size in the generator here is valid because a[i] is known to be a
+    # StaticArray for which the default Size method is correct. If wrapped
+    # StaticArrays (with a custom Size method) are to be supported, this will
+    # no longer be valid.
     S = Size(a[i])
     exprs = Vector{Expr}(undef, prod(S))
     for i ∈ 1:prod(S)
