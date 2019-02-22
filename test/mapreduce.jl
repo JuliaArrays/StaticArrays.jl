@@ -149,4 +149,11 @@ end
 
         @test ((@SVector Int64[]) + (@SVector Int64[])) == (@SVector Int64[])
     end
+    @testset "Nested SVectors" begin
+        # issue #593
+        v = SVector(SVector(3, 2), SVector(5, 7))
+        @test @inferred(v + v) == SVector(SVector(6, 4), SVector(10, 14))
+        v = SVector(SVector(3, 2, 1), SVector(5, 7, 9))
+        @test @inferred(v + v) == SVector(SVector(6, 4, 2), SVector(10, 14, 18))
+    end
 end
