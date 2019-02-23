@@ -137,7 +137,7 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
 @inline reshape(a::AbstractArray, s::Size) = _reshape(a, IndexStyle(a), s)
-@inline reshape(a::StaticArray, s::Tuple{Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
 @generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
     if indexstyle == IndexLinear
         exprs = [:(a[$i]) for i = 1:prod(S)]
