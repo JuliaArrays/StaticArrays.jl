@@ -35,6 +35,12 @@ end
         @test @inferred(v2 .* 1.0)::typeof(v) == v
     end
 
+    @testset "0-dimensional Array broadcast" begin
+        x = Array{Int, 0}(undef)
+        x .= Scalar(4)
+        @test x[] == 4
+    end
+
     @testset "2x2 StaticMatrix with StaticVector" begin
         m = @SMatrix [1 2; 3 4]
         v = SVector(1, 4)
