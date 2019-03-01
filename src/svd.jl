@@ -32,11 +32,26 @@ function svdvals(A::StaticMatrix)
     similar_type(A, T2, Size(diagsize(A)))(sv)
 end
 
-function svd(A::StaticMatrix)
-    # "Thin" SVD only for now.
-    f = svd(Matrix(A))
-    U = similar_type(A, eltype(f.U), Size(Size(A)[1], diagsize(A)))(f.U)
-    S = similar_type(A, eltype(f.S), Size(diagsize(A)))(f.S)
+function svd(A::StaticMatrix; full=Val(false))
+    _svd(A, full)
+end
+
+# Allow plain Bool in addition to Val
+_svd(A, full) = _svd(A, Val(convert(Bool, full)))
+
+function _svd(A, full::Val{false})
+    f = svd(Matrix(A), full=false)
+    U = similar_type(A,  eltype(f.U),  Size(Size(A)[1], diagsize(A)))(f.U)
+    S = similar_type(A,  eltype(f.S),  Size(diagsize(A)))(f.S)
     Vt = similar_type(A, eltype(f.Vt), Size(diagsize(A), Size(A)[2]))(f.Vt)
     SVD(U,S,Vt)
 end
+
+function _svd(A, full::Val{true})
+    f = svd(Matrix(A), full=true)
+    U = similar_type(A,  eltype(f.U),  Size(Size(A)[1], Size(A)[1]))(f.U)
+    S = similar_type(A,  eltype(f.S),  Size(diagsize(A)))(f.S)
+    Vt = similar_type(A, eltype(f.Vt), Size(Size(A)[2], Size(A)[2]))(f.Vt)
+    SVD(U,S,Vt)
+end
+
