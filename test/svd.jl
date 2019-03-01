@@ -33,6 +33,13 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m23').S  ≊ svd(Matrix(m23')).S
         @testinf svd(m23').Vt ≊ svd(Matrix(m23')).Vt
 
+        @testinf svd(m23, full=true).U::StaticMatrix  ≊ svd(Matrix(m23), full=true).U
+        @testinf svd(m23, full=true).S::StaticVector  ≊ svd(Matrix(m23), full=true).S
+        @testinf svd(m23, full=true).Vt::StaticMatrix ≊ svd(Matrix(m23), full=true).Vt
+        @testinf svd(m23', full=true).U::StaticMatrix  ≊ svd(Matrix(m23'), full=true).U
+        @testinf svd(m23', full=true).S::StaticVector  ≊ svd(Matrix(m23'), full=true).S
+        @testinf svd(m23', full=true).Vt::StaticMatrix ≊ svd(Matrix(m23'), full=true).Vt
+
         @testinf svd(transpose(m23)).U  ≊ svd(Matrix(transpose(m23))).U
         @testinf svd(transpose(m23)).S  ≊ svd(Matrix(transpose(m23))).S
         @testinf svd(transpose(m23)).Vt ≊ svd(Matrix(transpose(m23))).Vt
