@@ -346,3 +346,11 @@ end
         end
     end
 end
+
+# checkindex
+
+Base.checkindex(B::Type{Bool}, inds::AbstractUnitRange, i::StaticIndexing{T}) where T = Base.checkindex(B, inds, unwrap(i))
+
+# unsafe_view
+
+Base.unsafe_view(A::AbstractArray, i::StaticIndexing{T}) where T = Base.unsafe_view(A, unwrap(i))

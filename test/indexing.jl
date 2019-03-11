@@ -181,4 +181,10 @@ using StaticArrays, Test
         @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
         @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
     end
+
+    @testset "Using SArray as index for view" begin
+        a = collect(11:20)
+        @test view(a, SVector(1,2,3)) == [11,12,13]
+        @test_throws BoundsError view(a, SVector(1,11,3))
+    end
 end
