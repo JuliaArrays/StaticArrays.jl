@@ -116,15 +116,11 @@
 
         @test length(m) === 4
 
-        if isdefined(Base, :mightalias) # v0.7-
-            @test Base.mightalias(m, m)
-            @test !Base.mightalias(m, copy(m))
-            @test Base.mightalias(m, view(m, :, 1))
-        end
+        @test Base.mightalias(m, m)
+        @test !Base.mightalias(m, copy(m))
+        @test Base.mightalias(m, view(m, :, 1))
 
-        if isdefined(Base, :dataids) # v0.7-
-            @test Base.dataids(m) == (UInt(pointer(m)),)
-        end
+        @test Base.dataids(m) == (UInt(pointer(m)),)
     end
 
     @testset "setindex!" begin

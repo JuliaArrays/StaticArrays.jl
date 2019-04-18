@@ -72,9 +72,7 @@ end
 
 @inline Tuple(v::SArray) = v.data
 
-if isdefined(Base, :dataids) # v0.7-
-    Base.dataids(::SArray) = ()
-end
+Base.dataids(::SArray) = ()
 
 # See #53
 Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)
