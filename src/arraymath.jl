@@ -1,4 +1,3 @@
-@deprecate zeros(A::StaticArray) zeros(typeof(A))
 @inline zeros(::Type{SA}) where {SA <: StaticArray} = _zeros(Size(SA), SA)
 @generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
@@ -12,7 +11,6 @@
     end
 end
 
-@deprecate ones(A::StaticArray) ones(typeof(A))
 @inline ones(::Type{SA}) where {SA <: StaticArray} = _ones(Size(SA), SA)
 @generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)

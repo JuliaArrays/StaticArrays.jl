@@ -44,12 +44,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MMatrix{S1,S2,T}})() where {S1,S2,T}
-        Base.depwarn("`MMatrix{S1,S2,T}()` is deprecated, use `MMatrix{S1,S2,T}(undef)` instead", :MMatrix)
-        return MMatrix{S1,S2,T}(undef)
-    end
-end
 @generated function (::Type{MMatrix{S1,S2,T}})(::UndefInitializer) where {S1,S2,T}
     return quote
         $(Expr(:meta, :inline))
@@ -66,10 +60,6 @@ end
 # Some more advanced constructor-like functions
 @inline one(::Type{MMatrix{N}}) where {N} = one(MMatrix{N,N})
 
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{MMatrix{N}}) where {N} MMatrix{N,N}(1.0I)
-end
 
 #####################
 ## MMatrix methods ##
@@ -180,31 +170,6 @@ macro MMatrix(ex)
                 end
             else
                 error("@MMatrix expected a 2-dimensional array expression")
-            end
-        elseif ex.args[1] == :eye # deprecated
-            if length(ex.args) == 2
-                return quote
-                    Base.depwarn("`@MMatrix eye(m)` is deprecated, use `MMatrix{m,m}(1.0I)` instead", :eye)
-                    MMatrix{$(esc(ex.args[2])),$(esc(ex.args[2])),Float64}(I)
-                end
-            elseif length(ex.args) == 3
-                # We need a branch, depending if the first argument is a type or a size.
-                return quote
-                    if isa($(esc(ex.args[2])), DataType)
-                        Base.depwarn("`@MMatrix eye(T, m)` is deprecated, use `MMatrix{m,m,T}(I)` instead", :eye)
-                        MMatrix{$(esc(ex.args[3])), $(esc(ex.args[3])), $(esc(ex.args[2]))}(I)
-                    else
-                        Base.depwarn("`@MMatrix eye(m, n)` is deprecated, use `MMatrix{m,n}(1.0I)` instead", :eye)
-                        MMatrix{$(esc(ex.args[2])), $(esc(ex.args[3])), Float64}(I)
-                    end
-                end
-            elseif length(ex.args) == 4
-                return quote
-                    Base.depwarn("`@MMatrix eye(T, m, n)` is deprecated, use `MMatrix{m,n,T}(I)` instead", :eye)
-                    MMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))}(I)
-                end
-            else
-                error("Bad eye() expression for @MMatrix")
             end
         else
             error("@MMatrix only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")

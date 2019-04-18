@@ -103,10 +103,6 @@ end
     end
 end
 
-@inline function _mapreduce(f, op, ::Type{Val{D}}, nt::NamedTuple,sz::Size{S}, a::StaticArray) where {S,D}
-    Base.depwarn("`Val{D}` as dims argument is deprecated, use `D` or `Val(D)` instead.")
-    _mapreduce(f, op, Val(D), nt, sz, a)
-end
 @inline _mapreduce(f, op, D::Int, nt::NamedTuple, sz::Size{S}, a::StaticArray) where {S} =
     _mapreduce(f, op, Val(D), nt, sz, a)
 
@@ -226,10 +222,6 @@ _mean_denom(a, ::Type{Val{D}}) where {D} = size(a, D)
 @inline diff(a::StaticVector) = diff(a;dims=Val(1))
 
 @inline function _diff(sz::Size{S}, a::StaticArray, D::Int) where {S}
-    _diff(sz,a,Val(D))
-end
-@inline function _diff(sz::Size{S}, a::StaticArray, ::Type{Val{D}}) where {S,D}
-    Base.depwarn("`Val{D}` as dims argument is deprecated, use `D` or `Val(D)` instead.")
     _diff(sz,a,Val(D))
 end
 @generated function _diff(::Size{S}, a::StaticArray, ::Val{D}) where {S,D}

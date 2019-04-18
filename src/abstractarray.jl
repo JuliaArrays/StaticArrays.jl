@@ -165,9 +165,3 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 
 # TODO permutedims?
 
-# full deprecated in Base
-if isdefined(Base, :full)
-    import Base: full
-    @deprecate full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
-    @deprecate full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
-end

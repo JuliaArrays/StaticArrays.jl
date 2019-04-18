@@ -8,7 +8,6 @@
     end
 end
 
-Base.@deprecate unshift pushfirst
 @inline pushfirst(vec::StaticVector, x) = _pushfirst(Size(vec), vec, x)
 @generated function _pushfirst(::Size{s}, vec::StaticVector, x) where {s}
     newlen = s[1] + 1
@@ -44,7 +43,6 @@ end
     end
 end
 
-@deprecate shift popfirst
 @inline popfirst(vec::StaticVector) = _popfirst(Size(vec), vec)
 @generated function _popfirst(::Size{s}, vec::StaticVector) where {s}
     newlen = s[1] - 1
