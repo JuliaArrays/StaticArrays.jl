@@ -34,14 +34,6 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
     end
-
-    @static if VERSION < v"1.0"
-        # deprecated empty constructor
-        function MArray{S,T,N,L}() where {S,T,N,L}
-            Base.depwarn("`MArray{S,T,N,L}()` is deprecated, use `MArray{S,T,N,L}(undef)` instead", :MArray)
-            return MArray{S,T,N,L}(undef)
-        end
-    end
 end
 
 @generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
@@ -65,12 +57,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MArray{S,T,N}})() where {S,T,N}
-        Base.depwarn("`MArray{S,T,N}()` is deprecated, use `MArray{S,T,N}(undef)` instead", :MArray)
-        return MArray{S,T,N}(undef)
-    end
-end
 @generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
@@ -78,12 +64,6 @@ end
     end
 end
 
-@static if VERSION < v"1.0"
-    function (::Type{MArray{S,T}})() where {S,T}
-        Base.depwarn("`MArray{S,T}()` is deprecated, use `MArray{S,T}(undef)` instead", :MArray)
-        return MArray{S,T}(undef)
-    end
-end
 @generated function (::Type{MArray{S,T}})(::UndefInitializer) where {S,T}
     return quote
         $(Expr(:meta, :inline))
@@ -102,11 +82,6 @@ end
 
 # MArray(I::UniformScaling) methods to replace eye
 (::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(::Type{MArray{S}}) where {S} MArray{S}(1.0I)
-    @deprecate eye(::Type{MArray{S,T}}) where {S,T} MArray{S,T}(I)
-end
 
 ####################
 ## MArray methods ##
@@ -293,31 +268,6 @@ macro MArray(ex)
                 return quote
                     $(esc(ex.args[1]))($(esc(ex.args[2])), MArray{$(esc(Expr(:curly, Tuple, ex.args[3:end]...)))})
                 end
-            end
-        elseif ex.args[1] == :eye # deprecated
-            if length(ex.args) == 2
-                return quote
-                    Base.depwarn("`@MArray eye(m)` is deprecated, use `MArray{m,m}(1.0I)` instead", :eye)
-                    MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[2]))},Float64}(I)
-                end
-            elseif length(ex.args) == 3
-                # We need a branch, depending if the first argument is a type or a size.
-                return quote
-                    if isa($(esc(ex.args[2])), DataType)
-                        Base.depwarn("`@MArray eye(T, m)` is deprecated, use `MArray{m,m,T}(I)` instead", :eye)
-                        MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[3]))}, $(esc(ex.args[2]))}(I)
-                    else
-                        Base.depwarn("`@MArray eye(m, n)` is deprecated, use `MArray{m,n}(1.0I)` instead", :eye)
-                        MArray{Tuple{$(esc(ex.args[2])), $(esc(ex.args[3]))}, Float64}(I)
-                    end
-                end
-            elseif length(ex.args) == 4
-                return quote
-                    Base.depwarn("`@MArray eye(T, m, n)` is deprecated, use `MArray{m,n,T}(I)` instead", :eye)
-                    MArray{Tuple{$(esc(ex.args[3])), $(esc(ex.args[4]))}, $(esc(ex.args[2]))}(I)
-                end
-            else
-                error("Bad eye() expression for @MArray")
             end
         else
             error("@MArray only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")

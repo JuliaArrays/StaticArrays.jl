@@ -156,12 +156,6 @@ end
     end
 end
 
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(A::SM) where {SM<:StaticMatrix} typeof(A)(I)
-    @deprecate eye(::Type{SM}) where {SM<:StaticMatrix} SM(1.0I)
-end
-
 # StaticMatrix(I::UniformScaling) methods to replace eye
 (::Type{SM})(I::UniformScaling) where {N,M,SM<:StaticMatrix{N,M}} = _eye(Size(SM), SM, I)
 
@@ -190,8 +184,6 @@ end
         @inbounds return SMatrix{$N,$N,$T}(tuple($(exprs...)))
     end
 end
-
-@deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}

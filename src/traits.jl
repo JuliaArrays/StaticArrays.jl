@@ -132,10 +132,6 @@ Length(::Size{S}) where {S} = _Length(S...)
 
 @pure Base.prod(::Size{S}) where {S} = prod(S)
 
-if isdefined(Base, :sub2ind)
-    import Base: sub2ind
-    @deprecate sub2ind(s::Size, x::Int...) LinearIndices(s)[x...]
-end
 Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 @pure size_tuple(::Size{S}) where {S} = Tuple{S...}
