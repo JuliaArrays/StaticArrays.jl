@@ -14,6 +14,13 @@ setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), valu
 end
 
 @generated function _getindex_scalar(::Size{S}, a::StaticArray, inds::Int...) where S
+    if length(inds) == 0
+        return quote
+            @_propagate_inbounds_meta
+            a[1]
+        end
+    end
+
     stride = 1
     ind_expr = :()
     for i ∈ 1:length(inds)
@@ -36,6 +43,13 @@ end
 end
 
 @generated function _setindex!_scalar(::Size{S}, a::StaticArray, value, inds::Int...) where S
+    if length(inds) == 0
+        return quote
+            @_propagate_inbounds_meta
+            a[1] = value
+        end
+    end
+
     stride = 1
     ind_expr = :()
     for i ∈ 1:length(inds)
