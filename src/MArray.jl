@@ -114,9 +114,7 @@ end
 
 @inline Tuple(v::MArray) = v.data
 
-if isdefined(Base, :dataids) # v0.7-
-    Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
-end
+Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
 
 @inline function Base.unsafe_convert(::Type{Ptr{T}}, a::MArray{S,T}) where {S,T}
     Base.unsafe_convert(Ptr{T}, pointer_from_objref(a))

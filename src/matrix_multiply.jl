@@ -303,30 +303,16 @@ end
             gemm = :cgemm_
         end
 
-        if VERSION < v"0.7-"
-            blascall = quote
-                ccall((Base.BLAS.@blasfunc($gemm), Base.BLAS.libblas), Nothing,
-                    (Ref{UInt8}, Ref{UInt8}, Ref{Base.BLAS.BlasInt}, Ref{Base.BLAS.BlasInt},
-                     Ref{Base.BLAS.BlasInt}, Ref{$T}, Ptr{$T}, Ref{Base.BLAS.BlasInt},
-                     Ptr{$T}, Ref{Base.BLAS.BlasInt}, Ref{$T}, Ptr{$T},
-                     Ref{Base.BLAS.BlasInt}),
-                     transA, transB, m, n,
-                     ka, alpha, a, strideA,
-                     b, strideB, beta, c,
-                     strideC)
-             end
-         else
-             blascall = quote
-                 ccall((LinearAlgebra.BLAS.@blasfunc($gemm), LinearAlgebra.BLAS.libblas), Nothing,
-                     (Ref{UInt8}, Ref{UInt8}, Ref{LinearAlgebra.BLAS.BlasInt}, Ref{LinearAlgebra.BLAS.BlasInt},
-                      Ref{LinearAlgebra.BLAS.BlasInt}, Ref{$T}, Ptr{$T}, Ref{LinearAlgebra.BLAS.BlasInt},
-                      Ptr{$T}, Ref{LinearAlgebra.BLAS.BlasInt}, Ref{$T}, Ptr{$T},
-                      Ref{LinearAlgebra.BLAS.BlasInt}),
-                      transA, transB, m, n,
-                      ka, alpha, a, strideA,
-                      b, strideB, beta, c,
-                      strideC)
-            end
+        blascall = quote
+             ccall((LinearAlgebra.BLAS.@blasfunc($gemm), LinearAlgebra.BLAS.libblas), Nothing,
+                 (Ref{UInt8}, Ref{UInt8}, Ref{LinearAlgebra.BLAS.BlasInt}, Ref{LinearAlgebra.BLAS.BlasInt},
+                  Ref{LinearAlgebra.BLAS.BlasInt}, Ref{$T}, Ptr{$T}, Ref{LinearAlgebra.BLAS.BlasInt},
+                  Ptr{$T}, Ref{LinearAlgebra.BLAS.BlasInt}, Ref{$T}, Ptr{$T},
+                  Ref{LinearAlgebra.BLAS.BlasInt}),
+                  transA, transB, m, n,
+                  ka, alpha, a, strideA,
+                  b, strideB, beta, c,
+                  strideC)
         end
 
         return quote
