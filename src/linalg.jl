@@ -217,10 +217,15 @@ end
 @inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
 @inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
     if prod(S) == 0
-        return zero(promote_op(*, eltype(a), eltype(b)))
+        za = zero(eltype(a))
+        zb = zero(eltype(b))
+    else
+        # Use an actual element if there is one, to support e.g. Vector{<:Number}
+        # element types for which runtime size information is required to construct
+        # a zero element.
+        za = zero(a[1])
+        zb = zero(b[1])
     end
-    za = zero(a[1])
-    zb = zero(b[1])
     ret = adjoint(za) * zb + adjoint(za) * zb
     @inbounds @simd for j = 1 : prod(S)
         ret += adjoint(a[j]) * b[j]
