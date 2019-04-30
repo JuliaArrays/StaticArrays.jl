@@ -214,40 +214,23 @@ end
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
-@inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
+@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b, (x, y) -> adjoint(x) * y)
+@inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b, *)
+
+@inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray, product) where {S}
     if prod(S) == 0
-        za = zero(eltype(a))
-        zb = zero(eltype(b))
+        za, zb = zero(eltype(a)), zero(eltype(b))
     else
         # Use an actual element if there is one, to support e.g. Vector{<:Number}
         # element types for which runtime size information is required to construct
         # a zero element.
-        za = zero(a[1])
-        zb = zero(b[1])
+        za, zb = zero(a[1]), zero(b[1])
     end
-    ret = adjoint(za) * zb + adjoint(za) * zb
+    ret = product(za, zb) + product(za, zb)
     @inbounds @simd for j = 1 : prod(S)
-        ret += adjoint(a[j]) * b[j]
+        ret += product(a[j], b[j])
     end
     return ret
-end
-
-@inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _bilinear_vecdot(same_size(a, b), a, b)
-@generated function _bilinear_vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
-    if prod(S) == 0
-        return :(zero(promote_op(*, eltype(a), eltype(b))))
-    end
-
-    expr = :(a[1] * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + a[$j] * b[$j])
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds return $expr
-    end
 end
 
 @inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v; init=zero(real(eltype(v))))
