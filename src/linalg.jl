@@ -214,7 +214,7 @@ end
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b, (x, y) -> adjoint(x) * y)
+@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b, dot)
 @inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b, *)
 
 @inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray, product) where {S}
