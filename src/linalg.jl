@@ -215,20 +215,17 @@ end
 end
 
 @inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
-@generated function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
+@inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
     if prod(S) == 0
-        return :(zero(promote_op(*, eltype(a), eltype(b))))
+        return zero(promote_op(*, eltype(a), eltype(b)))
     end
-
-    expr = :(adjoint(a[1]) * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + adjoint(a[$j]) * b[$j])
+    za = zero(a[1])
+    zb = zero(b[1])
+    ret = adjoint(za) * zb + adjoint(za) * zb
+    @inbounds @simd for j = 1 : prod(S)
+        ret += adjoint(a[j]) * b[j]
     end
-
-    return quote
-        @_inline_meta
-        @inbounds return $expr
-    end
+    return ret
 end
 
 @inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _bilinear_vecdot(same_size(a, b), a, b)
