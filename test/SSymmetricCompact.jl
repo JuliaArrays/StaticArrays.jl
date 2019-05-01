@@ -1,8 +1,9 @@
 module SSymmetricCompactTest
 
-using Compat
 using StaticArrays
-using Base.Test
+using LinearAlgebra
+using Random
+using Test
 
 macro test_noalloc(ex)
     esc(quote
@@ -132,7 +133,7 @@ fill3(x) = fill(3, x)
         @test ishermitian(a)
         @test issymmetric(a)
 
-        b = rand(SSymmetricCompact{5, Complex128})
+        b = rand(SSymmetricCompact{5, ComplexF64})
         @test !ishermitian(b)
         @test issymmetric(b)
 
@@ -216,16 +217,16 @@ fill3(x) = fill(3, x)
     end
 
     @testset "transpose/adjoint" begin
-        a = Symmetric([[rand(Complex{Int}) for i = 1 : 2] for row = 1 : 3, col = 1 : 3])
+        a = Symmetric([[rand(Complex{Int}) for i = 1 : 2, j = 1 : 2] for row = 1 : 3, col = 1 : 3])
         @test transpose(SSymmetricCompact{3}(a)) == transpose(a)
-        # @test adjoint(SSymmetricCompact{3}(a)) == adjoint(a) # doesn't even work for a...
+        @test adjoint(SSymmetricCompact{3}(a)) == adjoint(a)
 
         b = Symmetric([rand(Complex{Int}) for i = 1 : 3, j = 1 : 3])
         @test adjoint(SSymmetricCompact{3}(b)) == adjoint(b)
     end
 
-    @testset "one/eye/ones/zeros/fill" begin
-        for N = 3 : 5, f in (:one, :eye, :ones, :zeros, :fill3)
+    @testset "one/ones/zeros/fill" begin
+        for N = 3 : 5, f in (:one, :ones, :zeros, :fill3)
             @eval begin
                 @test $f(SSymmetricCompact{$N, Int}) == $f(SMatrix{$N, $N, Int})
                 @test $f(SSymmetricCompact{$N, Int}) isa SSymmetricCompact{$N, Int}

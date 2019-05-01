@@ -1,12 +1,3 @@
-import Base: ==, -, +, *, /, \, abs, real, imag, conj, transpose, convert
-
-@generated function check_symmetric_parameters(::Val{N}, ::Val{L}) where {N, L}
-    if 2 * L != N * (N + 1)
-        return :(throw(ArgumentError("Size mismatch in SSymmetricCompact parameters. Got dimension $N and length $L.")))
-    end
-    :(nothing)
-end
-
 struct SSymmetricCompact{N, T, L} <: StaticMatrix{N, N, T}
     lowertriangle::SVector{L, T}
 
@@ -16,10 +7,19 @@ struct SSymmetricCompact{N, T, L} <: StaticMatrix{N, N, T}
     end
 end
 
-lowertriangletype(::Type{SSymmetricCompact{N, T, L}}) where {N, T, L} = SVector{L, T}
-lowertriangletype(::Type{<:SSymmetricCompact}) = SVector
+@generated function check_symmetric_parameters(::Val{N}, ::Val{L}) where {N, L}
+    if 2 * L != N * (N + 1)
+        return :(throw(ArgumentError("Size mismatch in SSymmetricCompact parameters. Got dimension $N and length $L.")))
+    end
+    :(nothing)
+end
+
 Base.@pure triangularnumber(N::Int) = div(N * (N + 1), 2)
 Base.@pure triangularroot(L::Int) = div(isqrt(8 * L + 1) - 1, 2) # from quadratic formula
+
+lowertriangletype(::Type{SSymmetricCompact{N, T, L}}) where {N, T, L} = SVector{L, T}
+lowertriangletype(::Type{SSymmetricCompact{N, T}}) where {N, T} = SVector{triangularnumber(N), T}
+lowertriangletype(::Type{SSymmetricCompact{N}}) where {N} = SVector{triangularnumber(N)}
 
 @inline (::Type{SSymmetricCompact{N, T}})(lowertriangle::SVector{L}) where {N, T, L} = SSymmetricCompact{N, T, L}(lowertriangle)
 @inline (::Type{SSymmetricCompact{N}})(lowertriangle::SVector{L, T}) where {N, T, L} = SSymmetricCompact{N, T, L}(lowertriangle)
@@ -30,7 +30,7 @@ Base.@pure triangularroot(L::Int) = div(isqrt(8 * L + 1) - 1, 2) # from quadrati
 end
 
 @generated function (::Type{SSymmetricCompact{N, T, L}})(a::Tuple) where {N, T, L}
-    expr = Vector{Expr}(L)
+    expr = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
         index = N * (col - 1) + row
@@ -47,6 +47,7 @@ end
     SSymmetricCompact{N, T, L}(a)
 end
 
+@inline (::Type{SSymmetricCompact{N}})(a::Tuple) where {N} = SSymmetricCompact{N, promote_tuple_eltype(a)}(a)
 @inline (::Type{SSymmetricCompact{N}})(a::NTuple{M, T}) where {N, T, M} = SSymmetricCompact{N, T}(a)
 @inline SSymmetricCompact(a::StaticMatrix{N, N, T}) where {N, T} = SSymmetricCompact{N, T}(a)
 
@@ -54,19 +55,20 @@ end
 @inline (::Type{SSC})(a::SSC) where {SSC <: SSymmetricCompact} = a
 
 @inline (::Type{SSC})(a::AbstractVector) where {SSC <: SSymmetricCompact} = SSC(convert(lowertriangletype(SSC), a))
-@inline (::Type{SSC})(a::Tuple) where {SSC <: SSymmetricCompact} = SSymmetricCompact(convert(lowertriangletype(SSC), a))
 
 # TODO: similar_type overload?
 
-@inline indextuple(::T) where {T <: SSymmetricCompact} = indextuple(T)
-@generated function indextuple(::Type{<:SSymmetricCompact{N}}) where N
-    indexmat = zeros(Int, N, N)
+@generated function _symmetric_compact_indices(::Val{N}) where N
+    # Returns a Tuple{Pair{Int, Bool}} I such that for linear index i,
+    # * I[i][1] is the index into the lowertriangle field of an SSymmetricCompact{N};
+    # * I[i][2] is true iff i is an index into the lower triangle of an N × N matrix.
+    indexmat = Matrix{Pair{Int, Bool}}(undef, N, N)
     i = 0
     for col = 1 : N, row = 1 : N
         indexmat[row, col] = if row >= col
-            i += 1
+            (i += 1) => true
         else
-            indexmat[col, row]
+            indexmat[col, row][1] => false
         end
     end
     quote
@@ -75,25 +77,22 @@ end
     end
 end
 
-@inline function Base.getindex(a::SSymmetricCompact{N}, i::Int) where {N}
-    index = indextuple(a)[i]
-    @inbounds return a.lowertriangle[index]
+Base.@propagate_inbounds function Base.getindex(a::SSymmetricCompact{N}, i::Int) where {N}
+    I = _symmetric_compact_indices(Val(N))
+    j, lower = I[i]
+    @inbounds x′ = a.lowertriangle[j]
+    return lower ? x′ : transpose(x′)
 end
 
-@generated function setindex(a::SSymmetricCompact{N, T, L}, x, index::Int) where {N, T, L}
-    I = indextuple(a)
-    exprs = [:(ifelse($i == $(I)[index], T(x), a.lowertriangle[$i])) for i = 1:L]
-    quote
-        @_inline_meta
-        @boundscheck if (index < 1 || index > $(N * N))
-            throw(BoundsError(a, index))
-        end
-        return typeof(a)(SVector{L, T}(tuple($(exprs...))))
-    end
+Base.@propagate_inbounds function Base.setindex(a::SSymmetricCompact{N, T, L}, x, i::Int) where {N, T, L}
+    I = _symmetric_compact_indices(Val(N))
+    j, lower = I[i]
+    x′ = lower ? x : transpose(x)
+    return SSymmetricCompact{N}(setindex(a.lowertriangle, x′, j))
 end
 
 # needed because it is used in convert.jl and the generic fallback is slow
-@generated function Tuple(a::SSymmetricCompact{N}) where N
+@generated function Base.Tuple(a::SSymmetricCompact{N}) where N
     exprs = [:(a[$i]) for i = 1 : N^2]
     quote
         @_inline_meta
@@ -101,45 +100,47 @@ end
     end
 end
 
-LinAlg.ishermitian(a::SSymmetricCompact{N, T}) where {N,T <: Real} = true
-LinAlg.ishermitian(a::SSymmetricCompact) = all(isreal, a.lowertriangle)
-LinAlg.issymmetric(a::SSymmetricCompact) = true
+LinearAlgebra.ishermitian(a::SSymmetricCompact{N, T}) where {N,T <: Real} = true
+LinearAlgebra.ishermitian(a::SSymmetricCompact) = all(isreal, a.lowertriangle)
+LinearAlgebra.issymmetric(a::SSymmetricCompact) = true
 
 # TODO: factorize?
 
 # TODO: a.lowertriangle == b.lowertriangle is slow (used by SDiagonal). SMatrix etc. actually use AbstractArray fallback (also slow)
-@inline ==(a::SSymmetricCompact, b::SSymmetricCompact) = mapreduce(==, (x, y) -> x && y, a.lowertriangle, b.lowertriangle)
-@generated function _map(f, ::Size{S}, a::SSymmetricCompact...) where {S}
+@inline Base.:(==)(a::SSymmetricCompact, b::SSymmetricCompact) = mapreduce(==, (x, y) -> x && y, a.lowertriangle, b.lowertriangle)
+@generated function _map(f, a::SSymmetricCompact...)
+    S = Size(a[1])
     N = S[1]
     L = triangularnumber(N)
-    exprs = Vector{Expr}(L)
+    exprs = Vector{Expr}(undef, L)
     for i ∈ 1:L
         tmp = [:(a[$j].lowertriangle[$i]) for j ∈ 1:length(a)]
         exprs[i] = :(f($(tmp...)))
     end
     return quote
         @_inline_meta
+        same_size(a...)
         @inbounds return SSymmetricCompact(SVector(tuple($(exprs...))))
     end
 end
 
 # Scalar-array. TODO: overload broadcast instead, once API has stabilized a bit
-@inline +(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a + b.lowertriangle)
-@inline +(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle + b)
+@inline Base.:+(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a + b.lowertriangle)
+@inline Base.:+(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle + b)
 
-@inline -(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a - b.lowertriangle)
-@inline -(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle - b)
+@inline Base.:-(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a - b.lowertriangle)
+@inline Base.:-(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle - b)
 
-@inline *(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a * b.lowertriangle)
-@inline *(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle * b)
+@inline Base.:*(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a * b.lowertriangle)
+@inline Base.:*(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle * b)
 
-@inline /(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle / b)
-@inline \(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a \ b.lowertriangle)
+@inline Base.:/(a::SSymmetricCompact, b::Number) = SSymmetricCompact(a.lowertriangle / b)
+@inline Base.:\(a::Number, b::SSymmetricCompact) = SSymmetricCompact(a \ b.lowertriangle)
 
 @generated function _plus_uniform(::Size{S}, a::SSymmetricCompact{N, T, L}, λ) where {S, N, T, L}
     @assert S[1] == N
     @assert S[2] == N
-    exprs = Vector{Expr}(L)
+    exprs = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
         i += 1
@@ -147,13 +148,47 @@ end
     end
     return quote
         @_inline_meta
-        T = promote_type(eltype(a), typeof(λ))
-        SSymmetricCompact{N, T, L}(SVector{L, T}(tuple($(exprs...))))
+        R = promote_type(eltype(a), typeof(λ))
+        SSymmetricCompact{N, R, L}(SVector{L, R}(tuple($(exprs...))))
     end
 end
 
-@inline transpose(a::SSymmetricCompact) = SSymmetricCompact((a.lowertriangle))
-@inline adjoint(a::SSymmetricCompact) = conj(a)
+@generated function LinearAlgebra.transpose(a::SSymmetricCompact{N, T, L}) where {N, T, L}
+    # For M = [A Bᵀ
+    #          B C],
+    # Mᵀ = [Aᵀ Bᵀ
+    #       B  Cᵀ]
+    # In general, we should only recursively transpose the diagonal elements.
+    exprs = Vector{Expr}(undef, L)
+    i = 0
+    for col = 1 : N, row = col : N
+        i += 1
+        exprs[i] = row == col ? :(transpose(a.lowertriangle[$i])) : :(a.lowertriangle[$i])
+    end
+    return quote
+        @_inline_meta
+        SSymmetricCompact{N}(SVector{L}(tuple($(exprs...))))
+    end
+end
+
+@generated function LinearAlgebra.adjoint(a::SSymmetricCompact{N, T, L}) where {N, T, L}
+    # For M = [A Bᵀ
+    #          B C],
+    # Mᴴ = [Aᴴ   Bᴴ
+    #      (Bᵀ)ᴴ Cᴴ]
+    # In general, we should only recursively apply the conjugate transpose to the diagonal elements,
+    # and only conjugate the off-diagonal elements.
+    exprs = Vector{Expr}(undef, L)
+    i = 0
+    for col = 1 : N, row = col : N
+        i += 1
+        exprs[i] = row == col ? :(adjoint(a.lowertriangle[$i])) : :(conj(a.lowertriangle[$i]))
+    end
+    return quote
+        @_inline_meta
+        SSymmetricCompact{N}(SVector{L}(tuple($(exprs...))))
+    end
+end
 
 @generated function _one(::Size{S}, ::Type{SSC}) where {S, SSC <: SSymmetricCompact}
     N = S[1]
@@ -162,7 +197,7 @@ end
     if T == Any
         T = Float64
     end
-    exprs = Vector{Expr}(L)
+    exprs = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
         exprs[i += 1] = row == col ? :(one($T)) : :(zero($T))
@@ -199,6 +234,6 @@ end
     end
 end
 
-@inline rand(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(rand, rng, SSC)
-@inline randn(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randn, rng, SSC)
-@inline randexp(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randexp, rng, SSC)
+@inline Random.rand(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(rand, rng, SSC)
+@inline Random.randn(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randn, rng, SSC)
+@inline Random.randexp(rng::AbstractRNG, ::Type{SSC}) where {SSC <: SSymmetricCompact} = _rand(randexp, rng, SSC)
