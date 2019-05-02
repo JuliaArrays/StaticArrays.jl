@@ -136,8 +136,7 @@ LinearAlgebra.issymmetric(a::SSymmetricCompact) = true
 
 # TODO: factorize?
 
-# TODO: a.lowertriangle == b.lowertriangle is slow (used by SDiagonal). SMatrix etc. actually use AbstractArray fallback (also slow)
-@inline Base.:(==)(a::SSymmetricCompact, b::SSymmetricCompact) = mapreduce(==, (x, y) -> x && y, a.lowertriangle, b.lowertriangle)
+@inline Base.:(==)(a::SSymmetricCompact, b::SSymmetricCompact) = a.lowertriangle == b.lowertriangle
 @generated function _map(f, a::SSymmetricCompact...)
     S = Size(a[1])
     N = S[1]
