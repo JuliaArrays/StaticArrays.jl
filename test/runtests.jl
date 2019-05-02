@@ -1,4 +1,4 @@
-using StaticArrays, Test, Random, LinearAlgebra, SpecialFunctions
+using StaticArrays, Test, Random, LinearAlgebra
 using InteractiveUtils
 
 # Allow no new ambiguities (see #18), unless you fix some old ones first!
