@@ -86,8 +86,6 @@ end
 
 @inline (::Type{SSC})(a::AbstractVector) where {SSC <: SSymmetricCompact} = SSC(convert(lowertriangletype(SSC), a))
 
-# TODO: similar_type overload?
-
 @generated function _symmetric_compact_indices(::Val{N}) where N
     # Returns a Tuple{Pair{Int, Bool}} I such that for linear index i,
     # * I[i][1] is the index into the lowertriangle field of an SSymmetricCompact{N};
@@ -110,15 +108,15 @@ end
 Base.@propagate_inbounds function Base.getindex(a::SSymmetricCompact{N}, i::Int) where {N}
     I = _symmetric_compact_indices(Val(N))
     j, lower = I[i]
-    @inbounds x′ = a.lowertriangle[j]
-    return lower ? x′ : transpose(x′)
+    @inbounds value = a.lowertriangle[j]
+    return lower ? value : transpose(value)
 end
 
 Base.@propagate_inbounds function Base.setindex(a::SSymmetricCompact{N, T, L}, x, i::Int) where {N, T, L}
     I = _symmetric_compact_indices(Val(N))
     j, lower = I[i]
-    x′ = lower ? x : transpose(x)
-    return SSymmetricCompact{N}(setindex(a.lowertriangle, x′, j))
+    value = lower ? x : transpose(x)
+    return SSymmetricCompact{N}(setindex(a.lowertriangle, value, j))
 end
 
 # needed because it is used in convert.jl and the generic fallback is slow
@@ -183,11 +181,12 @@ end
 end
 
 @generated function LinearAlgebra.transpose(a::SSymmetricCompact{N, T, L}) where {N, T, L}
-    # For M = [A Bᵀ
-    #          B C],
-    # Mᵀ = [Aᵀ Bᵀ
-    #       B  Cᵀ]
-    # In general, we should only recursively transpose the diagonal elements.
+    # Transposition of a symmetric matrix is the identity.
+    # However, if we happen to be storing a block matrix there may be
+    # non-symmetric diagonal parts so the blocks on the diagonal need
+    # transposing:
+    # [A  Bᵀ]ᵀ  =  [Aᵀ  Bᵀ]  =  [Aᵀ Bᵀ]
+    # [B  C ]      [Bᵀᵀ Cᵀ]     [B  Cᵀ]
     exprs = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
@@ -201,12 +200,12 @@ end
 end
 
 @generated function LinearAlgebra.adjoint(a::SSymmetricCompact{N, T, L}) where {N, T, L}
-    # For M = [A Bᵀ
-    #          B C],
-    # Mᴴ = [Aᴴ   Bᴴ
-    #      (Bᵀ)ᴴ Cᴴ]
-    # In general, we should only recursively apply the conjugate transpose to the diagonal elements,
-    # and only conjugate the off-diagonal elements.
+    # If we happen to be storing a block matrix there may be
+    # non-symmetric diagonal parts so we need to take the adjoint
+    # (conjugate transpose) of the diagonal elements, but just
+    # the conjugate of the off-diagonal elements:
+    # [A  Bᵀ]ᴴ  =  [Aᴴ  Bᴴ]  =  [Aᴴ B̄ᵀ]
+    # [B  C ]      [Bᵀᴴ Cᴴ]     [B̄  Cᴴ]
     exprs = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
