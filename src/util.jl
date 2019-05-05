@@ -93,7 +93,7 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 @inline drop_sdims(a::StaticArrayLike) = TrivialView(a)
 @inline drop_sdims(a) = a
 
-Base.@propagate_inbounds function Base.invperm(p::StaticVector)
+Base.@propagate_inbounds function invperm(p::StaticVector)
     # in difference to base, this does not check if p is a permutation (every value unique)
      ip = similar(p)
      ip[p] = 1:length(p)
