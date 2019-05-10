@@ -53,7 +53,7 @@ end
 end
 
 @inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
-@inline SMatrix(a::StaticMatrix) = SMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
+@inline SMatrix(a::StaticMatrix{S1, S2}) where {S1, S2} = SMatrix{S1, S2}(Tuple(a))
 
 # Simplified show for the type
 # show(io::IO, ::Type{SMatrix{N, M, T}}) where {N, M, T} = print(io, "SMatrix{$N,$M,$T}") # TODO reinstate

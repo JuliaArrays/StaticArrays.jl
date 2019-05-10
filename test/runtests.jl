@@ -23,6 +23,7 @@ include("Scalar.jl")
 include("SUnitRange.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+include("SHermitianCompact.jl")
 
 include("custom_types.jl")
 include("convert.jl")
