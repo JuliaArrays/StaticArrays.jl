@@ -23,8 +23,11 @@ end
         dimension_mismatch_fail(SA, a)
     end
 
-    return SA(unroll_tuple(a, Length(SA)))
+    return _convert(SA, a, Length(SA))
 end
+
+@inline _convert(SA, a, ::Length{L}) where L = SA(unroll_tuple(a, Length(SA)))
+@inline _convert(SA, a, ::Length{0}) = similar_type(SA, eltype(a))(())
 
 length_val(a::T) where {T <: StaticArrayLike} = length_val(Size(T))
 length_val(a::Type{T}) where {T<:StaticArrayLike} = length_val(Size(T))
