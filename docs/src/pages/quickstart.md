@@ -44,10 +44,10 @@ typeof(v1[[1,2,3]]) <: Vector # Can't determine size from the type of [1,2,3]
 
 # Is (partially) hooked into BLAS, LAPACK, etc:
 rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS
-eigvecs(m3) # eigvecs(), etc uses specialized algorithms up to 3×3, or else LAPACK
+eigen(m3) # eigen(), etc uses specialized algorithms up to 3×3, or else LAPACK
 
 # Static arrays stay statically sized, even when used by Base functions, etc:
-typeof(eigvecs(m3) == SArray{Tuple{3,3},Float64,2,9})
+typeof(eigen(m3)) == Eigen{Float64,Float64,SArray{Tuple{3,3},Float64,2,9},SArray{Tuple{3},Float64,1,3}}
 
 # similar() returns a mutable container, while similar_type() returns a constructor:
 typeof(similar(m3)) == MArray{Tuple{3,3},Int64,2,9} # (final parameter is length = 9)
