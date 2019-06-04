@@ -4,7 +4,7 @@
 Notes:
  - Some functions seem to be compiling strangely. We get strange behaviour with
    spurious allocations now, similar to Mat.
- - E.g. the very small compile time for mul! (unrolled) seems *odd*! Paired
+ - E.g. the very small compile time for A_mul_B! (unrolled) seems *odd*! Paired
    with this, the function appears to have become allocating. Not sure why.
  - Potentially also related to non-deterministic running speed. Sometimes when
    I run the script, the code (all code) runs 10x slower. There is is a small
@@ -21,9 +21,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.226788 seconds (128.4
 MMatrix * MMatrix compilation time (chunks):             0.075012 seconds (19.33 k allocations: 852.869 KB)
 Mat * Mat compilation time:                              0.602044 seconds (393.37 k allocations: 16.767 MB, 1.18% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000407 seconds (109 allocations: 6.234 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.152032 seconds (56.74 k allocations: 2.366 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.081052 seconds (13.18 k allocations: 575.253 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000407 seconds (109 allocations: 6.234 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.152032 seconds (56.74 k allocations: 2.366 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.081052 seconds (13.18 k allocations: 575.253 KB)
 
 Matrix multiplication
 ---------------------
@@ -67,9 +67,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.196371 seconds (145.5
 MMatrix * MMatrix compilation time (chunks):             0.036892 seconds (28.36 k allocations: 1.227 MB)
 Mat * Mat compilation time:                              0.306136 seconds (111.88 k allocations: 4.902 MB)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (108 allocations: 6.281 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.027851 seconds (16.32 k allocations: 677.622 KB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.022599 seconds (14.02 k allocations: 595.038 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (108 allocations: 6.281 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.027851 seconds (16.32 k allocations: 677.622 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.022599 seconds (14.02 k allocations: 595.038 KB)
 
 Matrix multiplication
 ---------------------
@@ -113,9 +113,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.255822 seconds (180.3
 MMatrix * MMatrix compilation time (chunks):             0.053494 seconds (45.79 k allocations: 1.941 MB)
 Mat * Mat compilation time:                              0.214820 seconds (162.91 k allocations: 7.060 MB, 2.78% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (108 allocations: 6.469 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.046341 seconds (25.42 k allocations: 1.033 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.026917 seconds (15.94 k allocations: 664.870 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (108 allocations: 6.469 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.046341 seconds (25.42 k allocations: 1.033 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.026917 seconds (15.94 k allocations: 664.870 KB)
 
 Matrix multiplication
 ---------------------
@@ -159,9 +159,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.170485 seconds (107.4
 MMatrix * MMatrix compilation time (chunks):             0.073876 seconds (70.89 k allocations: 2.889 MB)
 Mat * Mat compilation time:                              0.311236 seconds (291.69 k allocations: 11.120 MB)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000409 seconds (106 allocations: 6.438 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.075450 seconds (38.66 k allocations: 1.530 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.036264 seconds (18.39 k allocations: 749.655 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000409 seconds (106 allocations: 6.438 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.075450 seconds (38.66 k allocations: 1.530 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.036264 seconds (18.39 k allocations: 749.655 KB)
 
 Matrix multiplication
 ---------------------
@@ -205,9 +205,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.326533 seconds (184.1
 MMatrix * MMatrix compilation time (chunks):             0.100970 seconds (102.03 k allocations: 4.080 MB)
 Mat * Mat compilation time:                              0.477030 seconds (502.05 k allocations: 17.969 MB, 1.22% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (106 allocations: 6.688 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.108416 seconds (56.59 k allocations: 2.196 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.054462 seconds (21.40 k allocations: 859.081 KB, 11.28% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000408 seconds (106 allocations: 6.688 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.108416 seconds (56.59 k allocations: 2.196 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.054462 seconds (21.40 k allocations: 859.081 KB, 11.28% gc time)
 
 Matrix multiplication
 ---------------------
@@ -251,9 +251,9 @@ MMatrix * MMatrix compilation time (unrolled):           0.584175 seconds (292.1
 MMatrix * MMatrix compilation time (chunks):             0.142989 seconds (138.63 k allocations: 5.494 MB, 3.81% gc time)
 Mat * Mat compilation time:                              0.749114 seconds (843.91 k allocations: 27.630 MB, 0.80% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000410 seconds (106 allocations: 6.906 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.160473 seconds (77.55 k allocations: 2.931 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.063469 seconds (26.36 k allocations: 1005.655 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000410 seconds (106 allocations: 6.906 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.160473 seconds (77.55 k allocations: 2.931 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.063469 seconds (26.36 k allocations: 1005.655 KB)
 
 Matrix multiplication
 ---------------------
@@ -297,9 +297,9 @@ MMatrix * MMatrix compilation time (unrolled):           1.025261 seconds (437.0
 MMatrix * MMatrix compilation time (chunks):             0.187317 seconds (182.14 k allocations: 7.167 MB, 2.91% gc time)
 Mat * Mat compilation time:                              1.339295 seconds (1.28 M allocations: 39.766 MB, 0.89% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000422 seconds (106 allocations: 7.094 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.193126 seconds (53.54 k allocations: 1.584 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.082553 seconds (33.64 k allocations: 1.182 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000422 seconds (106 allocations: 7.094 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.193126 seconds (53.54 k allocations: 1.584 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.082553 seconds (33.64 k allocations: 1.182 MB)
 
 Matrix multiplication
 ---------------------
@@ -343,9 +343,9 @@ MMatrix * MMatrix compilation time (unrolled):           1.731620 seconds (624.4
 MMatrix * MMatrix compilation time (chunks):             0.238633 seconds (231.37 k allocations: 9.023 MB)
 Mat * Mat compilation time:                              2.061249 seconds (2.05 M allocations: 59.281 MB, 0.88% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000415 seconds (106 allocations: 7.344 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.266944 seconds (70.22 k allocations: 2.021 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.102956 seconds (33.26 k allocations: 1.030 MB, 6.72% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000415 seconds (106 allocations: 7.344 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.266944 seconds (70.22 k allocations: 2.021 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.102956 seconds (33.26 k allocations: 1.030 MB, 6.72% gc time)
 
 Matrix multiplication
 ---------------------
@@ -389,9 +389,9 @@ MMatrix * MMatrix compilation time (unrolled):           3.150150 seconds (860.2
 MMatrix * MMatrix compilation time (chunks):             0.306809 seconds (287.29 k allocations: 11.169 MB)
 Mat * Mat compilation time:                              3.066260 seconds (3.04 M allocations: 83.185 MB, 0.81% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000414 seconds (106 allocations: 7.781 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.366111 seconds (88.85 k allocations: 2.484 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.121859 seconds (42.60 k allocations: 1.267 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000414 seconds (106 allocations: 7.781 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.366111 seconds (88.85 k allocations: 2.484 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.121859 seconds (42.60 k allocations: 1.267 MB)
 
 Matrix multiplication
 ---------------------
@@ -435,9 +435,9 @@ MMatrix * MMatrix compilation time (unrolled):           5.478176 seconds (1.15 
 MMatrix * MMatrix compilation time (chunks):             0.393716 seconds (349.40 k allocations: 13.535 MB)
 Mat * Mat compilation time:                              4.582946 seconds (4.77 M allocations: 121.380 MB, 0.85% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000410 seconds (106 allocations: 8.000 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.503117 seconds (109.85 k allocations: 3.040 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.161995 seconds (52.92 k allocations: 1.538 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000410 seconds (106 allocations: 8.000 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.503117 seconds (109.85 k allocations: 3.040 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.161995 seconds (52.92 k allocations: 1.538 MB)
 
 Matrix multiplication
 ---------------------
@@ -481,9 +481,9 @@ MMatrix * MMatrix compilation time (unrolled):           9.202682 seconds (1.50 
 MMatrix * MMatrix compilation time (chunks):             0.516767 seconds (420.98 k allocations: 16.153 MB, 2.01% gc time)
 Mat * Mat compilation time:                              6.538570 seconds (6.50 M allocations: 160.338 MB, 0.73% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000419 seconds (106 allocations: 8.313 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.653112 seconds (132.92 k allocations: 3.651 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.197368 seconds (64.23 k allocations: 1.839 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000419 seconds (106 allocations: 8.313 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.653112 seconds (132.92 k allocations: 3.651 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.197368 seconds (64.23 k allocations: 1.839 MB)
 
 Matrix multiplication
 ---------------------
@@ -527,9 +527,9 @@ MMatrix * MMatrix compilation time (unrolled):          15.100884 seconds (1.92 
 MMatrix * MMatrix compilation time (chunks):             0.655627 seconds (500.86 k allocations: 19.082 MB, 1.82% gc time)
 Mat * Mat compilation time:                              9.429693 seconds (10.59 M allocations: 239.387 MB, 1.67% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000412 seconds (106 allocations: 8.688 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    0.846343 seconds (157.85 k allocations: 4.330 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.253477 seconds (76.54 k allocations: 2.154 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000412 seconds (106 allocations: 8.688 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    0.846343 seconds (157.85 k allocations: 4.330 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.253477 seconds (76.54 k allocations: 2.154 MB)
 
 Matrix multiplication
 ---------------------
@@ -573,9 +573,9 @@ MMatrix * MMatrix compilation time (unrolled):          24.304280 seconds (2.41 
 MMatrix * MMatrix compilation time (chunks):             0.813494 seconds (590.95 k allocations: 22.363 MB, 1.58% gc time)
 Mat * Mat compilation time:                             12.640583 seconds (12.74 M allocations: 289.036 MB, 0.67% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000416 seconds (106 allocations: 9.219 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    1.082925 seconds (184.76 k allocations: 4.993 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.312011 seconds (90.13 k allocations: 2.489 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000416 seconds (106 allocations: 9.219 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    1.082925 seconds (184.76 k allocations: 4.993 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.312011 seconds (90.13 k allocations: 2.489 MB)
 
 Matrix multiplication
 ---------------------
@@ -619,9 +619,9 @@ MMatrix * MMatrix compilation time (unrolled):          49.024010 seconds (2.97 
 MMatrix * MMatrix compilation time (chunks):             0.979227 seconds (651.35 k allocations: 24.512 MB, 1.23% gc time)
 Mat * Mat compilation time:                              6.609129 seconds (3.60 M allocations: 169.025 MB, 0.86% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000472 seconds (1.04 k allocations: 27.375 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    2.789548 seconds (133.70 k allocations: 3.788 MB)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.388417 seconds (104.77 k allocations: 2.884 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000472 seconds (1.04 k allocations: 27.375 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    2.789548 seconds (133.70 k allocations: 3.788 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.388417 seconds (104.77 k allocations: 2.884 MB)
 
 Matrix multiplication
 ---------------------
@@ -665,9 +665,9 @@ MMatrix * MMatrix compilation time (unrolled):          81.420545 seconds (3.63 
 MMatrix * MMatrix compilation time (chunks):             1.899633 seconds (750.22 k allocations: 27.943 MB, 1.69% gc time)
 Mat * Mat compilation time:                              7.808950 seconds (4.51 M allocations: 206.803 MB, 1.67% gc time)
 
-mul!(MMatrix, MMatrix) compilation time (unrolled):  0.000513 seconds (1.19 k allocations: 35.156 KB)
-mul!(MMatrix, MMatrix) compilation time (chunks):    3.140731 seconds (157.99 k allocations: 4.368 MB, 0.28% gc time)
-mul!(MMatrix, MMatrix) compilation time (BLAS):      0.471875 seconds (120.59 k allocations: 3.264 MB)
+A_mul_B!(MMatrix, MMatrix) compilation time (unrolled):  0.000513 seconds (1.19 k allocations: 35.156 KB)
+A_mul_B!(MMatrix, MMatrix) compilation time (chunks):    3.140731 seconds (157.99 k allocations: 4.368 MB, 0.28% gc time)
+A_mul_B!(MMatrix, MMatrix) compilation time (BLAS):      0.471875 seconds (120.59 k allocations: 3.264 MB)
 
 Matrix multiplication
 ---------------------

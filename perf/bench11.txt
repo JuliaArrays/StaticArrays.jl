@@ -44,7 +44,7 @@ SArray     ->  0.371094 seconds (4 allocations: 160 bytes)
 MArray     ->  0.671434 seconds (37.04 M allocations: 2.759 GB, 6.75% gc time)
 SizedArray ->  2.078264 seconds (74.07 M allocations: 6.071 GB, 8.45% gc time)
 
-Matrix symmetric eigenenvalue (82x speedup)
+Matrix symmetric eigenvalue (82x speedup)
 -----------------------------------------
 Array      ->444.241336 seconds (740.74 M allocations: 89.407 GB, 1.45% gc time)
 SArray     ->  5.857789 seconds (5 allocations: 256 bytes)
