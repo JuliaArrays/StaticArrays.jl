@@ -25,9 +25,9 @@ Array:      m3 = m1 * m2 takes 160.00 ns, 352.00 bytes
 MMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
 SizedArray: m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 29.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 29.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 2 and eltype Int64
@@ -49,9 +49,9 @@ Array:      m3 = m1 * m2 takes 39.00 ns, 144.00 bytes
 MMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
 SizedArray: m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 3.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 4 and eltype Int64
@@ -73,9 +73,9 @@ Array:      m3 = m1 * m2 takes 290.00 ns, 464.00 bytes
 MMatrix:    m3 = m1 * m2 takes 34.00 ns, 144.00 bytes
 SizedArray: m3 = m1 * m2 takes 34.00 ns, 144.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 8 and eltype Int64
@@ -97,9 +97,9 @@ Array:      m3 = m1 * m2 takes 639.00 ns, 880.00 bytes
 MMatrix:    m3 = m1 * m2 takes 198.00 ns, 544.00 bytes
 SizedArray: m3 = m1 * m2 takes 209.00 ns, 544.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 74.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 74.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 20.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 16 and eltype Int64
@@ -121,9 +121,9 @@ Array:      m3 = m1 * m2 takes 2.63 μs, 2.38 kb
 MMatrix:    m3 = m1 * m2 takes 1.79 μs, 2.06 kb
 SizedArray: m3 = m1 * m2 takes 1.79 μs, 2.06 kb
 
-Array:      A_mul_B!(m3, m1, m2) takes 148.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 75.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 78.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 148.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 75.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 78.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 32 and eltype Int64
@@ -193,9 +193,9 @@ Array:      m3 = m1 * m2 takes 151.00 ns, 128.00 bytes
 MMatrix:    m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
 SizedArray: m3 = m1 * m2 takes 7.00 ns, 16.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 28.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 28.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 2 and eltype Float64
@@ -217,9 +217,9 @@ Array:      m3 = m1 * m2 takes 41.00 ns, 144.00 bytes
 MMatrix:    m3 = m1 * m2 takes 10.00 ns, 48.00 bytes
 SizedArray: m3 = m1 * m2 takes 11.00 ns, 48.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 31.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 4.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 4 and eltype Float64
@@ -241,9 +241,9 @@ Array:      m3 = m1 * m2 takes 183.00 ns, 240.00 bytes
 MMatrix:    m3 = m1 * m2 takes 36.00 ns, 144.00 bytes
 SizedArray: m3 = m1 * m2 takes 36.00 ns, 144.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 47.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 6.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 8 and eltype Float64
@@ -265,9 +265,9 @@ Array:      m3 = m1 * m2 takes 274.00 ns, 656.00 bytes
 MMatrix:    m3 = m1 * m2 takes 102.00 ns, 544.00 bytes
 SizedArray: m3 = m1 * m2 takes 98.00 ns, 544.00 bytes
 
-Array:      A_mul_B!(m3, m1, m2) takes 77.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 77.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 21.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 16 and eltype Float64
@@ -289,9 +289,9 @@ Array:      m3 = m1 * m2 takes 867.00 ns, 2.16 kb
 MMatrix:    m3 = m1 * m2 takes 798.00 ns, 2.06 kb
 SizedArray: m3 = m1 * m2 takes 809.00 ns, 2.06 kb
 
-Array:      A_mul_B!(m3, m1, m2) takes 145.00 ns, 0.00 bytes
-MMatrix:    A_mul_B!(m3, m1, m2) takes 80.00 ns, 0.00 bytes
-SizedArray: A_mul_B!(m3, m1, m2) takes 83.00 ns, 0.00 bytes
+Array:      mul!(m3, m1, m2) takes 145.00 ns, 0.00 bytes
+MMatrix:    mul!(m3, m1, m2) takes 80.00 ns, 0.00 bytes
+SizedArray: mul!(m3, m1, m2) takes 83.00 ns, 0.00 bytes
 
 =====================================================================
  Vectors of length 32 and eltype Float64
