@@ -4,6 +4,10 @@ using StaticArrays, Test, LinearAlgebra
     m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
     m3c = ComplexF64.(m3)
     m23 = @SMatrix Float64[3 9 4; 6 6 2]
+    m_sing = @SMatrix [2.0 3.0 5.0; 4.0 9.0 10.0; 1.0 1.0 1.0]
+    v = @SVector [1, 2, 3]
+    mc_sing = @SMatrix [1.0+0.1im 0 0; 2.0+0.2im 0 0; 3.0 0.1im 0]
+    vc = @SVector [1.0f0+8.0f0im, 0.2f0im, 2.5f0]
 
     @testset "svd" begin
         @testinf svdvals(@SMatrix [2 0; 0 0])::StaticVector ≊ [2, 0]
@@ -51,5 +55,14 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m3c).U  isa SMatrix{3,3,ComplexF64}
         @testinf svd(m3c).S  isa SVector{3,Float64}
         @testinf svd(m3c).Vt isa SMatrix{3,3,ComplexF64}
+
+        @testinf svd(m3) \ v ≈ svd(Matrix(m3)) \ Vector(v)
+        @testinf svd(m_sing) \ v ≈ svd(Matrix(m_sing)) \ Vector(v)
+        @testinf svd(m3) \ m23' ≈ svd(Matrix(m3)) \ Matrix(m23')
+        @testinf svd(m_sing) \ m23' ≈ svd(Matrix(m_sing)) \ Matrix(m23')
+
+        @testinf svd(mc_sing) \ v ≈ svd(Matrix(mc_sing)) \ Vector(v)
+        @testinf svd(mc_sing) \ vc ≈ svd(Matrix(mc_sing)) \ Vector(vc)
+        @testinf svd(mc_sing) \ m23' ≈ svd(Matrix(mc_sing)) \ Matrix(m23')
     end
 end

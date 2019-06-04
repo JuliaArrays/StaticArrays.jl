@@ -55,3 +55,8 @@ function _svd(A, full::Val{true})
     SVD(U,S,Vt)
 end
 
+function \(F::SVD, B::StaticVecOrMat)
+    sthresh = eps(F.S[1])
+    Sinv = map(s->s < sthresh ? zero(1/sthresh) : 1/s, F.S)
+    return F.Vt' * (Diagonal(Sinv) * (F.U'*B))
+end
