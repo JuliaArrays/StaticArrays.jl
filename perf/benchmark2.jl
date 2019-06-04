@@ -44,7 +44,7 @@ if !@isdefined(f_mut_marray) || !@isdefined(benchmark_suite) || benchmark_suite 
     @noinline _det(x) = det(x)
     @noinline _inv(x) = inv(x)
     @noinline _eig(x) = eigen(x)
-    @noinline _chol(x) = chol(x)
+    @noinline _chol(x) = cholesky(x)
 
     f_det(n::Int, A) = (for i = 1:n; _det(A); end)
     f_inv(n::Int, A) = (for i = 1:n; _inv(A); end)
