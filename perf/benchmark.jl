@@ -1,11 +1,7 @@
-fsa = true
-
 using StaticArrays
-@static if fsa
-    using FixedSizeArrays
-end
+using LinearAlgebra
 
-if !isdefined(:N)
+if !@isdefined(N)
     N = 4
 end
 
@@ -17,12 +13,8 @@ M_g = div(2*10^8, N^2)
 A = rand(N,N)
 As = SMatrix{N,N}(A)
 Am = MMatrix{N,N}(A)
-@static if fsa
-    Af = Mat(ntuple(j -> ntuple(i->A[i,j], N), N)) # there is a bug in FixedSizeArrays Mat constructor (13 July 2016)
-end
 
-
-if !isdefined(:f_mut_marray) || !isdefined(:benchmark_suite) || benchmark_suite == false
+if !@isdefined(f_mut_marray) || !@isdefined(benchmark_suite) || benchmark_suite == false
     f(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C*A; end; return C)
     f_unrolled(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C)
     f_unrolled_chunks(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C)
