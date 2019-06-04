@@ -2,13 +2,12 @@ using StaticArrays
 using BenchmarkTools
 
 import BenchmarkTools: prettytime, prettymemory
+using Statistics: mean
 
 @noinline plus(a,b) = a+b
 @noinline plus!(c,a,b) = broadcast!(+, c, a, b)
 
 @noinline mul(a,b) = a*b
-@noinline mul!(c,a,b) = mul!(c, a, b)
-
 
 for T ∈ [Int64, Float64]
     for N ∈ [1,2,4,8,16,32,64,128,256]
