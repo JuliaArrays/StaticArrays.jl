@@ -18,7 +18,7 @@ using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
-                      normalize!, Eigen, det, logdet, cross, diff, qr
+                      normalize!, Eigen, det, logdet, cross, diff, qr, \
 
 # import eye for deprecation warnings
 @static if isdefined(LinearAlgebra, :eye)
