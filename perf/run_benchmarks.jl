@@ -1,11 +1,7 @@
 benchmark_suite = true
 using LinearAlgebra
 
-N = 0
-
-for n = 2:16
-    global N
-    N = n
+for N = 2:16
     include("benchmark2.jl")
 end
 
