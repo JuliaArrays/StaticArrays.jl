@@ -5,6 +5,8 @@ if !@isdefined(N)
     N = 4
 end
 
+const fsa = false
+
 M_f = div(10^9, N^3)
 M_g = div(2*10^8, N^2)
 
@@ -16,12 +18,12 @@ Am = MMatrix{N,N}(A)
 
 if !@isdefined(f_mut_marray) || !@isdefined(benchmark_suite) || benchmark_suite == false
     f(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C*A; end; return C)
-    f_unrolled(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled(C,A); end; return C)
-    f_unrolled_chunks(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.A_mul_B_unrolled_chunks(C,A); end; return C)
+    f_unrolled(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.mul_unrolled(Size(C), Size(A), C,A); end; return C)
+    f_unrolled_chunks(n::Integer, A::Union{SMatrix{M,M},MMatrix{M,M}}) where {M} = @inbounds (C = A; for i = 1:n; C = StaticArrays.mul_unrolled_chunks(Size(C), Size(A), C, A); end; return C)
     f_via_sarray(n::Integer, A::MMatrix{M,M}) where {M}= @inbounds (C = A; for i = 1:n; C = MMatrix{M,M}(SMatrix{M,M}(C)*SMatrix{M,M}(A)); end; return C)
     f_mut_array(n::Integer, A) = @inbounds (C = copy(A); tmp = similar(A); for i = 1:n;  mul!(tmp, C, A); map!(identity, C, tmp); end; return C)
-    f_mut_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_unrolled!(tmp, C, A); C.data = tmp.data; end; return C)
-    f_blas_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.A_mul_B_blas!(tmp, C, A); C.data = tmp.data; end; return C)
+    f_mut_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.mul_unrolled!(Size(tmp), tmp, Size(C), Size(A), C, A); C.data = tmp.data; end; return C)
+    f_blas_marray(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; tmp = similar(A); for i = 1:n; StaticArrays.mul_blas!(Size(tmp), tmp, Size(C), Size(A), C, A); C.data = tmp.data; end; return C)
 
     g(n::Integer, A) = @inbounds (C = A; for i = 1:n; C = C + A; end; return C)
     g_mut(n::Integer, A) = @inbounds (C = similar(A); C[:] = A[:]; for i = 1:n; @inbounds map!(+, C, C, A); end; return C)
