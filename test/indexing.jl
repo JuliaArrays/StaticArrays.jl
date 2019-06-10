@@ -101,6 +101,10 @@ using StaticArrays, Test
         @test (@inferred getindex(sm, :, SVector(2,1))) === @SMatrix [3 1; 4 2]
         @test (@inferred getindex(sm, 1, :)) === @SVector [1,3]
         @test (@inferred getindex(sm, :, 1)) === @SVector [1,2]
+
+        # SOneTo
+        @testinf sm[SOneTo(1),:] === @SMatrix [1 3]
+        @testinf sm[:,SOneTo(1)] === @SMatrix [1;2]
     end
 
     @testset "2D getindex()/setindex! on MMatrix" begin
