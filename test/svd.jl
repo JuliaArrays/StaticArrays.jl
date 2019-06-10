@@ -4,10 +4,14 @@ using StaticArrays, Test, LinearAlgebra
     m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
     m3c = ComplexF64.(m3)
     m23 = @SMatrix Float64[3 9 4; 6 6 2]
-    m_sing = @SMatrix [2.0 3.0 5.0; 4.0 9.0 10.0; 1.0 1.0 1.0]
+    m_sing = @SMatrix [2.0 3.0 5.0; 4.0 6.0 10.0; 1.0 1.0 1.0]
+    m_sing2 = @SMatrix [1 1; 1 0; 0 1]
     v = @SVector [1, 2, 3]
+    v2 = @SVector [1, 2]
     mc_sing = @SMatrix [1.0+0.1im 0 0; 2.0+0.2im 0 0; 3.0 0.1im 0]
+    mc_sing2 = @SMatrix [1.0+0.1im 0; 2.0+0.2im 1; 3.0 0.1im]
     vc = @SVector [1.0f0+8.0f0im, 0.2f0im, 2.5f0]
+    vc2 = @SVector [1.0f0+8.0f0im, 0.2f0im]
 
     @testset "svd" begin
         @testinf svdvals(@SMatrix [2 0; 0 0])::StaticVector ≊ [2, 0]
@@ -58,11 +62,28 @@ using StaticArrays, Test, LinearAlgebra
 
         @testinf svd(m3) \ v ≈ svd(Matrix(m3)) \ Vector(v)
         @testinf svd(m_sing) \ v ≈ svd(Matrix(m_sing)) \ Vector(v)
+        @testinf svd(m_sing2) \ v ≈ svd(Matrix(m_sing2)) \ Vector(v)
+        @testinf svd(m_sing2') \ v2 ≈ svd(Matrix(m_sing2')) \ Vector(v2)
         @testinf svd(m3) \ m23' ≈ svd(Matrix(m3)) \ Matrix(m23')
         @testinf svd(m_sing) \ m23' ≈ svd(Matrix(m_sing)) \ Matrix(m23')
+        @testinf svd(m_sing2) \ m23' ≈ svd(Matrix(m_sing2)) \ Matrix(m23')
+        @testinf svd(m_sing2; full=Val(true)) \ v ≈ svd(Matrix(m_sing2); full=true) \ Vector(v)
+        @testinf svd(m_sing2'; full=Val(true)) \ v2 ≈ svd(Matrix(m_sing2'); full=true) \ Vector(v2)
+        @testinf svd(m_sing2; full=Val(true)) \ m23' ≈ svd(Matrix(m_sing2); full=true) \ Matrix(m23')
+        @testinf svd(m_sing2'; full=Val(true)) \ m23 ≈ svd(Matrix(m_sing2'); full=true) \ Matrix(m23)
 
         @testinf svd(mc_sing) \ v ≈ svd(Matrix(mc_sing)) \ Vector(v)
         @testinf svd(mc_sing) \ vc ≈ svd(Matrix(mc_sing)) \ Vector(vc)
         @testinf svd(mc_sing) \ m23' ≈ svd(Matrix(mc_sing)) \ Matrix(m23')
+        @testinf svd(mc_sing2) \ v ≈ svd(Matrix(mc_sing2)) \ Vector(v)
+        @testinf svd(mc_sing2) \ vc ≈ svd(Matrix(mc_sing2)) \ Vector(vc)
+        @testinf svd(mc_sing2') \ vc2 ≈ svd(Matrix(mc_sing2')) \ Vector(vc2)
+        @testinf svd(mc_sing2) \ m23' ≈ svd(Matrix(mc_sing2)) \ Matrix(m23')
+        @testinf svd(mc_sing2') \ m23 ≈ svd(Matrix(mc_sing2')) \ Matrix(m23)
+        @testinf svd(mc_sing2; full=Val(true)) \ v ≈ svd(Matrix(mc_sing2); full=true) \ Vector(v)
+        @testinf svd(mc_sing2; full=Val(true)) \ vc ≈ svd(Matrix(mc_sing2); full=true) \ Vector(vc)
+        @testinf svd(mc_sing2'; full=Val(true)) \ vc2 ≈ svd(Matrix(mc_sing2'); full=true) \ Vector(vc2)
+        @testinf svd(mc_sing2; full=Val(true)) \ m23' ≈ svd(Matrix(mc_sing2); full=true) \ Matrix(m23')
+        @testinf svd(mc_sing2'; full=Val(true)) \ m23 ≈ svd(Matrix(mc_sing2'); full=true) \ Matrix(m23)
     end
 end
