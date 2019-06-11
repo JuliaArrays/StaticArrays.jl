@@ -58,5 +58,17 @@ end
 function \(F::SVD, B::StaticVecOrMat)
     sthresh = eps(F.S[1])
     Sinv = map(s->s < sthresh ? zero(1/sthresh) : 1/s, F.S)
-    return F.Vt' * (Diagonal(Sinv) * (F.U'*B))
+    return transposemult(F.Vt, diagmult(Sinv, transposemult(F.U, B)))
+end
+
+transposemult(U, B) = transposemult(Size(U), Size(B), U, B)
+function transposemult(sU, sB, U, B)
+    sU[1] == sB[1] && return U'*B
+    return U[SOneTo(sB[1]),:]'*B
+end
+diagmult(d, B) = diagmult(Size(d), Size(B), d, B)
+function diagmult(sd, sB, d, B)
+    sd[1] == sB[1] && return Diagonal(d)*B
+    ind = SOneTo(sd[1])
+    return isa(B, AbstractVector) ? Diagonal(d)*B[ind] : Diagonal(d)*B[ind,:]
 end

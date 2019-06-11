@@ -75,6 +75,7 @@ end
 @inline index_size(::Size, ::Int) = Size()
 @inline index_size(::Size, a::StaticArray) = Size(a)
 @inline index_size(s::Size, ::Colon) = s
+@inline index_size(s::Size, a::SOneTo{n}) where n = Size(n,)
 
 @inline index_sizes(::S, inds...) where {S<:Size} = map(index_size, unpack_size(S), inds)
 
@@ -93,6 +94,7 @@ linear_index_size(ind_sizes::Type{<:Size}...) = _linear_index_size((), ind_sizes
 _ind(i::Int, ::Int, ::Type{Int}) = :(inds[$i])
 _ind(i::Int, j::Int, ::Type{<:StaticArray}) = :(inds[$i][$j])
 _ind(i::Int, j::Int, ::Type{Colon}) = j
+_ind(i::Int, j::Int, ::Type{<:SOneTo}) = j
 
 ################################
 ## Non-scalar linear indexing ##
@@ -213,7 +215,7 @@ end
 
 # getindex
 
-@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Tuple, Int}, Colon}...)
+@propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Tuple, Int}, SOneTo, Colon}...)
     _getindex(a, index_sizes(Size(a), inds...), inds)
 end
 

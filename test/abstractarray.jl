@@ -80,7 +80,7 @@ using StaticArrays, Test, LinearAlgebra
 
         @test m[:, 1:2] isa Matrix
         @test m[:, [true, false, false]] isa Matrix
-        @test m[:, SOneTo(2)] isa MMatrix{2, 2, Int}
+        @test m[:, SOneTo(2)] isa SMatrix{2, 2, Int}
         @test m[:, :] isa SMatrix{2, 3, Int}
         @test m[:, 1] isa SVector{2, Int}
         @test m[2, :] isa SVector{3, Int}
