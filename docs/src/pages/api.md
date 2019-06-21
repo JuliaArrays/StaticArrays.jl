@@ -242,26 +242,25 @@ Rather conveniently, such types have *exactly* the same binary layout in memory,
 and therefore we can use `reinterpret` to convert between the two formats
 ```julia
 function svectors(x::Matrix{T}, ::Val{N}) where {T,N}
-    size(x,1) == N || throw("sizes mismatch")
-    isbitstype(T) || throw("use for bitstypes only")
-    reinterpret(SVector{N,T}, reshape(x, length(x)))
+    size(x,1) == N || error("sizes mismatch")
+    isbitstype(T) || error("use for bitstypes only")
+    reinterpret(SVector{N,T}, vec(x))
 end
 ```
-Such a conversion does not copy the data, rather it refers to the *same* memory. 
-Arguably, a `Vector` of `SVector`s is often preferable to a `Matrix` because 
-(a) it provides a better abstraction of the objects contained in the array and 
-(b) it allows the fast *StaticArrays* methods to act on elements
+Such a conversion does not copy the data, rather it refers to the *same* memory.
+Arguably, a `Vector` of `SVector`s is often preferable to a `Matrix` because it
+provides a better abstraction of the objects contained in the array and it
+allows the fast *StaticArrays* methods to act on elements.
 
-However, the resulting object is a Base.ReinterpretArray, not an Array, which may carry some
-runtime penalty on every single access. If you can afford the memory for a copy and can live with
-the non-shared mutation semantics, then it is better to pull a copy by e.g.
+However, the resulting object is a Base.ReinterpretArray, not an Array, which
+carries some runtime penalty on every single access. If you can afford the
+memory for a copy and can live with the non-shared mutation semantics, then it
+is better to pull a copy by e.g.
 ```julia
 function svectorscopy(x::Matrix{T}, ::Val{N}) where {T,N}
-    size(x,1) == N || throw("sizes mismatch")
-    isbitstype(T) || throw("use for bitstypes only")
-    res = Vector{SVector{N,T}}(undef, size(x,2))
-    GC.@preserve res x ccall(:memcpy, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Cvoid}, Csize_t), pointer(res), pointer(x), sizeof(x))
-    return res
+    size(x,1) == N || error("sizes mismatch")
+    isbitstype(T) || error("use for bitstypes only")
+    copy(reinterpret(SVector{N,T}, vec(x)))
 end
 ```
 For example:
@@ -275,28 +274,14 @@ julia> svectors(M, Val{2}())
 3-element reinterpret(SArray{Tuple{2},Int64,1,2}, ::Array{Int64,1}):
  [1, 2]
  [3, 4]
- [5, 6] 
+ [5, 6]
 
- julia> svectorscopy(M, Val{2}())
+julia> svectorscopy(M, Val{2}())
 3-element Array{SArray{Tuple{2},Int64,1,2},1}:
  [1, 2]
  [3, 4]
  [5, 6]
 ```
-If applications absolutely insist on obtaining a `Vector{<:SVector}` referencing the same memory,
-then this is possible by directly calling into the runtime. However, starting from 
-Julia 0.7 and 1.0, this violates the language specifications about aliasing 
-(Arrays with different `eltype` must not share memory), and is to be considered a dirty hack.
-This is nevertheless safe on 1.0.* or earlier versions of the Julia compiler, but will violate
-compiler assumptions on Julia 1.1 or later, and cause subtle data-corrupting miscompilation bugs.
-```julia
-function unmaintainable_svectors(x::Matrix{T}, ::Val{N}) where {T,N}
-    size(x,1) == N || throw("sizes mismatch")
-    isbitstype(T) || throw("use for bitstypes only")
-    ccall(:jl_reshape_array, Vector{SVector{N,T}}, (Any,Any,Any), Vector{SVector{N,T}}, x, (size(x,2),))
-end
-```
-
 
 ### Working with mutable and immutable arrays
 
