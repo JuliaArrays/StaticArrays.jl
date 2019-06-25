@@ -21,9 +21,17 @@ branches:
 #   allow_failures:
 #     - julia: nightly
     # - os: osx
+jobs:
+  include:
+    - stage: "Documentation"
+      julia: 1.1
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
+      after_success: skip
 after_success:
   - if [ $TRAVIS_JULIA_VERSION = "1.1" ] && [ $TRAVIS_OS_NAME = "linux" ]; then
       julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder()); Codecov.submit(Codecov.process_folder())';
     fi
-  - julia -e 'using Pkg; ps=Pkg.PackageSpec(name="Documenter", version="0.19"); Pkg.add(ps); Pkg.pin(ps)'
-  - julia docs/make.jl

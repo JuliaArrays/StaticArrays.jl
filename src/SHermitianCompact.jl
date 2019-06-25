@@ -1,7 +1,7 @@
 """
     SHermitianCompact{N, T, L} <: StaticMatrix{N, N, T}
 
-A [StaticArray](@ref) subtype that represents a Hermitian matrix. Unlike
+A [`StaticArray`](@ref) subtype that represents a Hermitian matrix. Unlike
 `LinearAlgebra.Hermitian`, `SHermitianCompact` stores only the lower triangle
 of the matrix (as an `SVector`). The lower triangle is stored in column-major order.
 For example, for an `SHermitianCompact{3}`, the indices of the stored elements
