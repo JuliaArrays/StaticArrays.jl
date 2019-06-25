@@ -1,7 +1,6 @@
 using Documenter, StaticArrays
 
 makedocs(
-         format = :html,
          modules = [StaticArrays],
          sitename = "StaticArrays.jl",
          pages = [
@@ -13,8 +12,4 @@ makedocs(
 
 deploydocs(
     repo = "github.com/JuliaArrays/StaticArrays.jl.git",
-    julia = "0.7",
-    target = "build",
-    deps   = nothing,
-    make   = nothing
 )
