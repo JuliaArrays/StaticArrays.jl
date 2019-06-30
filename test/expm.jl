@@ -6,6 +6,7 @@ using StaticArrays, Test, LinearAlgebra
     @test exp(@SMatrix [4 2; -2 1])::SMatrix ≈ exp([4 2; -2 1])
     @test exp(@SMatrix [4 2; 2 1])::SMatrix ≈ exp([4 2; 2 1])
     @test exp(@SMatrix [ -3+1im  -1+2im;-4-5im   5-2im])::SMatrix ≈ exp(Complex{Float64}[ -3+1im  -1+2im;-4-5im   5-2im])
+    @test exp(@SMatrix [2+2im  1-1im; -2-2im  6+2im])::SMatrix ≈ exp(Complex{Float64}[2+2im  1-1im; -2-2im  6+2im])
     @test exp(@SMatrix [1 2 0; 2 1 0; 0 0 1]) ≈ exp([1 2 0; 2 1 0; 0 0 1])
 
     for sz in (3,4), typ in (Float64, Complex{Float64})

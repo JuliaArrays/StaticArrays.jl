@@ -52,12 +52,13 @@ end
     z = sqrt((a - d)*(a - d) + 4*b*c )
     e = exp((a + d - z)/2)
     f = exp((a + d + z)/2)
-    zr = inv(z)
+    ϵ = eps()
+    g = abs2(z) < ϵ^2 ? exp((a + d) / 2) * (1 + z^2 / 24) : (f - e) / z
 
-    m11 = (-e*(a - d - z) + f*(a - d + z)) * zr/2  
-    m12 = (f-e) * b * zr
-    m21 = (f-e) * c * zr
-    m22 = (-e*(-a + d - z) + f*(-a + d + z)) * zr/2
+    m11 = (g * (a - d) + f + e) / 2
+    m12 = g * b
+    m21 = g * c
+    m22 = (-g * (a - d) + f + e) / 2
 
     (newtype)((m11, m21, m12, m22))
 end
