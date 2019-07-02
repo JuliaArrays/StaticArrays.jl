@@ -38,6 +38,15 @@ end
 @pure tuple_minimum(T::Type{<:Tuple}) = length(T.parameters) == 0 ? 0 : minimum(tuple(T.parameters...))
 @pure tuple_minimum(T::Tuple) = minimum(T)
 
+"""
+    size_to_tuple(::Type{S}) where S<:Tuple
+
+Converts a size given by `Tuple{N, M, ...}` into a tuple `(N, M, ...)`.
+"""
+@pure function size_to_tuple(::Type{S}) where S<:Tuple
+    return tuple(S.parameters...)
+end
+
 # Something doesn't match up type wise
 function check_array_parameters(Size, T, N, L)
     (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
