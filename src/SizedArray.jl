@@ -20,7 +20,7 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
     end
 
     function SizedArray{S, T, N, M}(::UndefInitializer) where {S, T, N, M}
-        new{S, T, N, M}(Array{T, M}(undef, S.parameters...))
+        new{S, T, N, M}(Array{T, M}(undef, size_to_tuple(S)...))
     end
 end
 
