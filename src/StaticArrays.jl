@@ -137,5 +137,6 @@ include("qr.jl")
 include("deque.jl")
 include("flatten.jl")
 include("io.jl")
+include("deprecated.jl")
 
 end # module
