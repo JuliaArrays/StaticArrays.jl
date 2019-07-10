@@ -10,20 +10,20 @@ For example:
 
     struct Stiffness <: FieldArray{Tuple{2,2,2,2}, Float64, 4}
         xxxx::Float64
-        xxxy::Float64
-        xxyx::Float64
-        xxyy::Float64
-        xyxx::Float64
-        xyxy::Float64
-        xyyx::Float64
-        xyyy::Float64
         yxxx::Float64
-        yxxy::Float64
-        yxyx::Float64
-        yxyy::Float64
+        xyxx::Float64
         yyxx::Float64
-        yyxy::Float64
+        xxyx::Float64
+        yxyx::Float64
+        xyyx::Float64
         yyyx::Float64
+        xxxy::Float64
+        yxxy::Float64
+        xyxy::Float64
+        yyxy::Float64
+        xxyy::Float64
+        yxyy::Float64
+        xyyy::Float64
         yyyy::Float64
     end
 """
@@ -41,13 +41,13 @@ For example:
 
     struct Stress <: FieldMatrix{3, 3, Float64}
         xx::Float64
-        xy::Float64
-        xz::Float64
         yx::Float64
-        yy::Float64
-        yz::Float64
         zx::Float64
+        xy::Float64
+        yy::Float64
         zy::Float64
+        xz::Float64
+        yz::Float64
         zz::Float64
     end
 """
@@ -71,11 +71,13 @@ For example:
 """
 abstract type FieldVector{N, T} <: FieldArray{Tuple{N}, T, 1} end
 
-@inline (::Type{FA})(x::Tuple{Vararg{Any, N}}) where {N, FA <: FieldArray} = if length(FA) == length(x)
-                                                                                FA(x...)
-                                                                             else
-                                                                                throw(DimensionMismatch("No precise constructor for $FA found. Length of input was $(length(x))."))
-                                                                             end
+@inline function (::Type{FA})(x::Tuple{Vararg{Any, N}}) where {N, FA <: FieldArray}
+   if length(FA) == length(x)
+      FA(x...)
+   else
+      throw(DimensionMismatch("No precise constructor for $FA found. Length of input was $(length(x))."))
+   end
+end
 
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)
 @propagate_inbounds setindex!(a::FieldArray, x, i::Int) = setfield!(a, i, x)
