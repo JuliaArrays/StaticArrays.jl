@@ -26,6 +26,8 @@ For example:
         xyyy::Float64
         yyyy::Float64
     end
+
+Do note that `FieldArray` and its derivatives are column major.
 """
 abstract type FieldArray{N, T, D} <: StaticArray{N, T, D} end
 
@@ -50,6 +52,20 @@ For example:
         yz::Float64
         zz::Float64
     end
+
+Do note that `FieldMatrix` and its derivatives are column major. Constructing Stress like this
+
+    sigma = Stress(1.0, 2.0, 3.0,
+                   4.0, 5.0, 6.0,
+                   7.0, 8.0, 9.0)
+
+    3×3 Stress:
+     1.0  4.0  7.0
+     2.0  5.0  8.0
+     3.0  6.0  9.0
+
+
+will give you the transpose of what the multi-argument formatting suggests.
 """
 abstract type FieldMatrix{N1, N2, T} <: FieldArray{Tuple{N1, N2}, T, 2} end
 
