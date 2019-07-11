@@ -27,7 +27,7 @@
 
         @testinf Tuple(p) === (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
 
-        @test (p + p) === Tensor3x3(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0)
+         @test @inferred(p + p) === Tensor3x3(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0)
 
         @test (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]) === (p.xx, p.yx, p.zx, p.xy, p.yy, p.zy, p.xz, p.yz, p.zz)
 
@@ -59,7 +59,7 @@
                 yy::T
             end
 
-            StaticArrays.similar_type(::Type{P2D}, ::Type{T}, s::Size{(2,2)}) where {P2D<:Tensor2x2,T} = Tensor2x2{T}
+            StaticArrays.similar_type(::Type{<:Tensor2x2}, ::Type{T}, s::Size{(2,2)}) where {T} = Tensor2x2{T}
         end)
 
         p = Tensor2x2(0.0, 0.0, 0.0, 0.0)
