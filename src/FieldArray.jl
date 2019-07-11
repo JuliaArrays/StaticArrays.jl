@@ -27,7 +27,9 @@ For example:
         yyyy::Float64
     end
 
-Do note that `FieldArray` and its derivatives are column major.
+ Note that you must define the fields of any `FieldArray` subtype in column major order. If you
+ want to use an alternative ordering you will need to pay special attention in providing your
+ own definitions of `getindex`, `setindex!` and tuple conversion.
 """
 abstract type FieldArray{N, T, D} <: StaticArray{N, T, D} end
 
@@ -53,7 +55,8 @@ For example:
         zz::Float64
     end
 
-Do note that `FieldMatrix` and its derivatives are column major. Constructing Stress like this
+ Note that the fields of any subtype of `FieldMatrix` must be defined in column major order.
+ This means that formatting of constructors for literal `FieldMatrix` can be confusing. For example
 
     sigma = Stress(1.0, 2.0, 3.0,
                    4.0, 5.0, 6.0,
@@ -65,7 +68,12 @@ Do note that `FieldMatrix` and its derivatives are column major. Constructing St
      3.0  6.0  9.0
 
 
-will give you the transpose of what the multi-argument formatting suggests.
+will give you the transpose of what the multi-argument formatting suggests. For clarity,
+you may consider using the alternative
+
+    sigma = Stress(@SArray[1.0 2.0 3.0;
+                           4.0 5.0 6.0;
+                           7.0 8.0 9.0])
 """
 abstract type FieldMatrix{N1, N2, T} <: FieldArray{Tuple{N1, N2}, T, 2} end
 
