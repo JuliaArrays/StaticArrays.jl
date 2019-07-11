@@ -3,13 +3,13 @@
         eval(quote
             struct Tensor3x3 <: FieldMatrix{3, 3, Float64}
                 xx::Float64
-                xy::Float64
-                xz::Float64
                 yx::Float64
-                yy::Float64
-                yz::Float64
                 zx::Float64
+                xy::Float64
+                yy::Float64
                 zy::Float64
+                xz::Float64
+                yz::Float64
                 zz::Float64
             end
 
@@ -29,7 +29,7 @@
 
         @test (p + p) === Tensor3x3(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0)
 
-        @test (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]) === (p.xx, p.xy, p.xz, p.yx, p.yy, p.yz, p.zx, p.zy, p.zz)
+        @test (p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]) === (p.xx, p.yx, p.zx, p.xy, p.yy, p.zy, p.xz, p.yz, p.zz)
 
         m = @SMatrix [2.0 0.0 0.0;
                       0.0 2.0 0.0;
@@ -54,8 +54,8 @@
         eval(quote
             mutable struct Tensor2x2{T} <: FieldMatrix{2, 2, T}
                 xx::T
-                xy::T
                 yx::T
+                xy::T
                 yy::T
             end
 
@@ -72,7 +72,7 @@
 
         @testinf Tuple(p) === (1.0, 2.0, 0.0, 0.0)
 
-        @test (p[1], p[2], p[3], p[4]) === (p.xx, p.xy, p.yx, p.yy)
+        @test (p[1], p[2], p[3], p[4]) === (p.xx, p.yx, p.xy, p.yy)
         @test (p[1], p[2], p[3], p[4]) === (1.0, 2.0, 0.0, 0.0)
 
         m = @SMatrix [2.0 0.0;
