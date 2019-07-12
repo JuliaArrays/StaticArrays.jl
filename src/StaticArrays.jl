@@ -29,7 +29,7 @@ export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector
+export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
 export SHermitianCompact
@@ -71,7 +71,7 @@ For mutable containers you may also need to define the following:
  - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
    is assumed to exist.
 
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
+(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray`, `FieldVector`, `FieldMatrix` and `FieldArray`)
 """
 abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
 const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
@@ -101,7 +101,7 @@ include("util.jl")
 include("traits.jl")
 
 include("SUnitRange.jl")
-include("FieldVector.jl")
+include("FieldArray.jl")
 include("SArray.jl")
 include("SMatrix.jl")
 include("SVector.jl")
