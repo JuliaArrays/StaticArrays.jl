@@ -120,6 +120,9 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(dot(@SVector[[1,2],[3,4]], @SVector[[1,2],[3,4]])) === 30
         @test @inferred(@SVector[[1,2],[3,4]]' * @SVector[[1,2],[3,4]]) === 30
 
+        m1 = reshape(v1, Size(2,2))
+        m2 = reshape(v2, Size(2,2))
+        @test @inferred(dot(m1, m2)) === dot(v1, v2)
     end
 
     @testset "transpose() and conj()" begin
