@@ -182,7 +182,7 @@ fill3(x) = fill(3, x)
     @testset "Scalar-array" begin
         x = SHermitianCompact(SVector{6, Int}(1 : 6))
         y = -5
-        for op in (:-, :+, :*, :/, :\)
+        for op in (:*, :/, :\)
             if op != :\
                 @eval begin
                     @test $op($x, $y) == $op(SMatrix($x), $y)

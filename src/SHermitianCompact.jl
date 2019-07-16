@@ -150,13 +150,6 @@ LinearAlgebra.issymmetric(a::SHermitianCompact) = true
     end
 end
 
-# Scalar-array. TODO: overload broadcast instead, once API has stabilized a bit
-@inline Base.:+(a::Number, b::SHermitianCompact) = SHermitianCompact(a + b.lowertriangle)
-@inline Base.:+(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle + b)
-
-@inline Base.:-(a::Number, b::SHermitianCompact) = SHermitianCompact(a - b.lowertriangle)
-@inline Base.:-(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle - b)
-
 @inline Base.:*(a::Number, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
 @inline Base.:*(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle * b)
 

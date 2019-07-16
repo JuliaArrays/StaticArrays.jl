@@ -16,12 +16,6 @@ import Base: +, -, *, /, \
 @inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
 
 # Scalar-array
-@inline +(a::Number, b::StaticArray) = broadcast(+, a, b)
-@inline +(a::StaticArray, b::Number) = broadcast(+, a, b)
-
-@inline -(a::Number, b::StaticArray) = broadcast(-, a, b)
-@inline -(a::StaticArray, b::Number) = broadcast(-, a, b)
-
 @inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
 @inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
 

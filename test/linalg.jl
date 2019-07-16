@@ -7,8 +7,6 @@ using StaticArrays, Test, LinearAlgebra
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
 
-        @test @inferred(v1 + c) === @SVector [4,6,8,10]
-        @test @inferred(v1 - c) === @SVector [0,2,4,6]
         @test @inferred(v1 * c) === @SVector [4,8,12,16]
         @test @inferred(v1 / c) === @SVector [1.0,2.0,3.0,4.0]
         @test @inferred(c \ v1)::SVector ≈ @SVector [1.0,2.0,3.0,4.0]
