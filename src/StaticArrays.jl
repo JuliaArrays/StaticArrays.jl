@@ -36,6 +36,7 @@ export SHermitianCompact
 
 export Size, Length
 
+export SA
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
@@ -113,6 +114,7 @@ include("SizedArray.jl")
 include("SDiagonal.jl")
 include("SHermitianCompact.jl")
 
+include("initializers.jl")
 include("convert.jl")
 
 include("abstractarray.jl")
