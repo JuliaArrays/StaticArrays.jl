@@ -320,7 +320,7 @@ however the `.=` and `(+).()` syntaxes are fused into a single, efficient call
 to `broadcast!`. The simpler syntax `x .+= pos` is expected to be non-allocating
 (and therefore faster) in Julia 0.6.
 
-The functions `setindex`, `push`, `pop`, `shift`, `unshift`, `insert` and `deleteat`
+The functions `setindex`, `push`, `pop`, `pushfirst`, `popfirst`, `insert` and `deleteat`
 are provided for performing certain specific operations on static arrays, in
 analogy with the standard functions `setindex!`, `push!`, `pop!`, etc. (Note that
 if the size of the static array changes, the type of the output will differ from
