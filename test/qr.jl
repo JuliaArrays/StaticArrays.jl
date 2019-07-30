@@ -1,11 +1,9 @@
 using StaticArrays, Test, LinearAlgebra, Random
 
-Base.randn(::Type{BigFloat}) = BigFloat(randn(Float64))
-Base.randn(::Type{BigFloat}, I::Integer) = [randn(BigFloat) for i=1:I]
-Base.randn(::Type{Int}) = rand(-9:9)
-Base.randn(::Type{Int}, I::Integer) = [randn(Int) for i=1:I]
-Base.randn(::Type{Complex{T}}) where T = Complex{T}(randn(T,2)...)
-Base.randn(::Type{Complex}) = randn(Complex{Float64})
+broadenrandn(::Type{BigFloat}) = BigFloat(randn(Float64))
+broadenrandn(::Type{Int}) = rand(-9:9)
+broadenrandn(::Type{Complex{T}}) where T = Complex{T}(broadenrandn(T), broadenrandn(T))
+broadenrandn(::Type{T}) where T = randn(T)
 
 Random.seed!(42)
 @testset "QR decomposition" begin
@@ -46,7 +44,7 @@ Random.seed!(42)
     for eltya in (Float32, Float64, BigFloat, Int),
             rel in (real, complex),
                 sz in [(3,3), (3,4), (4,3)]
-        arr = SMatrix{sz[1], sz[2], rel(eltya), sz[1]*sz[2]}( [randn(rel(eltya)) for i = 1:sz[1], j = 1:sz[2]] )
+        arr = SMatrix{sz[1], sz[2], rel(eltya), sz[1]*sz[2]}( [broadenrandn(rel(eltya)) for i = 1:sz[1], j = 1:sz[2]] )
         test_qr(arr)
     end
     # some special cases
