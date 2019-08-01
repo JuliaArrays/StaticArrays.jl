@@ -9,6 +9,8 @@ Broadcast.broadcastable(x::ScalarTest) = Ref(x)
         @test x == @inferred(x .+ ScalarTest())
         @test x .+ 1 == @inferred(x .+ Ref(1))
     end
+
+    @test Scalar(3) == @inferred(Scalar(1) .+ 2)
 end
 
 @testset "Broadcast sizes" begin
