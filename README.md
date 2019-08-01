@@ -2,8 +2,6 @@
 
 *Statically sized arrays for Julia*
 
-[![StaticArrays](http://pkg.julialang.org/badges/StaticArrays_0.5.svg)](http://pkg.julialang.org/?pkg=StaticArrays)
-[![StaticArrays](http://pkg.julialang.org/badges/StaticArrays_0.6.svg)](http://pkg.julialang.org/detail/StaticArrays)
 [![Build Status](https://travis-ci.org/JuliaArrays/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/StaticArrays.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/xabgh1yhsjxlp30d?svg=true)](https://ci.appveyor.com/project/JuliaArrays/staticarrays-jl)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
