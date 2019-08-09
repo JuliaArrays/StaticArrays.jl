@@ -203,6 +203,8 @@ end
 @inline any(a::StaticArray{<:Tuple,Bool}; dims=:) = reduce(|, a; dims=dims, init=false) # (benchmarking needed)
 @inline any(f::Function, a::StaticArray; dims=:) = mapreduce(x->f(x)::Bool, |, a; dims=dims, init=false) # (benchmarking needed)
 
+@inline Base.in(x, a::StaticArray) = mapreduce(==(x), |, a, init=false)
+
 _mean_denom(a, dims::Colon) = length(a)
 _mean_denom(a, dims::Int) = size(a, dims)
 _mean_denom(a, ::Val{D}) where {D} = size(a, D)

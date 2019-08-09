@@ -83,6 +83,9 @@ using Statistics: mean
         @test any(sb, dims=Val(2)) === RSArray2(any(b, dims=2))
         @test any(x->x>0, sa, dims=Val(2)) === RSArray2(any(x->x>0, a, dims=2))
 
+        @test all(in(x, sa) for x in sa)
+        @test all(in(x, sa) === in(x, a) for x in randn(10))
+
         @test mean(sa) === mean(a)
         @test mean(abs2, sa) === mean(abs2, a)
         @test mean(sa, dims=Val(2)) === RSArray2(mean(a, dims=2))
