@@ -112,15 +112,15 @@ end
     end
 end
 
-@propagate_inbounds function getindex(a::StaticArray, inds::StaticVector{<:Any, Int})
-    _getindex(a, Length(inds), inds)
+@propagate_inbounds function getindex(a::StaticArray, inds::StaticArray{<:Tuple, Int})
+    _getindex(a, Size(inds), inds)
 end
 
-@generated function _getindex(a::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[inds[$i]]) for i = 1:L]
+@generated function _getindex(a::StaticArray, s::Size{S}, inds::StaticArray{<:Tuple, Int}) where {S}
+    exprs = [:(a[inds[$i]]) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        similar_type(a, Size(L))(tuple($(exprs...)))
+        similar_type(a, s)(tuple($(exprs...)))
     end
 end
 
@@ -159,36 +159,36 @@ end
     end
 end
 
-@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticVector{<:Any, Int})
-    _setindex!(a, v, Length(inds), inds)
+@propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{<:Tuple, Int})
+    _setindex!(a, v, Size(inds), inds)
     return v
 end
 
-@generated function _setindex!(a::StaticArray, v, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[inds[$i]] = v) for i = 1:L]
+@generated function _setindex!(a::StaticArray, v, s::Size{S}, inds::StaticArray{<:Tuple, Int}) where {S}
+    exprs = [:(a[inds[$i]] = v) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        similar_type(a, Size(L))(tuple($(exprs...)))
+        similar_type(a, s)(tuple($(exprs...)))
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::AbstractArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
+@generated function _setindex!(a::StaticArray, v::AbstractArray, s::Size{S}, inds::StaticArray{<:Tuple, Int}) where {S}
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        if length(v) != L
-            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        if length(v) != $(prod(S))
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
     end
 end
 
-@generated function _setindex!(a::StaticArray, v::StaticArray, ::Length{L}, inds::StaticVector{<:Any, Int}) where {L}
-    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:L]
+@generated function _setindex!(a::StaticArray, v::StaticArray, s::Size{S}, inds::StaticArray{<:Tuple, Int}) where {S}
+    exprs = [:(a[inds[$i]] = v[$i]) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        if Length(typeof(v)) != L
-            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
+        if Length(typeof(v)) != Length(s)
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
     end

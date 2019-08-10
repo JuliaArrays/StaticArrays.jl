@@ -9,6 +9,9 @@ using StaticArrays, Test
 
         # Colon
         @test (@inferred getindex(sv,:)) === sv
+
+        # SArray
+        @test (@inferred getindex(sv, SMatrix{2,2}(1,4,2,3))) === SMatrix{2,2}(4,7,5,6)
     end
 
     @testset "Linear getindex() on SMatrix" begin
@@ -20,6 +23,9 @@ using StaticArrays, Test
 
         # Colon
         @test (@inferred getindex(sm,:)) === sv
+
+        # SArray
+        @test (@inferred getindex(sm, SMatrix{2,2}(1,4,2,3))) === SMatrix{2,2}(4,7,5,6)
     end
 
     @testset "Linear getindex()/setindex!() on MVector" begin
@@ -38,6 +44,9 @@ using StaticArrays, Test
 
         mv = MVector(0,0,0)
         @test (mv[SVector(1,3)] = SVector(4, 5); (@inferred mv == MVector(4,0,5)))
+
+        mv = MVector(0,0,0)
+        @test (mv[SMatrix{2,1}(1,3)] = SMatrix{2,1}(4, 5); (@inferred mv == MVector(4,0,5)))
 
         # Colon
         mv = MVector{4,Int}(undef)
@@ -61,6 +70,12 @@ using StaticArrays, Test
         # Colon
         mm = MMatrix{2,2,Int}(undef)
         @test (mm[:] = vec; (@inferred getindex(mm, :))::MVector{4,Int} == MVector((4,5,6,7)))
+
+        # SMatrix
+        mm = MMatrix{2,2,Int}(undef)
+        mi = MMatrix{2,2}(4,2,1,3)
+        data = @SMatrix [4 5; 6 7]
+        @test (mm[mi] = data; (@inferred getindex(mm, :))::MVector{4,Int} == MVector((5,6,7,4)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
