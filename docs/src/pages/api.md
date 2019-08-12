@@ -334,6 +334,71 @@ default. Run Julia with `julia -O` or `julia -O3` to enable these optimizations,
 and many of your (immutable) `StaticArray` methods *should* become significantly
 faster!
 
+### Static Bitsets
+
+Julia provides `BitArray` and `BitSet`, for dynamically sized sets of integers, respective
+arrays of booleans, where each entry is represented by a single bit (i.e. packed into 
+`UInt64`). StaticArrays provides a statically sized analogue, in the form of an immutable
+`SBitSet{N}` and mutable `MBitSet{N}`.
+
+These use the exact same bit layout as BitVector and `BitSet`, and are intended for combinatorial
+and logic computations. This means that `BitMatrix(undef, 64*N, k)` and `Vector{SBitSet{N}}(undef, k)`
+are binary compatible, and it is possible to `unsafe_wrap` one into the other. It also
+means that both have similar limitation with respect to aliasing and thread-safety.
+
+For the sake of convenience and speed (especially comparison and hashing), we follow
+neither the `AbstractVector` nor the `AbstractSet` interfaces.
+
+For the sake of bitwise operations, including complement `~`, `SBitSet` behave like 
+integers; additionally, the usual set operations are supported. This especially means 
+e.g. `setdiff(s1, s2) === s1 & ~s2`.
+
+For the sake of comparison and sorting, `getindex` and `setindex!`, an `MBitSet{N}` 
+behaves like an `MVector{64*N, Bool}`. Two `SBitSet{N}` or 
+`MBitSet{N}` are equal to each other if and only if their contents match, and are not
+equal to any other types. This limitation is necessary to permit fast hashing.
+
+For the sake of iteration and `length`, `SBitSet{N}` behave like a `BitSet`: They will 
+iterate over all set bits, in order smallest-to-largest. 
+
+For the sake of broadcasting, `SBitSet` and `MBitSet` behave like scalars. Since an `MBitSet{N}`
+is effectively something like a `Base.RefValue{SBitSet{N}}`, we support no-argument `setindex!`
+for overwriting an `MBitSet`, and no-argument `getindex` for conversion into an `SBitSet`. For
+the sake of convenience, we also support dot-notation from broadcasting for such modification; 
+i.e. `m .= s1 | (s2 & ~m)`, `m[] = s1 | (s2 & ~m)` and `m[] = s1 | (s2 & ~m[])` should compile 
+to identical machine code. Otherwise, broadcast loop fusion is not supported, i.e. `m .= s1 .| s2`
+will error. 
+
+Static bitsets break with the promotion convention used for `SVector` and `MVector`:
+Combinations of `SBitSet{N}` and `MBitSet{N}` promote to `SBitSet{N}` instead of `MBitSet{N}`.
+
+
+This behavior was chosen because many applications will use moderately small `N`; an `SBitSet{4}`,
+which is large enough to represent all subsets of `1:256` fits into a single vector
+register. Hence, there is a large gain from avoiding accidential promotion to `MBitSet`, and there 
+is realistically no expected gain from fusing logical operations.
+
+Examples:
+```
+julia> m=MBitSet{1}((37%UInt64,))
+MBitSet{1}([1, 3, 6])
+
+julia> collect(s)
+3-element Array{Int64,1}:
+ 1
+ 3
+ 6
+
+julia> m .= m | SBitSet{1}(17:19); m
+MBitSet{1}([1, 3, 6, 17, 18, 19])
+
+julia> m == SBitSet{1}(6, 17,1, 3, 19, 18, 1)
+true
+```
+Apart from syntactic sugar, relevant features are `setindex!` and construction from list of set bits and
+ranges (pointer arithmetic and playing well with LLVM escape analysis), hashing (avoid slow `Base` fallbacks),
+and `isless` and iteration (make use of BMI extensions). 
+
 ## Docstrings
 
 ```@index

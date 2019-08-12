@@ -6,7 +6,14 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              promote_rule, map, map!, reduce, mapreduce, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
-             copy, read, read!, write, reverse
+             copy, read, read!, write, reverse, 
+             zero, count_ones, iszero, empty!, isempty, eltype, iterate, isless, isequal, hash,
+             ~, +, |, xor, in, ==,
+             issubset, union, intersect, symdiff, setdiff,
+             union!, intersect!, symdiff!, setdiff!
+
+import Base.SimdLoop: simd_index, simd_inner_length, simd_outer_range
+import Base.Broadcast: broadcasted, materialize!, broadcastable
 
 import Statistics: mean
 
@@ -38,6 +45,8 @@ export Size, Length
 
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
+
+export SBitSet, MBitSet
 
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
@@ -112,6 +121,8 @@ include("MMatrix.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
 include("SHermitianCompact.jl")
+
+include("SBitSet.jl")
 
 include("convert.jl")
 
