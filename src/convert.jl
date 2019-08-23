@@ -26,7 +26,8 @@ end
     return _convert(SA, a, Length(SA))
 end
 
-@inline _convert(SA, a, ::Length{L}) where L = SA(unroll_tuple(a, Length(SA)))
+@inline _convert(SA, a, l::Length) = SA(unroll_tuple(a, l))
+@inline _convert(SA::Type{<:StaticArray{<:Tuple,T}}, a, ::Length{0}) where T = similar_type(SA, T)(())
 @inline _convert(SA, a, ::Length{0}) = similar_type(SA, eltype(a))(())
 
 length_val(a::T) where {T <: StaticArrayLike} = length_val(Size(T))

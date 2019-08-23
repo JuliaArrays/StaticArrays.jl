@@ -10,4 +10,8 @@ end # testset
     # Issue #520
     @testinf SVector{0}(Int8[]) === SVector{0,Int8}()
     @testinf SMatrix{0,0}(zeros(0,0)) === SMatrix{0,0,Float64}(())
+
+    # Issue #651
+    @testinf SVector{0,Float64}(Any[]) === SVector{0,Float64}()
+    @testinf SVector{0,Float64}(Int8[]) === SVector{0,Float64}()
 end
