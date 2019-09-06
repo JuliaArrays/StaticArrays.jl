@@ -78,8 +78,9 @@ function missing_size_error(::Type{SA}) where SA
         example, you might try
 
             m = zeros(3,3)
-            SMatrix(m)      # this error
-            SMatrix{3,3}(m) # correct - size is inferrable
+            SMatrix(m)            # this error
+            SMatrix{3,3}(m)       # correct - size is inferrable
+            SArray{Tuple{3,3}}(m) # correct, note Tuple{3,3}
         """)
 end
 
