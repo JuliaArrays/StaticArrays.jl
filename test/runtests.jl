@@ -52,3 +52,5 @@ include("flatten.jl")
 include("io.jl")
 include("svd.jl")
 include("deprecated.jl")
+
+include("vectorModules.jl")

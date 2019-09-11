@@ -14,8 +14,6 @@ The parameter `S` is mandatory since the length of `vec` is unknown to the
 compiler (the element type may optionally also be specified).
 """
 const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
-const Vector3D = SVector{3, Float64}
-const Vector2D = SVector{2, Float64}
 
 @inline SVector(x::NTuple{S,Any}) where {S} = SVector{S}(x)
 @inline SVector{S}(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
