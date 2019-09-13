@@ -170,13 +170,8 @@ end
             v11 = v11 / n1
             v12 = a[3]' / n1
 
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[3]' * a[3])
-            v21 = v21 / n2
-            v22 = a[3]' / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
+            vecs = @SMatrix [ v11  -v12' ;
+                              v12  v11' ]
 
             return Eigen(vals, vecs)
         end
@@ -194,13 +189,8 @@ end
             v11 = v11 / n1
             v12 = a[2] / n1
 
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[2]' * a[2])
-            v21 = v21 / n2
-            v22 = a[2] / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
+            vecs = @SMatrix [ v11  -v12' ;
+                              v12  v11' ]
 
             return Eigen(vals,vecs)
         end
