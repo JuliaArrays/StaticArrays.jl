@@ -105,30 +105,15 @@ scalar_getindex(x::Tuple{<: Any}) = x[1]
         end
     end
 
-    exprs = Array{Expr}(undef, newsize)
-    more = prod(newsize) > 0
-    current_ind = ones(Int, length(newsize))
     sizes = [sz.parameters[1] for sz ∈ s.parameters]
-
-    while more
-        exprs_vals = [(!(a[i] <: AbstractArray) ? :(scalar_getindex(a[$i])) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
-        exprs[current_ind...] = :(f($(exprs_vals...)))
-
-        # increment current_ind (maybe use CartesianIndices?)
-        current_ind[1] += 1
-        for i ∈ 1:length(newsize)
-            if current_ind[i] > newsize[i]
-                if i == length(newsize)
-                    more = false
-                    break
-                else
-                    current_ind[i] = 1
-                    current_ind[i+1] += 1
-                end
-            else
-                break
-            end
-        end
+    indices = CartesianIndices(newsize)
+    exprs = similar(indices, Expr)
+    for (j, current_ind) ∈ enumerate(indices)
+        exprs_vals = [
+            (!(a[i] <: AbstractArray) ? :(scalar_getindex(a[$i])) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))]))
+            for i = 1:length(sizes)
+        ]
+        exprs[j] = :(f($(exprs_vals...)))
     end
 
     return quote
@@ -150,39 +135,14 @@ end
     sizematch(Size{newsize}(), Size(dest)) ||
         throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
 
-    ndims = 0
-    for i = 1:length(sizes)
-        ndims = max(ndims, length(sizes[i]))
-    end
-
-    exprs = Array{Expr}(undef, newsize)
-    j = 1
-    more = prod(newsize) > 0
-    current_ind = ones(Int, max(length(newsize), length.(sizes)...))
-    while more
-        exprs_vals = [(!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))])) for i = 1:length(sizes)]
-        exprs[current_ind...] = :(dest[$j] = f($(exprs_vals...)))
-
-        # increment current_ind (maybe use CartesianIndices?)
-	if length(current_ind) >= 1
-            current_ind[1] += 1
-            for i ∈ 1:length(newsize)
-                if current_ind[i] > newsize[i]
-                    if i == length(newsize)
-                        more = false
-                        break
-                    else
-                        current_ind[i] = 1
-                        current_ind[i+1] += 1
-                    end
-                else
-                    break
-                end
-            end
-        else
-            break
-        end
-        j += 1
+    indices = CartesianIndices(newsize)
+    exprs = similar(indices, Expr)
+    for (j, current_ind) ∈ enumerate(indices)
+        exprs_vals = [
+            (!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))]))
+            for i = 1:length(sizes)
+        ]
+        exprs[j] = :(dest[$j] = f($(exprs_vals...)))
     end
 
     return quote
