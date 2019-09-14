@@ -5,6 +5,13 @@ Pkg.add("StaticArrays")  # or Pkg.clone("https://github.com/JuliaArrays/StaticAr
 using StaticArrays
 using LinearAlgebra
 
+# Use the convenience constructor type `SA` to create vectors and matrices
+SA[1, 2, 3]     isa SVector{3,Int}
+SA_F64[1, 2, 3] isa SVector{3,Float64}
+SA_F32[1, 2, 3] isa SVector{3,Float32}
+SA[1 2; 3 4]     isa SMatrix{2,2,Int}
+SA_F64[1 2; 3 4] isa SMatrix{2,2,Float64}
+
 # Create an SVector using various forms, using constructors, functions or macros
 v1 = SVector(1, 2, 3)
 v1.data === (1, 2, 3) # SVector uses a tuple for internal storage

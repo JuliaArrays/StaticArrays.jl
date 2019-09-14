@@ -36,7 +36,7 @@ export SHermitianCompact
 
 export Size, Length
 
-export SA
+export SA, SA_F32, SA_F64
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 

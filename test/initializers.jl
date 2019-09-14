@@ -1,3 +1,5 @@
+@testset "Initialization with SA" begin
+
 SA_test_ref(x)   = SA[1,x,x]
 SA_test_ref(x,T) = SA{T}[1,x,x]
 @test @inferred(SA_test_ref(2))   === SVector{3,Int}((1,2,2))
@@ -31,3 +33,7 @@ SA_test_hvcat(x,T) = SA{T}[1 x x;
                                                                                        4 5]
 @test_throws ArgumentError("SA[...] matrix rows of length (2, 3) are inconsistent") SA[1 2;
                                                                                        3 4 5]
+@test SA_F64[1, 2] === SVector{2,Float64}((1,2))
+@test SA_F32[1, 2] === SVector{2,Float32}((1,2))
+
+end
