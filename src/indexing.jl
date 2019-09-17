@@ -369,4 +369,7 @@ Base.checkindex(B::Type{Bool}, inds::AbstractUnitRange, i::StaticIndexing{T}) wh
 
 # unsafe_view
 
-Base.unsafe_view(A::AbstractArray, i::StaticIndexing{T}) where T = Base.unsafe_view(A, unwrap(i))
+unwrap_if_needed(i::StaticIndexing) = unwrap(i)
+unwrap_if_needed(i::Base.ViewIndex) = i
+
+Base.unsafe_view(A::AbstractArray, is::Union{StaticIndexing{T},Base.ViewIndex}...) where T = Base.unsafe_view(A, map(unwrap_if_needed, is)...)
