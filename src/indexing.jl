@@ -373,3 +373,7 @@ unwrap_if_needed(i::StaticIndexing) = unwrap(i)
 unwrap_if_needed(i::Base.ViewIndex) = i
 
 Base.unsafe_view(A::AbstractArray, is::Union{StaticIndexing,Base.ViewIndex}...) = Base.unsafe_view(A, map(unwrap_if_needed, is)...)
+
+# views of views need a new method for Base._indices_sub
+
+Base._indices_sub(i::StaticIndexing, I...) = Base._indices_sub(unwrap(i), I...)

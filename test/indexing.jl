@@ -214,5 +214,7 @@ using StaticArrays, Test
         @test Bv == B[1, [2,1], 2:3, [4]]
         @test axes(Bv, 1) === SOneTo(2)
         @test axes(Bv, 3) === SOneTo(1)
+        Bvv = view(Bv, (@SVector [1, 2]), 2, 1)
+        @test axes(Bvv) === (SOneTo(2),)
     end
 end
