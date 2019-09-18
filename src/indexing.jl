@@ -371,7 +371,8 @@ Base.checkindex(B::Type{Bool}, inds::AbstractUnitRange, i::StaticIndexing{T}) wh
 
 # I was considering catching arbitrary `Union{StaticIndexing,Base.ViewIndex}`
 # indices here but they shouldn't ever be mixed here.
-Base.unsafe_view(A::AbstractArray, indices::StaticIndexing...) = Base.unsafe_view(A, map(unwrap, indices)...)
+# i1 is explicitly specified to avoid ambiguities with Base
+Base.unsafe_view(A::AbstractArray, i1::StaticIndexing, indices::StaticIndexing...) = Base.unsafe_view(A, unwrap(i1), map(unwrap, indices)...)
 
 # Views of views need a new method for Base.SubArray because storing indices
 # wrapped in StaticIndexing in field indices of SubArray causes all sorts of problems.
