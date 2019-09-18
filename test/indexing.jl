@@ -216,5 +216,11 @@ using StaticArrays, Test
         @test axes(Bv, 3) === SOneTo(1)
         Bvv = view(Bv, (@SVector [1, 2]), 2, 1)
         @test axes(Bvv) === (SOneTo(2),)
+        @test Bvv[1] == B[1, 2, 3, 4]
+        Bvv[1] = 100
+        @test Bvv[1] == 100
+        @test B[1,2,3,4] == 100
+        @test eltype(Bvv) == Int
+        @test Bvv[:] == [B[1,2,3,4], B[1,1,3,4]]
     end
 end

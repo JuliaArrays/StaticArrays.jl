@@ -369,11 +369,13 @@ Base.checkindex(B::Type{Bool}, inds::AbstractUnitRange, i::StaticIndexing{T}) wh
 
 # unsafe_view
 
-unwrap_if_needed(i::StaticIndexing) = unwrap(i)
-unwrap_if_needed(i::Base.ViewIndex) = i
+# I was considering catching arbitrary `Union{StaticIndexing,Base.ViewIndex}`
+# indices here but they shouldn't ever be mixed here.
+Base.unsafe_view(A::AbstractArray, indices::StaticIndexing...) = Base.unsafe_view(A, map(unwrap, indices)...)
 
-Base.unsafe_view(A::AbstractArray, is::Union{StaticIndexing,Base.ViewIndex}...) = Base.unsafe_view(A, map(unwrap_if_needed, is)...)
-
-# views of views need a new method for Base._indices_sub
-
-Base._indices_sub(i::StaticIndexing, I...) = Base._indices_sub(unwrap(i), I...)
+# Views of views need a new method for Base.SubArray because storing indices
+# wrapped in StaticIndexing in field indices of SubArray causes all sorts of problems.
+# Additionally, in some cases the SubArray constructor may be called directly
+# instead of unsafe_view so we need this method too (Base._maybe_reindex
+# is a good example)
+Base.SubArray(A::AbstractArray, indices::NTuple{<:Any,StaticIndexing}) = Base.SubArray(A, map(unwrap, indices))
