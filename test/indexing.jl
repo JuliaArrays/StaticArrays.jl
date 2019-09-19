@@ -209,5 +209,18 @@ using StaticArrays, Test
         a = collect(11:20)
         @test view(a, SVector(1,2,3)) == [11,12,13]
         @test_throws BoundsError view(a, SVector(1,11,3))
+        B = rand(Int,3,4,5,6)
+        Bv = view(B, 1, (@SVector [2, 1]), [2, 3], (@SVector [4]))
+        @test Bv == B[1, [2,1], 2:3, [4]]
+        @test axes(Bv, 1) === SOneTo(2)
+        @test axes(Bv, 3) === SOneTo(1)
+        Bvv = view(Bv, (@SVector [1, 2]), 2, 1)
+        @test axes(Bvv) === (SOneTo(2),)
+        @test Bvv[1] == B[1, 2, 3, 4]
+        Bvv[1] = 100
+        @test Bvv[1] == 100
+        @test B[1,2,3,4] == 100
+        @test eltype(Bvv) == Int
+        @test Bvv[:] == [B[1,2,3,4], B[1,1,3,4]]
     end
 end

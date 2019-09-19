@@ -369,4 +369,13 @@ Base.checkindex(B::Type{Bool}, inds::AbstractUnitRange, i::StaticIndexing{T}) wh
 
 # unsafe_view
 
-Base.unsafe_view(A::AbstractArray, i::StaticIndexing{T}) where T = Base.unsafe_view(A, unwrap(i))
+# unsafe_view need only deal with vargs of `StaticIndexing`, as wrapped by to_indices.
+# i1 is explicitly specified to avoid ambiguities with Base
+Base.unsafe_view(A::AbstractArray, i1::StaticIndexing, indices::StaticIndexing...) = Base.unsafe_view(A, unwrap(i1), map(unwrap, indices)...)
+
+# Views of views need a new method for Base.SubArray because storing indices
+# wrapped in StaticIndexing in field indices of SubArray causes all sorts of problems.
+# Additionally, in some cases the SubArray constructor may be called directly
+# instead of unsafe_view so we need this method too (Base._maybe_reindex
+# is a good example)
+Base.SubArray(A::AbstractArray, indices::NTuple{<:Any,StaticIndexing}) = Base.SubArray(A, map(unwrap, indices))
