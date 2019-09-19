@@ -16,6 +16,9 @@ end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
+Base.strides(a::Union{SArray,MArray}) = Base.size_to_strides(1, size(a)...)
+Base.strides(a::SizedArray) = strides(a.data)
+
 function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
     print(io, Base.dims2string(length.(inds)), " ")
     Base.showarg(io, a, true)
