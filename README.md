@@ -27,21 +27,29 @@ Full documentation can be found [here](https://JuliaArrays.github.io/StaticArray
 ## Speed
 
 The speed of *small* `SVector`s, `SMatrix`s and `SArray`s is often > 10 × faster
-than `Base.Array`. See this simplified benchmark:
+than `Base.Array`. For example, here's a
+[microbenchmark](perf/README_benchmarks.jl) showing some common operations.
 
 ```
 ============================================
     Benchmarks for 3×3 Float64 matrices
 ============================================
-Matrix multiplication               -> 5.1x speedup
-Matrix multiplication (mutating)    -> 1.6x speedup
-Matrix addition                     -> 14.0x speedup
-Matrix addition (mutating)          -> 2.1x speedup
-Matrix determinant                  -> 119.3x speedup
-Matrix inverse                      -> 65.6x speedup
-Matrix symmetric eigendecomposition -> 24.8x speedup
-Matrix Cholesky decomposition       -> 12.1x speedup
+Matrix multiplication               -> 5.9x speedup
+Matrix multiplication (mutating)    -> 1.8x speedup
+Matrix addition                     -> 33.1x speedup
+Matrix addition (mutating)          -> 2.5x speedup
+Matrix determinant                  -> 112.9x speedup
+Matrix inverse                      -> 67.8x speedup
+Matrix symmetric eigendecomposition -> 25.0x speedup
+Matrix Cholesky decomposition       -> 8.8x speedup
+Matrix LU decomposition             -> 6.1x speedup
+Matrix QR decomposition             -> 65.0x speedup
 ```
+
+These numbers were generated on an Intel i7-7700HQ using Julia-1.2. As with all
+synthetic benchmarks, the speedups you see here should only be taken as very
+roughly indicative of the speedup you may see in real code. When in doubt,
+benchmark your real application!
 
 Note that in the current implementation, working with large `StaticArray`s puts a
 lot of stress on the compiler, and becomes slower than `Base.Array` as the size
