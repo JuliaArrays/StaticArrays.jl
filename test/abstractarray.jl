@@ -10,12 +10,10 @@ using StaticArrays, Test, LinearAlgebra
     end
 
     @testset "strides" begin
-        m1 = SArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
-        m2 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
-        m3 = Size(3,4,5)(rand(Int, 3, 4, 5))
+        m1 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
+        m2 = Size(3,4,5)(rand(Int, 3, 4, 5))
         @test strides(m1) === (1, 3, 12)
         @test strides(m2) === (1, 3, 12)
-        @test strides(m3) === (1, 3, 12)
     end
 
     @testset "similar_type" begin
