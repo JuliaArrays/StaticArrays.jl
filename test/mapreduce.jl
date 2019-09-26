@@ -157,4 +157,10 @@ using Statistics: mean
         v = SVector(SVector(3, 2, 1), SVector(5, 7, 9))
         @test @inferred(v + v) == SVector(SVector(6, 4, 2), SVector(10, 14, 18))
     end
+    @testset "hcat and vcat" begin
+        # issue #641
+        v = SVector([1,2], [3,4])
+        @test reduce(vcat, v) == [1,2,3,4]
+        @test reduce(hcat, v) == [1 3; 2 4]
+    end
 end
