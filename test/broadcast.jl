@@ -213,4 +213,18 @@ end
         foo493(X) = normalize.(X)
         @test foo493(X) isa Core.Compiler.return_type(foo493, Tuple{typeof(X)})
     end
+
+    @testset "broadcasting with tuples" begin
+        # issue 485
+        v = SVector(1,2,3)
+        @test v .+ (10, 20, 30) == SVector(11, 22, 33)
+        vm = MVector(1,2,3)
+        vm .+= (10, 20, 30)
+        @test vm == SVector(11, 22, 33)
+        @test (1,2) .+ (@SMatrix [10 20; 30 40]) == @SMatrix [11 21; 32 42]
+        @test (@SMatrix [10 20; 30 40]) .+ (1,2) == @SMatrix [11 21; 32 42]
+        mm = @MMatrix [10 20; 30 40]
+        mm .+= (1,2)
+        @test mm == @SMatrix [11 21; 32 42]
+    end
 end
