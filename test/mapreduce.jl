@@ -24,6 +24,11 @@ using Statistics: mean
         v3 = @SVector [1, 2, 3, 4]
         map!(+, mv3, v1, v2, v3)
         @test mv3 == @MVector [7, 9, 11, 13]
+
+        # Output eltype for empty cases #528
+        @test @inferred(map(/, SVector{0,Int}(), SVector{0,Int}())) === SVector{0,Float64}()
+        @test @inferred(map(+, SVector{0,Int}(), SVector{0,Float32}())) === SVector{0,Float32}()
+        @test @inferred(map(length, SVector{0,String}())) === SVector{0,Int}()
     end
 
     @testset "[map]reduce and [map]reducedim" begin

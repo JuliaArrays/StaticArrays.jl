@@ -109,9 +109,6 @@ end
         @test @inferred(v2 .- v1) === SVector(0, 2)
         @test @inferred(v1 .^ v2) === SVector(1, 16)
         @test @inferred(v2 .^ v1) === SVector(1, 16)
-        # Issue #199: broadcast with empty SArray
-        @test @inferred(SVector(1) .+ SVector{0,Int}()) === SVector{0,Union{}}()
-        @test @inferred(SVector{0,Int}() .+ SVector(1)) === SVector{0,Union{}}()
         # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
         @test @inferred(v1 .+ transpose(v2)) === @SMatrix [2 5; 3 6]
@@ -142,6 +139,13 @@ end
         @test @inferred(zeros(SVector{0}) .+ zeros(SMatrix{0,2})) === zeros(SMatrix{0,2})
         m = zeros(MMatrix{0,2})
         @test @inferred(broadcast!(+, m, m, zeros(SVector{0}))) == zeros(SMatrix{0,2})
+        # Issue #199: broadcast with empty SArray
+        @test @inferred(SVector(1) .+ SVector{0,Int}()) === SVector{0,Int}()
+        @test @inferred(SVector{0,Int}() .+ SVector(1.0)) === SVector{0,Float64}()
+        # Issue #528
+        @test @inferred(isapprox(SMatrix{3,0,Float64}(), SMatrix{3,0,Float64}()))
+        @test @inferred(broadcast(length, SVector{0,String}())) === SVector{0,Int}()
+        @test @inferred(broadcast(join, SVector{0,String}(), SVector{0,String}(), SVector{0,String}())) === SVector{0,String}()
     end
 
     @testset "Mutating broadcast!" begin
