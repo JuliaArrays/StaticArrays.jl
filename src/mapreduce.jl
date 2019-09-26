@@ -103,10 +103,23 @@ end
     end
 end
 
-@inline _mapreduce(f, op, D::Int, nt::NamedTuple, sz::Size{S}, a::StaticArray) where {S} =
-    _mapreduce(f, op, Val(D), nt, sz, a)
+@inline function _mapreduce(f, op, D::Int, nt::NamedTuple, sz::Size{S}, a::StaticArray) where {S}
+    # Body of this function is split because constant propagation (at least
+    # as of Julia 1.2) can't always correctly propagate here and
+    # as a result the function is not type stable and very slow.
+    # This makes it at least fast for three dimensions but people should use
+    # for example any(a; dims=Val(1)) instead of any(a; dims=1) anyway.
+    if D == 1
+        return _mapreduce(f, op, Val(1), nt, sz, a)
+    elseif D == 2
+        return _mapreduce(f, op, Val(2), nt, sz, a)
+    elseif D == 3
+        return _mapreduce(f, op, Val(3), nt, sz, a)
+    else
+        return _mapreduce(f, op, Val(D), nt, sz, a)
+    end
+end
 
-    
 @generated function _mapreduce(f, op, dims::Val{D}, nt::NamedTuple{()},
                                ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)
