@@ -29,9 +29,9 @@ const SA_F64 = SA{Float64}
 Base.@pure _SA_type(sa::Type{SA}, len::Int) = SVector{len}
 Base.@pure _SA_type(sa::Type{SA{T}}, len::Int) where {T} = SVector{len,T}
 
-@inline Base.getindex(sa::Type{<:SA}, xs...) where T = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) where T = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) where T = similar_type(sa, Size(1,length(xs)))(xs)
+@inline Base.getindex(sa::Type{<:SA}, xs...) = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
 
 Base.@pure function _SA_hvcat_transposed_size(rows)
     M = rows[1]
@@ -43,7 +43,7 @@ Base.@pure function _SA_hvcat_transposed_size(rows)
     Size(M, length(rows))
 end
 
-@inline function Base.typed_hvcat(sa::Type{<:SA}, rows::Dims, xs::Number...) where T
+@inline function Base.typed_hvcat(sa::Type{<:SA}, rows::Dims, xs::Number...)
     msize = _SA_hvcat_transposed_size(rows)
     if msize === nothing
         throw(ArgumentError("SA[...] matrix rows of length $rows are inconsistent"))
