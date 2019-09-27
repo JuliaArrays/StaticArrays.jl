@@ -216,15 +216,18 @@ end
 
     @testset "broadcasting with tuples" begin
         # issue 485
-        v = SVector(1,2,3)
-        @test v .+ (10, 20, 30) == SVector(11, 22, 33)
-        vm = MVector(1,2,3)
-        vm .+= (10, 20, 30)
-        @test vm == SVector(11, 22, 33)
-        @test (1,2) .+ (@SMatrix [10 20; 30 40]) == @SMatrix [11 21; 32 42]
-        @test (@SMatrix [10 20; 30 40]) .+ (1,2) == @SMatrix [11 21; 32 42]
-        mm = @MMatrix [10 20; 30 40]
-        mm .+= (1,2)
-        @test mm == @SMatrix [11 21; 32 42]
+        @test @inferred(SA[1,2,3] .+ (1,))               === SA{Int}[2, 3, 4]
+        @test @inferred(SA[1,2,3] .+ (10, 20, 30))       === SA{Int}[11, 22, 33]
+        @test @inferred((1,2)     .+ (SA[10 20; 30 40])) === SA{Int}[11 21; 32 42]
+        @test @inferred((SA[10 20; 30 40]) .+ (1,2))     === SA{Int}[11 21; 32 42]
+
+        add_bc!(m, v) = m .+= v  # Helper function; @inferred gets confused by .+= syntax
+        @test @inferred(add_bc!(MVector((1,2,3)), (10, 20, 30)))   ::MVector{3,Int}   == SA[11, 22, 33]
+        @test @inferred(add_bc!(MMatrix(SA[10 20; 30 40]), (1,2))) ::MMatrix{2,2,Int} == SA[11 21; 32 42]
+
+        # Tuples of SA
+        @test SA[1,2,3] .* (SA[1,0],) === SVector{3,SVector{2,Int}}(((1,0), (2,0), (3,0)))
+        # Unfortunately this case of nested broadcasting is not inferred
+        @test_broken @inferred(SA[1,2,3] .* (SA[1,0],))
     end
 end

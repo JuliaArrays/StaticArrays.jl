@@ -95,7 +95,6 @@ end
 
 scalar_getindex(x) = x
 scalar_getindex(x::Ref) = x[]
-scalar_getindex(x::Tuple{<: Any}) = x[1]
 
 @generated function _broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
     first_staticarray = 0
