@@ -177,11 +177,15 @@ end
 @inline reduce(op, a::StaticArray; dims=:, kw...) = _reduce(op, a, dims, kw.data)
 
 # disambiguation
-reduce(::typeof(vcat), A::StaticVector{<:Any,<:AbstractVecOrMat}) =
+reduce(::typeof(vcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
     Base._typed_vcat(mapreduce(eltype, promote_type, A), A)
+reduce(::typeof(vcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
+    _reduce(vcat, A, :, NamedTuple())
 
-reduce(::typeof(hcat), A::StaticVector{<:Any,<:AbstractVecOrMat}) =
+reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
     Base._typed_hcat(mapreduce(eltype, promote_type, A), A)
+reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
+    _reduce(hcat, A, :, NamedTuple())
 
 @inline _reduce(op, a::StaticArray, dims, kw::NamedTuple=NamedTuple()) = _mapreduce(identity, op, dims, kw, Size(a), a)
 
