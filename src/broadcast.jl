@@ -97,11 +97,15 @@ scalar_getindex(x) = x
 scalar_getindex(x::Ref) = x[]
 
 @generated function _broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
-    first_staticarray = 0
-    for i = 1:length(a)
-        if a[i] <: StaticArray
-            first_staticarray = a[i]
-            break
+    first_staticarray = a[findfirst(ai -> ai <: StaticArray, a)]
+
+    if prod(newsize) == 0
+        # Use inference to get eltype in empty case (see also comments in _map)
+        eltys = [:(eltype(a[$i])) for i ∈ 1:length(a)]
+        return quote
+            @_inline_meta
+            T = Core.Compiler.return_type(f, Tuple{$(eltys...)})
+            @inbounds return similar_type($first_staticarray, T, Size(newsize))()
         end
     end
 

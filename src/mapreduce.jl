@@ -18,17 +18,31 @@ end
 end
 
 @generated function _map(f, a::AbstractArray...)
-    i = findfirst(ai -> ai <: StaticArray, a)
-    if i === nothing
+    first_staticarray = findfirst(ai -> ai <: StaticArray, a)
+    if first_staticarray === nothing
         return :(throw(ArgumentError("No StaticArray found in argument list")))
     end
     # Passing the Size as an argument to _map leads to inference issues when
     # recursively mapping over nested StaticArrays (see issue #593). Calling
-    # Size in the generator here is valid because a[i] is known to be a
+    # Size in the generator here is valid because a[first_staticarray] is known to be a
     # StaticArray for which the default Size method is correct. If wrapped
     # StaticArrays (with a custom Size method) are to be supported, this will
     # no longer be valid.
-    S = Size(a[i])
+    S = Size(a[first_staticarray])
+
+    if prod(S) == 0
+        # In the empty case only, use inference to try figuring out a sensible
+        # eltype, as is done in Base.collect and broadcast.
+        # See https://github.com/JuliaArrays/StaticArrays.jl/issues/528
+        eltys = [:(eltype(a[$i])) for i ∈ 1:length(a)]
+        return quote
+            @_inline_meta
+            S = same_size(a...)
+            T = Core.Compiler.return_type(f, Tuple{$(eltys...)})
+            @inbounds return similar_type(a[$first_staticarray], T, S)()
+        end
+    end
+
     exprs = Vector{Expr}(undef, prod(S))
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]

@@ -2,7 +2,7 @@ using StaticArrays, Test, LinearAlgebra
 
 @testset "Linear algebra" begin
 
-    @testset "SVector as a (mathematical) vector space" begin
+    @testset "SArray as a (mathematical) vector space" begin
         c = 2
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
@@ -13,6 +13,10 @@ using StaticArrays, Test, LinearAlgebra
 
         @test @inferred(v1 + v2) === @SVector [6, 7, 8, 9]
         @test @inferred(v1 - v2) === @SVector [-2, 1, 4, 7]
+
+        # #528 eltype with empty addition
+        zm = zeros(SMatrix{3, 0, Float64})
+        @test @inferred(zm + zm) === zm
 
         # TODO Decide what to do about this stuff:
         #v3 = [2,4,6,8]
