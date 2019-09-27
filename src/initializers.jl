@@ -12,8 +12,16 @@ provided explicitly.
 * `SA[1 2; 3 4]` creates a 2×2 SMatrix of `Int`s.
 * `SA[1 2]` creates a 1×2 SMatrix of `Int`s.
 * `SA{Float32}[1, 2]` creates a length-2 `SVector` of `Float32` elements.
+
+A couple of helpful type aliases are also provided:
+
+* `SA_F64[1, 2]` creates a lenght-2 `SVector` of `Float64` elements
+* `SA_F32[1, 2]` creates a lenght-2 `SVector` of `Float32` elements
 """
 struct SA{T} ; end
+
+const SA_F32 = SA{Float32}
+const SA_F64 = SA{Float64}
 
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
