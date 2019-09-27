@@ -55,6 +55,7 @@ broadcast_indices(A::StaticArray) = indices(A)
 @inline broadcast_sizes() = ()
 @inline broadcast_size(a) = Size()
 @inline broadcast_size(a::AbstractArray) = Size(a)
+@inline broadcast_size(a::NTuple{N}) where N = Size(N)
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))
@@ -94,7 +95,6 @@ end
 
 scalar_getindex(x) = x
 scalar_getindex(x::Ref) = x[]
-scalar_getindex(x::Tuple{<: Any}) = x[1]
 
 @generated function _broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
     first_staticarray = 0
@@ -110,7 +110,7 @@ scalar_getindex(x::Tuple{<: Any}) = x[1]
     exprs = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
         exprs_vals = [
-            (!(a[i] <: AbstractArray) ? :(scalar_getindex(a[$i])) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))]))
+            (!(a[i] <: AbstractArray || a[i] <: Tuple) ? :(scalar_getindex(a[$i])) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))]))
             for i = 1:length(sizes)
         ]
         exprs[j] = :(f($(exprs_vals...)))
@@ -139,7 +139,7 @@ end
     exprs = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
         exprs_vals = [
-            (!(as[i] <: AbstractArray) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))]))
+            (!(as[i] <: AbstractArray || as[i] <: Tuple) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))]))
             for i = 1:length(sizes)
         ]
         exprs[j] = :(dest[$j] = f($(exprs_vals...)))
