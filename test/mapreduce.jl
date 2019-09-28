@@ -162,4 +162,13 @@ using Statistics: mean
         v = SVector(SVector(3, 2, 1), SVector(5, 7, 9))
         @test @inferred(v + v) == SVector(SVector(6, 4, 2), SVector(10, 14, 18))
     end
+    @testset "hcat and vcat" begin
+        # issue #641
+        v = SVector([1,2], [3,4])
+        @test reduce(vcat, v) == [1,2,3,4]
+        @test reduce(hcat, v) == [1 3; 2 4]
+        v2 = SVector(SVector(1,2), SVector(3,4))
+        @test @inferred(reduce(vcat, v2)) === @SVector [1,2,3,4]
+        @test @inferred(reduce(hcat, v2)) === @SMatrix [1 3; 2 4]
+    end
 end

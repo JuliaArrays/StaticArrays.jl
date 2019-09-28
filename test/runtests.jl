@@ -3,7 +3,7 @@ using InteractiveUtils
 
 # Allow no new ambiguities (see #18), unless you fix some old ones first!
 if VERSION >= v"1.0.0"
-    @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= 7
+    @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= 5
 end
 
 # We generate a lot of matrices using rand(), but unit tests should be

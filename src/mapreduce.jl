@@ -103,9 +103,9 @@ end
         @inbounds return $expr
     end
 end
-    
+
 @generated function _mapreduce(f, op, dims::Colon, nt::NamedTuple{(:init,)},
-                               ::Size{S}, a::StaticArray...) where {S}    
+                               ::Size{S}, a::StaticArray...) where {S}
     expr = :(nt.init)
     for i ∈ 1:prod(S)
         tmp = [:(a[$j][$i]) for j ∈ 1:length(a)]
@@ -138,7 +138,7 @@ end
                                ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)
     Snew = ([n==D ? 1 : S[n] for n = 1:N]...,)
-    
+
     exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n ∈ Snew]
     for i ∈ Base.product(itr...)
@@ -189,6 +189,17 @@ end
 ############
 
 @inline reduce(op, a::StaticArray; dims=:, kw...) = _reduce(op, a, dims, kw.data)
+
+# disambiguation
+reduce(::typeof(vcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
+    Base._typed_vcat(mapreduce(eltype, promote_type, A), A)
+reduce(::typeof(vcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
+    _reduce(vcat, A, :, NamedTuple())
+
+reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
+    Base._typed_hcat(mapreduce(eltype, promote_type, A), A)
+reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
+    _reduce(hcat, A, :, NamedTuple())
 
 @inline _reduce(op, a::StaticArray, dims, kw::NamedTuple=NamedTuple()) = _mapreduce(identity, op, dims, kw, Size(a), a)
 
