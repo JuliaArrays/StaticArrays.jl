@@ -40,10 +40,10 @@ using StaticArrays, Test, LinearAlgebra
 end
 
 @testset "LU division ($m×$n)" for m in [1:4..., 15], n in [1:4..., 15]
-    a = SMatrix{m,m,Int}(rand(Float64,m,m))
+    a = SMatrix{m,m,Float64}(rand(Float64,m,m))
     a_lu = lu(a)
-    b_col = SMatrix{m,n,Int}(rand(Float64,m,n))
-    b_line = SMatrix{n,m,Int}(rand(Float64,n,m))
+    b_col = SMatrix{m,n,Float64}(rand(Float64,m,n))
+    b_line = SMatrix{n,m,Float64}(rand(Float64,n,m))
 
     # test if / and \ work with lu:
     @test a\b_col ≈ a_lu\b_col
