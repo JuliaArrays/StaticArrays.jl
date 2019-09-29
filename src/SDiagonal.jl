@@ -37,11 +37,6 @@ diag(D::SDiagonal) = D.diag
 (::Type{SDiagonal{N}})(I::UniformScaling) where {N} = SDiagonal{N}(ntuple(x->I.λ, Val(N)))
 (::Type{SDiagonal{N,T}})(I::UniformScaling) where {N,T} = SDiagonal{N,T}(ntuple(x->I.λ, Val(N)))
 
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if VERSION < v"1.0"
-    @deprecate eye(::Type{SDiagonal{N,T}}) where {N,T} SDiagonal{N,T}(I)
-end
-
 one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 

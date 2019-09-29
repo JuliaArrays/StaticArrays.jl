@@ -64,15 +64,9 @@ end
         @test (transpose(SA)*SB)::SMatrix{n,n} ≈ transpose(A)*transpose(B)
         @test (transpose(SA)*transpose(SB))::SVector{n} ≈ transpose(A)*B
         @test (transpose(SA)*SB')::SVector{n} ≈ transpose(A)*conj(B)
-        if VERSION < v"0.7-"
-            @test (SB*SA)::RowVector{<:Any,<:SVector{n}} ≈ transpose(B)*A
-            @test (SB*SA')::RowVector{<:Any,<:SVector{n}} ≈ transpose(B)*A'
-            @test (SB*transpose(SA))::RowVector{<:Any,<:SVector{n}} ≈ transpose(B)*transpose(A)
-        else
-            @test (SB*SA)::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*A
-            @test (SB*SA')::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*A'
-            @test (SB*transpose(SA))::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*transpose(A)
-        end
+        @test (SB*SA)::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*A
+        @test (SB*SA')::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*A'
+        @test (SB*transpose(SA))::Transpose{<:Any,<:SVector{n}} ≈ transpose(B)*transpose(A)
         @test (transpose(SB)*SA)::SMatrix{n,n} ≈ B*A
         @test (SB'*SA)::SMatrix{n,n} ≈ conj(B)*A
         @test (transpose(SB)*transpose(SA))::SMatrix{n,n} ≈ B*transpose(A)
@@ -88,7 +82,7 @@ end
             eltyB in (Float64, ComplexF64, Int),
                 (ta, uploa) in ((UpperTriangular, :U), (LowerTriangular, :L)),
                     (tb, uplob) in ((UpperTriangular, :U), (LowerTriangular, :L))
- 
+
         A = ta(eltyA == Int ? rand(1:7, n, n) : rand(eltyA, n, n))
         B = tb(eltyB == Int ? rand(1:7, n, n) : rand(eltyB, n, n))
 

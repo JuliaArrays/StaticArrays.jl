@@ -18,7 +18,7 @@ using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
-                      normalize!, Eigen, det, logdet, cross, diff, qr
+                      normalize!, Eigen, det, logdet, cross, diff, qr, \
 
 # import eye for deprecation warnings
 @static if isdefined(LinearAlgebra, :eye)
@@ -29,12 +29,14 @@ export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector
+export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
 export SDiagonal
+export SHermitianCompact
 
 export Size, Length
 
+export SA, SA_F32, SA_F64
 export @SVector, @SMatrix, @SArray
 export @MVector, @MMatrix, @MArray
 
@@ -70,7 +72,7 @@ For mutable containers you may also need to define the following:
  - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
    is assumed to exist.
 
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray` and `FieldVector`)
+(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray`, `FieldVector`, `FieldMatrix` and `FieldArray`)
 """
 abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
 const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
@@ -98,10 +100,9 @@ const StaticArrayNoEltype{S, N, T} = StaticArray{S, T, N}
 
 include("util.jl")
 include("traits.jl")
-include("convert.jl")
 
 include("SUnitRange.jl")
-include("FieldVector.jl")
+include("FieldArray.jl")
 include("SArray.jl")
 include("SMatrix.jl")
 include("SVector.jl")
@@ -111,6 +112,10 @@ include("MVector.jl")
 include("MMatrix.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+include("SHermitianCompact.jl")
+
+include("initializers.jl")
+include("convert.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")
@@ -134,8 +139,6 @@ include("qr.jl")
 include("deque.jl")
 include("flatten.jl")
 include("io.jl")
-
-include("FixedSizeArrays.jl")
-include("ImmutableArrays.jl")
+include("deprecated.jl")
 
 end # module

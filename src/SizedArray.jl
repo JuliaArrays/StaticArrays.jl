@@ -19,15 +19,8 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
         new{S,T,N,M}(a)
     end
 
-    @static if VERSION < v"1.0"
-        function SizedArray{S, T, N, M}() where {S, T, N, M}
-            Base.depwarn("`SizedArray{S,T,N,M}()` is deprecated, use `SizedArray{S,T,N,M}(undef)` instead", :SizedArray)
-            new{S, T, N, M}(Array{T, M}(undef, S.parameters...))
-        end
-    end
-
     function SizedArray{S, T, N, M}(::UndefInitializer) where {S, T, N, M}
-        new{S, T, N, M}(Array{T, M}(undef, S.parameters...))
+        new{S, T, N, M}(Array{T, M}(undef, size_to_tuple(S)...))
     end
 end
 
@@ -37,17 +30,6 @@ end
 
 @inline SizedArray{S,T,N}(::UndefInitializer) where {S,T,N} = SizedArray{S,T,N,N}(undef)
 @inline SizedArray{S,T}(::UndefInitializer) where {S,T} = SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
-
-@static if VERSION < v"1.0"
-    @inline function SizedArray{S,T,N}() where {S,T,N}
-        Base.depwarn("`SizedArray{S,T,N}()` is deprecated, use `SizedArray{S,T,N}(undef)` instead", :SizedArray)
-        SizedArray{S,T,N,N}(undef)
-    end
-    @inline function SizedArray{S,T}() where {S,T}
-        Base.depwarn("`SizedArray{S,T}()` is deprecated, use `SizedArray{S,T}(undef)` instead", :SizedArray)
-        SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
-    end
-end
 
 @generated function (::Type{SizedArray{S,T,N,M}})(x::NTuple{L,Any}) where {S,T,N,M,L}
     if L != tuple_prod(S)
@@ -90,9 +72,7 @@ SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}
 @inline SizedMatrix{S1,S2}(a::Array{T,M}) where {S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}(a)
 @inline SizedMatrix{S1,S2}(x::NTuple{L,T}) where {S1,S2,T,L} = SizedArray{Tuple{S1,S2},T,2,2}(x)
 
-if isdefined(Base, :dataids) # v0.7-
-    Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
-end
+Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
 
 """
     Size(dims)(array)

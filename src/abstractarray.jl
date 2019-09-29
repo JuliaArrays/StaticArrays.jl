@@ -16,6 +16,10 @@ end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
+# Base.strides is intentionally not defined for SArray, see PR #658 for discussion
+Base.strides(a::MArray) = Base.size_to_strides(1, size(a)...)
+Base.strides(a::SizedArray) = strides(a.data)
+
 function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
     print(io, Base.dims2string(length.(inds)), " ")
     Base.showarg(io, a, true)
@@ -137,6 +141,7 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 
 @inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
 @inline reshape(a::AbstractArray, s::Size) = _reshape(a, IndexStyle(a), s)
+@inline reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
 @generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
     if indexstyle == IndexLinear
         exprs = [:(a[$i]) for i = 1:prod(S)]
@@ -158,14 +163,9 @@ reshape(a::Array, s::Size{S}) where {S} = s(a)
 @inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
+@inline copy(a::SizedArray) = typeof(a)(copy(a.data))
 
 @inline reverse(v::StaticVector) = typeof(v)(reverse(Tuple(v)))
 
 # TODO permutedims?
 
-# full deprecated in Base
-if isdefined(Base, :full)
-    import Base: full
-    @deprecate full(sym::Symmetric{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
-    @deprecate full(herm::Hermitian{T,SM}) where {T,SM <: StaticMatrix} SMatrix(sym)
-end

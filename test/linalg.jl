@@ -2,19 +2,21 @@ using StaticArrays, Test, LinearAlgebra
 
 @testset "Linear algebra" begin
 
-    @testset "SVector as a (mathematical) vector space" begin
+    @testset "SArray as a (mathematical) vector space" begin
         c = 2
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
 
-        @test @inferred(v1 + c) === @SVector [4,6,8,10]
-        @test @inferred(v1 - c) === @SVector [0,2,4,6]
         @test @inferred(v1 * c) === @SVector [4,8,12,16]
         @test @inferred(v1 / c) === @SVector [1.0,2.0,3.0,4.0]
         @test @inferred(c \ v1)::SVector ≈ @SVector [1.0,2.0,3.0,4.0]
 
         @test @inferred(v1 + v2) === @SVector [6, 7, 8, 9]
         @test @inferred(v1 - v2) === @SVector [-2, 1, 4, 7]
+
+        # #528 eltype with empty addition
+        zm = zeros(SMatrix{3, 0, Float64})
+        @test @inferred(zm + zm) === zm
 
         # TODO Decide what to do about this stuff:
         #v3 = [2,4,6,8]
@@ -120,6 +122,9 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(dot(@SVector[[1,2],[3,4]], @SVector[[1,2],[3,4]])) === 30
         @test @inferred(@SVector[[1,2],[3,4]]' * @SVector[[1,2],[3,4]]) === 30
 
+        m1 = reshape(v1, Size(2,2))
+        m2 = reshape(v2, Size(2,2))
+        @test @inferred(dot(m1, m2)) === dot(v1, v2)
     end
 
     @testset "transpose() and conj()" begin
@@ -168,31 +173,21 @@ using StaticArrays, Test, LinearAlgebra
 
         # issue #388
         let x = SVector(1, 2, 3)
-            if VERSION >= v"0.7.0-beta.47"
-                # current limit: 34 arguments
-                hcat(
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                allocs = @allocated hcat(
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                @test allocs == 0
-                vcat(
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                allocs = @allocated vcat(
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                    x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                @test allocs == 0
-            else
-                # current limit: 14 arguments
-                hcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                allocs = @allocated hcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                @test allocs == 0
-                vcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                allocs = @allocated vcat(x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-                @test allocs == 0
-            end
+            # current limit: 34 arguments
+            hcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            allocs = @allocated hcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            @test allocs == 0
+            vcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            allocs = @allocated vcat(
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
+                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
+            @test allocs == 0
         end
 
         # issue #561

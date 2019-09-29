@@ -9,6 +9,9 @@ using StaticArrays, Test
 
         # Colon
         @test (@inferred getindex(sv,:)) === sv
+
+        # SArray
+        @test (@inferred getindex(sv, SMatrix{2,2}(1,4,2,3))) === SMatrix{2,2}(4,7,5,6)
     end
 
     @testset "Linear getindex() on SMatrix" begin
@@ -20,6 +23,9 @@ using StaticArrays, Test
 
         # Colon
         @test (@inferred getindex(sm,:)) === sv
+
+        # SArray
+        @test (@inferred getindex(sm, SMatrix{2,2}(1,4,2,3))) === SMatrix{2,2}(4,7,5,6)
     end
 
     @testset "Linear getindex()/setindex!() on MVector" begin
@@ -38,6 +44,9 @@ using StaticArrays, Test
 
         mv = MVector(0,0,0)
         @test (mv[SVector(1,3)] = SVector(4, 5); (@inferred mv == MVector(4,0,5)))
+
+        mv = MVector(0,0,0)
+        @test (mv[SMatrix{2,1}(1,3)] = SMatrix{2,1}(4, 5); (@inferred mv == MVector(4,0,5)))
 
         # Colon
         mv = MVector{4,Int}(undef)
@@ -61,6 +70,12 @@ using StaticArrays, Test
         # Colon
         mm = MMatrix{2,2,Int}(undef)
         @test (mm[:] = vec; (@inferred getindex(mm, :))::MVector{4,Int} == MVector((4,5,6,7)))
+
+        # SMatrix
+        mm = MMatrix{2,2,Int}(undef)
+        mi = MMatrix{2,2}(4,2,1,3)
+        data = @SMatrix [4 5; 6 7]
+        @test (mm[mi] = data; (@inferred getindex(mm, :))::MVector{4,Int} == MVector((5,6,7,4)))
     end
 
     @testset "Linear getindex()/setindex!() with a SVector on an Array" begin
@@ -101,6 +116,10 @@ using StaticArrays, Test
         @test (@inferred getindex(sm, :, SVector(2,1))) === @SMatrix [3 1; 4 2]
         @test (@inferred getindex(sm, 1, :)) === @SVector [1,3]
         @test (@inferred getindex(sm, :, 1)) === @SVector [1,2]
+
+        # SOneTo
+        @testinf sm[SOneTo(1),:] === @SMatrix [1 3]
+        @testinf sm[:,SOneTo(1)] === @SMatrix [1;2]
     end
 
     @testset "2D getindex()/setindex! on MMatrix" begin
@@ -117,6 +136,10 @@ using StaticArrays, Test
         @test (mm = MMatrix{2,2,Int}(undef); mm[:,SVector(2,1)] = sm[:,SVector(2,1)]; (@inferred getindex(mm, :, SVector(2,1)))::MMatrix == @MMatrix [3 1; 4 2])
         @test (mm = MMatrix{2,2,Int}(undef); mm[1,:] = sm[1,:]; (@inferred getindex(mm, 1, :))::MVector == @MVector [1,3])
         @test (mm = MMatrix{2,2,Int}(undef); mm[:,1] = sm[:,1]; (@inferred getindex(mm, :, 1))::MVector == @MVector [1,2])
+
+        # SOneTo
+        @test (mm = MMatrix{2,2,Int}(undef); mm[SOneTo(1),:] = sm[SOneTo(1),:]; (@inferred getindex(mm, SOneTo(1), :))::MMatrix == @MMatrix [1 3])
+        @test (mm = MMatrix{2,2,Int}(undef); mm[:,SOneTo(1)] = sm[:,SOneTo(1)]; (@inferred getindex(mm, :, SOneTo(1)))::MMatrix == @MMatrix [1;2])
     end
 
     @testset "3D scalar indexing" begin
@@ -180,5 +203,24 @@ using StaticArrays, Test
         @test (zeros(0)[SVector{0,Int}()] = 0) == 0
         @test (zeros(0,2)[SVector{0,Int}(),SVector(1)] = 0) == 0
         @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
+    end
+
+    @testset "Using SArray as index for view" begin
+        a = collect(11:20)
+        @test view(a, SVector(1,2,3)) == [11,12,13]
+        @test_throws BoundsError view(a, SVector(1,11,3))
+        B = rand(Int,3,4,5,6)
+        Bv = view(B, 1, (@SVector [2, 1]), [2, 3], (@SVector [4]))
+        @test Bv == B[1, [2,1], 2:3, [4]]
+        @test axes(Bv, 1) === SOneTo(2)
+        @test axes(Bv, 3) === SOneTo(1)
+        Bvv = view(Bv, (@SVector [1, 2]), 2, 1)
+        @test axes(Bvv) === (SOneTo(2),)
+        @test Bvv[1] == B[1, 2, 3, 4]
+        Bvv[1] = 100
+        @test Bvv[1] == 100
+        @test B[1,2,3,4] == 100
+        @test eltype(Bvv) == Int
+        @test Bvv[:] == [B[1,2,3,4], B[1,1,3,4]]
     end
 end

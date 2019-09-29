@@ -41,6 +41,17 @@ end
 
     end
 
+    # Solve with non-square left hand sides (#606)
+    m1 = @SMatrix[0.2 0.3
+                  0.0 0.1
+                  0.5 0.1]
+    m2 = @SVector[1,2,3]
+    @test @inferred(m1\m2) ≈ Array(m1)\Array(m2)
+    m2 = @SMatrix[1 4
+                  2 5
+                  3 6]
+    @test @inferred(m1\m2) ≈ Array(m1)\Array(m2)
+
     @testset "Mixed static/dynamic" begin
         m2 = @SMatrix([0.2 0.3; 0.0 0.1])
         for m1 in (@SMatrix([1.0 0; 0 1.0]), @SMatrix([1.0 0; 1.0 1.0]),

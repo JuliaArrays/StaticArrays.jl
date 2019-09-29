@@ -9,6 +9,13 @@ using StaticArrays, Test, LinearAlgebra
         @test Base.isassigned(m, 2, 2) == true
     end
 
+    @testset "strides" begin
+        m1 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
+        m2 = Size(3,4,5)(rand(Int, 3, 4, 5))
+        @test strides(m1) === (1, 3, 12)
+        @test strides(m2) === (1, 3, 12)
+    end
+
     @testset "similar_type" begin
         @test @inferred(similar_type(SVector{3,Int})) == SVector{3,Int}
         @test @inferred(similar_type(@SVector [1,2,3])) == SVector{3,Int}
@@ -80,7 +87,7 @@ using StaticArrays, Test, LinearAlgebra
 
         @test m[:, 1:2] isa Matrix
         @test m[:, [true, false, false]] isa Matrix
-        @test m[:, SOneTo(2)] isa MMatrix{2, 2, Int}
+        @test m[:, SOneTo(2)] isa SMatrix{2, 2, Int}
         @test m[:, :] isa SMatrix{2, 3, Int}
         @test m[:, 1] isa SVector{2, Int}
         @test m[2, :] isa SVector{3, Int}
@@ -92,6 +99,7 @@ using StaticArrays, Test, LinearAlgebra
 
 
     @testset "reshape" begin
+        @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
 
@@ -106,8 +114,14 @@ using StaticArrays, Test, LinearAlgebra
     end
 
     @testset "copy" begin
-        @test @inferred(copy(SMatrix{2, 2}([1 2; 3 4]))) === @SMatrix [1 2; 3 4]
-        @test @inferred(copy(MMatrix{2, 2}([1 2; 3 4])))::MMatrix == [1 2; 3 4]
+        M = [1 2; 3 4]
+        SM = SMatrix{2, 2}(M)
+        MM = MMatrix{2, 2}(M)
+        SizeM = Size(2,2)(M)
+        @test @inferred(copy(SM)) === @SMatrix [1 2; 3 4]
+        @test @inferred(copy(MM))::MMatrix == M
+        @test copy(SM).data !== M
+        @test copy(SizeM).data !== M
     end
 
     @testset "reverse" begin

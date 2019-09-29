@@ -14,7 +14,6 @@ const Scalar{T} = SArray{Tuple{},T,0,1}
 end
 @inline convert(::Type{SA}, sa::SA) where {SA <: Scalar} = sa
 
-getindex(v::Scalar) = v.data[1]
 @propagate_inbounds function getindex(v::Scalar, i::Int)
     @boundscheck if i != 1
         error("Attempt to index Scalar at index $i")

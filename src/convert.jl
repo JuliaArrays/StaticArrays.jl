@@ -3,6 +3,7 @@
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
 @inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
+@inline (::Type{SA})(a::StaticArray) where {SA<:SizedArray} = SA(a.data)
 @propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
@@ -22,8 +23,12 @@ end
         dimension_mismatch_fail(SA, a)
     end
 
-    return SA(unroll_tuple(a, Length(SA)))
+    return _convert(SA, a, Length(SA))
 end
+
+@inline _convert(SA, a, l::Length) = SA(unroll_tuple(a, l))
+@inline _convert(SA::Type{<:StaticArray{<:Tuple,T}}, a, ::Length{0}) where T = similar_type(SA, T)(())
+@inline _convert(SA, a, ::Length{0}) = similar_type(SA, eltype(a))(())
 
 length_val(a::T) where {T <: StaticArrayLike} = length_val(Size(T))
 length_val(a::Type{T}) where {T<:StaticArrayLike} = length_val(Size(T))

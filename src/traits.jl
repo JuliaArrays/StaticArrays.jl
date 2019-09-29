@@ -78,8 +78,9 @@ function missing_size_error(::Type{SA}) where SA
         example, you might try
 
             m = zeros(3,3)
-            SMatrix(m)      # this error
-            SMatrix{3,3}(m) # correct - size is inferrable
+            SMatrix(m)            # this error
+            SMatrix{3,3}(m)       # correct - size is inferrable
+            SArray{Tuple{3,3}}(m) # correct, note Tuple{3,3}
         """)
 end
 
@@ -132,10 +133,6 @@ Length(::Size{S}) where {S} = _Length(S...)
 
 @pure Base.prod(::Size{S}) where {S} = prod(S)
 
-if isdefined(Base, :sub2ind)
-    import Base: sub2ind
-    @deprecate sub2ind(s::Size, x::Int...) LinearIndices(s)[x...]
-end
 Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 @pure size_tuple(::Size{S}) where {S} = Tuple{S...}

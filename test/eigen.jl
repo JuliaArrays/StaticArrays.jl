@@ -68,6 +68,14 @@ using StaticArrays, Test, LinearAlgebra
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
 
+        m_c = complex(m) # issue 614 (diagonal complex Hermitian)
+        (vals, vecs) = eigen(Hermitian(m_c))
+        @test vals::SVector ≈ sort(m_d)
+        (vals, vecs) = eigen(Hermitian(m_c, :L))
+        @test vals::SVector ≈ sort(m_d)
+        @test eigvals(m_c) ≈ sort(m_d)
+        @test eigvals(Hermitian(m_c)) ≈ sort(m_d)
+
         # issue #523
         for (i, j) in ((1, 2), (2, 1)), uplo in (:U, :L)
             A = SMatrix{2,2,Float64}((i, 0, 0, j))

@@ -112,8 +112,8 @@ end
 
 
 @inline function _eig(s::Size, A::StaticMatrix, permute, scale)
-    # Only cover the hermitian branch, for now ast least
-    # This also solves some type-stability issues such as arise in Base
+    # Only cover the hermitian branch, for now at least
+    # This also solves some type-stability issues that arise in Base
     if ishermitian(A)
        return _eig(s, Hermitian(A), permute, scale)
     else
@@ -136,19 +136,7 @@ end
     TA = eltype(A)
 
     @inbounds if A.uplo == 'U'
-        if a[3] == 0 # A is diagonal
-            A11 = a[1]
-            A22 = a[4]
-            if A11 < A22
-                vals = SVector(A11, A22)
-                vecs = @SMatrix [convert(TA, 1) convert(TA, 0);
-                                 convert(TA, 0) convert(TA, 1)]
-            else # A22 <= A11
-                vals = SVector(A22, A11)
-                vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
-                                 convert(TA, 1) convert(TA, 0)]
-            end
-        else # A is not diagonal
+        if !iszero(a[3]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
             d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
 
@@ -168,22 +156,11 @@ end
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
+
+            return (vals, vecs)
         end
-        return (vals, vecs)
     else # A.uplo == 'L'
-        if a[2] == 0 # A is diagonal
-            A11 = a[1]
-            A22 = a[4]
-            if A11 < A22
-                vals = SVector(A11, A22)
-                vecs = @SMatrix [convert(TA, 1) convert(TA, 0);
-                                 convert(TA, 0) convert(TA, 1)]
-            else # A22 <= A11
-                vals = SVector(A22, A11)
-                vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
-                                 convert(TA, 1) convert(TA, 0)]
-            end
-        else # A is not diagonal
+        if !iszero(a[2]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
             d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
 
@@ -203,9 +180,24 @@ end
 
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
+
+            return (vals,vecs)
         end
-        return (vals,vecs)
     end
+
+    # A must be diagonal if we reached this point; treatment of uplo 'L' and 'U' is then identical
+    A11 = real(a[1])
+    A22 = real(a[4])
+    if A11 < A22
+        vals = SVector(A11, A22)
+        vecs = @SMatrix [convert(TA, 1) convert(TA, 0);
+                         convert(TA, 0) convert(TA, 1)]
+    else # A22 <= A11
+        vals = SVector(A22, A11)
+        vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
+                         convert(TA, 1) convert(TA, 0)]
+    end
+    return (vals,vecs)
 end
 
 # A small part of the code in the following method was inspired by works of David

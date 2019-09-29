@@ -1,9 +1,9 @@
-using StaticArrays, Test, Random, LinearAlgebra, SpecialFunctions
+using StaticArrays, Test, Random, LinearAlgebra
 using InteractiveUtils
 
 # Allow no new ambiguities (see #18), unless you fix some old ones first!
 if VERSION >= v"1.0.0"
-    @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= 7
+    @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= 5
 end
 
 # We generate a lot of matrices using rand(), but unit tests should be
@@ -19,15 +19,19 @@ include("MMatrix.jl")
 include("SArray.jl")
 include("MArray.jl")
 include("FieldVector.jl")
+include("FieldMatrix.jl")
 include("Scalar.jl")
 include("SUnitRange.jl")
 include("SizedArray.jl")
 include("SDiagonal.jl")
+include("SHermitianCompact.jl")
 
 include("custom_types.jl")
+include("convert.jl")
 include("core.jl")
 include("abstractarray.jl")
 include("indexing.jl")
+include("initializers.jl")
 Random.seed!(42); include("mapreduce.jl")
 Random.seed!(42); include("arraymath.jl")
 include("broadcast.jl")
@@ -48,4 +52,4 @@ include("deque.jl")
 include("flatten.jl")
 include("io.jl")
 include("svd.jl")
-Random.seed!(42); include("fixed_size_arrays.jl")
+include("deprecated.jl")

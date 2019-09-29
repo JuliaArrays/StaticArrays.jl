@@ -116,15 +116,11 @@
 
         @test length(m) === 4
 
-        if isdefined(Base, :mightalias) # v0.7-
-            @test Base.mightalias(m, m)
-            @test !Base.mightalias(m, copy(m))
-            @test Base.mightalias(m, view(m, :, 1))
-        end
+        @test Base.mightalias(m, m)
+        @test !Base.mightalias(m, copy(m))
+        @test Base.mightalias(m, view(m, :, 1))
 
-        if isdefined(Base, :dataids) # v0.7-
-            @test Base.dataids(m) == (UInt(pointer(m)),)
-        end
+        @test Base.dataids(m) == (UInt(pointer(m)),)
     end
 
     @testset "setindex!" begin
@@ -156,5 +152,12 @@
         @test @inferred(promote_type(MVector{2,Int}, MVector{2,Float64})) === MVector{2,Float64}
         @test @inferred(promote_type(MMatrix{2,3,Float32,6}, MMatrix{2,3,Complex{Float64},6})) === MMatrix{2,3,Complex{Float64},6}
         @test @inferred(promote_type(MArray{Tuple{2, 2, 2, 2},Float32, 4, 16}, MArray{Tuple{2, 2, 2, 2}, Complex{Float64}, 4, 16})) === MArray{Tuple{2, 2, 2, 2}, Complex{Float64}, 4, 16}
+    end
+
+    @testset "zero-dimensional" begin
+        v = MArray{Tuple{}, Int, 0, 1}(1)
+        @test v[] == 1
+        v[] = 2
+        @test v[] == 2
     end
 end

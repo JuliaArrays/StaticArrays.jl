@@ -1,7 +1,5 @@
 using StaticArrays, Test
-if VERSION >= v"0.7.0-beta.85"
-    import Statistics: mean
-end
+using Statistics: mean
 
 @testset "Map, reduce, mapreduce, broadcast" begin
     @testset "map and map!" begin
@@ -26,6 +24,11 @@ end
         v3 = @SVector [1, 2, 3, 4]
         map!(+, mv3, v1, v2, v3)
         @test mv3 == @MVector [7, 9, 11, 13]
+
+        # Output eltype for empty cases #528
+        @test @inferred(map(/, SVector{0,Int}(), SVector{0,Int}())) === SVector{0,Float64}()
+        @test @inferred(map(+, SVector{0,Int}(), SVector{0,Float32}())) === SVector{0,Float32}()
+        @test @inferred(map(length, SVector{0,String}())) === SVector{0,Int}()
     end
 
     @testset "[map]reduce and [map]reducedim" begin
@@ -84,6 +87,9 @@ end
         @test any(x->x>0, sa) === any(x->x>0, a)
         @test any(sb, dims=Val(2)) === RSArray2(any(b, dims=2))
         @test any(x->x>0, sa, dims=Val(2)) === RSArray2(any(x->x>0, a, dims=2))
+
+        @test all(in(x, sa) for x in sa)
+        @test all(in(x, sa) === in(x, a) for x in randn(10))
 
         @test mean(sa) === mean(a)
         @test mean(abs2, sa) === mean(abs2, a)
@@ -148,5 +154,21 @@ end
         @test map(+, M, M) == [2 4; 6 8; 10 12; 14 16]
 
         @test ((@SVector Int64[]) + (@SVector Int64[])) == (@SVector Int64[])
+    end
+    @testset "Nested SVectors" begin
+        # issue #593
+        v = SVector(SVector(3, 2), SVector(5, 7))
+        @test @inferred(v + v) == SVector(SVector(6, 4), SVector(10, 14))
+        v = SVector(SVector(3, 2, 1), SVector(5, 7, 9))
+        @test @inferred(v + v) == SVector(SVector(6, 4, 2), SVector(10, 14, 18))
+    end
+    @testset "hcat and vcat" begin
+        # issue #641
+        v = SVector([1,2], [3,4])
+        @test reduce(vcat, v) == [1,2,3,4]
+        @test reduce(hcat, v) == [1 3; 2 4]
+        v2 = SVector(SVector(1,2), SVector(3,4))
+        @test @inferred(reduce(vcat, v2)) === @SVector [1,2,3,4]
+        @test @inferred(reduce(hcat, v2)) === @SMatrix [1 3; 2 4]
     end
 end

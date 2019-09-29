@@ -50,7 +50,7 @@
                 y::T
             end
 
-            StaticArrays.similar_type(::Type{P2D}, ::Type{T}, s::Size{(2,)}) where {P2D<:Point2D,T} = Point2D{T}
+            StaticArrays.similar_type(::Type{<:Point2D}, ::Type{T}, s::Size{(2,)}) where {T} = Point2D{T}
         end)
 
         p = Point2D(0.0, 0.0)
@@ -78,7 +78,7 @@
     end
 
     @testset "FieldVector with Tuple fields" begin
-        # verify that having a field which is itself a Tuple 
+        # verify that having a field which is itself a Tuple
         # doesn't break anything
 
         eval(quote

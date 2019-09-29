@@ -36,12 +36,7 @@ using StaticArrays, Test, LinearAlgebra
 
     # decomposition is correct
     l_u = l*u
-    if length(l_u) > 0 # Union{} element type breaks norm
-        @test l*u ≈ a[p,:]
-    else
-        @test_broken l*u ≈ a[p,:]
-    end
-
+    @test l*u ≈ a[p,:]
 end
 
 @testset "LU division ($m×$n)" for m in [1:4..., 15], n in [1:4..., 15]
@@ -53,4 +48,5 @@ end
     # test if / and \ work with lu:
     @test a\b_col ≈ a_lu\b_col
     @test b_line/a ≈ b_line/a_lu
+
 end

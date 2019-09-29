@@ -16,12 +16,6 @@ import Base: +, -, *, /, \
 @inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
 
 # Scalar-array
-@inline +(a::Number, b::StaticArray) = broadcast(+, a, b)
-@inline +(a::StaticArray, b::Number) = broadcast(+, a, b)
-
-@inline -(a::Number, b::StaticArray) = broadcast(-, a, b)
-@inline -(a::StaticArray, b::Number) = broadcast(-, a, b)
-
 @inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
 @inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
 
@@ -156,12 +150,6 @@ end
     end
 end
 
-# deprecate eye, keep around for as long as LinearAlgebra.eye exists
-@static if isdefined(LinearAlgebra, :eye)
-    @deprecate eye(A::SM) where {SM<:StaticMatrix} typeof(A)(I)
-    @deprecate eye(::Type{SM}) where {SM<:StaticMatrix} SM(1.0I)
-end
-
 # StaticMatrix(I::UniformScaling) methods to replace eye
 (::Type{SM})(I::UniformScaling) where {N,M,SM<:StaticMatrix{N,M}} = _eye(Size(SM), SM, I)
 
@@ -190,8 +178,6 @@ end
         @inbounds return SMatrix{$N,$N,$T}(tuple($(exprs...)))
     end
 end
-
-@deprecate(diagm(v::StaticVector, k::Type{Val{D}}=Val{0}) where {D}, diagm(k() => v))
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
@@ -222,38 +208,23 @@ end
     @inbounds return similar_type(a, typeof(Signed(a[2]*b[3])-Signed(a[3]*b[2])))(((Signed(a[2]*b[3])-Signed(a[3]*b[2]), Signed(a[3]*b[1])-Signed(a[1]*b[3]), Signed(a[1]*b[2])-Signed(a[2]*b[1]))))
 end
 
-@inline dot(a::StaticVector, b::StaticVector) = _vecdot(same_size(a, b), a, b)
-@generated function _vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
+@inline dot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b, dot)
+@inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _vecdot(same_size(a, b), a, b, *)
+
+@inline function _vecdot(::Size{S}, a::StaticArray, b::StaticArray, product) where {S}
     if prod(S) == 0
-        return :(zero(promote_op(*, eltype(a), eltype(b))))
+        za, zb = zero(eltype(a)), zero(eltype(b))
+    else
+        # Use an actual element if there is one, to support e.g. Vector{<:Number}
+        # element types for which runtime size information is required to construct
+        # a zero element.
+        za, zb = zero(a[1]), zero(b[1])
     end
-
-    expr = :(adjoint(a[1]) * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + adjoint(a[$j]) * b[$j])
+    ret = product(za, zb) + product(za, zb)
+    @inbounds @simd for j = 1 : prod(S)
+        ret += product(a[j], b[j])
     end
-
-    return quote
-        @_inline_meta
-        @inbounds return $expr
-    end
-end
-
-@inline bilinear_vecdot(a::StaticArray, b::StaticArray) = _bilinear_vecdot(same_size(a, b), a, b)
-@generated function _bilinear_vecdot(::Size{S}, a::StaticArray, b::StaticArray) where {S}
-    if prod(S) == 0
-        return :(zero(promote_op(*, eltype(a), eltype(b))))
-    end
-
-    expr = :(a[1] * b[1])
-    for j = 2:prod(S)
-        expr = :($expr + a[$j] * b[$j])
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds return $expr
-    end
+    return ret
 end
 
 @inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v; init=zero(real(eltype(v))))
