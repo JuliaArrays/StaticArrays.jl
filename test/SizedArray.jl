@@ -84,7 +84,7 @@
         @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
         @test convert(Array, SizedArray{Tuple{2,2,2,2}, Int}(ones(2,2,2,2))) == ones(2,2,2,2)
         # Conversion after reshaping
-        @test_broken Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
+        @test Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
     end
 
     @testset "promotion" begin
