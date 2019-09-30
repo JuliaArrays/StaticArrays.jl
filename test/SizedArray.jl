@@ -85,6 +85,9 @@
         @test convert(Array, SizedArray{Tuple{2,2,2,2}, Int}(ones(2,2,2,2))) == ones(2,2,2,2)
         # Conversion after reshaping
         @test Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
+        # Array(a::Array) makes a copy so this should work similarly
+        a = [1 2; 3 4]
+        @test Array(SizedMatrix{2,2}(a)) !== a
     end
 
     @testset "promotion" begin
