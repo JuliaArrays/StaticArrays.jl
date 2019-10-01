@@ -326,6 +326,15 @@ analogy with the standard functions `setindex!`, `push!`, `pop!`, etc. (Note tha
 if the size of the static array changes, the type of the output will differ from
 the input.)
 
+When building static arrays iteratively, it is usually efficient to build up an `MArray` first and then convert. The allocation will be elided by recent Julia compilers, resulting in very efficient code:
+```julia
+function standard_basis_vector(T, ::Val{I}, ::Val{N}) where {I,N}
+    v = zero(MVector{N,T})
+    v[I] = one(T)
+    SVector(v)
+end
+```
+
 ### SIMD optimizations
 
 It seems Julia and LLVM are smart enough to use processor vectorization
