@@ -149,15 +149,15 @@ Convenience macros `@MVector`, `@MMatrix` and `@MArray` are provided.
 ### `SizedArray`: a decorate size wrapper for `Array`
 
 Another convenient mutable type is the `SizedArray`, which is just a wrapper-type
-about a standard Julia `Array` which declares its knwon size. For example, if
+about a standard Julia `Array` which declares its known size. For example, if
 we knew that `a` was a 2×2 `Matrix`, then we can type `sa = SizedArray{Tuple{2,2}}(a)`
 to construct a new object which knows the type (the size will be verified
 automatically). A more convenient syntax for obtaining a `SizedArray` is by calling
 a `Size` object, e.g. `sa = Size(2,2)(a)`.
 
 Then, methods on `sa` will use the specialized code provided by the *StaticArrays*
-pacakge, which in many cases will be much, much faster. For example, calling
-`eig(sa)` will be signficantly faster than `eig(a)` since it will perform a
+package, which in many cases will be much, much faster. For example, calling
+`eigen(sa)` will be signficantly faster than `eigen(a)` since it will perform a
 specialized 2×2 matrix diagonalization rather than a general algorithm provided
 by Julia and *LAPACK*.
 
@@ -166,7 +166,7 @@ an `MArray` might be preferable.
 
 ### `FieldVector`
 
-Sometimes it might be useful to imbue your own types, having multiple fields,
+Sometimes it might be useful to implement your own types, having multiple fields,
 with vector-like properties. *StaticArrays* can take care of this for you by
 allowing you to inherit from `FieldVector{N, T}`. For example, consider:
 
@@ -194,7 +194,7 @@ appropriate method for `similar`,
 ### Implementing your own types
 
 You can easily create your own `StaticArray` type, by defining linear
-`getindex` (and optionally `setindex!` for mutable types - see
+`getindex` (and optionally `setindex!` for mutable types --- see
 `setindex(::MArray, val, i)` in *MArray.jl* for an example of how to
 achieve this through pointer manipulation). Your type should define a constructor
 that takes a tuple of the data (and mutable containers may want to define a
@@ -234,7 +234,7 @@ instance, e.g. `Size(2)(v)`.
 ### Arrays of static arrays
 
 Storing a large number of static arrays is convenient as an array of static
-arrays. For example, a collection of positions (3D coordinates - `SVector{3,Float64}`)
+arrays. For example, a collection of positions (3D coordinates --- `SVector{3,Float64}`)
 could be represented as a `Vector{SVector{3,Float64}}`.
 
 Another common way of storing the same data is as a 3×`N` `Matrix{Float64}`.
