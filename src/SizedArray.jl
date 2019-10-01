@@ -57,9 +57,9 @@ end
 @inline Array{T}(sa::SizedArray{S,T}) where {T,S} = Array(reshape(sa.data, size_to_tuple(S)))
 @inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = Array(reshape(sa.data, size_to_tuple(S)))
 
-@inline convert(::Type{Array}, sa::SizedArray{S}) where {S} = Array(reshape(sa.data, size_to_tuple(S)))
-@inline convert(::Type{Array{T}}, sa::SizedArray{S,T}) where {T,S} = Array(reshape(sa.data, size_to_tuple(S)))
-@inline convert(::Type{Array{T,N}}, sa::SizedArray{S,T,N}) where {T,S,N} = Array(reshape(sa.data, size_to_tuple(S)))
+@inline convert(::Type{Array}, sa::SizedArray{S}) where {S} = convert(Array, reshape(sa.data, size_to_tuple(S)))
+@inline convert(::Type{Array{T}}, sa::SizedArray{S,T}) where {T,S} = convert(Array{T}, reshape(sa.data, size_to_tuple(S)))
+@inline convert(::Type{Array{T,N}}, sa::SizedArray{S,T,N}) where {T,S,N} = convert(Array{T,N}, reshape(sa.data, size_to_tuple(S)))
 
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)

@@ -88,6 +88,10 @@
         # Array(a::Array) makes a copy so this should work similarly
         a = [1 2; 3 4]
         @test Array(SizedMatrix{2,2}(a)) !== a
+        @test @inferred(convert(Array, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Array{Int}, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Matrix{Int}, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Matrix{Float64}, SizedMatrix{2,2}(a))) == a
     end
 
     @testset "promotion" begin
