@@ -19,7 +19,7 @@ A = rand(Float64,N,N)
 A = A*A'
 As = SMatrix{N,N}(A)
 Am = MMatrix{N,N}(A)
-Az = Size(N,N)(copy(A))
+Az = SizedMatrix{N,N}(copy(A))
 @static if fsa
     Af = Mat(ntuple(j -> ntuple(i->A[i,j], N), N)) # there is a bug in FixedSizeArrays Mat constructor (13 July 2016)
 end

@@ -17,4 +17,4 @@ end
     end
 end
 
-@inline _sqrt(s::Size, A::StaticArray) = s(sqrt(Array(A)))
+@inline _sqrt(::Size{S}, A::StaticArray) where {S} = SizedArray{Tuple{S...}}(sqrt(Array(A)))

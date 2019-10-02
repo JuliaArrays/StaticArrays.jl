@@ -158,7 +158,7 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
     end
 end
 
-reshape(a::Array, s::Size{S}) where {S} = s(a)
+reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 
 @inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
 
