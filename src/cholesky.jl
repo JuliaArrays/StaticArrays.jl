@@ -53,5 +53,7 @@ end
 end
 
 # Otherwise default algorithm returning wrapped SizedArray
-@inline _cholesky(s::Size, A::StaticArray) = s(Matrix(cholesky(Hermitian(Matrix(A))).U))
+@inline _cholesky(::Size{S}, A::StaticArray) where {S} =
+    SizedArray{Tuple{S...}}(Matrix(cholesky(Hermitian(Matrix(A))).U))
+
 LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}

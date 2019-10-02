@@ -11,7 +11,7 @@ using StaticArrays, Test, LinearAlgebra
 
     @testset "strides" begin
         m1 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
-        m2 = Size(3,4,5)(rand(Int, 3, 4, 5))
+        m2 = SizedArray{Tuple{3,4,5}}(rand(Int, 3, 4, 5))
         @test strides(m1) === (1, 3, 12)
         @test strides(m2) === (1, 3, 12)
     end
@@ -117,7 +117,7 @@ using StaticArrays, Test, LinearAlgebra
         M = [1 2; 3 4]
         SM = SMatrix{2, 2}(M)
         MM = MMatrix{2, 2}(M)
-        SizeM = Size(2,2)(M)
+        SizeM = SizedMatrix{2,2}(M)
         @test @inferred(copy(SM)) === @SMatrix [1 2; 3 4]
         @test @inferred(copy(MM))::MMatrix == M
         @test copy(SM).data !== M

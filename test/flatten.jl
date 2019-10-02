@@ -3,7 +3,7 @@ using StaticArrays, Test
 @testset "Iterators.flatten" begin
     for x in [SVector(1.0, 2.0), MVector(1.0, 2.0),
             @SMatrix([1.0 2.0; 3.0 4.0]), @MMatrix([1.0 2.0]),
-            Size(1,2)([1.0 2.0])
+            SizedMatrix{1,2}([1.0 2.0])
             ]
         X = [x,x,x]
         @test length(Iterators.flatten(X)) == length(X)*length(x)

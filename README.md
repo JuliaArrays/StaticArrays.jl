@@ -124,7 +124,7 @@ similar_type(m3) == SArray{Tuple{3,3},Int64,2,9}
 Size(m3) === Size(3,3)
 
 # A standard Array can be wrapped into a SizedArray
-m4 = Size(3,3)(rand(3,3))
+m4 = SizedMatrix{3,3}(rand(3,3))
 inv(m4) # Take advantage of specialized fast methods
 
 # reshape() uses Size() or types to specify size:

@@ -16,7 +16,7 @@ for T ∈ [Int64, Float64]
         println(" Vectors of length ", N, " and eltype ", T)
         println("=====================================================================")
         immutables = [rand(SVector{N,T})]
-        mutables = [rand(T,N), rand(MVector{N,T}), Size(N)(rand(T,N))]
+        mutables = [rand(T,N), rand(MVector{N,T}), SizedVector{N}(rand(T,N))]
         instances = vcat(immutables, mutables)
 
         namelengths = [length(string(typeof(v).name.name)) for v ∈ instances]
@@ -45,7 +45,7 @@ for T ∈ [Int64, Float64]
         println(" Matrices of size ", N, "×", N, " and eltype ", T)
         println("=====================================================================")
         immutables = [rand(SMatrix{N,N,T})]
-        mutables = [rand(T,N,N), rand(MMatrix{N,N,T}), Size(N,N)(rand(T,N,N))]
+        mutables = [rand(T,N,N), rand(MMatrix{N,N,T}), SizedMatrix{N,N}(rand(T,N,N))]
         instances = vcat(immutables, mutables)
 
         namelengths = [length(string(typeof(v).name.name)) for v ∈ instances]

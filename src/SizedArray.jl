@@ -7,7 +7,9 @@ methods defined by the static array package. The size is checked once upon
 construction to determine if the number of elements (`length`) match, but the
 array may be reshaped.
 
-(Also, `Size(dims...)(array)` acheives the same thing)
+The aliases `SizedVector{N}` and `SizedMatrix{N,M}` are provided as more
+convenient names for one and two dimensional `SizedArray`s. For example, to
+wrap a 2x3 array `a` in a `SizedArray`, use `SizedMatrix{2,3}(a)`.
 """
 struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
     data::Array{T, M}
@@ -74,14 +76,10 @@ SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M}
 
 Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
 
-"""
-    Size(dims)(array)
-
-Creates a `SizedArray` wrapping `array` with the specified statically-known
-`dims`, so to take advantage of the (faster) methods defined by the static array
-package.
-"""
-(::Size{S})(a::Array) where {S} = SizedArray{Tuple{S...}}(a)
+function (::Size{S})(a::Array) where {S}
+    Base.depwarn("`Size{S}(a::Array)` is deprecated, use `SizedVector{N}(a)`, `SizedMatrix{N,M}(a)` or `SizedArray{Tuple{S}}(a)` instead", :Size)
+    SizedArray{Tuple{S...}}(a)
+end
 
 
 function promote_rule(::Type{<:SizedArray{S,T,N,M}}, ::Type{<:SizedArray{S,U,N,M}}) where {S,T,U,N,M}
