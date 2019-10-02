@@ -166,9 +166,9 @@ an `MArray` might be preferable.
 
 ### `FieldVector`
 
-Sometimes it might be useful to implement your own types, having multiple fields,
-with vector-like properties. *StaticArrays* can take care of this for you by
-allowing you to inherit from `FieldVector{N, T}`. For example, consider:
+Sometimes it is useful to give your own struct types the properties of a vector.
+*StaticArrays* can take care of this for you by allowing you to inherit from
+`FieldVector{N, T}`. For example, consider:
 
 ```julia
 struct Point3D <: FieldVector{3, Float64}
