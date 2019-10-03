@@ -61,9 +61,9 @@ end
 @inline convert(::Type{SA}, sa::SA) where {SA<:SizedArray} = sa
 
 # Back to Array (unfortunately need both convert and construct to overide other methods)
-@inline Array(sa::SizedArray{S}) where {S} = sa.data
-@inline Array{T}(sa::SizedArray{S,T}) where {T,S} = sa.data
-@inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = sa.data
+@inline Array(sa::SizedArray) = Array(sa.data)
+@inline Array{T}(sa::SizedArray{S,T}) where {T,S} = Array{T}(sa.data)
+@inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = Array{T,N}(sa.data)
 
 @inline convert(::Type{Array}, sa::SizedArray{S}) where {S} = sa.data
 @inline convert(::Type{Array{T}}, sa::SizedArray{S,T}) where {T,S} = sa.data
