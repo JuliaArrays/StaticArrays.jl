@@ -65,7 +65,7 @@ end
 @inline Array{T}(sa::SizedArray{S,T}) where {T,S} = Array{T}(sa.data)
 @inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = Array{T,N}(sa.data)
 
-@inline convert(::Type{Array}, sa::SizedArray{S}) where {S} = sa.data
+@inline convert(::Type{Array}, sa::SizedArray) = sa.data
 @inline convert(::Type{Array{T}}, sa::SizedArray{S,T}) where {T,S} = sa.data
 @inline convert(::Type{Array{T,N}}, sa::SizedArray{S,T,N}) where {T,S,N} = sa.data
 
