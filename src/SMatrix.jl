@@ -16,7 +16,7 @@ unknown to the compiler (the element type may optionally also be specified).
 """
 const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
 
-@generated function (::Type{SMatrix{S1}})(x::NTuple{L,Any}) where {S1,L}
+@generated function (::Type{SMatrix{S1}})(x::NTuple{L,T}) where {S1,L,T}
     S2 = div(L, S1)
     if S1*S2 != L
         throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
@@ -24,26 +24,28 @@ const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
 
     return quote
         $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
         SMatrix{S1, $S2, T, L}(x)
     end
 end
+@inline (::Type{SMatrix{S1}})(x::Tuple) where {S1} = SMatrix{S1}(promote(x...))
 
-@generated function (::Type{SMatrix{S1,S2}})(x::NTuple{L,Any}) where {S1,S2,L}
+@generated function (::Type{SMatrix{S1,S2}})(x::NTuple{L,T}) where {S1,S2,L,T}
     return quote
         $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
         SMatrix{S1, S2, T, L}(x)
     end
 end
+(::Type{SMatrix{S1,S2}})(x::Tuple{}) where {S1,S2} = SMatrix{S1, S2, Union{}, 0}(x)
+@inline (::Type{SMatrix{S1,S2}})(x::Tuple) where {S1,S2} = SMatrix{S1,S2}(promote(x...))
+
 SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
-@generated function (::Type{SMatrixNoType{S1, S2, L}})(x::NTuple{L,Any}) where {S1,S2,L}
+@generated function (::Type{SMatrixNoType{S1, S2, L}})(x::NTuple{L,T}) where {S1,S2,L,T}
     return quote
         $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
         SMatrix{S1, S2, T, L}(x)
     end
 end
+@inline (::Type{SMatrixNoType{S1,S2,L}})(x::NTuple{L,Any}) where {S1,S2,L} = SMatrixNoType{S1,S2,L}(promote(x...))
 
 @generated function (::Type{SMatrix{S1,S2,T}})(x::NTuple{L,Any}) where {S1,S2,T,L}
     return quote

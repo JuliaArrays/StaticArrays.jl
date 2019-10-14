@@ -50,12 +50,12 @@ end
     end
 end
 
-@generated function (::Type{MArray{S}})(x::T) where {S, T <: Tuple}
-    return quote
-        $(Expr(:meta, :inline))
-        MArray{S,promote_tuple_eltype(T),$(tuple_length(S)),$(tuple_prod(S))}(x)
-    end
-end
+# Promote to common element type
+@inline (::Type{MArray{S}})(x::Tuple) where {S <: Tuple} = MArray{S}(promote(x...))
+# ...once all elements are the same, call the constructor with all parameters determined
+@inline (::Type{MArray{S}})(x::NTuple{N,T}) where {S <: Tuple, T, N} = MArray{S, T, tuple_length(S), N}(x)
+# ...the empty case requires  special casing since T isn't defined in the above definition in the empty case
+@inline (::Type{MArray{S}})(x::Tuple{}) where {S <: Tuple} = MArray{S, Union{}, tuple_length(S), 0}(x)
 
 @generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote

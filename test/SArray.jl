@@ -122,3 +122,12 @@
         @test @inferred(promote_type(SMatrix{2,3,Float32,6}, SMatrix{2,3,Complex{Float64},6})) === SMatrix{2,3,Complex{Float64},6}
     end
 end
+
+# It useed to be a problem that element promotion didn't work for newly defined  types
+struct _TestFloat64 <: Real
+    x::Float64
+end
+Base.promote_rule(::Type{Float64}, ::Type{_TestFloat64}) = _TestFloat64
+@testset "promotion with new types" begin
+    @test eltype(SArray{Tuple{2}}((1.0, _TestFloat64(1.0)))) === _TestFloat64
+end
