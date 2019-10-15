@@ -77,7 +77,7 @@ end
     SHermitianCompact{N, T, L}(a)
 end
 
-@inline (::Type{SHermitianCompact{N}})(a::Tuple) where {N} = SHermitianCompact{N, promote_tuple_eltype(a)}(a)
+@inline (::Type{SHermitianCompact{N}})(a::Tuple) where {N} = SHermitianCompact{N}(promote(a...))
 @inline (::Type{SHermitianCompact{N}})(a::NTuple{M, T}) where {N, T, M} = SHermitianCompact{N, T}(a)
 @inline SHermitianCompact(a::StaticMatrix{N, N, T}) where {N, T} = SHermitianCompact{N, T}(a)
 

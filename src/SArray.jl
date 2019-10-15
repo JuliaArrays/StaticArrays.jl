@@ -43,13 +43,12 @@ end
     end
 end
 
-@generated function (::Type{SArray{S}})(x::T) where {S <: Tuple, T <: Tuple}
-    return quote
-        @_inline_meta
-        SArray{S, $(promote_tuple_eltype(T)), $(tuple_length(S)), $(tuple_prod(S))}(x)
-    end
-end
-
+# Promote to common element type
+@inline (::Type{SArray{S}})(x::Tuple) where {S <: Tuple} = SArray{S}(promote(x...))
+# ...once all elements are the same, call the constructor with all parameters determined
+@inline (::Type{SArray{S}})(x::NTuple{N,T}) where {S <: Tuple, N, T} = SArray{S, T, tuple_length(S), N}(x)
+# ...the empty case requires  special casing since T isn't defined in the above definition in the empty case
+@inline (::Type{SArray{S}})(x::Tuple{}) where {S <: Tuple} = SArray{S, Union{}, tuple_length(S), 0}(x)
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 # Simplified show for the type

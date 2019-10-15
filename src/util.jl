@@ -12,22 +12,6 @@ TupleN{T,N} = NTuple{N,T}
     end
 end
 
-# Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
-@generated function promote_tuple_eltype(::Union{T,Type{T}}) where T <: Tuple
-    t = Union{}
-    for i = 1:length(T.parameters)
-        tmp = T.parameters[i]
-        if tmp <: Vararg
-            tmp = tmp.parameters[1]
-        end
-        t = :(promote_type($t, $tmp))
-    end
-    return quote
-        @_inline_meta
-        $t
-    end
-end
-
 # The ::Tuple variants exist to make sure that anything that calls with a tuple
 # instead of a Tuple gets through to the constructor, so the user gets a nice
 # error message
