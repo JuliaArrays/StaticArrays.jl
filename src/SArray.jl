@@ -46,7 +46,7 @@ end
 @generated function (::Type{SArray{S}})(x::T) where {S <: Tuple, T <: Tuple}
     return quote
         @_inline_meta
-        SArray{S, $(promote_tuple_eltype(T)), $(tuple_length(S)), $(tuple_prod(S))}(x)
+        SArray{S, promote_tuple_eltype(T), $(tuple_length(S)), $(tuple_prod(S))}(x)
     end
 end
 
