@@ -267,13 +267,13 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
     return quote
         $(Expr(:meta, :inline))
         if p == Inf
-            return mapreduce(abs, max, a; init=$(zero(real(eltype(a)))))
+            return mapreduce(abs, max, a)
         elseif p == 1
             @inbounds return $expr_p1
         elseif p == 2
             return norm(a)
         elseif p == 0
-            return mapreduce(_norm_p0, +, a; init=$(zero(real(eltype(a)))))
+            return mapreduce(_norm_p0, +, a)
         else
             @inbounds return ($expr)^(inv(p))
         end
