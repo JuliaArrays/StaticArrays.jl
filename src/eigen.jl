@@ -111,13 +111,14 @@ end
 end
 
 
-@inline function _eig(s::Size, A::StaticMatrix, permute, scale)
-    # Only cover the hermitian branch, for now at least
-    # This also solves some type-stability issues that arise in Base
+@inline function _eig(s::Size, A::T, permute, scale, ::Type{EivalsT}) where {T <: StaticMatrix, EivalsT}
+    # For the non-hermitian branch, fall back to LinearAlgebra
     if ishermitian(A)
-       return _eig(s, Hermitian(A), permute, scale)
+        eivals, eivecs = _eig(s, Hermitian(A), permute, scale)
+        return SVector{first(size(T)), EivalsT}(eivals), eivecs
     else
-       error("Only hermitian matrices are diagonalizable by *StaticArrays*. Non-Hermitian matrices should be converted to `Array` first.")
+        eivals, eivecs = eigen(Array(A); permute = permute, scale = scale)
+        return SVector{first(size(T)), EivalsT}(eivals), SMatrix{size(T)..., eltype(T)}(eivecs)
     end
 end
 
@@ -382,8 +383,8 @@ end
     return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
-@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
-    vals, vecs = _eig(Size(A), A, permute, scale)
+@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true, eivals_type::Type{T}=real(eltype(A))) where {T}
+    vals, vecs = _eig(Size(A), A, permute, scale, eivals_type)
     return Eigen(vals, vecs)
 end
 
