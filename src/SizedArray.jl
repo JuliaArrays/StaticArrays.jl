@@ -18,6 +18,14 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
         if length(a) != tuple_prod(S)
             error("Dimensions $(size(a)) don't match static size $S")
         end
+        if size(a) != size_to_tuple(S)
+            Base.depwarn("Construction of `SizedArray` with an `Array` of a different
+                size is deprecated. If you need this functionality report it at
+                https://github.com/JuliaArrays/StaticArrays.jl/pull/666 .
+                Calling `sa = reshape(a::Array, s::Size)` will actually reshape
+                array `a` in the future and converting `sa` back to `Array` will
+                return an `Array` of shape `s`.", :SizedArray)
+        end
         new{S,T,N,M}(a)
     end
 
@@ -55,9 +63,9 @@ end
 @inline convert(::Type{SA}, sa::SA) where {SA<:SizedArray} = sa
 
 # Back to Array (unfortunately need both convert and construct to overide other methods)
-@inline Array(sa::SizedArray) = sa.data
-@inline Array{T}(sa::SizedArray{S,T}) where {T,S} = sa.data
-@inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = sa.data
+@inline Array(sa::SizedArray) = Array(sa.data)
+@inline Array{T}(sa::SizedArray{S,T}) where {T,S} = Array{T}(sa.data)
+@inline Array{T,N}(sa::SizedArray{S,T,N}) where {T,S,N} = Array{T,N}(sa.data)
 
 @inline convert(::Type{Array}, sa::SizedArray) = sa.data
 @inline convert(::Type{Array{T}}, sa::SizedArray{S,T}) where {T,S} = sa.data

@@ -2,7 +2,7 @@
     @testset "Inner Constructors" begin
         @test SizedArray{Tuple{2}, Int, 1}((3, 4)).data == [3, 4]
         @test SizedArray{Tuple{2}, Int, 1}([3, 4]).data == [3, 4]
-        @test SizedArray{Tuple{2, 2}, Int, 2}(collect(3:6)).data == collect(3:6)
+        @test_deprecated SizedArray{Tuple{2, 2}, Int, 2}(collect(3:6)).data == collect(3:6)
         @test size(SizedArray{Tuple{4, 5}, Int, 2}(undef).data) == (4, 5)
         @test size(SizedArray{Tuple{4, 5}, Int}(undef).data) == (4, 5)
 
@@ -25,7 +25,7 @@
         @test @inferred(SizedArray{Tuple{2}}([1,2]))::SizedArray{Tuple{2},Int,1,1} == [1,2]
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
-        @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test_deprecated @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2}
         @test @inferred(SizedArray{Tuple{2,2},Int}(undef)) isa SizedArray{Tuple{2,2},Int,2,2}
@@ -41,14 +41,14 @@
         @test @inferred(SizedVector{2}([1,2]))::SizedArray{Tuple{2},Int,1,1} == [1,2]
         @test @inferred(SizedVector{2}((1,2)))::SizedArray{Tuple{2},Int,1,1} == [1,2]
         # Reshaping
-        @test @inferred(SizedVector{2}([1 2]))::SizedArray{Tuple{2},Int,1,2} == [1,2]
+        @test_deprecated @inferred(SizedVector{2}([1 2]))::SizedArray{Tuple{2},Int,1,2} == [1,2]
         # Back to Vector
         @test Vector(SizedVector{2}((1,2))) == [1,2]
         @test convert(Vector, SizedVector{2}((1,2))) == [1,2]
 
         @test @inferred(SizedMatrix{2,2}([1 2; 3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # Reshaping
-        @test @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test_deprecated @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         @test @inferred(SizedMatrix{2,2}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
         # Back to Matrix
         @test Matrix(SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
@@ -84,7 +84,14 @@
         @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
         @test convert(Array, SizedArray{Tuple{2,2,2,2}, Int}(ones(2,2,2,2))) == ones(2,2,2,2)
         # Conversion after reshaping
-        @test_broken Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
+        @test_deprecated Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
+        # Array(a::Array) makes a copy so this should work similarly
+        a = [1 2; 3 4]
+        @test Array(SizedMatrix{2,2}(a)) !== a
+        @test @inferred(convert(Array, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Array{Int}, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Matrix{Int}, SizedMatrix{2,2}(a))) === a
+        @test @inferred(convert(Matrix{Float64}, SizedMatrix{2,2}(a))) == a
     end
 
     @testset "promotion" begin
