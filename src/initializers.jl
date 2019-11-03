@@ -26,9 +26,6 @@ const SA_F64 = SA{Float64}
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
 
-Base.@pure _SA_type(sa::Type{SA}, len::Int) = SVector{len}
-Base.@pure _SA_type(sa::Type{SA{T}}, len::Int) where {T} = SVector{len,T}
-
 @inline Base.getindex(sa::Type{<:SA}, xs...) = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
