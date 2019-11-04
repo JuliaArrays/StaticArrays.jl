@@ -213,8 +213,8 @@ using StaticArrays, Test, LinearAlgebra
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
 
-        # not Hermitian
-        @test_throws Exception eigen(@SMatrix randn(4,4))
+        # not Hermitian - we can handle these now
+        # @test_throws Exception eigen(@SMatrix randn(4,4))
     end
 
     @testset "complex" begin
