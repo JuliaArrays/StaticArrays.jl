@@ -111,11 +111,11 @@ end
 end
 
 
-@inline function _eig(s::Size, A::T, permute, scale) where {T <: StaticMatrix, EivalsT}
+@inline function _eig(s::Size, A::T, permute, scale) where {T <: StaticMatrix}
     # For the non-hermitian branch, fall back to LinearAlgebra
     if ishermitian(A)
         eivals, eivecs = _eig(s, Hermitian(A), permute, scale)
-        return SVector{first(size(T)), EivalsT}(eivals), eivecs
+        return eivals, eivecs
     else
         eivals, eivecs = eigen(Array(A); permute = permute, scale = scale)
         return SVector{s[1]}(eivals), SMatrix{s[1],s[2]}(eivecs)
