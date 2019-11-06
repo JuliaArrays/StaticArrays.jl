@@ -26,6 +26,7 @@ const SA_F64 = SA{Float64}
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
 
+@inline Base.getindex(::Type{Union{}}) = invoke(getindex, Tuple{Type}, Union{})
 @inline Base.getindex(sa::Type{<:SA}, xs...) = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
