@@ -226,6 +226,19 @@ using StaticArrays, Test, LinearAlgebra
         end
     end
 
+    @testset "hermitian type stability" begin
+        for n=1:4
+            m = @SMatrix randn(n,n)
+            m += m'
+
+            @inferred eigen(Hermitian(m))
+            @inferred eigen(Symmetric(m))
+
+            mc = @SMatrix randn(ComplexF64, n, n)
+            @inferred eigen(Hermitian(mc + mc'))
+        end
+    end
+
     @testset "non-hermitian 2d" begin
         for n=1:5
             angle = 2π * rand()
