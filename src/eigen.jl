@@ -383,7 +383,7 @@ end
     return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
-@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true) where {T}
+@inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
     vals, vecs = _eig(Size(A), A, permute, scale)
     return Eigen(vals, vecs)
 end
