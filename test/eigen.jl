@@ -212,9 +212,6 @@ using StaticArrays, Test, LinearAlgebra
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
-
-        # not Hermitian - we can handle these now
-        # @test_throws Exception eigen(@SMatrix randn(4,4))
     end
 
     @testset "complex" begin
@@ -226,6 +223,34 @@ using StaticArrays, Test, LinearAlgebra
             @test V'V ≈ Matrix(I, n, n)
             @test V*diagm(Val(0) => D)*V' ≈ A
             @test V'*A*V ≈ diagm(Val(0) => D)
+        end
+    end
+
+    @testset "non-hermitian 2d" begin
+        for n=1:5
+            angle = 2π * rand()
+            rot = @SMatrix [cos(angle) -sin(angle); sin(angle) cos(angle)]
+
+            vals, vecs = eigen(rot)
+
+            @test norm(vals[1]) ≈ 1.0
+            @test norm(vals[2]) ≈ 1.0
+
+            @test vecs[:,1] ≈ conj.(vecs[:,2])
+        end
+    end
+
+    @testset "non-hermitian 3d" begin
+        for n=1:5
+            angle = 2π * rand()
+            rot = @SMatrix [cos(angle) 0.0 -sin(angle); 0.0 1.0 0.0; sin(angle) 0.0 cos(angle)]
+
+            vals, vecs = eigen(rot)
+
+            @test norm(vals[1]) ≈ 1.0
+            @test norm(vals[2]) ≈ 1.0
+
+            @test vecs[:,1] ≈ conj.(vecs[:,2])
         end
     end
 end
