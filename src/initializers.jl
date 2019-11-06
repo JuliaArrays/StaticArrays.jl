@@ -26,6 +26,7 @@ const SA_F64 = SA{Float64}
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
 
+# Lower bound `SA{E}<:T` prevents `T == Union{}` from accidentally matching this signature.
 @inline Base.getindex(sa::Type{T}, xs...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_vcat(sa::Type{T}, xs::Number...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(length(xs)))(xs)
 @inline Base.typed_hcat(sa::Type{T}, xs::Number...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(1,length(xs)))(xs)
