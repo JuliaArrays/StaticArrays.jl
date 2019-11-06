@@ -27,8 +27,8 @@ const SA_F64 = SA{Float64}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
 
 @inline Base.getindex(sa::Type{T}, xs...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_vcat(sa::Type{T}, xs::Number...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_hcat(sa::Type{T}, xs::Number...) where {E, SA{E}<:T<:SA} = similar_type(sa, Size(1,length(xs)))(xs)
+@inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
 
 Base.@pure function _SA_hvcat_transposed_size(rows)
     M = rows[1]
@@ -40,7 +40,7 @@ Base.@pure function _SA_hvcat_transposed_size(rows)
     Size(M, length(rows))
 end
 
-@inline function Base.typed_hvcat(sa::Type{T}, rows::Dims, xs::Number...) where {E, SA{E}<:T<:SA}
+@inline function Base.typed_hvcat(sa::Type{<:SA}, rows::Dims, xs::Number...)
     msize = _SA_hvcat_transposed_size(rows)
     if msize === nothing
         throw(ArgumentError("SA[...] matrix rows of length $rows are inconsistent"))
