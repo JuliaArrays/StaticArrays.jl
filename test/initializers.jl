@@ -18,6 +18,7 @@ SA_test_hcat(x,T) = SA{T}[1 x x]
 @test @inferred(SA_test_hcat(2.0)) === SMatrix{1,3,Float64}((1,2,2))
 @test @inferred(SA_test_hcat(2,Float32))   === SMatrix{1,3,Float32}((1,2,2))
 
+# hvcat needs to be in a function for the row argument to constant propagate
 SA_test_hvcat(x) = SA[1 x x;
                       x 2 x]
 SA_test_hvcat(x,T) = SA{T}[1 x x;
@@ -35,6 +36,11 @@ SA_test_hvcat(x,T) = SA{T}[1 x x;
                                                                                        3 4 5]
 @test SA_F64[1, 2] === SVector{2,Float64}((1,2))
 @test SA_F32[1, 2] === SVector{2,Float32}((1,2))
+
+@test_inlined SA[1,2]
+@test_inlined SA[1 2]
+@test_inlined SA[1;2]
+@test_inlined SA_test_hvcat(3)
 
 # https://github.com/JuliaArrays/StaticArrays.jl/pull/685
 @test Union{}[] isa Vector{Union{}}
