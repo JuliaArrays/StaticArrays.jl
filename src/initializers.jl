@@ -26,9 +26,16 @@ const SA_F64 = SA{Float64}
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
 
-@inline Base.getindex(sa::Type{<:SA}, xs...) = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
+# These definitions are duplicated to avoid matching `sa === Union{}` in the
+# neater-looking alternative `sa::Type{<:SA}`.
+@inline Base.getindex(sa::Type{SA}, xs...)            = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.getindex(sa::Type{SA{T}}, xs...) where T = similar_type(sa, Size(length(xs)))(xs)
+
+@inline Base.typed_vcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.typed_vcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(length(xs)))(xs)
+
+@inline Base.typed_hcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(1,length(xs)))(xs)
+@inline Base.typed_hcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(1,length(xs)))(xs)
 
 Base.@pure function _SA_hvcat_transposed_size(rows)
     M = rows[1]
@@ -40,7 +47,7 @@ Base.@pure function _SA_hvcat_transposed_size(rows)
     Size(M, length(rows))
 end
 
-@inline function Base.typed_hvcat(sa::Type{<:SA}, rows::Dims, xs::Number...)
+@inline function _SA_typed_hvcat(sa, rows, xs)
     msize = _SA_hvcat_transposed_size(rows)
     if msize === nothing
         throw(ArgumentError("SA[...] matrix rows of length $rows are inconsistent"))
@@ -48,4 +55,7 @@ end
     # hvcat lowering is row major ordering, so we must transpose
     transpose(similar_type(sa, msize)(xs))
 end
+
+@inline Base.typed_hvcat(sa::Type{SA}, rows::Dims, xs::Number...)            = _SA_typed_hvcat(sa, rows, xs)
+@inline Base.typed_hvcat(sa::Type{SA{T}}, rows::Dims, xs::Number...) where T = _SA_typed_hvcat(sa, rows, xs)
 

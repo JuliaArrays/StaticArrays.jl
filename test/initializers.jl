@@ -36,4 +36,14 @@ SA_test_hvcat(x,T) = SA{T}[1 x x;
 @test SA_F64[1, 2] === SVector{2,Float64}((1,2))
 @test SA_F32[1, 2] === SVector{2,Float32}((1,2))
 
+# https://github.com/JuliaArrays/StaticArrays.jl/pull/685
+@test Union{}[] isa Vector{Union{}}
+@test Base.typed_vcat(Union{}) isa Vector{Union{}}
+@test Base.typed_hcat(Union{}) isa Vector{Union{}}
+@test Base.typed_hvcat(Union{}, ()) isa Vector{Union{}}
+@test_throws MethodError Union{}[1]
+@test_throws MethodError Union{}[1 2]
+@test_throws MethodError Union{}[1; 2]
+@test_throws MethodError Union{}[1 2; 3 4]
+
 end
