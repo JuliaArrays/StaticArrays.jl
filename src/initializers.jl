@@ -25,9 +25,17 @@ const SA_F64 = SA{Float64}
 
 @inline similar_type(::Type{SA}, ::Size{S}) where {S} = SArray{Tuple{S...}}
 @inline similar_type(::Type{SA{T}}, ::Size{S}) where {T,S} = SArray{Tuple{S...}, T}
-@inline Base.getindex(sa::Type{<:SA}, xs...) = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_vcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(length(xs)))(xs)
-@inline Base.typed_hcat(sa::Type{<:SA}, xs::Number...) = similar_type(sa, Size(1,length(xs)))(xs)
+
+# These definitions are duplicated to avoid matching `sa === Union{}` in the
+# neater-looking alternative `sa::Type{<:SA}`.
+@inline Base.getindex(sa::Type{SA}, xs...)            = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.getindex(sa::Type{SA{T}}, xs...) where T = similar_type(sa, Size(length(xs)))(xs)
+
+@inline Base.typed_vcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(length(xs)))(xs)
+@inline Base.typed_vcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(length(xs)))(xs)
+
+@inline Base.typed_hcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(1,length(xs)))(xs)
+@inline Base.typed_hcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(1,length(xs)))(xs)
 
 Base.@pure function _SA_hvcat_transposed_size(rows)
     M = rows[1]
@@ -39,7 +47,7 @@ Base.@pure function _SA_hvcat_transposed_size(rows)
     Size(M, length(rows))
 end
 
-@inline function Base.typed_hvcat(sa::Type{<:SA}, rows::Dims, xs::Number...)
+@inline function _SA_typed_hvcat(sa, rows, xs)
     msize = _SA_hvcat_transposed_size(rows)
     if msize === nothing
         throw(ArgumentError("SA[...] matrix rows of length $rows are inconsistent"))
@@ -48,20 +56,6 @@ end
     transpose(similar_type(sa, msize)(xs))
 end
 
-# Unpirate `Union{}[]`.  We tried another solution that dispatches on
-# `Type{T}` with `SA{E}<:T<:SA` However, it did not work well with the
-# compiler.
-# https://github.com/JuliaArrays/StaticArrays.jl/pull/685#issuecomment-550497302
-@inline Base.getindex(::Type{Union{}}) = invoke(getindex, Tuple{Type}, Union{})
-@inline Base.getindex(::Type{Union{}}, xs::Vararg{T,N}) where {T,N} =
-    invoke(getindex, Tuple{Type,Vararg{T,N}}, Union{}, xs...)
-@inline Base.typed_vcat(::Type{Union{}}) = invoke(Base.typed_vcat, Tuple{Type}, Union{})
-@inline Base.typed_vcat(::Type{Union{}}, xs::Vararg{T,N}) where {T,N} =
-    invoke(Base.typed_vcat, Tuple{Type,Vararg{T,N}}, Union{}, xs...)
-@inline Base.typed_hcat(::Type{Union{}}) = invoke(Base.typed_hcat, Tuple{Type}, Union{})
-@inline Base.typed_hcat(::Type{Union{}}, xs::Vararg{T,N}) where {T,N} =
-    invoke(Base.typed_hcat, Tuple{Type,Vararg{T,N}}, Union{}, xs...)
-@inline Base.typed_hvcat(::Type{Union{}}, rows::Dims) where {T,N} =
-    invoke(Base.typed_hvcat, Tuple{Type,Dims}, Union{}, rows)
-@inline Base.typed_hvcat(::Type{Union{}}, rows::Dims, xs::Vararg{T,N}) where {T,N} =
-    invoke(Base.typed_hvcat, Tuple{Type,Dims,Vararg{T,N}}, Union{}, rows, xs...)
+@inline Base.typed_hvcat(sa::Type{SA}, rows::Dims, xs::Number...)            = _SA_typed_hvcat(sa, rows, xs)
+@inline Base.typed_hvcat(sa::Type{SA{T}}, rows::Dims, xs::Number...) where T = _SA_typed_hvcat(sa, rows, xs)
+
