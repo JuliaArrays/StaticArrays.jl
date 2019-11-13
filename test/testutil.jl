@@ -58,7 +58,7 @@ Note that LLVM IR can contain `call` instructions to intrinsics which don't
 make it into the native code, so this can be overly eager in declaring a
 a lack of complete inlining.
 """
-macro test_inlined(ex)
+macro test_inlined(ex, should_inline=true)
     ex_orig = ex
     ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
     expr = quote
@@ -71,7 +71,10 @@ macro test_inlined(ex)
         # TODO: Figure out some better pattern matching; LLVM IR can contain
         # calls to intrinsics, so this will sometimes/often fail even when the
         # native code has no call instructions.
-        @test !occursin("call", code_str)
+        $(should_inline ?
+          :(@test !occursin("call", code_str)) :
+          :(@test occursin("call", code_str))
+        )
     end
     @assert expr.args[4].head == :macrocall
     expr.args[4].args[2] = __source__
@@ -84,9 +87,11 @@ should_not_be_inlined(x) = _should_not_be_inlined(x)
 
 @testset "@test_inlined" begin
     @test_inlined should_be_inlined(1)
+    @test_inlined should_not_be_inlined(1) false
     ts = @testset ErrorCounterTestSet "" begin
+        @test_inlined should_be_inlined(1) false
         @test_inlined should_not_be_inlined(1)
     end
-    @test ts.errorcount == 0 && ts.failcount == 1 && ts.passcount == 0
+    @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
 end
 

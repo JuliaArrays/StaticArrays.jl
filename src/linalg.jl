@@ -1,6 +1,7 @@
 import Base: +, -, *, /, \
 
-# TODO: more operators, like AbstractArray
+#--------------------------------------------------
+# Vector space algebra
 
 # Unary ops
 @inline -(a::StaticArray) = map(-, a)
@@ -30,10 +31,7 @@ import Base: +, -, *, /, \
 @inline -(a::UniformScaling, b::StaticMatrix) = _plus_uniform(Size(b), -b, a.λ)
 
 @generated function _plus_uniform(::Size{S}, a::StaticMatrix, λ) where {S}
-    if S[1] != S[2]
-        throw(DimensionMismatch("matrix is not square: dimensions are $S"))
-    end
-    n = S[1]
+    n = checksquare(a)
     exprs = [i == j ? :(a[$(LinearIndices(S)[i, j])] + λ) : :(a[$(LinearIndices(S)[i, j])]) for i = 1:n, j = 1:n]
     return quote
         $(Expr(:meta, :inline))
@@ -46,6 +44,8 @@ end
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
 @inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
+#--------------------------------------------------
+# Matrix algebra
 
 # Transpose, conjugate, etc
 @inline conj(a::StaticArray) = map(conj, a)
@@ -133,31 +133,30 @@ end
 @inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
 @inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
 
-@inline one(::SM) where {SM <: StaticMatrix} = _one(Size(SM), SM)
-@inline one(::Type{SM}) where {SM <: StaticMatrix} = _one(Size(SM), SM)
-@generated function _one(::Size{S}, ::Type{SM}) where {S, SM <: StaticArray}
-    if (length(S) != 2) || (S[1] != S[2])
-        error("multiplicative identity defined only for square matrices")
+@inline one(m::StaticMatrixLike) = _one(Size(m), m)
+@inline one(::Type{SM}) where {SM<:StaticMatrixLike}= _one(Size(SM), SM)
+function _one(s::Size, m_or_SM)
+    if (length(s) != 2) || (s[1] != s[2])
+        throw(DimensionMismatch("multiplicative identity defined only for square matrices"))
     end
-    T = eltype(SM) # should be "hyperpure"
-    if T == Any
-        T = Float64
-    end
-    exprs = [i == j ? :(one($T)) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
-    return quote
-        $(Expr(:meta, :inline))
-        SM(tuple($(exprs...)))
-    end
+    _scalar_matrix(s, m_or_SM, one(_eltype_or(m_or_SM, Float64)))
 end
 
-# StaticMatrix(I::UniformScaling) methods to replace eye
-(::Type{SM})(I::UniformScaling) where {N,M,SM<:StaticMatrix{N,M}} = _eye(Size(SM), SM, I)
+# StaticMatrix(I::UniformScaling)
+(::Type{SM})(I::UniformScaling) where {SM<:StaticMatrix} = _scalar_matrix(Size(SM), SM, I.λ)
+# The following oddity is needed if we want `SArray{Tuple{2,3}}(I)` to work
+# because we do not have `SArray{Tuple{2,3}} <: StaticMatrix`.
+(::Type{SM})(I::UniformScaling) where {SM<:(StaticArray{Tuple{N,M}} where {N,M})} =
+    _scalar_matrix(Size(SM), SM, I.λ)
 
-@generated function _eye(::Size{S}, ::Type{SM}, I::UniformScaling{T}) where {S, SM <: StaticArray, T}
-    exprs = [i == j ? :(I.λ) : :(zero($T)) for i ∈ 1:S[1], j ∈ 1:S[2]]
+# Construct a matrix with the scalar λ on the diagonal and zeros off the
+# diagonal. The matrix can be non-square.
+@generated function _scalar_matrix(s::Size{S}, m_or_SM, λ) where {S}
+    elements = Symbol[i == j ? :λ : :λzero for i in 1:S[1], j in 1:S[2]]
     return quote
         $(Expr(:meta, :inline))
-        SM(tuple($(exprs...)))
+        λzero = zero(λ)
+        _construct_similar(m_or_SM, s, tuple($(elements...)))
     end
 end
 
@@ -193,6 +192,8 @@ end
     end
 end
 
+#--------------------------------------------------
+# Vector products
 @inline cross(a::StaticVector, b::StaticVector) = _cross(same_size(a, b), a, b)
 _cross(::Size{S}, a::StaticVector, b::StaticVector) where {S} = error("Cross product not defined for $(S[1])-vectors")
 @inline function _cross(::Size{(2,)}, a::StaticVector, b::StaticVector)
@@ -227,6 +228,8 @@ end
     return ret
 end
 
+#--------------------------------------------------
+# Norms
 @inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v; init=zero(real(eltype(v))))
 
 @inline norm(a::StaticArray) = _norm(Size(a), a)
@@ -288,9 +291,7 @@ end
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}
-    if S[1] != S[2]
-        throw(DimensionMismatch("matrix is not square"))
-    end
+    checksquare(a)
 
     if S[1] == 0
         return :(zero(eltype(a)))
@@ -304,6 +305,10 @@ end
         @inbounds return $total
     end
 end
+
+
+#--------------------------------------------------
+# Outer products
 
 const _length_limit = Length(200)
 
@@ -462,11 +467,9 @@ end
     end
 end
 
-# some micro-optimizations (TODO check these make sense for v0.6+)
-@inline LinearAlgebra.checksquare(::SM) where {SM<:StaticMatrix} = _checksquare(Size(SM))
-@inline LinearAlgebra.checksquare(::Type{SM}) where {SM<:StaticMatrix} = _checksquare(Size(SM))
 
-@pure _checksquare(::Size{S}) where {S} = (S[1] == S[2] || throw(DimensionMismatch("matrix is not square: dimensions are $S")); S[1])
+#--------------------------------------------------
+# Some shimming for special linear algebra matrix types
+@inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Symmetric{eltype(A),typeof(A)}(A, uplo))
+@inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Hermitian{eltype(A),typeof(A)}(A, uplo))
 
-@inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Symmetric{eltype(A),typeof(A)}(A, uplo))
-@inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (LinearAlgebra.checksquare(A);Hermitian{eltype(A),typeof(A)}(A, uplo))

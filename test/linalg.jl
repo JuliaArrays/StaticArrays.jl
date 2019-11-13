@@ -1,5 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
+using LinearAlgebra: checksquare
+
 @testset "Linear algebra" begin
 
     @testset "SArray as a (mathematical) vector space" begin
@@ -100,7 +102,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(one(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
         @test @inferred(one(MMatrix{2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
 
-        @test_throws ErrorException one(MMatrix{2,4})
+        @test_throws DimensionMismatch one(MMatrix{2,4})
     end
 
     @testset "cross()" begin
@@ -325,5 +327,13 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(kron(transpose(b),A))::SizedMatrix{10,210} == kron(transpose(q),P)
         @test @inferred(kron(A,transpose(b)))::SizedMatrix{10,210} == kron(P,transpose(q))
 
+    end
+
+    @testset "checksquare" begin
+        m22 = SA[1 2; 3 4]
+        @test @inferred(checksquare(m22)) === 2
+        @test_inlined checksquare(m22)
+        m23 = SA[1 2 3; 4 5 6]
+        @test_inlined checksquare(m23) false
     end
 end

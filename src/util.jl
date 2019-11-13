@@ -108,3 +108,4 @@ Base.@propagate_inbounds function invperm(p::StaticVector)
      ip[p] = 1:length(p)
      similar_type(p)(ip)
 end
+
