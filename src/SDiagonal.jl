@@ -33,7 +33,7 @@ size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
 # override to avoid copying
 diag(D::SDiagonal) = D.diag
 
-# SDiagonal(I::UniformScaling) methods to replace eye
+# SDiagonal(I::UniformScaling) methods
 (::Type{SDiagonal{N}})(I::UniformScaling) where {N} = SDiagonal{N}(ntuple(x->I.λ, Val(N)))
 (::Type{SDiagonal{N,T}})(I::UniformScaling) where {N,T} = SDiagonal{N,T}(ntuple(x->I.λ, Val(N)))
 

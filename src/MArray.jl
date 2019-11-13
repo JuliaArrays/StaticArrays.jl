@@ -73,16 +73,6 @@ end
 
 @inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
 
-# Simplified show for the type
-#show(io::IO, ::Type{MArray{S, T, N}}) where {S, T, N} = print(io, "MArray{$S,$T,$N}")
-
-# Some more advanced constructor-like functions
-@inline one(::Type{MArray{S}}) where {S} = one(MArray{S,Float64,tuple_length(S)})
-@inline one(::Type{MArray{S,T}}) where {S,T} = one(MArray{S,T,tuple_length(S)})
-
-# MArray(I::UniformScaling) methods to replace eye
-(::Type{MA})(I::UniformScaling) where {MA<:MArray} = _eye(Size(MA), MA, I)
-
 ####################
 ## MArray methods ##
 ####################

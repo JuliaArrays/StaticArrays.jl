@@ -95,7 +95,7 @@ macro MVector(ex)
                 error("@MVector expected a 1-dimensional array expression")
             end
         else
-            error("@MVector only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@MVector only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Use @MVector [a,b,c] or @MVector([a,b,c])")

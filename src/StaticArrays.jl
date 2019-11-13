@@ -19,11 +19,7 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
                       factorize, ishermitian, issymmetric, isposdef, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr, \
-
-# import eye for deprecation warnings
-@static if isdefined(LinearAlgebra, :eye)
-    import LinearAlgebra: eye
-end
+using LinearAlgebra: checksquare
 
 export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
@@ -88,8 +84,8 @@ const StaticMatrixLike{T} = Union{
     StaticMatrix{<:Any, <:Any, T},
     Transpose{T, <:StaticVecOrMat{T}},
     Adjoint{T, <:StaticVecOrMat{T}},
-    Symmetric{T, <:StaticMatrix{T}},
-    Hermitian{T, <:StaticMatrix{T}},
+    Symmetric{T, <:StaticMatrix{<:Any, <:Any, T}},
+    Hermitian{T, <:StaticMatrix{<:Any, <:Any, T}},
     Diagonal{T, <:StaticVector{<:Any, T}}
 }
 const StaticVecOrMatLike{T} = Union{StaticVector{<:Any, T}, StaticMatrixLike{T}}

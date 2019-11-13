@@ -100,7 +100,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(one(MMatrix{2,2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
         @test @inferred(one(MMatrix{2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
 
-        @test_throws ErrorException one(MMatrix{2,4})
+        @test_throws DimensionMismatch one(MMatrix{2,4})
     end
 
     @testset "cross()" begin
