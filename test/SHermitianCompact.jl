@@ -218,13 +218,7 @@ fill3(x) = fill(3, x)
 
     @testset "transpose/adjoint" begin
         a = Hermitian([[rand(Complex{Int}) for i = 1 : 2, j = 1 : 2] for row = 1 : 3, col = 1 : 3])
-        if VERSION < v"1.2.0-"
-            @test transpose(SHermitianCompact{3}(a)) == transpose(a)
-        else
-            # FIXME: This `transpose(a)` crashes in v1.2.0-rc1.
-            # See https://github.com/JuliaLang/julia/issues/32222
-            @test_skip transpose(SHermitianCompact{3}(a)) == transpose(a)
-        end
+        @test transpose(SHermitianCompact{3}(a)) == transpose(a)
         @test adjoint(SHermitianCompact{3}(a)) == adjoint(a)
 
         b = Hermitian([rand(Complex{Int}) for i = 1 : 3, j = 1 : 3])
