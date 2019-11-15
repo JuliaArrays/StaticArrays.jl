@@ -155,6 +155,9 @@
         @test Size(Adjoint(zero(SMatrix{2, 3}))) == Size(3, 2)
         @test Size(Diagonal(SVector(1, 2, 3))) == Size(3, 3)
         @test Size(Transpose(Diagonal(SVector(1, 2, 3)))) == Size(3, 3)
+        @test Size(UpperTriangular(zero(SMatrix{2, 2}))) == Size(2, 2)
+        @test Size(LowerTriangular(zero(SMatrix{2, 2}))) == Size(2, 2)
+        @test Size(LowerTriangular(Symmetric(zero(SMatrix{2, 2})))) == Size(2,2)
     end
 
     @testset "dimmatch" begin
