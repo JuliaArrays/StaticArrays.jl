@@ -110,26 +110,33 @@ end
     return SVector{s[1], T}(vals)
 end
 
+# Utility to rewrap `Eigen` of normal `Array` into an Eigen containing `SArray`.
+@inline function _make_static(s::Size, E::Eigen{T,V}) where {T,V}
+    Eigen(similar_type(SVector, V, Size(s[1]))(E.values),
+          similar_type(SMatrix, T, s)(E.vectors))
+end
 
 @inline function _eig(s::Size, A::T, permute, scale) where {T <: StaticMatrix}
-    # For the non-hermitian branch, fall back to LinearAlgebra
     if ishermitian(A)
-        eivals, eivecs = _eig(s, Hermitian(A), permute, scale)
-        return eivals, eivecs
+        return _eig(s, Hermitian(A), permute, scale)
     else
-        eivals, eivecs = eigen(Array(A); permute = permute, scale = scale)
-        return SVector{s[1]}(eivals), SMatrix{s[1],s[2]}(eivecs)
+        # For the non-hermitian branch fall back to LinearAlgebra eigen().
+        # Eigenvalues could be real or complex so a Union of concrete types is
+        # inferred. Having _make_static a separate function allows inference to
+        # preserve the union of concrete types:
+        #   Union{E{A,B},E{C,D}} -> Union{E{SA,SB},E{SC,SD}}
+        _make_static(s, eigen(Array(A); permute = permute, scale = scale))
     end
 end
 
 @inline function _eig(s::Size, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     E = eigen(Hermitian(Array(parent(A))))
-    return (SVector{s[1], T}(E.values), SMatrix{s[1], s[2], eltype(A)}(E.vectors))
+    return Eigen(SVector{s[1], T}(E.values), SMatrix{s[1], s[2], eltype(A)}(E.vectors))
 end
 
 
 @inline function _eig(::Size{(1,1)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    @inbounds return (SVector{1,T}((real(A[1]),)), SMatrix{1,1,eltype(A)}(I))
+    @inbounds return Eigen(SVector{1,T}((real(A[1]),)), SMatrix{1,1,eltype(A)}(I))
 end
 
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
@@ -158,7 +165,7 @@ end
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
 
-            return (vals, vecs)
+            return Eigen(vals, vecs)
         end
     else # A.uplo == 'L'
         if !iszero(a[2]) # A is not diagonal
@@ -182,7 +189,7 @@ end
             vecs = @SMatrix [ v11  v21 ;
                               v12  v22 ]
 
-            return (vals,vecs)
+            return Eigen(vals,vecs)
         end
     end
 
@@ -198,7 +205,7 @@ end
         vecs = @SMatrix [convert(TA, 0) convert(TA, 1);
                          convert(TA, 1) convert(TA, 0)]
     end
-    return (vals,vecs)
+    return Eigen(vals,vecs)
 end
 
 # A small part of the code in the following method was inspired by works of David
@@ -231,19 +238,19 @@ end
 
         if a11 < a22
             if a22 < a33
-                return (SVector(a11, a22, a33), hcat(v1,v2,v3))
+                return Eigen(SVector((a11, a22, a33)), hcat(v1,v2,v3))
             elseif a33 < a11
-                return (SVector(a33, a11, a22), hcat(v3,v1,v2))
+                return Eigen(SVector((a33, a11, a22)), hcat(v3,v1,v2))
             else
-                return (SVector(a11, a33, a22), hcat(v1,v3,v2))
+                return Eigen(SVector((a11, a33, a22)), hcat(v1,v3,v2))
             end
         else #a22 < a11
             if a11 < a33
-                return (SVector(a22, a11, a33), hcat(v2,v1,v3))
+                return Eigen(SVector((a22, a11, a33)), hcat(v2,v1,v3))
             elseif a33 < a22
-                return (SVector(a33, a22, a11), hcat(v3,v2,v1))
+                return Eigen(SVector((a33, a22, a11)), hcat(v3,v2,v1))
             else
-                return (SVector(a22, a33, a11), hcat(v2,v3,v1))
+                return Eigen(SVector((a22, a33, a11)), hcat(v2,v3,v1))
             end
         end
     end
@@ -380,12 +387,11 @@ end
         (eigvec1, eigvec3) = (eigvec3, eigvec1)
     end
 
-    return (SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
+    return Eigen(SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
 end
 
 @inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
-    vals, vecs = _eig(Size(A), A, permute, scale)
-    return Eigen(vals, vecs)
+    _eig(Size(A), A, permute, scale)
 end
 
 # to avoid method ambiguity with LinearAlgebra
@@ -395,8 +401,7 @@ end
 @inline eigen(A::Symmetric{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
 
 @inline function _eigen(A::LinearAlgebra.HermOrSym; permute::Bool=true, scale::Bool=true)
-    vals, vecs = _eig(Size(A), A, permute, scale)
-    return Eigen(vals, vecs)
+    _eig(Size(A), A, permute, scale)
 end
 
 # NOTE: The following Boost Software License applies to parts of the method:
