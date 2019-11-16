@@ -16,59 +16,25 @@ unknown to the compiler (the element type may optionally also be specified).
 """
 const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
 
-@generated function (::Type{SMatrix{S1}})(x::NTuple{L,Any}) where {S1,L}
-    S2 = div(L, S1)
-    if S1*S2 != L
-        throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
-    end
+# Constructors
 
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, $S2, T, L}(x)
-    end
+@inline function (::Type{SMatrix{S1,S2}})(x::Tuple) where {S1,S2}
+    SArray{Tuple{S1,S2}}(x)
 end
 
-@generated function (::Type{SMatrix{S1,S2}})(x::NTuple{L,Any}) where {S1,S2,L}
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, S2, T, L}(x)
-    end
-end
-SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
-@generated function (::Type{SMatrixNoType{S1, S2, L}})(x::NTuple{L,Any}) where {S1,S2,L}
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, S2, T, L}(x)
-    end
+@inline function (::Type{SMatrix{S1,S2,T}})(x::NTuple{L,Any}) where {S1,S2,T,L}
+    SArray{Tuple{S1,S2}, T, 2, L}(x)
 end
 
-@generated function (::Type{SMatrix{S1,S2,T}})(x::NTuple{L,Any}) where {S1,S2,T,L}
-    return quote
-        $(Expr(:meta, :inline))
-        SMatrix{S1, S2, T, L}(x)
-    end
+# Convenience functions taking SMatrix{N} without the second dimension.
+@inline function (::Type{SMatrix{S1}})(x::NTuple{L,Any}) where {S1,L}
+    SArray{Tuple{S1, div(L, S1)}}(x)
 end
 
-@inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
-@inline SMatrix(a::StaticMatrix{S1, S2}) where {S1, S2} = SMatrix{S1, S2}(Tuple(a))
-
-# Simplified show for the type
-# show(io::IO, ::Type{SMatrix{N, M, T}}) where {N, M, T} = print(io, "SMatrix{$N,$M,$T}") # TODO reinstate
-
-# Some more advanced constructor-like functions
 @inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
 
-#####################
-## SMatrix methods ##
-#####################
 
-@propagate_inbounds function getindex(v::SMatrix, i::Int)
-    v.data[i]
-end
-
+# SMatrix initialization
 macro SMatrix(ex)
     if !isa(ex, Expr)
         error("Bad input for @SMatrix")
