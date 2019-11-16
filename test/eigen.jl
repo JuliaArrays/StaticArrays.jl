@@ -254,6 +254,10 @@ using StaticArrays, Test, LinearAlgebra
             @inferred eigen(Hermitian(m))
             @inferred eigen(Symmetric(m))
 
+            # Test that general eigen() gives a small union of concrete types
+            SEigen{T} = Eigen{T, T, SArray{Tuple{n,n},T,2,n*n}, SArray{Tuple{n},T,1,n}}
+            @inferred_maybe_allow Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
+
             mc = @SMatrix randn(ComplexF64, n, n)
             @inferred eigen(Hermitian(mc + mc'))
         end
