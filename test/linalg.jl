@@ -147,67 +147,6 @@ using StaticArrays, Test, LinearAlgebra
 
     end
 
-    @testset "vcat() and hcat()" begin
-        @test @inferred(vcat(SVector(1,2,3))) === SVector(1,2,3)
-        @test @inferred(hcat(SVector(1,2,3))) === SMatrix{3,1}(1,2,3)
-        @test @inferred(hcat(SMatrix{3,1}(1,2,3))) === SMatrix{3,1}(1,2,3)
-
-        @test @inferred(vcat(SVector(1,2,3), SVector(4,5,6))) === SVector(1,2,3,4,5,6)
-        @test @inferred(hcat(SVector(1,2,3), SVector(4,5,6))) === @SMatrix [1 4; 2 5; 3 6]
-        @test_throws DimensionMismatch vcat(SVector(1,2,3), @SMatrix [1 4; 2 5])
-        @test_throws DimensionMismatch hcat(SVector(1,2,3), SVector(4,5))
-
-        @test @inferred(vcat(@SMatrix([1;2;3]), SVector(4,5,6))) === @SMatrix([1;2;3;4;5;6])
-        @test @inferred(vcat(SVector(1,2,3), @SMatrix([4;5;6]))) === @SMatrix([1;2;3;4;5;6])
-        @test @inferred(hcat(@SMatrix([1;2;3]), SVector(4,5,6))) === @SMatrix [1 4; 2 5; 3 6]
-        @test @inferred(hcat(SVector(1,2,3), @SMatrix([4;5;6]))) === @SMatrix [1 4; 2 5; 3 6]
-
-        @test @inferred(vcat(@SMatrix([1;2;3]), @SMatrix([4;5;6]))) === @SMatrix([1;2;3;4;5;6])
-        @test @inferred(hcat(@SMatrix([1;2;3]), @SMatrix([4;5;6]))) === @SMatrix [1 4; 2 5; 3 6]
-
-        @test @inferred(vcat(SVector(1),SVector(2),SVector(3),SVector(4))) === SVector(1,2,3,4)
-        @test @inferred(hcat(SVector(1),SVector(2),SVector(3),SVector(4))) === SMatrix{1,4}(1,2,3,4)
-
-        vcat(SVector(1.0f0), SVector(1.0)) === SVector(1.0, 1.0)
-        hcat(SVector(1.0f0), SVector(1.0)) === SMatrix{1,2}(1.0, 1.0)
-
-        # issue #388
-        let x = SVector(1, 2, 3)
-            # current limit: 34 arguments
-            hcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            allocs = @allocated hcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            @test allocs == 0
-            vcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            allocs = @allocated vcat(
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x,
-                x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x, x)
-            @test allocs == 0
-        end
-
-        # issue #561
-        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
-            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
-        end
-
-        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
-            @test @inferred(hcat(A, B)) === SMatrix{2, 4}([Matrix(A) Matrix(B)])
-        end
-
-        let A = Diagonal(SVector(1, 2)), B = @SMatrix [3 4; 5 6]
-            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
-        end
-
-        let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
-            @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
-        end
-    end
-
     @testset "normalization" begin
         @test norm(SVector(1.0,2.0,2.0)) ≈ 3.0
         @test norm(SVector(1.0,2.0,2.0),2) ≈ 3.0

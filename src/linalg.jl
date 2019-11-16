@@ -82,54 +82,6 @@ end
     end
 end
 
-@inline vcat(a::StaticVecOrMatLike) = a
-@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _vcat(Size(a), Size(b), a, b)
-@inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = vcat(vcat(a,b), vcat(c...))
-
-@generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
-    if Size(Sa)[2] != Size(Sb)[2]
-        throw(DimensionMismatch("Tried to vcat arrays of size $Sa and $Sb"))
-    end
-
-    # TODO cleanup?
-    if a <: StaticVector && b <: StaticVector
-        Snew = (Sa[1] + Sb[1],)
-        exprs = vcat([:(a[$i]) for i = 1:Sa[1]],
-                     [:(b[$i]) for i = 1:Sb[1]])
-    else
-        Snew = (Sa[1] + Sb[1], Size(Sa)[2])
-        exprs = [((i <= size(a,1)) ? ((a <: StaticVector) ? :(a[$i]) : :(a[$i,$j]))
-                                   : ((b <: StaticVector) ? :(b[$(i-size(a,1))]) : :(b[$(i-size(a,1)),$j])))
-                                   for i = 1:(Sa[1]+Sb[1]), j = 1:Size(Sa)[2]]
-    end
-
-    return quote
-        @_inline_meta
-        @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
-    end
-end
-
-@inline hcat(a::StaticVector) = similar_type(a, Size(Size(a)[1],1))(a)
-@inline hcat(a::StaticMatrixLike) = a
-@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _hcat(Size(a), Size(b), a, b)
-@inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = hcat(hcat(a,b), hcat(c...))
-
-@generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
-    if Sa[1] != Sb[1]
-        throw(DimensionMismatch("Tried to hcat arrays of size $Sa and $Sb"))
-    end
-
-    exprs = vcat([:(a[$i]) for i = 1:prod(Sa)],
-                 [:(b[$i]) for i = 1:prod(Sb)])
-
-    Snew = (Sa[1], Size(Sa)[2] + Size(Sb)[2])
-
-    return quote
-        @_inline_meta
-        @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
-    end
-end
-
 @inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
 @inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
 
