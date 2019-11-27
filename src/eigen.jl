@@ -13,6 +13,10 @@ end
     end
 end
 
+function eigvals(A::StaticMatrix{N,N}, B::StaticMatrix{N,N}; kwargs...) where N
+    return SVector{N}(eigvals(Array(A), Array(B); kwargs...))
+end
+
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
 @inline _eigvals(::Size{(1, 1)}, a::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 

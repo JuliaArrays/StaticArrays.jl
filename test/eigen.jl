@@ -82,6 +82,15 @@ using StaticArrays, Test, LinearAlgebra
             E = eigen(Symmetric(A, uplo))
             @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
         end
+
+        m1_a = randn(2,2)
+        m1_a = m1_a*m1_a'
+        m1 = SMatrix{2,2}(m1_a)
+        m2_a = randn(2,2)
+        m2_a = m2_a*m2_a'
+        m2 = SMatrix{2,2}(m2_a)
+        @test eigvals(m1, m2) ≈ eigvals(m1_a, m2_a)
+        @test isa(eigvals(m1, m2), SVector{2})
     end
 
     @testset "3×3" for i = 1:100
@@ -112,6 +121,15 @@ using StaticArrays, Test, LinearAlgebra
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
+
+        m1_a = randn(3,3)
+        m1_a = m1_a*m1_a'
+        m1 = SMatrix{3,3}(m1_a)
+        m2_a = randn(3,3)
+        m2_a = m2_a*m2_a'
+        m2 = SMatrix{3,3}(m2_a)
+        @test eigvals(m1, m2) ≈ eigvals(m1_a, m2_a)
+        @test isa(eigvals(m1, m2), SVector{3})
     end
 
     @testset "3x3 degenerate cases" begin
