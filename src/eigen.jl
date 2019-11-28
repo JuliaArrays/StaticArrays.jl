@@ -16,11 +16,9 @@ end
 function eigvals(A::StaticMatrixLike, B::StaticMatrixLike; kwargs...)
     SA = Size(A)
     if SA != Size(B)
-        error("Generalized eigenvalues can only be calculated for matrices of equal sizes")
+        throw(DimensionMismatch("Generalized eigenvalues can only be calculated for matrices of equal sizes: dimensions are $SA and $(Size(B))"))
     end
-    if SA[1] != SA[2]
-        error("Generalized eigenvalues can only be calculated for square matrices")
-    end
+    checksquare(A)
     return _eigvals(SA, A, B; kwargs...)
 end
 
