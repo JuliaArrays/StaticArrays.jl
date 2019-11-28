@@ -43,7 +43,7 @@ end
 end
 
 @generated function _det(::Size{S}, A::StaticMatrix) where S
-    LinearAlgebra.checksquare(A)
+    checksquare(A)
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
@@ -58,7 +58,7 @@ end
 @inline logdet(A::StaticMatrix) = _logdet(Size(A), A)
 @inline _logdet(::Union{Size{(1,1)}, Size{(2,2)}, Size{(3,3)}, Size{(4,4)}}, A::StaticMatrix) = log(det(A))
 @generated function _logdet(::Size{S}, A::StaticMatrix) where S
-    LinearAlgebra.checksquare(A)
+    checksquare(A)
     if prod(S) ≤ 14*14
         quote
             @_inline_meta

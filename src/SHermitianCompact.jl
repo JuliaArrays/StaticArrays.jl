@@ -230,7 +230,7 @@ end
     end
 end
 
-@inline _eye(s::Size{S}, t::Type{SSC}) where {S, SSC <: SHermitianCompact} = _one(s, t)
+@inline _scalar_matrix(s::Size{S}, t::Type{SSC}) where {S, SSC <: SHermitianCompact} = _one(s, t)
 
 # _fill covers fill, zeros, and ones:
 @generated function _fill(val, ::Size{s}, ::Type{SSC}) where {s, SSC <: SHermitianCompact}

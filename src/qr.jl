@@ -98,7 +98,7 @@ end
     Q = [Symbol("Q_$(i)_$(j)") for i = 1:m, j = 1:m]
     R = [Symbol("R_$(i)_$(j)") for i = 1:m, j = 1:n]
 
-    initQ = [:($(Q[i, j]) = $(i == j ? one : zero)(T)) for i = 1:m, j = 1:m]  # Q .= eye(A)
+    initQ = [:($(Q[i, j]) = $(i == j ? one : zero)(T)) for i = 1:m, j = 1:m]  # Q .= I
     initR = [:($(R[i, j]) = T(A[$i, $j])) for i = 1:m, j = 1:n]               # R .= A
 
     code = quote end
