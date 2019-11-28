@@ -13,8 +13,19 @@ end
     end
 end
 
-function eigvals(A::StaticMatrix{N,N}, B::StaticMatrix{N,N}; kwargs...) where N
-    return SVector{N}(eigvals(Array(A), Array(B); kwargs...))
+function eigvals(A::StaticMatrixLike, B::StaticMatrixLike; kwargs...)
+    SA = Size(A)
+    if SA != Size(B)
+        error("Generalized eigenvalues can only be calculated for matrices of equal sizes")
+    end
+    if SA[1] != SA[2]
+        error("Generalized eigenvalues can only be calculated for square matrices")
+    end
+    return _eigvals(SA, A, B; kwargs...)
+end
+
+@inline function _eigvals(s::Size, A::StaticMatrixLike, B::StaticMatrixLike; kwargs...)
+    return SVector{s[1]}(eigvals(Array(A), Array(B); kwargs...))
 end
 
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))

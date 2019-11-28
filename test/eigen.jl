@@ -90,8 +90,12 @@ using StaticArrays, Test, LinearAlgebra
         m2_a = m2_a*m2_a'
         m2 = SMatrix{2,2}(m2_a)
         @test eigvals(m1, m2) ≈ eigvals(m1_a, m2_a)
+        @test eigvals(Symmetric(m1), Symmetric(m2)) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
         @test isa(eigvals(m1, m2), SVector{2})
     end
+
+    @test_throws ErrorException eigvals(SA[1 2 3; 4 5 6], SA[1 2 3; 4 5 5])
+    @test_throws ErrorException eigvals(SA[1 2; 4 5], SA[1 2 3; 4 5 5; 3 4 5])
 
     @testset "3×3" for i = 1:100
         m_a = randn(3,3)
