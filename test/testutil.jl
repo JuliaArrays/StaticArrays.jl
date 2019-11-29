@@ -95,3 +95,17 @@ should_not_be_inlined(x) = _should_not_be_inlined(x)
     @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
 end
 
+
+"""
+    @inferred_maybe_allow allow ex
+
+Expands to `@inferred allow ex` on Julia 1.2 and newer and
+`@inferred ex` on Julia 1.0 and 1.1.
+"""
+macro inferred_maybe_allow(allow, ex)
+    if VERSION < v"1.2"
+        return esc(:(@inferred $ex))
+    else
+        return esc(:(@inferred $allow $ex))
+    end
+end
