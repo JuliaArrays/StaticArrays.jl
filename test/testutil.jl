@@ -100,11 +100,11 @@ end
     @inferred_maybe_allow allow ex
 
 Expands to `@inferred allow ex` on Julia 1.2 and newer and
-`@inferred ex` on Julia 1.0 and 1.1.
+`ex` on Julia 1.0 and 1.1.
 """
 macro inferred_maybe_allow(allow, ex)
     if VERSION < v"1.2"
-        return esc(:(@inferred $ex))
+        return esc(:($ex))
     else
         return esc(:(@inferred $allow $ex))
     end
