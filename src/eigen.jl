@@ -13,6 +13,19 @@ end
     end
 end
 
+function eigvals(A::StaticMatrixLike, B::StaticMatrixLike; kwargs...)
+    SA = Size(A)
+    if SA != Size(B)
+        throw(DimensionMismatch("Generalized eigenvalues can only be calculated for matrices of equal sizes: dimensions are $SA and $(Size(B))"))
+    end
+    checksquare(A)
+    return _eigvals(SA, A, B; kwargs...)
+end
+
+@inline function _eigvals(s::Size, A::StaticMatrixLike, B::StaticMatrixLike; kwargs...)
+    return SVector{s[1]}(eigvals(Array(A), Array(B); kwargs...))
+end
+
 @inline _eigvals(::Size{(1,1)}, a, permute, scale) = @inbounds return SVector(Tuple(a))
 @inline _eigvals(::Size{(1, 1)}, a::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real} = @inbounds return SVector(real(parent(a).data[1]))
 
