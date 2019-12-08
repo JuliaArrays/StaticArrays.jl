@@ -1,5 +1,3 @@
-@inline Size(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = Size(A.data)
-
 @inline transpose(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =
     LinearAlgebra.UpperTriangular(transpose(A.data))
 @inline adjoint(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =

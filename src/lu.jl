@@ -11,6 +11,24 @@ Base.iterate(S::LU, ::Val{:U}) = (S.U, Val(:p))
 Base.iterate(S::LU, ::Val{:p}) = (S.p, Val(:done))
 Base.iterate(S::LU, ::Val{:done}) = nothing
 
+@inline function Base.getproperty(F::LU, s::Symbol)
+    if s === :P
+        U = getfield(F, :U)
+        p = getfield(F, :p)
+        one(similar_type(p, Size(U)))[:,invperm(p)]
+    else
+        getfield(F, s)
+    end
+end
+
+function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
+    println(io, LU) # Don't show full type - this will be in the factors
+    println(io, "L factor:")
+    show(io, mime, F.L)
+    println(io, "\nU factor:")
+    show(io, mime, F.U)
+end
+
 # LU decomposition
 function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true))
     L, U, p = _lu(A, pivot)
@@ -135,9 +153,6 @@ end
 @generated function tailindices(::Type{Val{M}}) where {M}
     :(SVector{$(M-1),Int}($(tuple(2:M...))))
 end
-
-# Base.lufact() interface is fairly inherently type unstable.  Punt on
-# implementing that, for now...
 
 \(F::LU, v::AbstractVector) = F.U \ (F.L \ v[F.p])
 \(F::LU, B::AbstractMatrix) = F.U \ (F.L \ B[F.p,:])
