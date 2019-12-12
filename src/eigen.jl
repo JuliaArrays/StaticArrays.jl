@@ -157,16 +157,17 @@ end
     TA = eltype(A)
 
     @inbounds if A.uplo == 'U'
-        if !iszero(a[3]) # A is not diagonal
+        abs2a3 = abs2(a[3])
+        if !iszero(abs2a3) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
+            d = real(a[1] * a[4] - abs2a3) # Should be real
 
             tmp2 = t_half * t_half - d
             tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
             vals = SVector(t_half - tmp, t_half + tmp)
 
             v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[3]' * a[3])
+            n1 = sqrt(abs2(v11) + abs2a3) # always > 0
             v11 = v11 / n1
             v12 = a[3]' / n1
 
@@ -176,16 +177,17 @@ end
             return Eigen(vals, vecs)
         end
     else # A.uplo == 'L'
-        if !iszero(a[2]) # A is not diagonal
+        abs2a2 = abs2(a[2])
+        if !iszero(abs2a2) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
+            d = real(a[1] * a[4] - abs2a2) # Should be real
 
             tmp2 = t_half * t_half - d
             tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
             vals = SVector(t_half - tmp, t_half + tmp)
 
             v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[2]' * a[2])
+            n1 = sqrt(abs2(v11) + abs2a2) # always > 0
             v11 = v11 / n1
             v12 = a[2] / n1
 
@@ -196,7 +198,8 @@ end
         end
     end
 
-    # A must be diagonal if we reached this point; treatment of uplo 'L' and 'U' is then identical
+    # A must be diagonal (or computation of abs2 underflowed) if we reached this point;
+    # treatment of uplo 'L' and 'U' is then identical
     A11 = real(a[1])
     A22 = real(a[4])
     if A11 < A22
