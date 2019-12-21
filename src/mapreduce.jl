@@ -285,3 +285,43 @@ end
         @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
     end
 end
+
+struct _InitialValue end
+
+_maybeval(dims::Integer) = Val(Int(dims))
+_maybeval(dims) = dims
+_valof(::Val{D}) where D = D
+
+@inline Base.accumulate(op::F, a::StaticVector; dims = :, init = _InitialValue()) where {F} =
+    _accumulate(op, a, _maybeval(dims), init)
+
+@inline Base.accumulate(op::F, a::StaticArray; dims, init = _InitialValue()) where {F} =
+    _accumulate(op, a, _maybeval(dims), init)
+
+@inline function _accumulate(op::F, a::StaticArray, dims::Union{Val,Colon}, init) where {F}
+    # Adjoin the initial value to `op`:
+    rf(x, y) = x isa _InitialValue ? y : op(x, y)
+
+    # StaticArrays' `reduce` is `foldl`:
+    results = _reduce(
+        a,
+        dims,
+        (init = (similar_type(a, Union{}, Size(0))(), init),),
+    ) do (ys, acc), x
+        y = rf(acc, x)
+        (vcat(ys, SA[y]), y)
+    end
+    dims === (:) && return first(results)
+
+    ys = map(first, results)
+    data = _map(a, CartesianIndices(a)) do _, CI
+        D = _valof(dims)
+        I = Tuple(CI)
+        J = Base.setindex(I, 1, D)
+        ys[J...][I[D]]
+    end
+    return similar_type(a, eltype(data))(data)
+end
+
+@inline Base.cumsum(a::StaticArray; kw...) = accumulate(Base.add_sum, a; kw...)
+@inline Base.cumprod(a::StaticArray; kw...) = accumulate(Base.mul_prod, a; kw...)
