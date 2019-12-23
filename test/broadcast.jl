@@ -115,6 +115,8 @@ end
         # Issue 382: infinite recursion in Base.Broadcast.broadcast_indices with Adjoint
         @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
         @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
+        
+        @test @inferred(v1' + v2') === SVector(2,6)'
     end
 
     @testset "StaticVector with Scalar" begin
