@@ -108,9 +108,9 @@ macro SVector(ex)
                 error("@SVector expected a 1-dimensional array expression")
             end
         else
-            error("@SVector only supports the zeros(), ones(), rand(), randn(), randexp(), and eye() functions.")
+            error("@SVector only supports the zeros(), ones(), rand(), randn() and randexp() functions.")
         end
-    else # TODO Expr(:call, :zeros), Expr(:call, :ones), Expr(:call, :eye) ?
+    else
         error("Use @SVector [a,b,c], @SVector Type[a,b,c] or a comprehension like [f(i) for i = i_min:i_max]")
     end
 end

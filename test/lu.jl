@@ -1,5 +1,14 @@
 using StaticArrays, Test, LinearAlgebra
 
+@testset "LU utils" begin
+    F = lu(SA[1 2; 3 4])
+
+    @test @inferred((F->F.p)(F)) === SA[2, 1]
+    @test @inferred((F->F.P)(F)) === SA[0 1; 1 0]
+
+    @test occursin(r"^StaticArrays.LU.*L factor.*U factor"s, sprint(show, MIME("text/plain"), F))
+end
+
 @testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
     a = SMatrix{m,n,Int}(1:(m*n))
     l, u, p = @inferred(lu(a, Val{pivot}()))

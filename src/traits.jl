@@ -93,6 +93,7 @@ Size(::Type{Transpose{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)
 Size(::Type{Symmetric{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Hermitian{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Diagonal{T, A}}) where {T, A <: AbstractVector{T}} = Size(Size(A)[1], Size(A)[1])
+Size(::Type{<:LinearAlgebra.AbstractTriangular{T, A}}) where {T,A} = Size(A)
 
 @pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
@@ -117,7 +118,7 @@ Length(::Size{S}) where {S} = _Length(S...)
 @inline _Length(S...) = Length{Dynamic()}()
 
 # Some @pure convenience functions for `Size`
-@pure get(::Size{S}) where {S} = S
+@pure (::Type{Tuple})(::Size{S}) where {S} = S
 
 @pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
 
@@ -138,7 +139,7 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 @pure size_tuple(::Size{S}) where {S} = Tuple{S...}
 
 # Some @pure convenience functions for `Length`
-@pure get(::Length{L}) where {L} = L
+@pure (::Type{Int})(::Length{L}) where {L} = L
 
 @pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
 @pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L

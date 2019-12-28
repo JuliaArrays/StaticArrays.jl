@@ -82,7 +82,19 @@ using StaticArrays, Test, LinearAlgebra
             E = eigen(Symmetric(A, uplo))
             @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
         end
+
+        m1_a = randn(2,2)
+        m1_a = m1_a*m1_a'
+        m1 = SMatrix{2,2}(m1_a)
+        m2_a = randn(2,2)
+        m2_a = m2_a*m2_a'
+        m2 = SMatrix{2,2}(m2_a)
+        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
     end
+
+    @test_throws DimensionMismatch eigvals(SA[1 2 3; 4 5 6], SA[1 2 3; 4 5 5])
+    @test_throws DimensionMismatch eigvals(SA[1 2; 4 5], SA[1 2 3; 4 5 5; 3 4 5])
 
     @testset "3×3" for i = 1:100
         m_a = randn(3,3)
@@ -112,6 +124,14 @@ using StaticArrays, Test, LinearAlgebra
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
+
+        m1_a = randn(3,3)
+        m1_a = m1_a*m1_a'
+        m1 = SMatrix{3,3}(m1_a)
+        m2_a = randn(3,3)
+        m2_a = m2_a*m2_a'
+        m2 = SMatrix{3,3}(m2_a)
+        @test (@inferred_maybe_allow SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
     end
 
     @testset "3x3 degenerate cases" begin
@@ -212,9 +232,6 @@ using StaticArrays, Test, LinearAlgebra
         @test vals::SVector ≈ sort(m_d)
         @test eigvals(m) ≈ sort(m_d)
         @test eigvals(Hermitian(m)) ≈ sort(m_d)
-
-        # not Hermitian
-        @test_throws Exception eigen(@SMatrix randn(4,4))
     end
 
     @testset "complex" begin
@@ -226,6 +243,51 @@ using StaticArrays, Test, LinearAlgebra
             @test V'V ≈ Matrix(I, n, n)
             @test V*diagm(Val(0) => D)*V' ≈ A
             @test V'*A*V ≈ diagm(Val(0) => D)
+        end
+    end
+
+    @testset "hermitian type stability" begin
+        for n=1:4
+            m = @SMatrix randn(n,n)
+            m += m'
+
+            @inferred eigen(Hermitian(m))
+            @inferred eigen(Symmetric(m))
+
+            # Test that general eigen() gives a small union of concrete types
+            SEigen{T} = Eigen{T, T, SArray{Tuple{n,n},T,2,n*n}, SArray{Tuple{n},T,1,n}}
+            @inferred_maybe_allow Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
+
+            mc = @SMatrix randn(ComplexF64, n, n)
+            @inferred eigen(Hermitian(mc + mc'))
+        end
+    end
+
+    @testset "non-hermitian 2d" begin
+        for n=1:5
+            angle = 2π * rand()
+            rot = @SMatrix [cos(angle) -sin(angle); sin(angle) cos(angle)]
+
+            vals, vecs = eigen(rot)
+
+            @test norm(vals[1]) ≈ 1.0
+            @test norm(vals[2]) ≈ 1.0
+
+            @test vecs[:,1] ≈ conj.(vecs[:,2])
+        end
+    end
+
+    @testset "non-hermitian 3d" begin
+        for n=1:5
+            angle = 2π * rand()
+            rot = @SMatrix [cos(angle) 0.0 -sin(angle); 0.0 1.0 0.0; sin(angle) 0.0 cos(angle)]
+
+            vals, vecs = eigen(rot)
+
+            @test norm(vals[1]) ≈ 1.0
+            @test norm(vals[2]) ≈ 1.0
+
+            @test vecs[:,1] ≈ conj.(vecs[:,2])
         end
     end
 end

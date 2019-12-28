@@ -1,13 +1,12 @@
-length(a::SA) where {SA <: StaticArrayLike} = length(SA)
+length(a::StaticArrayLike) = prod(Size(a))
 length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
 
-@pure size(::Type{SA}) where {SA <: StaticArrayLike} = get(Size(SA))
+@pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
 @inline function size(t::Type{<:StaticArrayLike}, d::Int)
     S = size(t)
     d > length(S) ? 1 : S[d]
 end
-@inline size(a::StaticArrayLike) = size(typeof(a))
-@inline size(a::StaticArrayLike, d::Int) = size(typeof(a), d)
+@inline size(a::StaticArrayLike) = Tuple(Size(a))
 
 Base.axes(s::StaticArray) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}
@@ -92,6 +91,27 @@ mutable_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = MArr
 #similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
 
 sizedarray_similar_type(::Type{T},s::Size{S},::Type{Val{D}}) where {T,S,D} = SizedArray{Tuple{S...},T,D,length(s)}
+
+# Utility for computing the eltype of an array instance, type, or type
+# constructor.  For type constructors without a definite eltype, the default
+# value is returned.
+Base.@pure _eltype_or(a::AbstractArray, default) = eltype(a)
+Base.@pure _eltype_or(::Type{<:AbstractArray{T}}, default) where {T} = T
+Base.@pure _eltype_or(::Type{<:AbstractArray}, default) = default # eltype not available
+
+"""
+    _construct_similar(a, ::Size, elements::NTuple)
+
+Construct a static array of similar type to `a` with the given `elements`.
+
+When `a` is an instance or a concrete type the element type `eltype(a)` is
+used. However, when `a` is a `UnionAll` type such as `SMatrix{2,2}`, the
+promoted type of `elements` is used instead.
+"""
+@inline function _construct_similar(a, s::Size, elements::NTuple{L,ET}) where {L,ET}
+    similar_type(a, _eltype_or(a, ET), s)(elements)
+end
+
 
 # Field vectors are user controlled, and currently default to SVector, etc
 
