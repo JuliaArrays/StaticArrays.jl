@@ -378,9 +378,6 @@ Base.unsafe_view(A::AbstractArray, i1::StaticIndexing, indices::StaticIndexing..
 # Additionally, in some cases the SubArray constructor may be called directly
 # instead of unsafe_view so we need this method too (Base._maybe_reindex
 # is a good example)
-Base.SubArray(A::AbstractArray, indices::NTuple{<:Any,StaticIndexing}) = Base.SubArray(A, map(unwrap, indices))
-# this method is defined to prevent infinite recursion when viewing a
-# zero-dimensional array (see issue #705)
-function Base.SubArray(A::AbstractArray, indices::Tuple{})
-    return invoke(Base.SubArray, Tuple{AbstractArray, Tuple}, A, indices)
-end
+# the tuple indices has to have at least one element to prevent infinite
+# recursion when viewing a zero-dimensional array (see issue #705)
+Base.SubArray(A::AbstractArray, indices::Tuple{StaticIndexing, Vararg{StaticIndexing}}) = Base.SubArray(A, map(unwrap, indices))
