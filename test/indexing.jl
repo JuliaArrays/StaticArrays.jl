@@ -205,6 +205,14 @@ using StaticArrays, Test
         @test (zeros(2,0)[SVector(1),SVector{0,Int}()] = 0) == 0
     end
 
+    @testset "Viewing zero-dimensional arrays" begin
+        # issue #705
+        A = zeros()
+        B = MArray{Tuple{},Float64,0,1}(0.0)
+        @test @inferred(view(A))[] == 0.0
+        @test @inferred(view(B))[] == 0.0
+    end
+
     @testset "Using SArray as index for view" begin
         a = collect(11:20)
         @test view(a, SVector(1,2,3)) == [11,12,13]
