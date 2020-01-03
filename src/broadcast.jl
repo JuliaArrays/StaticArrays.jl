@@ -97,7 +97,7 @@ scalar_getindex(x) = x
 scalar_getindex(x::Ref) = x[]
 
 @generated function _broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
-    first_staticarray = a[findfirst(ai -> ai <: StaticArray, a)]
+    first_staticarray = a[findfirst(ai -> ai <: Union{StaticArray, Transpose{<:Any, <:StaticArray}, Adjoint{<:Any, <:StaticArray}}, a)]
 
     if prod(newsize) == 0
         # Use inference to get eltype in empty case (see also comments in _map)
