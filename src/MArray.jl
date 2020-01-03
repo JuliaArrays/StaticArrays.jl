@@ -1,5 +1,5 @@
 """
-    MArray{S, T, L}()
+    MArray{S, T, L}(undef)
     MArray{S, T, L}(x::NTuple{L, T})
     MArray{S, T, L}(x1, x2, x3, ...)
 
