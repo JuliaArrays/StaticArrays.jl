@@ -116,7 +116,8 @@ end
         @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
         @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
         
-        @test @inferred(v1' + v2') === SVector(2,6)'
+        # Issue 704: broadcast with adjoint wrapped static arrays
+        @test @inferred(v1' .+ v2') === SA[2 6]
     end
 
     @testset "StaticVector with Scalar" begin
