@@ -147,6 +147,9 @@ using LinearAlgebra: checksquare
         @test @inferred(adjoint(@SMatrix [m m; m m])) == adjoint([[m] [m]; [m] [m]])
         @test @inferred(transpose(@SMatrix [m m; m m])) == transpose([[m] [m]; [m] [m]])
 
+        # Recursive adjoint/transpose correctly handles eltype (#708)
+        @test (@inferred(adjoint(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(adjoint([1,2]), 2,2))
+        @test (@inferred(transpose(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(transpose([1,2]), 2,2))
     end
 
     @testset "normalization" begin

@@ -62,7 +62,8 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return similar_type($m, Size($Snew))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
     end
 end
 
@@ -78,7 +79,8 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return similar_type($m, Size($Snew))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
     end
 end
 
