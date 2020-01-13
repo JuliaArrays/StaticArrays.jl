@@ -221,187 +221,159 @@ end
     return Eigen(vals,vecs)
 end
 
-# A small part of the code in the following method was inspired by works of David
-# Eberly, Geometric Tools LLC, in code released under the Boost Software
-# License (included at the end of this file).
+# Port of https://www.geometrictools.com/GTEngine/Include/Mathematics/GteSymmetricEigensolver3x3.h
+# released by David Eberly, Geometric Tools, Redmond WA 98052
+# under the Boost Software License, Version 1.0 (included at the end of this file)
+# TODO ensure right-handedness of the eigenvalue matrix
 # TODO extend the method to complex hermitian
-@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
-    S = arithmetic_closure(T)
-    Sreal = real(S)
-
-    @inbounds a11 = convert(Sreal, A.data[1])
-    @inbounds a22 = convert(Sreal, A.data[5])
-    @inbounds a33 = convert(Sreal, A.data[9])
-    if A.uplo == 'U'
-        @inbounds a12 = convert(S, A.data[4])
-        @inbounds a13 = convert(S, A.data[7])
-        @inbounds a23 = convert(S, A.data[8])
-    else
-        @inbounds a12 = conj(convert(S, A.data[2]))
-        @inbounds a13 = conj(convert(S, A.data[3]))
-        @inbounds a23 = conj(convert(S, A.data[6]))
-    end
-
-    p1 = abs2(a12) + abs2(a13) + abs2(a23)
-    if (p1 == 0)
-        # Matrix is diagonal
-        v1 = SVector(one(S),  zero(S), zero(S))
-        v2 = SVector(zero(S), one(S),  zero(S))
-        v3 = SVector(zero(S), zero(S), one(S) )
-
-        if a11 < a22
-            if a22 < a33
-                return Eigen(SVector((a11, a22, a33)), hcat(v1,v2,v3))
-            elseif a33 < a11
-                return Eigen(SVector((a33, a11, a22)), hcat(v3,v1,v2))
-            else
-                return Eigen(SVector((a11, a33, a22)), hcat(v1,v3,v2))
-            end
-        else #a22 < a11
-            if a11 < a33
-                return Eigen(SVector((a22, a11, a33)), hcat(v2,v1,v3))
-            elseif a33 < a22
-                return Eigen(SVector((a33, a22, a11)), hcat(v3,v2,v1))
-            else
-                return Eigen(SVector((a22, a33, a11)), hcat(v2,v3,v1))
-            end
-        end
-    end
-
-    q = (a11 + a22 + a33) / 3
-    p2 = abs2(a11 - q) + abs2(a22 - q) + abs2(a33 - q) + 2 * p1
-    p = sqrt(p2 / 6)
-    invp = inv(p)
-    b11 = (a11 - q) * invp
-    b22 = (a22 - q) * invp
-    b33 = (a33 - q) * invp
-    b12 = a12 * invp
-    b13 = a13 * invp
-    b23 = a23 * invp
-    B = SMatrix{3,3,S}((b11, conj(b12), conj(b13), b12, b22, conj(b23), b13, b23, b33))
-    r = real(det(B)) / 2
-
-    # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
-    # but computation error can leave it slightly outside this range.
-    if (r <= -1)
-        phi = Sreal(pi) / 3
-    elseif (r >= 1)
-        phi = zero(Sreal)
-    else
-        phi = acos(r) / 3
-    end
-
-    eig3 = q + 2 * p * cos(phi)
-    eig1 = q + 2 * p * cos(phi + (2*Sreal(pi)/3))
-    eig2 = 3 * q - eig1 - eig3     # since tr(A) = eig1 + eig2 + eig3
-
-    if r > 0 # Helps with conditioning the eigenvector calculation
-        (eig1, eig3) = (eig3, eig1)
-    end
-
-    # Calculate the first eigenvector
-    # This should be orthogonal to these three rows of A - eig1*I
-    # Use all combinations of cross products and choose the "best" one
-    r₁ = SVector(a11 - eig1, a12, a13)
-    r₂ = SVector(conj(a12), a22 - eig1, a23)
-    r₃ = SVector(conj(a13), conj(a23), a33 - eig1)
-    n₁ = sum(abs2, r₁)
-    n₂ = sum(abs2, r₂)
-    n₃ = sum(abs2, r₃)
-
-    r₁₂ = r₁ × r₂
-    r₂₃ = r₂ × r₃
-    r₃₁ = r₃ × r₁
-    n₁₂ = sum(abs2, r₁₂)
-    n₂₃ = sum(abs2, r₂₃)
-    n₃₁ = sum(abs2, r₃₁)
-
-    # we want best angle so we put all norms on same footing
-    # (cheaper to multiply by third nᵢ rather than divide by the two involved)
-    if n₁₂ * n₃ > n₂₃ * n₁
-        if n₁₂ * n₃ > n₃₁ * n₂
-            eigvec1 = r₁₂ / sqrt(n₁₂)
+@inline function StaticArrays._eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
+    function converged(aggressive, bdiag0, bdiag1, bsuper)
+        if aggressive
+            bsuper == 0
         else
-            eigvec1 = r₃₁ / sqrt(n₃₁)
-        end
-    else
-        if n₂₃ * n₁ > n₃₁ * n₂
-            eigvec1 = r₂₃ / sqrt(n₂₃)
-        else
-            eigvec1 = r₃₁ / sqrt(n₃₁)
+            summe = abs(bdiag0) + abs(bdiag1)
+            summe + bsuper == summe
         end
     end
 
-    # Calculate the second eigenvector
-    # This should be orthogonal to the previous eigenvector and the three
-    # rows of A - eig2*I. However, we need to "solve" the remaining 2x2 subspace
-    # problem in case the cross products are identically or nearly zero
-
-    # The remaing 2x2 subspace is:
-    @inbounds if abs(eigvec1[1]) < abs(eigvec1[2]) # safe to set one component to zero, depending on this
-        orthogonal1 = SVector(-eigvec1[3], zero(S), eigvec1[1]) / sqrt(abs2(eigvec1[1]) + abs2(eigvec1[3]))
-    else
-        orthogonal1 = SVector(zero(S), eigvec1[3], -eigvec1[2]) / sqrt(abs2(eigvec1[2]) + abs2(eigvec1[3]))
-    end
-    orthogonal2 = eigvec1 × orthogonal1
-
-    # The projected 2x2 eigenvalue problem is C x = 0 where C is the projection
-    # of (A - eig2*I) onto the subspace {orthogonal1, orthogonal2}
-    @inbounds a_orth1_1 = a11 * orthogonal1[1] + a12 * orthogonal1[2] + a13 * orthogonal1[3]
-    @inbounds a_orth1_2 = conj(a12) * orthogonal1[1] + a22 * orthogonal1[2] + a23 * orthogonal1[3]
-    @inbounds a_orth1_3 = conj(a13) * orthogonal1[1] + conj(a23) * orthogonal1[2] + a33 * orthogonal1[3]
-
-    @inbounds a_orth2_1 = a11 * orthogonal2[1] + a12 * orthogonal2[2] + a13 * orthogonal2[3]
-    @inbounds a_orth2_2 = conj(a12) * orthogonal2[1] + a22 * orthogonal2[2] + a23 * orthogonal2[3]
-    @inbounds a_orth2_3 = conj(a13) * orthogonal2[1] + conj(a23) * orthogonal2[2] + a33 * orthogonal2[3]
-
-    @inbounds c11 = conj(orthogonal1[1])*a_orth1_1 + conj(orthogonal1[2])*a_orth1_2 + conj(orthogonal1[3])*a_orth1_3 - eig2
-    @inbounds c12 = conj(orthogonal1[1])*a_orth2_1 + conj(orthogonal1[2])*a_orth2_2 + conj(orthogonal1[3])*a_orth2_3
-    @inbounds c22 = conj(orthogonal2[1])*a_orth2_1 + conj(orthogonal2[2])*a_orth2_2 + conj(orthogonal2[3])*a_orth2_3 - eig2
-
-    # Solve this robustly (some values might be small or zero)
-    c11² = abs2(c11)
-    c12² = abs2(c12)
-    c22² = abs2(c22)
-    if c11² >= c22²
-        if c11² > 0 || c12² > 0
-            if c11² >= c12²
-                tmp = c12 / c11 # TODO check for compex input
-                p2 = inv(sqrt(1 + abs2(tmp)))
-                p1 = tmp * p2
-            else
-                tmp = c11 / c12 # TODO check for compex input
-                p1 = inv(sqrt(1 + abs2(tmp)))
-                p2 = tmp * p1
+    function get_cos_sin(u::T,v::T) where {T}
+        max_abs = max(abs(u), abs(v))
+        if max_abs > 0
+            u,v = (u,v) ./ max_abs
+            len = sqrt(u^2 + v^2)
+            cs, sn = (u,v) ./ len
+            if cs > 0
+                cs = -cs
+                sn = -sn
             end
-            eigvec2 = p1*orthogonal1 - p2*orthogonal2
-        else # c11 == 0 && c12 == 0 && c22 == 0 (smaller than c11)
-            eigvec2 = orthogonal1
+            T(cs), T(sn)
+        else
+            T(-1), T(0)
+        end
+    end
+
+    function _sortperm3(v)
+        perm = SVector(1,2,3)
+        # unrolled bubble-sort
+        (v[perm[1]] > v[perm[2]]) && (perm = SVector(perm[2], perm[1], perm[3]))
+        (v[perm[2]] > v[perm[3]]) && (perm = SVector(perm[1], perm[3], perm[2]))
+        (v[perm[1]] > v[perm[2]]) && (perm = SVector(perm[2], perm[1], perm[3]))
+        perm
+    end
+
+    update0(Q, c, s) = Q * @SMatrix [c 0 -s; s 0 c; 0 1 0]
+    update1(Q, c, s) = Q * @SMatrix [0 1 0; c 0 s; -s 0 c]
+    update2(Q, c, s) = Q * @SMatrix [c s 0; s -c 0; 0 0 1]
+    update3(Q, c, s) = Q * @SMatrix [1 0 0; 0 c s; 0 s -c]
+
+    is_rotation = false
+    aggressive = true
+
+    a00, a01, a02, a11, a12, a22 = A[1,1], A[1,2], A[1,3], A[2,2], A[2,3], A[3,3]
+
+    c,s = get_cos_sin(a12, -a02)
+
+    Q = @SMatrix [c s 0; s -c 0; 0 0 1]
+
+    term0 = c * a00 + s * a01
+    term1 = c * a01 + s * a11
+    b00 = c * term0 + s * term1
+    b01 = s * term0 - c * term1
+    term0 = s * a00 - c * a01
+    term1 = s * a01 - c * a11
+    b11 = s * term0 - c * term1
+    b12 = s * a02 - c * a12
+    b22 = a22
+
+    max_iteration = 2 * (1 + 53 + 1021) # 2 * (1 + mantissa_bits - minimum exponent) for Float64
+
+    if abs(b12) <= abs(b01)
+        saveB00, saveB01, saveB11 = b00, b01, b11
+        for iteration in 1:max_iteration
+            c2, s2 = get_cos_sin((b00 - b11) / 2, b01)
+            s = sqrt((1 - c2) / 2)
+            c = s2 / 2s
+            Q = update0(Q, c, s)
+            is_rotation = !is_rotation
+
+            saveB00, saveB01, saveB11 = b00, b01, b11
+
+            term0 = c * saveB00 + s * saveB01
+            term1 = c * saveB01 + s * saveB11
+            b00 = c * term0 + s * term1
+            b11 = b22
+            term0 = c * saveB01 - s * saveB00
+            term1 = c * saveB11 - s * saveB01
+            b22 = c * term1 - s * term0
+            b01 = s * b12
+            b12 = c * b12
+
+            if converged(aggressive, b00, b11, b01)
+                c2, s2 = get_cos_sin((b00 - b11) / 2, b01)
+                s = sqrt((1 - c2) / 2)
+                c = s2 / 2s
+
+                Q = update2(Q, c, s)
+                is_rotation = !is_rotation
+
+                saveB00, saveB01, saveB11 = b00, b01, b11
+
+                term0 = c * saveB00 + s * saveB01
+                term1 = c * saveB01 + s * saveB11
+                b00 = c * term0 + s * term1
+                term0 = s * saveB00 - c * saveB01
+                term1 = s * saveB01 - c * saveB11
+                b11 = s * term0 - c * term1
+                break
+            end
         end
     else
-        if c22² >= c12²
-            tmp = c12 / c22 # TODO check for compex input
-            p1 = inv(sqrt(1 + abs2(tmp)))
-            p2 = tmp * p1
-        else
-            tmp = c22 / c12 # TODO check for compex input
-            p2 = inv(sqrt(1 + abs2(tmp)))
-            p1 = tmp * p2
+        saveB11, saveB12, saveB22 = b11, b12, b22
+        for iteration in 1:max_iteration
+            c2, s2 = get_cos_sin((b22 - b11) / 2, b12)
+            s = sqrt((1 - c2) / 2)
+            c = s2 / 2s
+
+            Q = update1(Q, c, s)
+            is_rotation = !is_rotation
+
+            saveB11, saveB12, saveB22 = b11, b12, b22
+
+            term0 = c * saveB22 + s * saveB12
+            term1 = c * saveB12 + s * saveB11
+            b22 = c * term0 + s * term1
+            b11 = b00
+            term0 = c * saveB12 - s * saveB22
+            term1 = c * saveB11 - s * saveB12
+            b00 = c * term1 - s * term0
+            b12 = s * b01
+            b01 = c * b01
+
+            if converged(aggressive, b11, b22, b12)
+                c2, s2 = get_cos_sin((b11 - b22) / 2, b12)
+                s = sqrt((1 - c2) / 2)
+                c = s2 / 2s
+
+                Q = update3(Q, c, s)
+                is_rotation = !is_rotation
+
+                saveB11, saveB12, saveB22 = b11, b12, b22
+                term0 = c * saveB11 + s * saveB12
+                term1 = c * saveB12 + s * saveB22
+                b11 = c * term0 + s * term1
+                term0 = s * saveB11 - c * saveB12
+                term1 = s * saveB12 - c * saveB22
+                b22 = s * term0 - c * term1
+                break
+            end
         end
-        eigvec2 = p1*orthogonal1 - p2*orthogonal2
     end
 
-    # The third eigenvector is a simple cross product of the other two
-    eigvec3 = eigvec1 × eigvec2 # should be normalized already
-
-    # Sort them back to the original ordering, if necessary
-    if r > 0
-        (eig1, eig3) = (eig3, eig1)
-        (eigvec1, eigvec3) = (eigvec3, eigvec1)
-    end
-
-    return Eigen(SVector(eig1, eig2, eig3), hcat(eigvec1, eigvec2, eigvec3))
+    evals = @SVector [b00, b11, b22]
+    perm = _sortperm3(evals)
+    Eigen(evals[perm], Q[:,perm])
 end
+
 
 @inline function eigen(A::StaticMatrix; permute::Bool=true, scale::Bool=true)
     _eig(Size(A), A, permute, scale)
