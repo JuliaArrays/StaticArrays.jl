@@ -285,7 +285,7 @@ end
     b12 = s * a02 - c * a12
     b22 = a22
 
-    max_iteration = 2 * (1 + 53 + 1021) # 2 * (1 + mantissa_bits - minimum exponent) for Float64
+    max_iteration = 2 * (1 + precision(T) - exponent(floatmin(T)))
 
     if abs(b12) <= abs(b01)
         saveB00, saveB01, saveB11 = b00, b01, b11
