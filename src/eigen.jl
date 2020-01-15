@@ -253,7 +253,7 @@ end
     end
 
     function _sortperm3(v)
-        perm = SVector(1,2,3)
+        local perm = SVector(1,2,3)
         # unrolled bubble-sort
         (v[perm[1]] > v[perm[2]]) && (perm = SVector(perm[2], perm[1], perm[3]))
         (v[perm[2]] > v[perm[3]]) && (perm = SVector(perm[1], perm[3], perm[2]))
