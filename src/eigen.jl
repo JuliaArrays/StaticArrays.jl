@@ -226,7 +226,7 @@ end
 # under the Boost Software License, Version 1.0 (included at the end of this file)
 # TODO ensure right-handedness of the eigenvalue matrix
 # TODO extend the method to complex hermitian
-@inline function StaticArrays._eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
+@inline function _eig(::Size{(3,3)}, A::LinearAlgebra.HermOrSym{T}, permute, scale) where {T <: Real}
     function converged(aggressive, bdiag0, bdiag1, bsuper)
         if aggressive
             bsuper == 0
