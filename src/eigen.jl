@@ -241,8 +241,8 @@ end
         if aggressive
             bsuper == 0
         else
-            summe = abs(bdiag0) + abs(bdiag1)
-            summe + bsuper == summe
+            diag_sum = abs(bdiag0) + abs(bdiag1)
+            diag_sum + bsuper == diag_sum
         end
     end
 
