@@ -196,7 +196,7 @@ appropriate method for `similar`,
 
 You can easily create your own `StaticArray` type, by defining linear
 `getindex` (and optionally `setindex!` for mutable types --- see
-`setindex(::MArray, val, i)` in *MArray.jl* for an example of how to
+`setindex!(::MArray, val, i)` in *MArray.jl* for an example of how to
 achieve this through pointer manipulation). Your type should define a constructor
 that takes a tuple of the data (and mutable containers may want to define a
 default constructor).
