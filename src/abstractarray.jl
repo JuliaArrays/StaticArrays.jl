@@ -86,9 +86,9 @@ similar_type(::Type{SA},::Type{T},s::Size{S}) where {SA<:Union{MVector,MMatrix,M
 
 mutable_similar_type(::Type{T}, s::Size{S}, ::Type{Val{D}}) where {T,S,D} = MArray{Tuple{S...},T,D,prod(s)}
 
-# Should `SizedArray` stay the same, and also take over an `Array`?
-#similar_type{SA<:SizedArray,T,S}(::Type{SA},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
-#similar_type{A<:Array,T,S}(::Type{A},::Type{T},s::Size{S}) = sizedarray_similar_type(T,s,length_val(s))
+similar_type(::Type{<:SizedArray},::Type{T},s::Size{S}) where {S,T} = sizedarray_similar_type(T,s,length_val(s))
+# Should SizedArray also be used for normal Array?
+#similar_type(::Type{<:Array},::Type{T},s::Size{S}) where {S,T} = sizedarray_similar_type(T,s,length_val(s))
 
 sizedarray_similar_type(::Type{T},s::Size{S},::Type{Val{D}}) where {T,S,D} = SizedArray{Tuple{S...},T,D,length(s)}
 
@@ -238,4 +238,3 @@ end
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
-
