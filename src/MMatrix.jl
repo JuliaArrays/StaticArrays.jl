@@ -1,5 +1,5 @@
 """
-    MMatrix{S1, S2, T, L}()
+    MMatrix{S1, S2, T, L}(undef)
     MMatrix{S1, S2, T, L}(x::NTuple{L, T})
     MMatrix{S1, S2, T, L}(x1, x2, x3, ...)
 

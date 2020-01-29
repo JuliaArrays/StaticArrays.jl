@@ -1,5 +1,5 @@
 """
-    MVector{S,T}()
+    MVector{S,T}(undef)
     MVector{S,T}(x::NTuple{S, T})
     MVector{S,T}(x1, x2, x3, ...)
 
