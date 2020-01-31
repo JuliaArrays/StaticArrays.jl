@@ -51,15 +51,15 @@ lowertriangletype(::Type{SHermitianCompact{N, T, L}}) where {N, T, L} = SVector{
 lowertriangletype(::Type{SHermitianCompact{N, T}}) where {N, T} = SVector{triangularnumber(N), T}
 lowertriangletype(::Type{SHermitianCompact{N}}) where {N} = SVector{triangularnumber(N)}
 
-@inline (::Type{SHermitianCompact{N, T}})(lowertriangle::SVector{L}) where {N, T, L} = SHermitianCompact{N, T, L}(lowertriangle)
-@inline (::Type{SHermitianCompact{N}})(lowertriangle::SVector{L, T}) where {N, T, L} = SHermitianCompact{N, T, L}(lowertriangle)
+@inline SHermitianCompact{N, T}(lowertriangle::SVector{L}) where {N, T, L} = SHermitianCompact{N, T, L}(lowertriangle)
+@inline SHermitianCompact{N}(lowertriangle::SVector{L, T}) where {N, T, L} = SHermitianCompact{N, T, L}(lowertriangle)
 
 @inline function SHermitianCompact(lowertriangle::SVector{L, T}) where {T, L}
     N = triangularroot(L)
     SHermitianCompact{N, T, L}(lowertriangle)
 end
 
-@generated function (::Type{SHermitianCompact{N, T, L}})(a::Tuple) where {N, T, L}
+@generated function SHermitianCompact{N, T, L}(a::Tuple) where {N, T, L}
     expr = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
@@ -72,13 +72,13 @@ end
     end
 end
 
-@inline function (::Type{SHermitianCompact{N, T}})(a::Tuple) where {N, T}
+@inline function SHermitianCompact{N, T}(a::Tuple) where {N, T}
     L = triangularnumber(N)
     SHermitianCompact{N, T, L}(a)
 end
 
-@inline (::Type{SHermitianCompact{N}})(a::Tuple) where {N} = SHermitianCompact{N, promote_tuple_eltype(a)}(a)
-@inline (::Type{SHermitianCompact{N}})(a::NTuple{M, T}) where {N, T, M} = SHermitianCompact{N, T}(a)
+@inline SHermitianCompact{N}(a::Tuple) where {N} = SHermitianCompact{N, promote_tuple_eltype(a)}(a)
+@inline SHermitianCompact{N}(a::NTuple{M, T}) where {N, T, M} = SHermitianCompact{N, T}(a)
 @inline SHermitianCompact(a::StaticMatrix{N, N, T}) where {N, T} = SHermitianCompact{N, T}(a)
 
 @inline (::Type{SSC})(a::SHermitianCompact) where {SSC <: SHermitianCompact} = SSC(a.lowertriangle)
