@@ -8,8 +8,8 @@ SDiagonal(x...) = Diagonal(SVector(x...))
 
 # this is to deal with convert.jl
 #@inline (::Type{SDiagonal{N,T}})(a::AbstractVector) where {N,T} = Diagonal(SVector{N,T}(a))
-@inline (::Type{SDiagonal{N,T}})(a::Tuple) where {N,T} = Diagonal(SVector{N,T}(a))
-@inline (::Type{SDiagonal{N}})(a::Tuple) where {N} = Diagonal(SVector{N}(a))
+@inline SDiagonal{N,T}(a::Tuple) where {N,T} = Diagonal(SVector{N,T}(a))
+@inline SDiagonal{N}(a::Tuple) where {N} = Diagonal(SVector{N}(a))
 
 SDiagonal(a::SVector) = Diagonal(a)
 SDiagonal(a::StaticMatrix{N,N,T}) where {N,T} = Diagonal(diag(a))
@@ -34,8 +34,8 @@ size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
 diag(D::SDiagonal) = D.diag
 
 # SDiagonal(I::UniformScaling) methods
-(::Type{SDiagonal{N}})(I::UniformScaling) where {N} = SDiagonal{N}(ntuple(x->I.λ, Val(N)))
-(::Type{SDiagonal{N,T}})(I::UniformScaling) where {N,T} = SDiagonal{N,T}(ntuple(x->I.λ, Val(N)))
+SDiagonal{N}(I::UniformScaling) where {N} = SDiagonal{N}(ntuple(x->I.λ, Val(N)))
+SDiagonal{N,T}(I::UniformScaling) where {N,T} = SDiagonal{N,T}(ntuple(x->I.λ, Val(N)))
 
 one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
