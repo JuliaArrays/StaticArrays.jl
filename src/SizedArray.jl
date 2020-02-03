@@ -41,7 +41,7 @@ end
 @inline SizedArray{S,T,N}(::UndefInitializer) where {S,T,N} = SizedArray{S,T,N,N}(undef)
 @inline SizedArray{S,T}(::UndefInitializer) where {S,T} = SizedArray{S,T,tuple_length(S),tuple_length(S)}(undef)
 
-@generated function (::Type{SizedArray{S,T,N,M}})(x::NTuple{L,Any}) where {S,T,N,M,L}
+@generated function SizedArray{S,T,N,M}(x::NTuple{L,Any}) where {S,T,N,M,L}
     if L != tuple_prod(S)
         error("Dimension mismatch")
     end
