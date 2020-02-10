@@ -93,7 +93,7 @@ macro SMatrix(ex)
             s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 1), 1:s1)
             s2 = minimum(s2s)
             if maximum(s2s) != s2
-                error("Rows must be of matching lengths")
+                throw(DimensionMismatch("Rows must be of matching lengths"))
             end
 
             exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
@@ -108,7 +108,7 @@ macro SMatrix(ex)
             s2s = map(i -> ((isa(ex.args[i+1], Expr) && ex.args[i+1].head == :row) ? length(ex.args[i+1].args) : 1), 1:s1)
             s2 = minimum(s2s)
             if maximum(s2s) != s2
-                error("Rows must be of matching lengths")
+                throw(DimensionMismatch("Rows must be of matching lengths"))
             end
 
             exprs = [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
