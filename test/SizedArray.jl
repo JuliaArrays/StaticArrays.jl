@@ -99,4 +99,12 @@
         @test @inferred(promote_type(SizedVector{2,Int,1}, SizedVector{2,Float64,1})) === SizedVector{2,Float64,1}
         @test @inferred(promote_type(SizedMatrix{2,3,Float32,2}, SizedMatrix{2,3,Complex{Float64},2})) === SizedMatrix{2,3,Complex{Float64},2}
     end
+
+    @testset "reshaping" begin
+        y = rand(4,1,2)
+        sy = SizedArray{Tuple{size(y)...}}(y)
+
+        @test vec(sy) isa SizedArray{Tuple{8}, Float64}
+        @test reshape(sy, Size(2,4)) isa SizedArray{Tuple{2, 4}, Float64}
+    end
 end
