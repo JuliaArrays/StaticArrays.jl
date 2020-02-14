@@ -309,6 +309,8 @@ _valof(::Val{D}) where D = D
         (init = (similar_type(a, Union{}, Size(0))(), init),),
     ) do (ys, acc), x
         y = rf(acc, x)
+        # Not using `push(ys, y)` here since we need to widen element type as
+        # we iterate.
         (vcat(ys, SA[y]), y)
     end
     dims === (:) && return first(results)
