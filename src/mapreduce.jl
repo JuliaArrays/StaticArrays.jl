@@ -314,10 +314,13 @@ _valof(::Val{D}) where D = D
     dims === (:) && return first(results)
 
     ys = map(first, results)
+    # Now map over all indices of `a`.  Since `_map` needs at least
+    # one `StaticArray` to be passed, we pass `a` here, even though
+    # the values of `a` are not used.
     data = _map(a, CartesianIndices(a)) do _, CI
         D = _valof(dims)
         I = Tuple(CI)
-        J = Base.setindex(I, 1, D)
+        J = setindex(I, 1, D)
         ys[J...][I[D]]
     end
     return similar_type(a, eltype(data))(data)
