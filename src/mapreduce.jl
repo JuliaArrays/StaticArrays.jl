@@ -288,15 +288,15 @@ end
 
 struct _InitialValue end
 
-_maybeval(dims::Integer) = Val(Int(dims))
-_maybeval(dims) = dims
+_maybe_val(dims::Integer) = Val(Int(dims))
+_maybe_val(dims) = dims
 _valof(::Val{D}) where D = D
 
 @inline Base.accumulate(op::F, a::StaticVector; dims = :, init = _InitialValue()) where {F} =
-    _accumulate(op, a, _maybeval(dims), init)
+    _accumulate(op, a, _maybe_val(dims), init)
 
 @inline Base.accumulate(op::F, a::StaticArray; dims, init = _InitialValue()) where {F} =
-    _accumulate(op, a, _maybeval(dims), init)
+    _accumulate(op, a, _maybe_val(dims), init)
 
 @inline function _accumulate(op::F, a::StaticArray, dims::Union{Val,Colon}, init) where {F}
     # Adjoin the initial value to `op`:
