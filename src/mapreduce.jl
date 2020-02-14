@@ -299,6 +299,18 @@ _valof(::Val{D}) where D = D
     _accumulate(op, a, _maybe_val(dims), init)
 
 @inline function _accumulate(op::F, a::StaticArray, dims::Union{Val,Colon}, init) where {F}
+    if isempty(a)
+        if init isa _InitialValue
+            # Deliberately not using `return_type` here, since this `eltype` is
+            # exact for the singleton element case (i.e., `op` will not be called).
+            return similar_type(a)()
+        else
+            # Using the type that _would_ be used if `size(a, dims) == 1`:
+            T = return_type(op, Tuple{typeof(init), eltype(a)})
+            return similar_type(a, T)()
+        end
+    end
+
     # Adjoin the initial value to `op`:
     rf(x, y) = x isa _InitialValue ? y : op(x, y)
 
