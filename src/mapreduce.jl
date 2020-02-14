@@ -309,7 +309,7 @@ _valof(::Val{D}) where D = D
         (init = (similar_type(a, Union{}, Size(0))(), init),),
     ) do (ys, acc), x
         y = rf(acc, x)
-        (vcat(ys, SA[y]), y)
+        (push(ys, y), y)
     end
     dims === (:) && return first(results)
 
