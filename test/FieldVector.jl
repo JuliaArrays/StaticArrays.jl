@@ -7,7 +7,7 @@
                 z::Float64
             end
 
-            StaticArrays.similar_type(::Type{Point3D}, ::Type{Float64}, s::Size{(3,)}) = Point3D
+            # No need to define similar_type for non-parametric FieldVector (#792)
         end)
 
         p = Point3D(1.0, 2.0, 3.0)
@@ -29,6 +29,8 @@
                       0.0 0.0 2.0]
 
         @test @inferred(m*p) === Point3D(2.0, 4.0, 6.0)
+        @test @inferred(SA[2.0 0.0 0.0;
+                           0.0 2.0 0.0]*p) === SVector((2.0, 4.0))
 
         @test @inferred(similar_type(Point3D)) == Point3D
         @test @inferred(similar_type(Point3D, Float64)) == Point3D
@@ -91,5 +93,21 @@
         @test length(x) == 1
         @test length(x[1]) == 2
         @test x.x == (1, 2)
+    end
+
+    @testset "FieldVector with parametric eltype and without similar_type" begin
+        eval(quote
+            struct FVT{T} <: FieldVector{2, T}
+                x::T
+                y::T
+            end
+
+            # No similar_type defined - test fallback codepath
+        end)
+
+        @test @inferred(similar_type(FVT{Float64}, Float32)) == SVector{2,Float32} # Fallback code path
+        @test @inferred(similar_type(FVT{Float64}, Size(2))) == FVT{Float64}
+        @test @inferred(similar_type(FVT{Float64}, Size(3))) == SVector{3,Float64}
+        @test @inferred(similar_type(FVT{Float64}, Float32, Size(3))) == SVector{3,Float32}
     end
 end
