@@ -13,7 +13,7 @@
                 zz::Float64
             end
 
-            StaticArrays.similar_type(::Type{Tensor3x3}, ::Type{Float64}, s::Size{(3,3)}) = Tensor3x3
+            # No need to define similar_type for non-parametric FieldMatrix (#792)
         end)
 
         p = Tensor3x3(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
