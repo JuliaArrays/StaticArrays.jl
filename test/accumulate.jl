@@ -15,6 +15,9 @@ using StaticArrays, Test
             @test cumsum(a) isa similar_type(a)
             @inferred cumsum(a)
         end
+        @test eltype(cumsum(T{0,Int8}(()))) == eltype(cumsum(Int8[]))
+        @test eltype(cumsum(T{1,Int8}((1)))) == eltype(cumsum(Int8[1]))
+        @test eltype(cumsum(T{2,Int8}((1, 2)))) == eltype(cumsum(Int8[1, 2]))
     end
 
     @testset "cumsum(::$label; dims=2)" for (label, T) in [
@@ -48,6 +51,10 @@ using StaticArrays, Test
         a = SA[1, 2, 3]
         @test cumprod(a)::SArray == cumprod(collect(a))
         @inferred cumprod(a)
+
+        @test eltype(cumsum(SA{Int8}[])) == eltype(cumsum(Int8[]))
+        @test eltype(cumsum(SA{Int8}[1])) == eltype(cumsum(Int8[1]))
+        @test eltype(cumsum(SA{Int8}[1, 2])) == eltype(cumsum(Int8[1, 2]))
     end
 
     @testset "empty vector with init" begin

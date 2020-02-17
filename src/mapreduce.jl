@@ -340,5 +340,7 @@ _valof(::Val{D}) where D = D
     return similar_type(a, eltype(data))(data)
 end
 
-@inline Base.cumsum(a::StaticArray; kw...) = accumulate(Base.add_sum, a; kw...)
-@inline Base.cumprod(a::StaticArray; kw...) = accumulate(Base.mul_prod, a; kw...)
+@inline Base.cumsum(a::StaticArray; kw...) =
+    accumulate(Base.add_sum, a; init = Base.reduce_empty(Base.add_sum, eltype(a)), kw...)
+@inline Base.cumprod(a::StaticArray; kw...) =
+    accumulate(Base.mul_prod, a; init = Base.reduce_empty(Base.mul_prod, eltype(a)), kw...)
