@@ -299,20 +299,13 @@ _valof(::Val{D}) where D = D
     _accumulate(op, a, _maybe_val(dims), init)
 
 @inline function _accumulate(op::F, a::StaticArray, dims::Union{Val,Colon}, init) where {F}
-    if isempty(a)
-        if init isa _InitialValue
-            # Deliberately not using `return_type` here, since this `eltype` is
-            # exact for the singleton element case (i.e., `op` will not be called).
-            return similar_type(a)()
-        else
-            # Using the type that _would_ be used if `size(a, dims) == 1`:
-            T = return_type(op, Tuple{typeof(init), eltype(a)})
-            return similar_type(a, T)()
-        end
-    end
-
     # Adjoin the initial value to `op`:
-    rf(x, y) = x isa _InitialValue ? y : op(x, y)
+    rf(x, y) = x isa _InitialValue ? Base.reduce_first(op, y) : op(x, y)
+
+    if isempty(a)
+        T = return_type(rf, Tuple{typeof(init), eltype(a)})
+        return similar_type(a, T)()
+    end
 
     # StaticArrays' `reduce` is `foldl`:
     results = _reduce(
@@ -340,7 +333,5 @@ _valof(::Val{D}) where D = D
     return similar_type(a, eltype(data))(data)
 end
 
-@inline Base.cumsum(a::StaticArray; kw...) =
-    accumulate(Base.add_sum, a; init = Base.reduce_empty(Base.add_sum, eltype(a)), kw...)
-@inline Base.cumprod(a::StaticArray; kw...) =
-    accumulate(Base.mul_prod, a; init = Base.reduce_empty(Base.mul_prod, eltype(a)), kw...)
+@inline Base.cumsum(a::StaticArray; kw...) = accumulate(Base.add_sum, a; kw...)
+@inline Base.cumprod(a::StaticArray; kw...) = accumulate(Base.mul_prod, a; kw...)
