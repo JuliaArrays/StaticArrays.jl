@@ -16,7 +16,7 @@ struct SizedArray{S <: Tuple, T, N, M} <: StaticArray{S, T, N}
 
     function SizedArray{S, T, N, M}(a::Array) where {S, T, N, M}
         if length(a) != tuple_prod(S)
-            error("Dimensions $(size(a)) don't match static size $S")
+            throw(DimensionMismatch("Dimensions $(size(a)) don't match static size $S"))
         end
         if size(a) != size_to_tuple(S)
             Base.depwarn("Construction of `SizedArray` with an `Array` of a different

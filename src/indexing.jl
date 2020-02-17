@@ -141,7 +141,7 @@ end
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
-        if length(v) != L
+        @boundscheck if length(v) != L
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
         end
         @inbounds $(Expr(:block, exprs...))
@@ -152,7 +152,7 @@ end
     exprs = [:(a[$i] = v[$i]) for i = 1:L]
     return quote
         @_propagate_inbounds_meta
-        if Length(typeof(v)) != L
+        @boundscheck if Length(typeof(v)) != L
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
         end
         $(Expr(:block, exprs...))
@@ -176,7 +176,7 @@ end
     exprs = [:(a[inds[$i]] = v[$i]) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        if length(v) != $(prod(S))
+        @boundscheck if length(v) != $(prod(S))
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
@@ -187,7 +187,7 @@ end
     exprs = [:(a[inds[$i]] = v[$i]) for i = 1:prod(S)]
     return quote
         @_propagate_inbounds_meta
-        if Length(typeof(v)) != Length(s)
+        @boundscheck if Length(typeof(v)) != Length(s)
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
@@ -342,7 +342,7 @@ end
     end
 
     if v <: StaticArray
-        if Length(v) != prod(linearsizes)
+        @boundscheck if Length(v) != prod(linearsizes)
             return DimensionMismatch("tried to assign $(length(v))-element array to $newsize destination")
         end
         quote

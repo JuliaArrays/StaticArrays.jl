@@ -111,11 +111,10 @@ array operations as in the example below.
 abstract type FieldVector{N, T} <: FieldArray{Tuple{N}, T, 1} end
 
 @inline function (::Type{FA})(x::Tuple{Vararg{Any, N}}) where {N, FA <: FieldArray}
-   if length(FA) == length(x)
-      FA(x...)
-   else
-      throw(DimensionMismatch("No precise constructor for $FA found. Length of input was $(length(x))."))
-   end
+    @boundscheck if length(FA) != length(x)
+        throw(DimensionMismatch("No precise constructor for $FA found. Length of input was $(length(x))."))
+    end
+    return FA(x...)
 end
 
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)
