@@ -50,6 +50,28 @@ end
     end
 end
 
+"""
+    SArray{S, T, N, L}(undef)
+    SArray{S, T, N}(undef)
+    SArray{S, T}(undef)
+"""
+@inline SArray{S, T, N, L}(::UndefInitializer) where {S <: Tuple, T, N, L} = 
+    SArray{S, T, N, L}(Array{T}(undef, size_to_tuple(S) ) )
+
+@generated function SArray{S, T, N}(::UndefInitializer) where {S <: Tuple, T, N}
+    return quote
+        @_inline_meta
+        SArray{S, T, N, $(tuple_prod(S)) }(undef)
+    end
+end
+
+@generated function SArray{S, T}(::UndefInitializer) where {S <: Tuple, T}
+    return quote
+        @_inline_meta
+        SArray{S, T, N, $(tuple_length(S)), $(tuple_prod(S)) }(undef)
+    end
+end
+
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 ####################
