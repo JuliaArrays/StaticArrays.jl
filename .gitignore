@@ -2,4 +2,5 @@
 *.jl.*.cov
 *.jl.mem
 /Manifest.toml
+/benchmark/Manifest.toml
 /docs/Manifest.toml
