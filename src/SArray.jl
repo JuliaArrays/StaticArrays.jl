@@ -54,6 +54,11 @@ end
     SArray{S, T, N, L}(undef)
     SArray{S, T, N}(undef)
     SArray{S, T}(undef)
+    SArray{S}(undef)
+    SVector{S, T}(undef)
+    SVector{S}(undef)
+    SMatrix{S1, S2, T}(undef)
+    SMatrix{S1, S2}(undef)
 """
 @inline SArray{S, T, N, L}(::UndefInitializer) where {S <: Tuple, T, N, L} = 
     SArray{S, T, N, L}(Array{T}(undef, size_to_tuple(S) ) )
@@ -68,9 +73,20 @@ end
 @generated function SArray{S, T}(::UndefInitializer) where {S <: Tuple, T}
     return quote
         @_inline_meta
-        SArray{S, T, N, $(tuple_length(S)), $(tuple_prod(S)) }(undef)
+        SArray{S, T, $(tuple_length(S)), $(tuple_prod(S)) }(undef)
     end
 end
+
+@generated function SArray{S}(::UndefInitializer) where {S <: Tuple}
+    return quote
+        Base.@_inline_meta
+        SArray{S, Float32, $(tuple_length(S)), $(tuple_prod(S)) }(undef)
+    end
+end
+
+@inline SVector{S}(::UndefInitializer) where {S} = SVector{S, Float32}(undef)
+@inline SMatrix{S1, S2}(::UndefInitializer) where {S1, S2} = SMatrix{S1, S2, Float32}(undef)
+
 
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
