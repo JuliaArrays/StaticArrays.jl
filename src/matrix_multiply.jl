@@ -4,7 +4,7 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 # Manage dispatch of * and mul!
 # TODO Adjoint? (Inner product?)
 
-@inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
+@inline *(A::StaticMatrix, B::AbwtractVector) = _mul(Size(A), A, B)
 @inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
@@ -19,6 +19,10 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
 #@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
+@inline mul!(dest::StaticMatrix, A::Transpose{<:Any,<:StaticMatrix}, B::StaticMatrix) =
+    _mul!(Size(dest), dest, Size(A), Size(B), A, B, true, false)
+@inline mul!(dest::StaticVector, A::Transpose{<:Any,<:StaticMatrix}, B::StaticVector) =
+    _tmul!(Size(dest), dest, Size(A.parent), Size(B), A.parent, B, true, false)
 
 
 
@@ -210,6 +214,7 @@ end
     end
 end
 
+
 # TODO aliasing problems if c === b?
 @generated function _mul!(::Size{sc}, c::StaticVector, ::Size{sa}, ::Size{sb}, a::StaticMatrix, b::StaticVector) where {sa, sb, sc}
     if sb[1] != sa[2] || sc[1] != sa[1]
@@ -284,6 +289,23 @@ end
     end
 end
 
+@inline mul_blas!(Sc::Size{s}, c::SizedArray{<:Any,T},
+        Sa::Size{sa}, Sb::Size{sb},
+        a::SizedArray{<:Any,T}, b::SizedArray{<:Any,T},
+        α::Real=one(T), β::Real=zero(T)) where {s,sa,sb, T <: BlasFloat} =
+    BLAS.gemm!('N','N', α, a.data, b.data, β , c.data)
+
+@inline mul_blas!(Sc::Size{s}, c::SizedArray{<:Any,T},
+        Sa::Size{sa}, Sb::Size{sb},
+        a::Transpose{<:Any, <:SizedArray}, b::SizedArray{<:Any,T},
+        α::Real=one(T), β::Real=zero(T)) where {s,sa,sb, T <: BlasFloat} =
+    BLAS.gemm!('T','N', α, a.parent.data, b.data, β , c.data)
+
+@inline mul_blas!(Sc::Size{s}, c::StaticMatrix{<:Any, <:Any, T},
+        Sa::Size{sa}, Sb::Size{sb},
+        a::Transpose{<:Any, <:StaticMatrix}, b::StaticMatrix{<:Any, <:Any, T},
+        α::Real=one(T), β::Real=zero(T)) where {s,sa,sb, T <: BlasFloat} =
+    BLAS.gemm!('T','N', α, a.parent, b, β , c)
 
 @generated function mul_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T},
         ::Size{sa}, ::Size{sb},
