@@ -40,3 +40,22 @@ length_val(a::Type{T}) where {T<:StaticArrayLike} = length_val(Size(T))
         @inbounds return $(Expr(:tuple, exprs...))
     end
 end
+
+# promote() to SArray
+@inline Base.promote_rule(::Type{<: SVector{S, T} },
+                        y::Type{<: AbstractArray{T} } ) where {S, T} = (@boundscheck length(y) == S || error();
+                                                                        SVector{S, T} )
+@inline Base.promote_rule(::Type{<: SVector{S, T1} },
+                        ::Type{<: AbstractArray{T2} } ) where {S, T1, T2} = SVector{S, promote_type(T1, T2) }
+
+@inline Base.promote_rule(::Type{<: SMatrix{S1, S2, T} },
+                        y::Type{<: AbstractArray{T} } ) where {S1, S2, T} = (@boundscheck length(y) == S1 * S2 || error();
+                                                                             SMatrix{S1, S2, T} )
+@inline Base.promote_rule(::Type{<: SMatrix{S1, S2, T1} },
+                        ::Type{<: AbstractArray{T2} } ) where {S1, S2, T1, T2} = SMatrix{S1, S2, promote_type(T1, T2) }
+
+@inline Base.promote_rule(::Type{<: SArray{S, T} },
+                        y::Type{<: AbstractArray{T} } ) where {S, T} = (@boundscheck length(y) == prod(size(S)) || error();
+                                                                        SArray{S, T} )
+@inline Base.promote_rule(::Type{<: SArray{S, T1} },
+                        ::Type{<: AbstractArray{T2} } ) where {S, T1, T2} = SArray{S, promote_type(T1, T2) }
