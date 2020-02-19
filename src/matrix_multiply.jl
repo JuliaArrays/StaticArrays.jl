@@ -285,7 +285,10 @@ end
 end
 
 
-@generated function mul_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T}, ::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, T}, b::StaticMatrix{<:Any, <:Any, T}) where {s,sa,sb, T <: BlasFloat}
+@generated function mul_blas!(::Size{s}, c::StaticMatrix{<:Any, <:Any, T},
+        ::Size{sa}, ::Size{sb},
+        a::StaticMatrix{<:Any, <:Any, T}, b::StaticMatrix{<:Any, <:Any, T},
+        alpha::Real=one(T), beta::Real=zero(T)) where {s,sa,sb, T <: BlasFloat}
     if sb[1] != sa[2] || sa[1] != s[1] || sb[2] != s[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $s"))
     end
@@ -316,8 +319,6 @@ end
         end
 
         return quote
-            alpha = one(T)
-            beta = zero(T)
             transA = 'N'
             transB = 'N'
             m = $(sa[1])
