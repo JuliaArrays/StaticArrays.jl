@@ -224,6 +224,8 @@ end
 # Port of https://www.geometrictools.com/GTEngine/Include/Mathematics/GteSymmetricEigensolver3x3.h
 # released by David Eberly, Geometric Tools, Redmond WA 98052
 # under the Boost Software License, Version 1.0 (included at the end of this file)
+# The original documentation states
+# (see https://www.geometrictools.com/Documentation/RobustEigenSymmetric3x3.pdf )
 # [This] is an implementation of Algorithm 8.2.3 (Symmetric QR Algorithm) described in
 # Matrix Computations,2nd edition, by G. H. Golub and C. F. Van Loan, The Johns Hopkins
 # University Press, Baltimore MD, Fourth Printing 1993. Algorithm 8.2.1 (Householder
