@@ -1,6 +1,8 @@
 *.jl.cov
 *.jl.*.cov
 *.jl.mem
+/.benchmarkci
 /Manifest.toml
+/benchmark/*.json
 /benchmark/Manifest.toml
 /docs/Manifest.toml
