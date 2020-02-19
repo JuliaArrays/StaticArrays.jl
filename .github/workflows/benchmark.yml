@@ -14,7 +14,7 @@ jobs:
       - name: Install dependencies
         run: julia -e 'using Pkg; pkg"add PkgBenchmark BenchmarkCI@0.1"'
       - name: Run benchmarks
-        run: julia -e 'using BenchmarkCI; BenchmarkCI.judge(baseline = "origin/tkf/pkgbenchmark")'
+        run: julia -e 'using BenchmarkCI; BenchmarkCI.judge()'
       - name: Post results
         run: julia -e 'using BenchmarkCI; BenchmarkCI.postjudge()'
         env:
