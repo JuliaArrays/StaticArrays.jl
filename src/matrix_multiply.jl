@@ -4,7 +4,7 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 # Manage dispatch of * and mul!
 # TODO Adjoint? (Inner product?)
 
-@inline *(A::StaticMatrix, B::AbwtractVector) = _mul(Size(A), A, B)
+@inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
 @inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
