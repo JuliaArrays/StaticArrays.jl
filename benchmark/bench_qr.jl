@@ -4,7 +4,7 @@ using BenchmarkTools
 using LinearAlgebra
 using StaticArrays
 
-suite = BenchmarkGroup()
+const suite = BenchmarkGroup()
 
 for K = 1:22
     a = rand(SMatrix{K,K,Float64,K*K})
