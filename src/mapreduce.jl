@@ -285,3 +285,53 @@ end
         @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
     end
 end
+
+struct _InitialValue end
+
+_maybe_val(dims::Integer) = Val(Int(dims))
+_maybe_val(dims) = dims
+_valof(::Val{D}) where D = D
+
+@inline Base.accumulate(op::F, a::StaticVector; dims = :, init = _InitialValue()) where {F} =
+    _accumulate(op, a, _maybe_val(dims), init)
+
+@inline Base.accumulate(op::F, a::StaticArray; dims, init = _InitialValue()) where {F} =
+    _accumulate(op, a, _maybe_val(dims), init)
+
+@inline function _accumulate(op::F, a::StaticArray, dims::Union{Val,Colon}, init) where {F}
+    # Adjoin the initial value to `op`:
+    rf(x, y) = x isa _InitialValue ? Base.reduce_first(op, y) : op(x, y)
+
+    if isempty(a)
+        T = return_type(rf, Tuple{typeof(init), eltype(a)})
+        return similar_type(a, T)()
+    end
+
+    # StaticArrays' `reduce` is `foldl`:
+    results = _reduce(
+        a,
+        dims,
+        (init = (similar_type(a, Union{}, Size(0))(), init),),
+    ) do (ys, acc), x
+        y = rf(acc, x)
+        # Not using `push(ys, y)` here since we need to widen element type as
+        # we iterate.
+        (vcat(ys, SA[y]), y)
+    end
+    dims === (:) && return first(results)
+
+    ys = map(first, results)
+    # Now map over all indices of `a`.  Since `_map` needs at least
+    # one `StaticArray` to be passed, we pass `a` here, even though
+    # the values of `a` are not used.
+    data = _map(a, CartesianIndices(a)) do _, CI
+        D = _valof(dims)
+        I = Tuple(CI)
+        J = setindex(I, 1, D)
+        ys[J...][I[D]]
+    end
+    return similar_type(a, eltype(data))(data)
+end
+
+@inline Base.cumsum(a::StaticArray; kw...) = accumulate(Base.add_sum, a; kw...)
+@inline Base.cumprod(a::StaticArray; kw...) = accumulate(Base.mul_prod, a; kw...)
