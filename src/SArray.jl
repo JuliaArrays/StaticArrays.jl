@@ -55,6 +55,7 @@ end
 ####################
 ## SArray methods ##
 ####################
+@inline SArray{S, T, N, L}(x::SArray{S, T, N, L} ) where {S, T, N, L} = x
 
 @propagate_inbounds function getindex(v::SArray, i::Int)
     v.data[i]
