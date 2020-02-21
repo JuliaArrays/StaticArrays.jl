@@ -21,7 +21,7 @@ for f in [det, inv, exp]
     for N in matrix_sizes
         SA = @SMatrix rand(N, N)
         A = Array(SA)
-        s2 = s1["$N"] = BenchmarkGroup()
+        s2 = s1[string(N, pad=2)] = BenchmarkGroup()
         s2["SMatrix"] = @benchmarkable $f($SA)
         s2["Matrix"] = @benchmarkable $f($A)
     end
@@ -35,7 +35,7 @@ for f in [*, \]
         SB = @SMatrix rand(N, N)
         A = Array(SA)
         B = Array(SB)
-        s2 = s1["$N"] = BenchmarkGroup()
+        s2 = s1[string(N, pad=2)] = BenchmarkGroup()
         s2["SMatrix"] = @benchmarkable $f($SA, $SB)
         s2["Matrix"] = @benchmarkable $f($A, $B)
     end
