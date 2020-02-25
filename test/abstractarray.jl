@@ -137,16 +137,20 @@ using StaticArrays, Test, LinearAlgebra
         @test convert(AbstractArray{Float64}, sv) isa SVector{2,Float64}
         @test convert(AbstractVector{Float64}, sv) isa SVector{2,Float64}
         @test convert(AbstractArray{Float64}, sv) == sv
+        @test convert(AbstractArray{Int}, sv) === sv
         sm = SMatrix{2,2}(1,2,3,4)
         @test convert(AbstractArray{Float64,2}, sm) isa SMatrix{2,2,Float64}
         @test convert(AbstractArray{Float64,2}, sm) == sm
+        @test convert(AbstractArray{Int,2}, sm) === sm
         mv = MVector(1, 2, 3)
         @test convert(AbstractArray{Float64}, mv) isa MVector{3,Float64}
         @test convert(AbstractVector{Float64}, mv) isa MVector{3,Float64}
         @test convert(AbstractArray{Float64}, mv) == mv
+        @test convert(AbstractArray{Int}, mv) === mv
         mm = MMatrix{2, 2}(1, 2, 3, 4)
         @test convert(AbstractArray{Float64,2}, mm) isa MMatrix{2,2,Float64}
         @test convert(AbstractArray{Float64,2}, mm) == mm
+        @test convert(AbstractArray{Int,2}, mm) === mm
     end
 end
 
