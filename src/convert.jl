@@ -11,6 +11,12 @@
 @inline convert(::Type{SA}, sa::SA) where {SA<:StaticArray} = sa
 @inline convert(::Type{SA}, x::Tuple) where {SA<:StaticArray} = SA(x) # convert -> constructor. Hopefully no loops...
 
+# support conversion to AbstractArray
+AbstractArray{T}(sa::StaticArray{S,T}) where {S,T} = sa
+AbstractArray{T,N}(sa::StaticArray{S,T,N}) where {S,T,N} = sa
+AbstractArray{T}(sa::StaticArray{S,U}) where {S,T,U} = similar_type(typeof(sa),T,Size(sa))(Tuple(sa))
+AbstractArray{T,N}(sa::StaticArray{S,U,N}) where {S,T,U,N} = similar_type(typeof(sa),T,Size(sa))(Tuple(sa))
+
 # Constructing a Tuple from a StaticArray
 @inline Tuple(a::StaticArray) = unroll_tuple(a, Length(a))
 

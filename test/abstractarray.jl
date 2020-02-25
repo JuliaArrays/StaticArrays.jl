@@ -129,6 +129,25 @@ using StaticArrays, Test, LinearAlgebra
         m = MVector(1, 2, 3)
         @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
     end
+
+    @testset "Conversion to AbstractArray" begin
+        # Issue #746
+        # conversion to AbstractArray changes the eltype from Int to Float64
+        sv = SVector(1,2)
+        @test convert(AbstractArray{Float64}, sv) isa SVector{2,Float64}
+        @test convert(AbstractVector{Float64}, sv) isa SVector{2,Float64}
+        @test convert(AbstractArray{Float64}, sv) == sv
+        sm = SMatrix{2,2}(1,2,3,4)
+        @test convert(AbstractArray{Float64,2}, sm) isa SMatrix{2,2,Float64}
+        @test convert(AbstractArray{Float64,2}, sm) == sm
+        mv = MVector(1, 2, 3)
+        @test convert(AbstractArray{Float64}, mv) isa MVector{3,Float64}
+        @test convert(AbstractVector{Float64}, mv) isa MVector{3,Float64}
+        @test convert(AbstractArray{Float64}, mv) == mv
+        mm = MMatrix{2, 2}(1, 2, 3, 4)
+        @test convert(AbstractArray{Float64,2}, mm) isa MMatrix{2,2,Float64}
+        @test convert(AbstractArray{Float64,2}, mm) == mm
+    end
 end
 
 @testset "vcat() and hcat()" begin
@@ -191,4 +210,3 @@ end
         @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
     end
 end
-
