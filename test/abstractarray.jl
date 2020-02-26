@@ -134,23 +134,49 @@ using StaticArrays, Test, LinearAlgebra
         # Issue #746
         # conversion to AbstractArray changes the eltype from Int to Float64
         sv = SVector(1,2)
-        @test convert(AbstractArray{Float64}, sv) isa SVector{2,Float64}
-        @test convert(AbstractVector{Float64}, sv) isa SVector{2,Float64}
+        @test @inferred(convert(AbstractArray{Float64}, sv)) isa SVector{2,Float64}
+        @test @inferred(convert(AbstractVector{Float64}, sv)) isa SVector{2,Float64}
         @test convert(AbstractArray{Float64}, sv) == sv
         @test convert(AbstractArray{Int}, sv) === sv
         sm = SMatrix{2,2}(1,2,3,4)
-        @test convert(AbstractArray{Float64,2}, sm) isa SMatrix{2,2,Float64}
+        @test @inferred(convert(AbstractArray{Float64,2}, sm)) isa SMatrix{2,2,Float64}
         @test convert(AbstractArray{Float64,2}, sm) == sm
         @test convert(AbstractArray{Int,2}, sm) === sm
         mv = MVector(1, 2, 3)
-        @test convert(AbstractArray{Float64}, mv) isa MVector{3,Float64}
-        @test convert(AbstractVector{Float64}, mv) isa MVector{3,Float64}
+        @test @inferred(convert(AbstractArray{Float64}, mv)) isa MVector{3,Float64}
+        @test @inferred(convert(AbstractVector{Float64}, mv)) isa MVector{3,Float64}
         @test convert(AbstractArray{Float64}, mv) == mv
         @test convert(AbstractArray{Int}, mv) === mv
         mm = MMatrix{2, 2}(1, 2, 3, 4)
-        @test convert(AbstractArray{Float64,2}, mm) isa MMatrix{2,2,Float64}
+        @test @inferred(convert(AbstractArray{Float64,2}, mm)) isa MMatrix{2,2,Float64}
         @test convert(AbstractArray{Float64,2}, mm) == mm
         @test convert(AbstractArray{Int,2}, mm) === mm
+
+        # Test some of the types in StaticMatrixLike
+        sym = Symmetric(SA[1 2; 2 3])
+        @test @inferred(convert(AbstractArray{Float64}, sym)) isa Symmetric{Float64,SMatrix{2,2,Float64,4}}
+        @test @inferred(convert(AbstractArray{Float64,2}, sym)) isa Symmetric{Float64,SMatrix{2,2,Float64,4}}
+        @test convert(AbstractArray{Float64}, sym) == sym
+        her = Hermitian(SA[1 2+im; 2-im 3])
+        @test @inferred(convert(AbstractArray{ComplexF64}, her)) isa Hermitian{ComplexF64,SMatrix{2,2,ComplexF64,4}}
+        @test convert(AbstractArray{ComplexF64}, her) == her
+        diag = Diagonal(SVector(1,2))
+        @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
+        @test convert(AbstractArray{Float64}, diag) == diag
+        # The following cases currently convert the SMatrix into an MMatrix, because
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static array
+        # trans = Transpose(SVector(1,2))
+        # @test @inferred(convert(AbstractArray{Float64}, trans)) isa Transpose{Float64,SVector{2,Float64}}
+        # adj = Adjoint(SVector(1,2))
+        # @test @inferred(convert(AbstractArray{Float64}, adj)) isa Adjoint{Float64,SVector{2,Float64}}
+        # uptri = UpperTriangular(SA[1 2; 0 3])
+        # @test @inferred(convert(AbstractArray{Float64}, uptri)) isa UpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        # lotri = LowerTriangular(SA[1 0; 2 3])
+        # @test @inferred(convert(AbstractArray{Float64}, lotri)) isa LowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+        # unituptri = UnitUpperTriangular(SA[1 2; 0 1])
+        # @test @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        # unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
+        # @test @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
     end
 end
 
