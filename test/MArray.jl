@@ -137,6 +137,18 @@
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
 
+        m = @MMatrix [0 0; 0 0]
+        m[1] = Int8(11)
+        m[2] = Int8(12)
+        m[3] = Int8(13)
+        m[4] = Int8(14)
+        @test m.data === (11, 12, 13, 14)
+
+        v = @MVector [1.,2.,3.]
+        v[1] = Float16(11)
+        @test v.data === (11., 2., 3.)
+
+        v = @MArray [1,2,3]
         @test_throws BoundsError setindex!(v, 4, -1)
         mm = @MArray zeros(3,3,3,3)
         @test_throws BoundsError setindex!(mm, 4, -1)
