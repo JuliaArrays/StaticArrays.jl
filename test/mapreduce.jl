@@ -49,6 +49,15 @@ using Statistics: mean
         @test mapreduce(x->x^2, max, sa; dims=2, init=-1.) == SMatrix{I,1}(mapreduce(x->x^2, max, a, dims=2, init=-1.))
     end
 
+    @testset "[map]foldl" begin
+        a = rand(4,3)
+        v1 = [2,4,6,8]; sv1 = SVector{4}(v1)
+        @test foldl(+, sv1) === foldl(+, v1)
+        @test foldl(+, sv1; init=0) === foldl(+, v1; init=0)
+        @test mapfoldl(-, +, sv1) === mapfoldl(-, +, v1)
+        @test mapfoldl(-, +, sv1; init=0) === mapfoldl(-, +, v1, init=0)
+    end
+
     @testset "implemented by [map]reduce and [map]reducedim" begin
         I, J, K = 2, 2, 2
         OSArray = SArray{Tuple{I,J,K}}  # original
