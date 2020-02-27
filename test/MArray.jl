@@ -142,9 +142,12 @@
         @test_throws BoundsError setindex!(mm, 4, -1)
         @test_throws BoundsError setindex!(mm, 4, 82)
 
-        # setindex with non-elbits type
-        m = MArray{Tuple{2,2,2}, String}(undef)
-        @test_throws ErrorException setindex!(m, "a", 1, 1, 1)
+        # setindex with non-bits eltype
+        m = fill("a", MMatrix{2,2, String})
+        m[1,1] = "b"
+        m[1,2] = "c"
+        @test m == ["b" "c";
+                    "a" "a"]
     end
 
     @testset "promotion" begin

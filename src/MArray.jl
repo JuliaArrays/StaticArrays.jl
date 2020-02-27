@@ -94,9 +94,14 @@ end
     if isbitstype(T)
         GC.@preserve v unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
     else
-        # This one is unsafe (#27)
-        # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
+        # This is inherently slow because we've got to rebuild a new Tuple to
+        # reassign to data.v.
+        #
+        # However it seems not possible to make fast without having some kind
+        # of mutable pseudo-container which is inlined as a part of the parent
+        # struct such that you can't access it separately. (A mutable
+        # FieldArray achieves this, but can't be parameterized on the size.)
+        @inbounds v.data = setindex(v.data, val, i)
     end
 
     return val
