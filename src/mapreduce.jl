@@ -202,7 +202,11 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 ## (map)foldl ##
 ################
 
-@inline mapfoldl(f, op::R, a::StaticArray; init = _InitialValue()) where {R} =
+# Using `where {R}` to force specialization. See:
+# https://docs.julialang.org/en/v1.5-dev/manual/performance-tips/#Be-aware-of-when-Julia-avoids-specializing-1
+# https://github.com/JuliaLang/julia/pull/33917
+
+@inline mapfoldl(f::F, op::R, a::StaticArray; init = _InitialValue()) where {F,R} =
     _mapfoldl(f, op, :, init, Size(a), a)
 @inline foldl(op::R, a::StaticArray; init = _InitialValue()) where {R} =
     _foldl(op, a, :, init)
