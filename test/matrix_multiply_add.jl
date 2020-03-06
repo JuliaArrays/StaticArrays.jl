@@ -1,111 +1,154 @@
+using Test
+using StaticArrays
+using LinearAlgebra
+using BenchmarkTools
 
-function test_muladd(a,b,c, α, β, test_transpose=true)
-    c0 = copy(c)
-    b0 = copy(b)
+# check_dims
+@test StaticArrays.check_dims(Size(4,), Size(4,3), Size(3,))
+@test !StaticArrays.check_dims(Size(4,), Size(4,3), Size(4,))
+@test !StaticArrays.check_dims(Size(4,), Size(3,4), Size(4,))
 
-    mul!(c,a,b)
-    @test c ≈ a*b
+@test StaticArrays.check_dims(Size(4,), Size(4,3), Size(3,1))
+@test StaticArrays.check_dims(Size(4,1), Size(4,3), Size(3,))
+@test StaticArrays.check_dims(Size(4,1), Size(4,3), Size(3,1))
+@test !StaticArrays.check_dims(Size(4,2), Size(4,3), Size(3,))
+@test !StaticArrays.check_dims(Size(4,), Size(4,3), Size(3,2))
+@test StaticArrays.check_dims(Size(4,2), Size(4,3), Size(3,2))
+@test !StaticArrays.check_dims(Size(4,2), Size(4,3), Size(3,3))
 
-    c .= c0
-    b .= b0
-    mul!(c,a,b,α,β)
-    @test c ≈ a*b*α + c0*β
-
-    @test (@allocated mul!(c,a,b)) == 0
-    @test (@allocated mul!(c,a,b,α,β)) == 0
-
-    if test_transpose
-        c .= c0
-        b .= b0
-        mul!(b, Transpose(a), c)
-        @test b ≈ a'c
-
-        c .= c0
-        b .= b0
-        mul!(b,Transpose(a),c,α,β)
-        @test b ≈ a'c*α + b0*β
-
-        @test (@allocated mul!(b,Transpose(a),c)) == 0
-        @test (@allocated mul!(b,Transpose(a),c,α,β)) == 0
+function test_multiply_add(N1,N2,ArrayType=MArray)
+    if ArrayType <: MArray
+        Mat = MMatrix
+        Vec = MVector
+    elseif ArrayType <: SizedArray
+        Mat = SizedMatrix
+        Vec = SizedVector
     end
+    A = rand(Mat{N1,N2})
+    At = Transpose(A)
+    b = rand(Vec{N2})
+    c = rand(Vec{N1})
+
+    # Parent
+    @test parent(A) === A
+    @test parent(At) === A
+    @test size(parent(At)) == (N1,N2)
+    @test parent(b') === b
+    @test size(parent(b')) == (N2,)
+
+    # TSize
+    ta = StaticArrays.TSize(A)
+    @test !StaticArrays.istranpose(ta)
+    @test size(ta) == (N1,N2)
+    @test Size(ta) == Size(N1,N2)
+    ta = StaticArrays.TSize(At)
+    @test StaticArrays.istranpose(ta)
+    @test size(ta) == (N2,N1)
+    @test Size(ta) == Size(N2,N1)
+    tb = StaticArrays.TSize(b')
+    @test StaticArrays.istranpose(tb)
+    ta = transpose(ta)
+    @test !StaticArrays.istranpose(ta)
+    @test size(ta) == (N1,N2)
+    @test Size(ta) == Size(N1,N2)
+
+    # A*b
+    mul!(c,A,b)
+    @test c ≈ A*b
+    mul!(c,A,b,1.0,0.0)
+    @test c ≈ A*b
+    mul!(c,A,b,1.0,1.0)
+    @test c ≈ 2A*b
+
+    # matrix-transpose × vector
+    mul!(b,At,c)
+    @test b ≈ A'c
+    mul!(b,At,c,2.0,0.0)
+    @test b ≈ 2A'c
+    mul!(b,At,c,1.0,2.0)
+    @test b ≈ 5A'c
+
+    bmark = @benchmark mul!($c,$A,$b) samples=10 evals=10
+    @test minimum(bmark).allocs == 0
+    b = @benchmark mul!($b,Transpose($A),$c) samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # outer product
+    C = rand(Mat{N1,N2})
+    a = rand(Vec{N1})
+    b = rand(Vec{N2})
+    mul!(C,a,b')
+    @test C ≈ a*b'
+    mul!(C,a,b',2.,0.)
+    @test C ≈ 2a*b'
+    mul!(C,a,b',1.,1.)
+    @test C ≈ 3a*b'
+
+    b = @benchmark mul!($C,$a,$b') samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # A × B
+    A = rand(Mat{N1,N2})
+    B = rand(Mat{N2,N2})
+    C = rand(Mat{N1,N2})
+    mul!(C,A,B)
+    @test C ≈ A*B
+    mul!(C,A,B,2.0,0.0)
+    @test C ≈ 2A*B
+    mul!(C,A,B,2.0,1.0)
+    @test C ≈ 4A*B
+
+    b = @benchmark mul!($C,$A,$B,1,0) samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # A'B
+    At = Transpose(A)
+    mul!(B,At,C)
+    @test B ≈ A'C
+    mul!(B,At,C,2.0,0.0)
+    @test B ≈ 2A'C
+    mul!(B,At,C,2.0,1.0)
+    @test B ≈ 4A'C
+
+    b = @benchmark mul!($B,Transpose($A),$C) samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # A*B'
+    Bt = Transpose(B)
+    mul!(C,A,Bt)
+    @test C ≈ A*B'
+    mul!(C,A,Bt,2.0,0.0)
+    @test C ≈ 2A*B'
+    mul!(C,A,Bt,2.0,1.0)
+    @test C ≈ 4A*B'
+
+    b = @benchmark mul!($C,$A,Transpose($B),1,2) samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # A'B'
+    B = rand(Mat{N1,N1})
+    C = rand(Mat{N2,N1})
+    mul!(C,Transpose(A),Transpose(B))
+    @test C ≈ A'B'
+    mul!(C,Transpose(A),Transpose(B),2.0,0.0)
+    @test C ≈ 2A'B'
+    mul!(C,Transpose(A),Transpose(B),2.0,1.0)
+    @test C ≈ 4A'B'
+
+    b = @benchmark mul!($C,Transpose($A),Transpose($B),1.0,2) samples=10 evals=10
+    @test minimum(b).allocs == 0
+
+    # Transpose Output
+    C = rand(Mat{N1,N2})
+    mul!(Transpose(C),Transpose(A),Transpose(B))
+    @test C' ≈ A'B'
+    b = @benchmark mul!(Transpose($C),Transpose($A),Transpose($B),1.0,2) samples=10 evals=10
+    @test minimum(b).allocs == 0
 end
 
-@testset "Matrix multiply-add" begin
-    α,β = 2.0, 1.0
-
-    # Test matrix multiplication
-    N1,N2 = 3,2
-    a = @MMatrix rand(N1,N2)
-    b = @MMatrix rand(N2,N2)
-    c = @MMatrix rand(N1,N2)
-    test_muladd(a, b, c, α, β)
-    test_muladd(a, b, c, 1, β)
-    test_muladd(a, b, c, α, 2)
-    test_muladd(a, b, c, α, Float32(3))
-
-    N1,N2 = 5,6
-    a = @MMatrix rand(N1,N2)
-    b = @MMatrix rand(N2,N2)
-    c = @MMatrix rand(N1,N2)
-    test_muladd(a, b, c, α, β)
-
-    N1,N2 = 14,16
-    a = @MMatrix rand(N1,N2)
-    b = @MMatrix rand(N2,N2)
-    c = @MMatrix rand(N1,N2)
-    test_muladd(a, b, c, α, β)
-
-    N1,N2 = 3,2
-    a = SizedMatrix{N1,N2}(rand(N1,N2))
-    b = SizedMatrix{N2,N2}(rand(N2,N2))
-    c = SizedMatrix{N1,N2}(rand(N1,N2))
-    test_muladd(a, b, c, α, β)
-
-    N1,N2 = 5,6
-    a = SizedMatrix{N1,N2}(rand(N1,N2))
-    b = SizedMatrix{N2,N2}(rand(N2,N2))
-    c = SizedMatrix{N1,N2}(rand(N1,N2))
-    test_muladd(a, b, c, α, β)
-
-    N1,N2 = 14,16
-    a = SizedMatrix{N1,N2}(rand(N1,N2))
-    b = SizedMatrix{N2,N2}(rand(N2,N2))
-    c = SizedMatrix{N1,N2}(rand(N1,N2))
-    test_muladd(a, b, c, α, β)
-
-    # Test matrix-vector multiplication
-    N = 15
-    a = @MMatrix rand(N,N)
-    b = @MVector rand(N)
-    c = @MVector rand(N)
-    test_muladd(a,b,c,α,β)
-
-    N = 15
-    a = rand(SizedMatrix{N,N})
-    b = rand(SizedVector{N})
-    c = rand(SizedVector{N})
-    test_muladd(a,b,c,α,β)
-
-    # Test outer products
-    N = 5
-    a = @MVector rand(N)
-    b = @MVector rand(N)
-    c = @MMatrix rand(N,N)
-    test_muladd(a,b',c,α,β, false)
-
-    N = 15
-    a = rand(SizedVector{N})
-    b = rand(SizedVector{N})
-    c = rand(SizedMatrix{N,N})
-    test_muladd(a,b',c,α,β, false)
+# Test the three different
+@testset "matrix multiply-add" begin
+    test_multiply_add(3,4)
+    test_multiply_add(5,6)
+    test_multiply_add(15,16)
 end
-
-#=
-Summary:
-All MMatrix sizes run without allocations
-All MMatrix sizes have low compile times
-
-Slow compilation:
-    MMatrix initialization
-    MMatrix multiplication (not in place)
-=#
