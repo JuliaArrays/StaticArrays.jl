@@ -13,17 +13,6 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 @inline *(A::StaticArray{Tuple{N,1},<:Any,2}, B::Adjoint{<:Any,<:StaticVector}) where {N} = vec(A) * B
 @inline *(A::StaticArray{Tuple{N,1},<:Any,2}, B::Transpose{<:Any,<:StaticVector}) where {N} = vec(A) * B
 
-# @inline mul!(dest::StaticVecOrMat, A::StaticVecOrMat, B::StaticVecOrMat) = mul
-# @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::StaticMatrix) = mul!(dest, reshape(A, Size(Size(A)[1], 1)), B)
-# @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
-# @inline mul!(dest::StaticVecOrMat, A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul!(Size(dest), dest, Size(A), Size(B), A, B)
-# #@inline *{TA<:LinearAlgebra.BlasFloat,Tb}(A::StaticMatrix{TA}, b::StaticVector{Tb})
-# @inline mul!(dest::StaticMatrix, A::Transpose{<:Any,<:StaticMatrix}, B::StaticMatrix) =
-#     _mul!(Size(dest), dest, Size(A), Size(B), A, B, true, false)
-# @inline mul!(dest::StaticVector, A::Transpose{<:Any,<:StaticMatrix}, B::StaticVector) =
-#     _tmul!(Size(dest), dest, Size(A.parent), Size(B), A.parent, B, true, false)
-
-
 
 # Implementations
 
@@ -184,7 +173,7 @@ end
     # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than (possibly) a mutable type. Avoids allocation == faster
     tmp_type_in = :(SVector{$(sb[1]), T})
     tmp_type_out = :(SVector{$(sa[1]), T})
-    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(Size(a), Size($(sb[1])), a,
+    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(TSize(a), TSize($(sb[1])), a,
                     $(Expr(:call, tmp_type_in, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))::$tmp_type_out)
                   for k2 = 1:sb[2]]
 
@@ -197,23 +186,6 @@ end
             vect_exprs...,
             :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
         ))
-    end
-end
-
-@generated function partly_unrolled_multiply(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticArray{<:Tuple, Tb}) where {sa, sb, Ta, Tb}
-    if sa[2] != sb[1]
-        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
-    end
-
-    if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
-    else
-        exprs = [:(zero(promote_op(matprod,Ta,Tb))) for k = 1:sa[1]]
-    end
-
-    return quote
-        $(Expr(:meta,:noinline))
-        @inbounds return SVector(tuple($(exprs...)))
     end
 end
 

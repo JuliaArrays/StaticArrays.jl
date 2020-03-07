@@ -14,6 +14,8 @@ TSize(A::Type{<:Transpose{<:Any,<:StaticArray}}) = TSize{size(A),true}()
 TSize(A::Type{<:Adjoint{<:Real,<:StaticArray}}) = TSize{size(A),true}()  # can't handle complex adjoints yet
 TSize(A::Type{<:StaticArray}) = TSize{size(A),false}()
 TSize(A::StaticArrayLike) = TSize(typeof(A))
+TSize(S::Size{s}, T=false) where s = TSize{s,T}()
+TSize(s::Number) = TSize(Size(s))
 istranpose(::TSize{<:Any,T}) where T = T
 size(::TSize{S}) where S = S
 Size(::TSize{S}) where S = Size{S}()
@@ -27,7 +29,13 @@ Base.parent(A::StaticArray) = A
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
-    α::Real, β::Real) = _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B), MulAddMul(α,β))
+    α::Ta, β::Tb) where {Ta<:Real,Tb<:Real} = _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B),
+    MulAddMul{false,false,Ta,Tb}(α,β))
+
+@inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike{T},
+        B::StaticVecOrMatLike{T}) where T =
+    _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B), MulAddMul{true,true,T,T}(one(T),zero(T)))
+
 
 "Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling."
 @inline multiplied_dimension(A::Type{<:StaticVecOrMatLike}, B::Type{<:StaticVecOrMatLike}) =
@@ -135,13 +143,13 @@ end
         return quote
             @_inline_meta
             muladd_unrolled_all!(Sc, c, Sa, Sb, a, b, _add)
-            # return c
+            return c
         end
     elseif mult_dim < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
         return quote
             @_inline_meta
             muladd_unrolled_chunks!(Sc, c, Sa, Sb, a, b, _add)
-            # return c
+            return c
         end
     else
         if can_blas
@@ -184,26 +192,49 @@ end
 end
 
 
-@generated function muladd_unrolled_chunks!(Sc::TSize{sc}, c::StaticMatrix,
-        Sa::TSize{sa}, Sb::TSize{sb},
-        a::StaticMatrixLike, b::StaticMatrixLike,
-        _add::MulAddMul) where {sa, sb, sc}
-    if !check_dims(Size(sc),Size(sa),Size(sb))
+@generated function muladd_unrolled_chunks!(Sc::TSize{sc}, c::StaticMatrix, ::TSize{sa,tA}, Sb::TSize{sb,tB},
+        a::StaticMatrix, b::StaticMatrix, _add::MulAddMul) where {sa, sb, sc, tA, tB}
+    if sb[1] != sa[2] || sa[1] != sc[1] || sb[2] != sc[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
+    #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
+
     # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than a mutable type. Avoids allocation == faster
     tmp_type = SVector{sb[1], eltype(c)}
+    vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(TSize{sa,tA}()), $(TSize{(sb[1],),tB}()),
+        a, $(Expr(:call, tmp_type, [:($(_lind(:b, Sb, i, k2))) for i = 1:sb[1]]...)))) for k2 = 1:sb[2]]
 
-    col_mult = [:(
-        _mul!(Sc, c, Sa, Sb, a,
-        $(Expr(:call, tmp_type,
-        [:($(_lind(:b, Sb, i, k2))) for i = 1:sb[1]]...)),_add,Val($k2))) for k2 = 1:sb[2]]
+    lhs = [:($(_lind(:c, Sc, k1, k2))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    # exprs = [:(c[$(LinearIndices(sc)[k1, k2])] = $(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    rhs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    exprs = _muladd_expr(lhs, rhs, _add)
 
     return quote
+        @_inline_meta
         α = _add.alpha
         β = _add.beta
-        return $(Expr(:block, col_mult...))
+        @inbounds $(Expr(:block, vect_exprs...))
+        @inbounds $(Expr(:block, exprs...))
+    end
+end
+
+# @inline partly_unrolled_multiply(Sa::Size, Sb::Size, a::StaticMatrix, b::StaticArray) where {sa, sb, Ta, Tb} =
+#     partly_unrolled_multiply(TSize(Sa), TSize(Sb), a, b)
+@generated function partly_unrolled_multiply(Sa::TSize{sa}, ::TSize{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticArray{<:Tuple, Tb}) where {sa, sb, Ta, Tb}
+    if sa[2] != sb[1]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
+    end
+
+    if sa[2] != 0
+        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:($(_lind(:a,Sa,k,j))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+    else
+        exprs = [:(zero(promote_op(matprod,Ta,Tb))) for k = 1:sa[1]]
+    end
+
+    return quote
+        $(Expr(:meta,:noinline))
+        @inbounds return SVector(tuple($(exprs...)))
     end
 end
 
