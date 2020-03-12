@@ -13,26 +13,27 @@ jobs:
       matrix:
         version:
           - '1.0'
-          - '1.1'
-          - '1.2'
           - '1.3'
-          - '1.4'
           - 'nightly'
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
         arch:
-          - x86
           - x64
-        exclude:
-          # Trim down the matrix with some excludes
-          # see https://github.community/t5/GitHub-Actions/Improve-matrix-exclusion-feature/td-p/32592
-          - {os: "macOS-latest", arch: "x32"}
-          - {version: "1.1", os: "macOS-latest"}
-          - {version: "1.2", os: "macOS-latest"}
-          - {version: "1.1", os: "windows-latest"}
-          - {version: "1.2", os: "windows-latest"}
+        include:
+          # Add some extra configurations to build matrix. See
+          # https://github.com/marketplace/actions/setup-julia-environment
+          # x86 testing
+          - {os: 'ubuntu-latest',  arch: 'x86', version: '1.0'     }
+          - {os: 'ubuntu-latest',  arch: 'x86', version: '1.3'     }
+          - {os: 'ubuntu-latest',  arch: 'x86', version: 'nightly' }
+          - {os: 'windows-latest', arch: 'x86', version: '1.0'     }
+          - {os: 'windows-latest', arch: 'x86', version: '1.3'     }
+          - {os: 'windows-latest', arch: 'x86', version: 'nightly' }
+          # additional version tests
+          - {os: 'ubuntu-latest',  arch: 'x64', version: '1.1'     }
+          - {os: 'ubuntu-latest',  arch: 'x64', version: '1.2'     }
     steps:
       - uses: actions/checkout@v1
       - uses: julia-actions/setup-julia@latest
