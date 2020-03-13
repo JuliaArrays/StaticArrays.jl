@@ -2,12 +2,11 @@
 
 *Statically sized arrays for Julia*
 
-[![Build Status](https://travis-ci.org/JuliaArrays/StaticArrays.jl.svg?branch=master)](https://travis-ci.org/JuliaArrays/StaticArrays.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/xabgh1yhsjxlp30d?svg=true)](https://ci.appveyor.com/project/JuliaArrays/staticarrays-jl)
+[![Build Status](https://github.com/JuliaArrays/StaticArrays.jl/workflows/CI/badge.svg)](https://github.com/JuliaArrays/StaticArrays.jl/actions?query=workflow%3ACI)
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 [![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/latest)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/latest)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia, using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
