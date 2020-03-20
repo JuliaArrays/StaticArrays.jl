@@ -77,21 +77,16 @@ using StaticArrays, Test, LinearAlgebra
         @test eigvals(Hermitian(m_c)) ≈ sort(m_d)
     end
 
-    # issue #523
-    @testset "2×2 degenerate cases" for (i, j) in ((1 , 1), (1, 2), (2, 1)), uplo in (:U, :L)
-        fmin = floatmin(Float64)
-        pfmin = prevfloat(fmin)
-        nfmin = nextfloat(fmin)
-        A = SMatrix{2,2,Float64}((i, 0, 0, j))
-        E = eigen(Symmetric(A, uplo))
-        @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
-        A = SMatrix{2,2,Float64}((i, pfmin, pfmin, j))
-        E = eigen(Symmetric(A, uplo))
-        @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
-        A = SMatrix{2,2,Float64}((i, fmin, fmin, j))
-        E = eigen(Symmetric(A, uplo))
-        @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
-        A = SMatrix{2,2,Float64}((i, nfmin, nfmin, j))
+    # issue #523, #694
+    zero = 0.0
+    smallest_non_zero = nextfloat(zero)
+    smallest_normal = floatmin(zero)
+    largest_subnormal = prevfloat(smallest_normal)
+    epsilon = eps(1.0)
+    one_p_epsilon = 1.0 + epsilon
+    degenerate = (zero, -1, 1, smallest_non_zero, smallest_normal, largest_subnormal, epsilon, one_p_epsilon, -one_p_epsilon)
+    @testset "2×2 degenerate cases" for (i, j, k) in zip(degenerate,degenerate,degenerate), uplo in (:U, :L)
+        A = SMatrix{2,2,Float64}((i, k, k, j))
         E = eigen(Symmetric(A, uplo))
         @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
     end
