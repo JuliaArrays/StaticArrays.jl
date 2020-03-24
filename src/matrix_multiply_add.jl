@@ -1,4 +1,21 @@
-import LinearAlgebra.MulAddMul
+# import LinearAlgebra.MulAddMul
+
+abstract type MulAddMul{T} end
+
+struct AlphaBeta{T} <: MulAddMul{T}
+    α::T
+    β::T
+    function AlphaBeta{T}(α,β) where T <: Real
+        new{T}(α,β)
+    end
+end
+@inline AlphaBeta(α::A,β::B) where {A,B} = AlphaBeta{promote_type(A,B)}(α,β)
+@inline alpha(ab::AlphaBeta) = ab.α
+@inline beta(ab::AlphaBeta) = ab.β
+
+struct NoMulAdd{T} <: MulAddMul{T} end
+@inline alpha(ma::NoMulAdd{T}) where T = one(T)
+@inline beta(ma::NoMulAdd{T}) where T = zero(T)
 
 """ Size that stores whether a Matrix is a Transpose
 Useful when selecting multiplication methods, and avoiding allocations when dealing with
@@ -29,35 +46,17 @@ Base.parent(A::StaticArray) = A
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
-    α::Ta, β::Tb) where {Ta<:Real,Tb<:Real} = _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B),
-    MulAddMul{false,false,Ta,Tb}(α,β))
+    α::Real, β::Real) = _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B),
+    AlphaBeta(α,β))
 
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike{T},
         B::StaticVecOrMatLike{T}) where T =
-    _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B), MulAddMul{true,true,T,T}(one(T),zero(T)))
+    _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B), NoMulAdd{T}())
 
 
 "Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling."
 @inline multiplied_dimension(A::Type{<:StaticVecOrMatLike}, B::Type{<:StaticVecOrMatLike}) =
     prod(size(A)) * size(B,2)
-
-""" Combine left and right sides of an assignment expression, short-cutting
-        lhs = α * rhs + β * lhs,
-    element-wise.
-If α = 1, the multiplication by α is removed. If β = 0, the second rhs term is removed.
-"""
-function _muladd_expr(lhs::Array{Expr}, rhs::Array{Expr}, ::Type{<:MulAddMul{Tα,Tβ}}) where {Tα,Tβ}
-    @assert length(lhs) == length(rhs)
-    n = length(rhs)
-    if !Tα # not 1
-        rhs = [:(α * $(expr)) for expr in rhs]
-    end
-    if !Tβ # not 0
-        rhs = [:($(lhs[k]) * β + $(rhs[k])) for k = 1:n]
-    end
-    exprs = [:($(lhs[k]) = $(rhs[k])) for k = 1:n]
-    return exprs
-end
 
 "Validate the dimensions of a matrix multiplication, including matrix-vector products"
 function check_dims(::Size{sc}, ::Size{sa}, ::Size{sb}) where {sa,sb,sc}
@@ -71,6 +70,28 @@ function check_dims(::Size{sc}, ::Size{sa}, ::Size{sb}) where {sa,sb,sc}
         end
     end
     return true
+end
+
+""" Combine left and right sides of an assignment expression, short-cutting
+        lhs = α * rhs + β * lhs,
+    element-wise.
+If α = 1, the multiplication by α is removed. If β = 0, the second rhs term is removed.
+"""
+function _muladd_expr(lhs::Array{Expr}, rhs::Array{Expr}, ::Type{<:AlphaBeta})
+    @assert length(lhs) == length(rhs)
+    n = length(rhs)
+    rhs = [:(α * $(expr)) for expr in rhs]
+    rhs = [:($(lhs[k]) * β + $(rhs[k])) for k = 1:n]
+    exprs = [:($(lhs[k]) = $(rhs[k])) for k = 1:n]
+    _assign(lhs, rhs)
+    return exprs
+end
+
+@inline _muladd_expr(lhs::Array{Expr}, rhs::Array{Expr}, ::Type{<:MulAddMul}) = _assign(lhs, rhs)
+
+@inline function _assign(lhs::Array{Expr}, rhs::Array{Expr})
+    @assert length(lhs) == length(rhs)
+    [:($(lhs[k]) = $(rhs[k])) for k = 1:length(lhs)]
 end
 
 "Obtain an expression for the linear index of var[k,j], taking transposes into account"
@@ -102,17 +123,18 @@ end
 
     return quote
         # @_inline_meta
-        α = _add.alpha
-        β = _add.beta
+        # α = _add.alpha
+        # β = _add.beta
+        α = alpha(_add)
+        β = beta(_add)
         @inbounds $(Expr(:block, exprs...))
         return c
     end
 end
 
 # Outer product
-@generated function _mul!(::TSize{sc}, c::StaticMatrix, ::TSize{sa,false}, ::TSize{sb,true}, a::StaticVector,
-        b::StaticVector,
-        _add::MulAddMul) where {sa, sb, sc}
+@generated function _mul!(::TSize{sc}, c::StaticMatrix, ::TSize{sa,false}, ::TSize{sb,true},
+        a::StaticVector, b::StaticVector, _add::MulAddMul) where {sa, sb, sc}
     if sc[1] != sa[1] || sc[2] != sb[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
@@ -123,8 +145,8 @@ end
 
     return quote
         @_inline_meta
-        α = _add.alpha
-        β = _add.beta
+        α = alpha(_add)
+        β = beta(_add)
         @inbounds $(Expr(:block, exprs...))
         return c
     end
@@ -185,8 +207,10 @@ end
 
     return quote
         @_inline_meta
-        α = _add.alpha
-        β = _add.beta
+        # α = _add.alpha
+        # β = _add.beta
+        α = alpha(_add)
+        β = beta(_add)
         @inbounds $(Expr(:block, exprs...))
     end
 end
@@ -212,8 +236,10 @@ end
 
     return quote
         @_inline_meta
-        α = _add.alpha
-        β = _add.beta
+        # α = _add.alpha
+        # β = _add.beta
+        α = alpha(_add)
+        β = beta(_add)
         @inbounds $(Expr(:block, vect_exprs...))
         @inbounds $(Expr(:block, exprs...))
     end
@@ -248,7 +274,7 @@ function mul_blas!(::TSize{<:Any,false}, c::StaticMatrix, ::TSize{<:Any,tA}, ::T
     A = _get_raw_data(a)
     B = _get_raw_data(b)
     C = _get_raw_data(c)
-    BLAS.gemm!(mat_char(tA), mat_char(tB), T(_add.alpha), A, B, T(_add.beta), C)
+    BLAS.gemm!(mat_char(tA), mat_char(tB), T(alpha(_add)), A, B, T(beta(_add)), C)
 end
 
 # if C is transposed, transpose the entire expression
