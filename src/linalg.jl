@@ -102,7 +102,6 @@ end
 # because we do not have `SArray{Tuple{2,3}} <: StaticMatrix`.
 (::Type{SM})(I::UniformScaling) where {SM<:(StaticArray{Tuple{N,M}} where {N,M})} =
     _scalar_matrix(Size(SM), SM, I.λ)
-convert(T::Type{<:StaticArrayLike}, I::UniformScaling) = T(I)
 
 # Construct a matrix with the scalar λ on the diagonal and zeros off the
 # diagonal. The matrix can be non-square.

@@ -75,13 +75,6 @@ using LinearAlgebra: checksquare
         @test @inferred(SDiagonal{3}(2.0I))::SDiagonal{3,Float64} == 2I3x3
         @test @inferred(SDiagonal{3,Float64}(I))::SDiagonal{3,Float64} == I3x3
         @test @inferred(SDiagonal{3,Float32}(2.0I))::SDiagonal{3,Float32} == 2I3x3
-
-        # convert from UniformScaling falls back to constructors
-        @test @inferred(convert(SMatrix{2,2,Float64}, I)) === SA_F64[1 0; 0 1]
-        @test @inferred(convert(MMatrix{2,2,Float64}, I))::MMatrix{2,2,Float64} == SA[1 0; 0 1]
-        @test @inferred(convert(SMatrix{2,2}, I)) === SA{Bool}[1 0; 0 1]
-        @test @inferred(convert(SArray{Tuple{2,2}}, I)) === SA{Bool}[1 0; 0 1]
-        @test @inferred(convert(SDiagonal{2}, I)) === Diagonal{Bool,SArray{Tuple{2},Bool,1,2}}((1,1))
     end
 
     @testset "diagm()" begin
