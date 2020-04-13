@@ -7,6 +7,11 @@ using InteractiveUtils
 Random.seed!(42)
 include("testutil.jl")
 
+# Hook into Pkg.test so that tests from a single file can be run.  For example,
+# to run only the MVector and SVector tests, use:
+#
+#   Pkg.test("StaticArrays", test_args=["MVector", "SVector"])
+#
 enabled_tests = lowercase.(ARGS)
 function addtests(fname)
     key = lowercase(splitext(fname)[1])
