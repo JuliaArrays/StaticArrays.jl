@@ -87,30 +87,49 @@ end
 @inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
 @inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
 
+@inline _construct_sametype(a::Type, elements) = a(elements)
+@inline _construct_sametype(a, elements) = typeof(a)(elements)
+
 @inline one(m::StaticMatrixLike) = _one(Size(m), m)
 @inline one(::Type{SM}) where {SM<:StaticMatrixLike}= _one(Size(SM), SM)
 function _one(s::Size, m_or_SM)
     if (length(s) != 2) || (s[1] != s[2])
         throw(DimensionMismatch("multiplicative identity defined only for square matrices"))
     end
-    _scalar_matrix(s, m_or_SM, one(_eltype_or(m_or_SM, Float64)))
+    λ = one(_eltype_or(m_or_SM, Float64))
+    _construct_sametype(m_or_SM, _scalar_matrix_elements(s, λ))
+    # TODO: Bring back the use of _construct_similar here:
+    # _construct_similar(m_or_SM, s, _scalar_matrix_elements(s, λ))
+    #
+    # However, because _construct_similar uses `similar_type`, it will be
+    # breaking for some StaticMatrix types (in particular Rotations.RotMatrix)
+    # which must have similar_type return a general type able to hold any
+    # matrix in the full general linear group.
+    #
+    # (Generally we're stuck here and things like RotMatrix really need to
+    # override one() and zero() themselves: on the one hand, one(RotMatrix)
+    # should return a RotMatrix, but zero(RotMatrix) can not be a RotMatrix.
+    # The best StaticArrays can do is to use similar_type to return an SMatrix
+    # for both of these, and let the more specialized library define the
+    # correct algebraic properties.)
 end
 
 # StaticMatrix(I::UniformScaling)
-(::Type{SM})(I::UniformScaling) where {SM<:StaticMatrix} = _scalar_matrix(Size(SM), SM, I.λ)
+(::Type{SM})(I::UniformScaling) where {SM<:StaticMatrix} =
+    SM(_scalar_matrix_elements(Size(SM), I.λ))
 # The following oddity is needed if we want `SArray{Tuple{2,3}}(I)` to work
 # because we do not have `SArray{Tuple{2,3}} <: StaticMatrix`.
 (::Type{SM})(I::UniformScaling) where {SM<:(StaticArray{Tuple{N,M}} where {N,M})} =
-    _scalar_matrix(Size(SM), SM, I.λ)
+    SM(_scalar_matrix_elements(Size(SM), I.λ))
 
 # Construct a matrix with the scalar λ on the diagonal and zeros off the
 # diagonal. The matrix can be non-square.
-@generated function _scalar_matrix(s::Size{S}, m_or_SM, λ) where {S}
+@generated function _scalar_matrix_elements(s::Size{S}, λ) where {S}
     elements = Symbol[i == j ? :λ : :λzero for i in 1:S[1], j in 1:S[2]]
     return quote
         $(Expr(:meta, :inline))
         λzero = zero(λ)
-        _construct_similar(m_or_SM, s, tuple($(elements...)))
+        tuple($(elements...))
     end
 end
 
