@@ -1,57 +1,67 @@
 using StaticArrays, Test, Random, LinearAlgebra
 using InteractiveUtils
 
-# Allow no new ambiguities (see #18), unless you fix some old ones first!
-if VERSION >= v"1.0.0"
-    @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= 5
-end
-
 # We generate a lot of matrices using rand(), but unit tests should be
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
 # file order dependence)
 Random.seed!(42)
-
 include("testutil.jl")
-include("SVector.jl")
-include("MVector.jl")
-include("SMatrix.jl")
-include("MMatrix.jl")
-include("SArray.jl")
-include("MArray.jl")
-include("FieldVector.jl")
-include("FieldMatrix.jl")
-include("Scalar.jl")
-include("SUnitRange.jl")
-include("SizedArray.jl")
-include("SDiagonal.jl")
-include("SHermitianCompact.jl")
 
-include("custom_types.jl")
-include("convert.jl")
-include("core.jl")
-include("abstractarray.jl")
-include("indexing.jl")
-include("initializers.jl")
-Random.seed!(42); include("mapreduce.jl")
-Random.seed!(42); include("sort.jl")
-Random.seed!(42); include("accumulate.jl")
-Random.seed!(42); include("arraymath.jl")
-include("broadcast.jl")
-include("linalg.jl")
-Random.seed!(42); include("matrix_multiply.jl")
-Random.seed!(42); include("triangular.jl")
-include("det.jl")
-include("inv.jl")
-Random.seed!(42); include("solve.jl")
-Random.seed!(44); include("eigen.jl")
-include("expm.jl")
-include("sqrtm.jl")
-include("lyap.jl")
-Random.seed!(42); include("lu.jl")
-Random.seed!(42); include("qr.jl")
-Random.seed!(42); include("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
-include("deque.jl")
-include("flatten.jl")
-include("io.jl")
-include("svd.jl")
-include("deprecated.jl")
+# Hook into Pkg.test so that tests from a single file can be run.  For example,
+# to run only the MVector and SVector tests, use:
+#
+#   Pkg.test("StaticArrays", test_args=["MVector", "SVector"])
+#
+enabled_tests = lowercase.(ARGS)
+function addtests(fname)
+    key = lowercase(splitext(fname)[1])
+    if isempty(enabled_tests) || key in enabled_tests
+        Random.seed!(42)
+        include(fname)
+    end
+end
+
+addtests("SVector.jl")
+addtests("MVector.jl")
+addtests("SMatrix.jl")
+addtests("MMatrix.jl")
+addtests("SArray.jl")
+addtests("MArray.jl")
+addtests("FieldVector.jl")
+addtests("FieldMatrix.jl")
+addtests("Scalar.jl")
+addtests("SUnitRange.jl")
+addtests("SizedArray.jl")
+addtests("SDiagonal.jl")
+addtests("SHermitianCompact.jl")
+
+addtests("ambiguities.jl")
+addtests("custom_types.jl")
+addtests("convert.jl")
+addtests("core.jl")
+addtests("abstractarray.jl")
+addtests("indexing.jl")
+addtests("initializers.jl")
+addtests("mapreduce.jl")
+addtests("sort.jl")
+addtests("accumulate.jl")
+addtests("arraymath.jl")
+addtests("broadcast.jl")
+addtests("linalg.jl")
+addtests("matrix_multiply.jl")
+addtests("triangular.jl")
+addtests("det.jl")
+addtests("inv.jl")
+addtests("solve.jl")
+addtests("eigen.jl")
+addtests("expm.jl")
+addtests("sqrtm.jl")
+addtests("lyap.jl")
+addtests("lu.jl")
+addtests("qr.jl")
+addtests("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
+addtests("deque.jl")
+addtests("flatten.jl")
+addtests("io.jl")
+addtests("svd.jl")
+addtests("deprecated.jl")
