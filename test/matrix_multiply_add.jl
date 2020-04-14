@@ -2,28 +2,13 @@ using StaticArrays
 using LinearAlgebra
 using BenchmarkTools
 using Test
-# function benchmark_matmul(N1,N2,ArrayType=MArray)
-#     if ArrayType <: MArray
-#         Mat = MMatrix
-#         Vec = MVector
-#     elseif ArrayType <: SizedArray
-#         Mat = SizedMatrix
-#         Vec = SizedVector
-#     end
-#     α,β = 1.0, 1.0
-#     A = rand(Mat{N1,N2})
-#     B = rand(Mat{N2,N2})
-#     C = rand(Mat{N1,N2})
-#     println("C = A*B")
-#     @btime mul!($C,$A,$B)
-#     println("C = A*B + C")
-#     @btime mul!($C,$A,$B,$α,$β)
-#     println("B = A'C")
-#     @btime mul!($B,Transpose($A),$C)
-#     println("B = A'C + B")
-#     @btime mul!($B,Transpose($A),$C,$α,$β)
-# end
-# benchmark_matmul(20,20,SizedArray)
+
+macro test_noalloc(ex)
+    esc(quote
+        $ex
+        @test(@allocated($ex) == 0)
+    end)
+end
 
 # check_dims
 @test StaticArrays.check_dims(Size(4,), Size(4,3), Size(3,))
