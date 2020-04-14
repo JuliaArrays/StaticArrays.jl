@@ -26,13 +26,6 @@ macro testinf(ex)
     esc(:(@test $ex))
 end
 
-@testset "@testinf" begin
-    @testinf [1,2] == [1,2]
-    x = [1,2]
-    @testinf x == [1,2]
-    @testinf (@SVector [1,2]) == (@SVector [1,2])
-end
-
 function test_expand_error(ex)
     @test_throws LoadError macroexpand(@__MODULE__, ex)
 end
@@ -85,17 +78,6 @@ should_be_inlined(x) = x*x
 @noinline _should_not_be_inlined(x) = x*x
 should_not_be_inlined(x) = _should_not_be_inlined(x)
 
-@testset "@test_inlined" begin
-    @test_inlined should_be_inlined(1)
-    @test_inlined should_not_be_inlined(1) false
-    ts = @testset ErrorCounterTestSet "" begin
-        @test_inlined should_be_inlined(1) false
-        @test_inlined should_not_be_inlined(1)
-    end
-    @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
-end
-
-
 """
     @inferred_maybe_allow allow ex
 
@@ -107,5 +89,24 @@ macro inferred_maybe_allow(allow, ex)
         return esc(:($ex))
     else
         return esc(:(@inferred $allow $ex))
+    end
+end
+
+@testset "test utils" begin
+    @testset "@testinf" begin
+        @testinf [1,2] == [1,2]
+        x = [1,2]
+        @testinf x == [1,2]
+        @testinf (@SVector [1,2]) == (@SVector [1,2])
+    end
+
+    @testset "@test_inlined" begin
+        @test_inlined should_be_inlined(1)
+        @test_inlined should_not_be_inlined(1) false
+        ts = @testset ErrorCounterTestSet "" begin
+            @test_inlined should_be_inlined(1) false
+            @test_inlined should_not_be_inlined(1)
+        end
+        @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
     end
 end
