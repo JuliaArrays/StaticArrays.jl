@@ -47,7 +47,7 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
+            LUp = lu(A; check = false)
             det(LUp.U)*_parity(LUp.p)
         end
     else
@@ -62,7 +62,7 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
+            LUp = lu(A; check = false)
             d, s = logabsdet(LUp.U)
             d + log(s*_parity(LUp.p))
         end

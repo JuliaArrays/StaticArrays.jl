@@ -17,7 +17,7 @@ import Base: sqrt, exp, log
 using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
-                      factorize, ishermitian, issymmetric, isposdef, normalize,
+                      factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
                       normalize!, Eigen, det, logdet, cross, diff, qr, \
 using LinearAlgebra: checksquare
 
