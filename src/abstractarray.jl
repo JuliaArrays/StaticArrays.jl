@@ -191,7 +191,7 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 
 #--------------------------------------------------
 # Concatenation
-@inline vcat(a::StaticVecOrMatLike) = a
+@inline vcat(a::StaticMatrixLike) = a
 @inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _vcat(Size(a), Size(b), a, b)
 @inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = vcat(vcat(a,b), vcat(c...))
 # A couple of hacky overloads to avoid some vcat surprises.
