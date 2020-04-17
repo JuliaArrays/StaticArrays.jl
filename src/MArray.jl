@@ -97,10 +97,8 @@ end
         # This is inherently slow because we've got to rebuild a new Tuple to
         # reassign to data.v.
         #
-        # However it seems not possible to make fast without having some kind
-        # of mutable pseudo-container which is inlined as a part of the parent
-        # struct such that you can't access it separately. (A mutable
-        # FieldArray achieves this, but can't be parameterized on the size.)
+        # However it seems not possible to make fast, at least in julia 1.4
+        # TODO: Revisit if https://github.com/JuliaLang/julia/pull/34126 is merged
         @inbounds v.data = setindex(v.data, val, i)
     end
 
