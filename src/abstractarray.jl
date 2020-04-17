@@ -194,6 +194,11 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 @inline vcat(a::StaticVecOrMatLike) = a
 @inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _vcat(Size(a), Size(b), a, b)
 @inline vcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = vcat(vcat(a,b), vcat(c...))
+# A couple of hacky overloads to avoid some vcat surprises.
+# We can't really make this work a lot better in general without Base providing
+# a dispatch mechanism for output container type.
+@inline vcat(a::StaticVector, bs::Number...) = vcat(a, SVector(bs))
+@inline vcat(a::Number, b::StaticVector) = vcat(similar_type(b, typeof(a), Size(1))((a,)), b)
 
 @generated function _vcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Size(Sa)[2] != Size(Sb)[2]
@@ -222,6 +227,8 @@ end
 @inline hcat(a::StaticMatrixLike) = a
 @inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _hcat(Size(a), Size(b), a, b)
 @inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = hcat(hcat(a,b), hcat(c...))
+@inline hcat(a::StaticMatrix{1}, bs::Number...) = hcat(a, SMatrix{1,length(bs)}(bs))
+@inline hcat(a::Number, b::StaticMatrix{1}) = hcat(similar_type(b, typeof(a), Size(1))((a,)), b)
 
 @generated function _hcat(::Size{Sa}, ::Size{Sb}, a::StaticVecOrMatLike, b::StaticVecOrMatLike) where {Sa, Sb}
     if Sa[1] != Sb[1]
