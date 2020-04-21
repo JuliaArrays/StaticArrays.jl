@@ -23,7 +23,7 @@ using LinearAlgebra: checksquare
 
 export SOneTo
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
-export Scalar, SArray, SVector, SMatrix
+export Scalar, SArray, SVector, SMatrix, SUnitRange
 export MArray, MVector, MMatrix
 export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
