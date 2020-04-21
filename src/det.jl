@@ -47,8 +47,8 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A; check = false)
-            det(LUp.U)*_parity(LUp.p)
+            _, U, p = _lu(A, Val(true), false)
+            det(UpperTriangular(U))*_parity(p)
         end
     else
         :(@_inline_meta; det(Matrix(A)))

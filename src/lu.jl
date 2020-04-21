@@ -44,7 +44,7 @@ function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
 end
 
 # location of the first zero on the diagonal, 0 when not found
-function __first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
+function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
     if @generated
         quote
             $(map(i -> :(A[$i, $i] == zero(T) && return $i), 1:min(M, N))...)
@@ -58,18 +58,18 @@ function __first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
     end
 end
 
-function __first_zero_on_diagonal(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix})
-    __first_zero_on_diagonal(A.data)
+function _first_zero_on_diagonal(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix})
+    _first_zero_on_diagonal(A.data)
 end
 
-issuccess(F::LU) = __first_zero_on_diagonal(F.U) == 0
+issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
 
 @generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}
     if M*N ≤ 14*14
         quote
             L, U, P = __lu(A, pivot)
             if check
-                i = __first_zero_on_diagonal(U)
+                i = _first_zero_on_diagonal(U)
                 i == 0 || throw(SingularException(i))
             end
             L, U, P
