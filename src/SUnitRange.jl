@@ -26,7 +26,6 @@ end
 end
 
 # Shorten show for REPL use.
-show(io::IO, ::Type{SUnitRange}) = print(io, "SUnitRange")
 function show(io::IO, ::MIME"text/plain", ::SUnitRange{Start, L}) where {Start, L}
     print(io, "SUnitRange($Start,$(Start + L - 1))")
 end

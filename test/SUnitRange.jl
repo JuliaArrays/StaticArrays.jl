@@ -10,7 +10,4 @@
 
     @test_throws Exception StaticArrays.SUnitRange{1, -1}()
     @test_throws TypeError StaticArrays.SUnitRange{1, 1.5}()
-
-    ur_str = sprint(show, StaticArrays.SUnitRange)
-    @test ur_str == "SUnitRange"
 end

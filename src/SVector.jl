@@ -22,9 +22,6 @@ const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))
 
-# Simplified show for the type
-# show(io::IO, ::Type{SVector{N, T}}) where {N, T} = print(io, "SVector{$N,$T}") # TODO reinstate
-
 # Some more advanced constructor-like functions
 @inline zeros(::Type{SVector{N}}) where {N} = zeros(SVector{N,Float64})
 @inline ones(::Type{SVector{N}}) where {N} = ones(SVector{N,Float64})
