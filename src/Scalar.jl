@@ -24,5 +24,3 @@ end
 # A lot more compact than the default array show
 Base.show(io::IO, ::MIME"text/plain", x::Scalar{T}) where {T} = print(io, "Scalar{$T}(", x.data, ")")
 
-# Simplified show for the type
-show(io::IO, ::Type{Scalar{T}}) where {T} = print(io, "Scalar{T}")
