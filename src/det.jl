@@ -44,6 +44,13 @@ end
 
 det(F::LU) = det(F.U) * _parity(F.p)
 
+function logabsdet(A::Union{LowerTriangular{<:Any,<:StaticMatrix},
+                            UpperTriangular{<:Any,<:StaticMatrix}})
+    checksquare(A)
+    mapreduce(x -> (log(abs(x)), sign(x)), ((l1, s1), (l2, s2)) -> (l1 + l2, s1 * s2),
+              diag(A))
+end
+
 function logdet(F::LU)
     d, s = logabsdet(F.U)
     d + log(s * _parity(F.p))
