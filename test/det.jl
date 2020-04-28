@@ -29,12 +29,17 @@ using StaticArrays, Test, LinearAlgebra
     for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         SA = SMatrix{sz,sz,typ}(A)
-        @test det(A) ≈ det(SA)
+        @test det(A) ≈ det(SA) == det(lu(SA))
         if typ == Float64 && det(A) < 0
             A[:,1], A[:,2] = A[:,2], A[:,1]
             SA = SMatrix{sz,sz,typ}(A)
         end
-        @test logdet(A) ≈ logdet(SA)
+        @test logdet(A) ≈ logdet(SA) == logdet(lu(SA))
+        dA, sA = logabsdet(A)
+        dSA, sSA = logabsdet(SA)
+        dLU, sLU = logabsdet(lu(SA))
+        @test dA ≈ dSA == dLU
+        @test sA ≈ sSA == sLU
     end
 
     @test_throws DimensionMismatch det(@SMatrix [0; 1])

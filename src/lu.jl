@@ -84,7 +84,7 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
             L = similar_type(A, T2, Size($M, $(min(M,N))))(f.L)
             U = similar_type(A, T2, Size($(min(M,N)), $N))(f.U)
             p = similar_type(A, Int, Size($M))(f.p)
-            (L,U,p)
+            L, U, p
         end
     end
 end
