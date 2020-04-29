@@ -1,10 +1,9 @@
 @testset "SizedArray" begin
     @testset "Inner Constructors" begin
-        @test SizedArray{Tuple{2}, Int, 1}((3, 4)).data == [3, 4]
-        @test SizedArray{Tuple{2}, Int, 1}([3, 4]).data == [3, 4]
-        @test_deprecated SizedArray{Tuple{2, 2}, Int, 2}(collect(3:6)).data == collect(3:6)
-        @test size(SizedArray{Tuple{4, 5}, Int, 2}(undef).data) == (4, 5)
-        @test size(SizedArray{Tuple{4, 5}, Int}(undef).data) == (4, 5)
+        @test SizedArray{Tuple{2},Int,1,1,Vector{Int}}((3, 4)).data == [3, 4]
+        @test SizedArray{Tuple{2},Int,1,1,Vector{Int}}([3, 4]).data == [3, 4]
+        @test SizedArray{Tuple{2,2},Int,2,1,Vector{Int}}([3, 4, 5, 6]).data == [3, 4, 5, 6]
+        @test_throws DimensionMismatch SizedArray{Tuple{2,2,1},Int,3,2,Matrix{Int}}([1 2; 3 4]).data == [1 2; 3 4]
 
         # Bad input
         @test_throws Exception SArray{Tuple{1},Int,1}([2 3])
@@ -19,36 +18,47 @@
     end
 
     @testset "Outer Constructors" begin
+        @test SizedArray{Tuple{2},Int,1}([3, 4]).data == [3, 4]
+        @test SizedArray{Tuple{2},Int,1,1}([3, 4]).data == [3, 4]
+
         # From Array
+        @test @inferred(SizedArray{Tuple{2},Float64,1,1}([1,2]))::SizedArray{Tuple{2},Float64,1,1} == [1.0, 2.0]
         @test @inferred(SizedArray{Tuple{2},Float64,1}([1,2]))::SizedArray{Tuple{2},Float64,1,1} == [1.0, 2.0]
         @test @inferred(SizedArray{Tuple{2},Float64}([1,2]))::SizedArray{Tuple{2},Float64,1,1} == [1.0, 2.0]
         @test @inferred(SizedArray{Tuple{2}}([1,2]))::SizedArray{Tuple{2},Int,1,1} == [1,2]
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
-        @test_deprecated @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test_throws DimensionMismatch SizedArray{Tuple{4}}([1 2; 3 4])
         # Uninitialized
-        @test @inferred(SizedArray{Tuple{2,2},Int,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2}
-        @test @inferred(SizedArray{Tuple{2,2},Int}(undef)) isa SizedArray{Tuple{2,2},Int,2,2}
+        @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
+        @test @inferred(SizedArray{Tuple{2,2},Int,2,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
+        @test @inferred(SizedArray{Tuple{2,2},Int,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
+        @test @inferred(SizedArray{Tuple{2,2},Int}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
+        @test size(SizedArray{Tuple{4,5},Int,2}(undef).data) == (4, 5)
+        @test size(SizedArray{Tuple{4,5},Int}(undef).data) == (4, 5)
 
         # From Tuple
-        @test @inferred(SizedArray{Tuple{2},Float64,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1} == [1.0, 2.0]
-        @test @inferred(SizedArray{Tuple{2},Float64}((1,2)))::SizedArray{Tuple{2},Float64,1,1} == [1.0, 2.0]
-        @test @inferred(SizedArray{Tuple{2}}((1,2)))::SizedArray{Tuple{2},Int,1,1} == [1,2]
-        @test @inferred(SizedArray{Tuple{2,2}}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
+        @test @inferred(SizedArray{Tuple{2},Float64,1,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
+        @test @inferred(SizedArray{Tuple{2},Float64,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
+        @test @inferred(SizedArray{Tuple{2},Float64}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
+        @test @inferred(SizedArray{Tuple{2}}((1,2)))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
+        @test @inferred(SizedArray{Tuple{2,2}}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}} == [1 3; 2 4]
+        @test SizedArray{Tuple{2},Int,1}((3, 4)).data == [3, 4]
     end
 
     @testset "SizedVector and SizedMatrix" begin
-        @test @inferred(SizedVector{2}([1,2]))::SizedArray{Tuple{2},Int,1,1} == [1,2]
-        @test @inferred(SizedVector{2}((1,2)))::SizedArray{Tuple{2},Int,1,1} == [1,2]
+        @test @inferred(SizedVector{2}([1,2]))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
+        @test @inferred(SizedVector{2}((1,2)))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
         # Reshaping
-        @test_deprecated @inferred(SizedVector{2}([1 2]))::SizedArray{Tuple{2},Int,1,2} == [1,2]
+        @test @inferred(SizedVector{2}([1 2]))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
         # Back to Vector
         @test Vector(SizedVector{2}((1,2))) == [1,2]
         @test convert(Vector, SizedVector{2}((1,2))) == [1,2]
 
-        @test @inferred(SizedMatrix{2,2}([1 2; 3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
+        @test @inferred(SizedMatrix{2,2}([1 2; 3 4]))::SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}} == [1 2; 3 4]
         # Reshaping
-        @test_deprecated @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         @test @inferred(SizedMatrix{2,2}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
         # Back to Matrix
         @test Matrix(SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
@@ -84,7 +94,7 @@
         @test convert(Matrix, SMatrix{2,2}((1,2,3,4))) == [1 3; 2 4]
         @test convert(Array, SizedArray{Tuple{2,2,2,2}, Int}(ones(2,2,2,2))) == ones(2,2,2,2)
         # Conversion after reshaping
-        @test_deprecated Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
+        @test Array(SizedMatrix{2,2}([1,2,3,4])) == [1 3; 2 4]
         # Array(a::Array) makes a copy so this should work similarly
         a = [1 2; 3 4]
         @test Array(SizedMatrix{2,2}(a)) !== a
