@@ -117,4 +117,23 @@
         @test vec(sy) isa SizedArray{Tuple{8}, Float64}
         @test reshape(sy, Size(2,4)) isa SizedArray{Tuple{2, 4}, Float64}
     end
+
+    @testset "sized views" begin
+        x = rand(4,1,2)
+        y = SizedMatrix{4,2}(view(x, :, 1, :))
+        @test isa(y, SizedArray{Tuple{4,2},Float64,2,2,SubArray{Float64,2,Array{Float64,3},Tuple{Base.Slice{Base.OneTo{Int64}},Int64,Base.Slice{Base.OneTo{Int64}}},false}})
+        @test Array(y) isa Matrix{Float64}
+        @test Array(y) == x[:, 1, :]
+        @test convert(Array, y) isa Matrix{Float64}
+        @test convert(Array, y) == x[:, 1, :]
+
+        x2 = rand(10)
+        y2 = SizedMatrix{4,2}(view(x2, 1:8))
+        @test isa(y2, SizedArray{Tuple{4,2},Float64,2,1,SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true}})
+        @test Array(y2) isa Matrix{Float64}
+        @test Array(y2) == reshape(x2[1:8], 4, 2)
+        @test convert(Array, y2) isa Matrix{Float64}
+        @test convert(Array, y2) == reshape(x2[1:8], 4, 2)
+
+    end
 end
