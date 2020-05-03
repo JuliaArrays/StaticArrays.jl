@@ -58,6 +58,44 @@ using Statistics: mean
         @test mapfoldl(-, +, sv1; init=0) === mapfoldl(-, +, v1, init=0)
     end
 
+    @testset "empty array" begin
+        # issue #778
+        @test iszero(SVector{0,Int}())
+
+        @testset "$fold" for fold in [reduce, foldl]
+            @test fold(+, SVector{0,Bool}()) === 0
+            @test fold(nothing, SVector{0,Int}(), init=:INIT) === :INIT
+        end
+
+        @testset "$mapfold" for mapfold in [mapreduce, mapfoldl]
+            @test mapfold(identity, +, SVector{0,Bool}()) === 0
+            @test mapfold(abs, +, SVector{0,Bool}()) === 0
+            @test mapfold(nothing, nothing, SVector{0,Int}(), init=:INIT) === :INIT
+        end
+
+        @test mapreduce(
+            (a, b) -> a + b,
+            (a, b) -> a * b,
+            SVector{0,Int}(),
+            SVector{0,Int}();
+            init = :INIT,
+        ) == :INIT
+
+        # When there are multiple inputs, the error is thrown by
+        # StaticArrays.jl:
+        @test_throws(
+            ArgumentError("reducing over an empty collection is not allowed"),
+            mapreduce((a, b) -> a + b, (a, b) -> a * b, SVector{0,Int}(), SVector{0,Int}())
+        )
+
+        # When the mapping and/or reducing functions are unsupported,
+        # the error is thrown by `Base.mapreduce_empty`:
+        @test_throws(
+            ArgumentError("reducing over an empty collection is not allowed"),
+            mapreduce(nothing, nothing, SVector{0,Int}())
+        )
+    end
+
     @testset "implemented by [map]reduce and [map]reducedim" begin
         I, J, K = 2, 2, 2
         OSArray = SArray{Tuple{I,J,K}}  # original
