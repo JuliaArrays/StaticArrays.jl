@@ -33,6 +33,7 @@
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
+        @test @inferred(SizedArray{Tuple{2,2},Int,2,1}(undef)) isa SizedArray{Tuple{2,2},Int,2,1,Vector{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test size(SizedArray{Tuple{4,5},Int,2}(undef).data) == (4, 5)
@@ -44,6 +45,7 @@
         @test @inferred(SizedArray{Tuple{2},Float64}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
         @test @inferred(SizedArray{Tuple{2}}((1,2)))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
         @test @inferred(SizedArray{Tuple{2,2}}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}} == [1 3; 2 4]
+        @test @inferred(SizedArray{Tuple{2,2},Int,2,1}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,1,Vector{Int}} == [1 3; 2 4]
         @test SizedArray{Tuple{2},Int,1}((3, 4)).data == [3, 4]
     end
 
@@ -121,7 +123,8 @@
     @testset "sized views" begin
         x = rand(4,1,2)
         y = SizedMatrix{4,2}(view(x, :, 1, :))
-        @test isa(y, SizedArray{Tuple{4,2},Float64,2,2,SubArray{Float64,2,Array{Float64,3},Tuple{Base.Slice{Base.OneTo{Int64}},Int64,Base.Slice{Base.OneTo{Int64}}},false}})
+
+        @test isa(y, SizedArray{Tuple{4,2},Float64,2,2,<:SubArray{Float64,2}})
         @test Array(y) isa Matrix{Float64}
         @test Array(y) == x[:, 1, :]
         @test convert(Array, y) isa Matrix{Float64}
@@ -129,7 +132,7 @@
 
         x2 = rand(10)
         y2 = SizedMatrix{4,2}(view(x2, 1:8))
-        @test isa(y2, SizedArray{Tuple{4,2},Float64,2,1,SubArray{Float64,1,Array{Float64,1},Tuple{UnitRange{Int64}},true}})
+        @test isa(y2, SizedArray{Tuple{4,2},Float64,2,1,<:SubArray{Float64,1}})
         @test Array(y2) isa Matrix{Float64}
         @test Array(y2) == reshape(x2[1:8], 4, 2)
         @test convert(Array, y2) isa Matrix{Float64}
