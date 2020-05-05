@@ -3,6 +3,7 @@
         @test SizedArray{Tuple{2},Int,1,1,Vector{Int}}((3, 4)).data == [3, 4]
         @test SizedArray{Tuple{2},Int,1,1,Vector{Int}}([3, 4]).data == [3, 4]
         @test SizedArray{Tuple{2,2},Int,2,1,Vector{Int}}([3, 4, 5, 6]).data == [3, 4, 5, 6]
+        @test SizedArray{Tuple{},Int,0,1,Vector{Int}}((2,)).data == [2]
         @test_throws DimensionMismatch SizedArray{Tuple{2,2,1},Int,3,2,Matrix{Int}}([1 2; 3 4]).data == [1 2; 3 4]
 
         # Bad input
@@ -47,11 +48,17 @@
         @test @inferred(SizedArray{Tuple{2,2}}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}} == [1 3; 2 4]
         @test @inferred(SizedArray{Tuple{2,2},Int,2,1}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,1,Vector{Int}} == [1 3; 2 4]
         @test SizedArray{Tuple{2},Int,1}((3, 4)).data == [3, 4]
+
+        # Dimension 0
+        @test SizedArray{Tuple{},Int,0,1}((2,)).data == [2]
+        @test SizedArray{Tuple{},Int,0}((2,)).data == fill(2)
+        @test SizedArray{Tuple{},Int}((2,)).data == fill(2)
     end
 
     @testset "SizedVector and SizedMatrix" begin
         @test @inferred(SizedVector{2}([1,2]))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
         @test @inferred(SizedVector{2}((1,2)))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
+        @test @inferred(SizedVector{0,Int}(()))::SizedArray{Tuple{0},Int,1,1,Vector{Int}} == []
         # Reshaping
         @test @inferred(SizedVector{2}([1 2]))::SizedArray{Tuple{2},Int,1,1,Vector{Int}} == [1,2]
         # Back to Vector

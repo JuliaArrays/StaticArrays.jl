@@ -128,6 +128,13 @@ end
 @inline function SizedVector{S}(x::NTuple{S,T}) where {S,T}
     return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
 end
+@inline function SizedVector{S,T}(x::NTuple{S}) where {S,T}
+    return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
+end
+# disambiguation
+@inline function SizedVector{S}(a::StaticVector{S,T}) where {S,T}
+    return SizedVector{S,T}(a.data)
+end
 
 const SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M,Array{T,M}}
 
@@ -138,6 +145,13 @@ const SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M,Array{T,M}}
 end
 @inline function SizedMatrix{S1,S2}(x::NTuple{L,T}) where {S1,S2,T,L}
     return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
+end
+@inline function SizedMatrix{S1,S2,T}(x::NTuple{L}) where {S1,S2,T,L}
+    return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
+end
+# disambiguation
+@inline function SizedMatrix{S1,S2}(a::StaticMatrix{S1,S2,T}) where {S1,S2,T}
+    return SizedMatrix{S1,S2,T}(a.data)
 end
 
 Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
