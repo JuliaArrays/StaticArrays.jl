@@ -114,9 +114,10 @@
     end
 
     @testset "promotion" begin
-        @test @inferred(promote_type(SizedVector{1,Float64,1}, SizedVector{1,BigFloat,1})) == SizedVector{1,BigFloat,1}
-        @test @inferred(promote_type(SizedVector{2,Int,1}, SizedVector{2,Float64,1})) === SizedVector{2,Float64,1}
+        @test @inferred(promote_type(SizedVector{1,Float64}, SizedVector{1,BigFloat})) == SizedVector{1,BigFloat}
+        @test @inferred(promote_type(SizedVector{2,Int}, SizedVector{2,Float64})) === SizedVector{2,Float64}
         @test @inferred(promote_type(SizedMatrix{2,3,Float32,2}, SizedMatrix{2,3,Complex{Float64},2})) === SizedMatrix{2,3,Complex{Float64},2}
+        @test @inferred(promote_type(SizedArray{Tuple{2,2},Float64,2,2,Matrix{Float64}}, SizedArray{Tuple{2,2},BigFloat,2,2,Matrix{BigFloat}})) == SizedArray{Tuple{2,2},BigFloat,2,2,Matrix{BigFloat}}
     end
 
     @testset "reshaping" begin

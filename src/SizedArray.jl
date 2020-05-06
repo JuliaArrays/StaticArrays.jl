@@ -117,7 +117,7 @@ end
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
-const SizedVector{S,T,M} = SizedArray{Tuple{S},T,1,M,Array{T,M}}
+const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
     return SizedArray{Tuple{S},T,1,1,TData}(a)
@@ -136,7 +136,7 @@ end
     return SizedVector{S,T}(a.data)
 end
 
-const SizedMatrix{S1,S2,T,M} = SizedArray{Tuple{S1,S2},T,2,M,Array{T,M}}
+const SizedMatrix{S1,S2,T} = SizedArray{Tuple{S1,S2},T,2}
 
 @inline function SizedMatrix{S1,S2}(
     a::TData,
@@ -161,11 +161,21 @@ function promote_rule(
     ::Type{SizedArray{S,U,N,M,TDataB}},
 ) where {S,T,U,N,M,TDataA,TDataB}
     TU = promote_type(T, U)
-    return SizedArray{
-        S,
-        TU,
-        N,
-        M,
-        promote_type(TDataA, TDataB),
-    }
+    return SizedArray{S, TU, N, M, promote_type(TDataA, TDataB)}
+end
+
+function promote_rule(
+    ::Type{SizedArray{S,T,N,M}},
+    ::Type{SizedArray{S,U,N,M}},
+) where {S,T,U,N,M,}
+    TU = promote_type(T, U)
+    return SizedArray{S, TU, N, M}
+end
+
+function promote_rule(
+    ::Type{SizedArray{S,T,N}},
+    ::Type{SizedArray{S,U,N}},
+) where {S,T,U,N}
+    TU = promote_type(T, U)
+    return SizedArray{S, TU, N}
 end
