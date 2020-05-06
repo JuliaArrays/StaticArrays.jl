@@ -83,9 +83,9 @@ using StaticArrays, Test, LinearAlgebra
     smallest_normal = floatmin(zero)
     largest_subnormal = prevfloat(smallest_normal)
     epsilon = eps(1.0)
-    one_p_epsilon = 1.0 + epsilon
+    one_p_epsilon = nextfloat(1.0)
     degenerate = (zero, -1, 1, smallest_non_zero, smallest_normal, largest_subnormal, epsilon, one_p_epsilon, -one_p_epsilon)
-    @testset "2×2 degenerate cases" for (i, j, k) in zip(degenerate,degenerate,degenerate), uplo in (:U, :L)
+    @testset "2×2 degenerate cases" for (i, j, k) in Iterators.product(degenerate,degenerate,degenerate), uplo in (:U, :L)
         A = SMatrix{2,2,Float64}((i, k, k, j))
         E = eigen(Symmetric(A, uplo))
         @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
