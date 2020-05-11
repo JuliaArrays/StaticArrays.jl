@@ -137,6 +137,8 @@
         @test Array(y) == x[:, 1, :]
         @test convert(Array, y) isa Matrix{Float64}
         @test convert(Array, y) == x[:, 1, :]
+        y[3, 2] = 18
+        @test x[3, 1, 2] == 18
 
         x2 = rand(10)
         y2 = SizedMatrix{4,2}(view(x2, 1:8))
