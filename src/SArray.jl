@@ -66,7 +66,7 @@ Base.dataids(::SArray) = ()
 
 # See #53
 Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)
-Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) where {S,T,D,L} =
+Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SA}) where {S,T,D,L,SA<:SArray{S,T,D,L}} =
     Ptr{T}(Base.unsafe_convert(Ptr{SArray{S,T,D,L}}, a))
 
 macro SArray(ex)
