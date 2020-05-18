@@ -27,6 +27,11 @@
 
         @test SArray(SArray{Tuple{2}}(1,2)) === SArray{Tuple{2}}(1,2)
 
+        @test SArray{Tuple{}}(i for i in 1:1).data === (1,)
+        @test SArray{Tuple{3}}(i for i in 1:3).data === (1,2,3)
+        @test SArray{Tuple{3}}(float(i) for i in 1:3).data === (1.0,2.0,3.0)
+        @test SArray{Tuple{2,3}}(i+10j for i in 1:2, j in 1:3).data === (11,12,21,22,31,32)
+
         @test ((@SArray [1])::SArray{Tuple{1}}).data === (1,)
         @test ((@SArray [1,2])::SArray{Tuple{2}}).data === (1,2)
         @test ((@SArray Float64[1,2,3])::SArray{Tuple{3}}).data === (1.0, 2.0, 3.0)

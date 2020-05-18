@@ -50,6 +50,34 @@ end
     end
 end
 
+@generated function (::Type{SArray{S, T}})(gen::Base.Generator) where {S <: Tuple, T}
+    stmts = [:(Base.@_inline_meta)]
+    args = []
+    iter = :(iterate(gen))
+    for i in CartesianIndices(size_to_tuple(S))
+        el = Symbol(:el, i)
+        push!(stmts, :(($el,st) = $iter))
+        push!(args, el)
+        iter = :(iterate(gen,st))
+    end
+    push!(stmts, :(SArray{S, T}($(args...))))
+    Expr(:block, stmts...)
+end
+
+@generated function (::Type{SArray{S}})(gen::Base.Generator) where {S <: Tuple}
+    stmts = [:(Base.@_inline_meta)]
+    args = []
+    iter = :(iterate(gen))
+    for i in CartesianIndices(size_to_tuple(S))
+        el = Symbol(:el, i)
+        push!(stmts, :(($el,st) = $iter))
+        push!(args, el)
+        iter = :(iterate(gen,st))
+    end
+    push!(stmts, :(SArray{S}($(args...))))
+    Expr(:block, stmts...)
+end
+
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 ####################

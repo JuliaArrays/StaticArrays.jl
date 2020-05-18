@@ -52,7 +52,7 @@ end
     end
 end
 
-@generated function SMatrix{M,N}(gen::Base.Generator{R,F}) where {M, N, R, F}
+@generated function SMatrix{M, N, T}(gen::Base.Generator) where {M, N, T}
     stmts = [:(Base.@_inline_meta)]
     args = []
     iter = :(iterate(gen))
@@ -62,11 +62,11 @@ end
         push!(args, el)
         iter = :(iterate(gen,st))
     end
-    push!(stmts, :(SMatrix{M,N}($(args...))))
+    push!(stmts, :(SMatrix{M, N, T}($(args...))))
     Expr(:block, stmts...)
 end
 
-@generated function SMatrix{M,N,T}(gen::Base.Generator{R,F}) where {M, N, T, R, F}
+@generated function SMatrix{M, N}(gen::Base.Generator) where {M, N}
     stmts = [:(Base.@_inline_meta)]
     args = []
     iter = :(iterate(gen))
@@ -76,7 +76,7 @@ end
         push!(args, el)
         iter = :(iterate(gen,st))
     end
-    push!(stmts, :(SMatrix{M,N,T}($(args...))))
+    push!(stmts, :(SMatrix{M, N}($(args...))))
     Expr(:block, stmts...)
 end
 
