@@ -80,7 +80,7 @@ export sacollect
     push!(stmts, :(SA($(args...))))
     Expr(:block, stmts...)
 end
-@doc """
+"""
    sacollect(SA, gen)
 
 Construct a statically-sized vector of type `SA`.from a generator
@@ -101,7 +101,8 @@ allocated.
 Equivalent:
 
     SVector{3, Int}([2i+1 for i in 1:3])
-""" sacollect
+"""
+sacollect
 
 @inline (::Type{SArray{S, T}})(gen::Base.Generator) where {S <: Tuple, T} =
     sacollect(SArray{S, T}, gen)
