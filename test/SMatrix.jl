@@ -37,6 +37,10 @@
             (11,12,21,22,31,32)
         @test (SMatrix{2,3,Float64}(i+10j for i in 1:2, j in 1:3)::SMatrix{2,3}).data ===
             (11.0,12.0,21.0,22.0,31.0,32.0)
+        @test_throws Exception SMatrix{2,3}(i+10j for i in 1:1, j in 1:3)
+        @test_throws Exception SMatrix{2,3}(i+10j for i in 1:3, j in 1:3)
+        @test_throws Exception SMatrix{2,3,Int}(i+10j for i in 1:1, j in 1:3)
+        @test_throws Exception SMatrix{2,3,Int}(i+10j for i in 1:3, j in 1:3)
 
         @test ((@SMatrix [1.0])::SMatrix{1,1}).data === (1.0,)
         @test ((@SMatrix [1 2])::SMatrix{1,2}).data === (1, 2)

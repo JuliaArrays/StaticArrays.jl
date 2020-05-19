@@ -19,33 +19,10 @@ const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 @inline SVector{S}(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
 @inline SVector{S}(x::T) where {S, T <: Tuple} = SVector{S,promote_tuple_eltype(T)}(x)
 
-@generated function SVector{N, T}(gen::Base.Generator) where {N, T}
-    stmts = [:(Base.@_inline_meta)]
-    args = []
-    iter = :(iterate(gen))
-    for i in 1:N
-        el = Symbol(:el, i)
-        push!(stmts, :(($el,st) = $iter))
-        push!(args, el)
-        iter = :(iterate(gen,st))
-    end
-    push!(stmts, :(SVector{N,T}($(args...))))
-    Expr(:block, stmts...)
-end
-
-@generated function SVector{N}(gen::Base.Generator) where {N}
-    stmts = [:(Base.@_inline_meta)]
-    args = []
-    iter = :(iterate(gen))
-    for i in 1:N
-        el = Symbol(:el, i)
-        push!(stmts, :(($el,st) = $iter))
-        push!(args, el)
-        iter = :(iterate(gen,st))
-    end
-    push!(stmts, :(SVector{N}($(args...))))
-    Expr(:block, stmts...)
-end
+@inline SVector{N, T}(gen::Base.Generator) where {N, T} =
+    sacollect(SVector{N, T}, gen)
+@inline SVector{N}(gen::Base.Generator) where {N} =
+    sacollect(SVector{N}, gen)
 
 # conversion from AbstractVector / AbstractArray (better inference than default)
 #@inline convert{S,T}(::Type{SVector{S}}, a::AbstractArray{T}) = SVector{S,T}((a...))

@@ -50,33 +50,63 @@ end
     end
 end
 
-@generated function (::Type{SArray{S, T}})(gen::Base.Generator) where {S <: Tuple, T}
-    stmts = [:(Base.@_inline_meta)]
-    args = []
-    iter = :(iterate(gen))
-    for i in CartesianIndices(size_to_tuple(S))
-        el = Symbol(:el, i)
-        push!(stmts, :(($el,st) = $iter))
-        push!(args, el)
-        iter = :(iterate(gen,st))
-    end
-    push!(stmts, :(SArray{S, T}($(args...))))
-    Expr(:block, stmts...)
+
+@noinline function generator_too_short_error(inds::CartesianIndices, i::CartesianIndex)
+    error("Generator produced too few elements: Expected exactly $(shape_string(inds)) elements, but generator stopped at $(shape_string(i))")
+end
+@noinline function generator_too_long_error(inds::CartesianIndices)
+    error("Generator produced too many elements: Expected exactly $(shape_string(inds)) elements, but generator yields more")
 end
 
-@generated function (::Type{SArray{S}})(gen::Base.Generator) where {S <: Tuple}
+shape_string(inds::CartesianIndices) = join(length.(inds), '×')
+shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
+
+@inline throw_if_nothing(x, inds, i) =
+    (x === nothing && generator_too_short_error(inds, i); x)
+
+export sacollect
+@generated function sacollect(::Type{SA}, gen) where {SA <: SArray{S}} where {S <: Tuple}
     stmts = [:(Base.@_inline_meta)]
     args = []
     iter = :(iterate(gen))
-    for i in CartesianIndices(size_to_tuple(S))
+    inds = CartesianIndices(size_to_tuple(S))
+    for i in inds
         el = Symbol(:el, i)
-        push!(stmts, :(($el,st) = $iter))
+        push!(stmts, :(($el,st) = throw_if_nothing($iter, $inds, $i)))
         push!(args, el)
         iter = :(iterate(gen,st))
     end
-    push!(stmts, :(SArray{S}($(args...))))
+    push!(stmts, :($iter === nothing || generator_too_long_error($inds)))
+    push!(stmts, :(SA($(args...))))
     Expr(:block, stmts...)
 end
+@doc """
+   sacollect(SA, gen)
+
+Construct a statically-sized vector of type `SA`.from a generator
+`gen`. `SA` needs to have a size parameter since the length of `vec`
+is unknown to the compiler. `SA` can optionally have a type parameter
+as well.
+
+Example:
+
+    sacollect(SVector{3, Int}, 2i+1 for i in 1:3)
+    sacollect(SMatrix{2, 3}, i+j for i in 1:2, j in 1:3)
+    sacollect(SArray{2, 3}, i+j for i in 1:2, j in 1:3)
+
+This creates the same statically-sized vector as if the generator were
+collected in an array, but is more efficient since no array is
+allocated.
+
+Equivalent:
+
+    SVector{3, Int}([2i+1 for i in 1:3])
+""" sacollect
+
+@inline (::Type{SArray{S, T}})(gen::Base.Generator) where {S <: Tuple, T} =
+    sacollect(SArray{S, T}, gen)
+@inline (::Type{SArray{S}})(gen::Base.Generator) where {S <: Tuple} =
+    sacollect(SArray{S}, gen)
 
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 

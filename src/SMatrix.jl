@@ -52,33 +52,10 @@ end
     end
 end
 
-@generated function SMatrix{M, N, T}(gen::Base.Generator) where {M, N, T}
-    stmts = [:(Base.@_inline_meta)]
-    args = []
-    iter = :(iterate(gen))
-    for j in 1:N, i in 1:M
-        el = Symbol(:el, i, :x, j)
-        push!(stmts, :(($el,st) = $iter))
-        push!(args, el)
-        iter = :(iterate(gen,st))
-    end
-    push!(stmts, :(SMatrix{M, N, T}($(args...))))
-    Expr(:block, stmts...)
-end
-
-@generated function SMatrix{M, N}(gen::Base.Generator) where {M, N}
-    stmts = [:(Base.@_inline_meta)]
-    args = []
-    iter = :(iterate(gen))
-    for j in 1:N, i in 1:M
-        el = Symbol(:el, i, :x, j)
-        push!(stmts, :(($el,st) = $iter))
-        push!(args, el)
-        iter = :(iterate(gen,st))
-    end
-    push!(stmts, :(SMatrix{M, N}($(args...))))
-    Expr(:block, stmts...)
-end
+@inline SMatrix{M, N, T}(gen::Base.Generator) where {M, N, T} =
+    sacollect(SMatrix{M, N, T}, gen)
+@inline SMatrix{M, N}(gen::Base.Generator) where {M, N} =
+    sacollect(SMatrix{M, N}, gen)
 
 @inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
 @inline SMatrix(a::StaticMatrix{S1, S2}) where {S1, S2} = SMatrix{S1, S2}(Tuple(a))
