@@ -41,7 +41,7 @@
 
         @test sacollect(SVector{6}, Iterators.product(1:2, 1:3)) ==
             SVector{6}(collect(Iterators.product(1:2, 1:3)))
-        @test sacollect(SVector{2}, Iterators.zip(1:2, 1:3)) ==
+        @test sacollect(SVector{2}, Iterators.zip(1:2, 2:3)) ==
             SVector{2}(collect(Iterators.zip(1:2, 2:3)))
         @test sacollect(SVector{3}, Iterators.take(1:10, 3)) ==
             SVector{3}(collect(Iterators.take(1:10, 3)))
