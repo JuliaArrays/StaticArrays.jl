@@ -85,8 +85,8 @@ end
 
 Construct a statically-sized vector of type `SA`.from a generator
 `gen`. `SA` needs to have a size parameter since the length of `vec`
-is unknown to the compiler. `SA` can optionally have a type parameter
-as well.
+is unknown to the compiler. `SA` can optionally specify the element
+type as well.
 
 Example:
 
