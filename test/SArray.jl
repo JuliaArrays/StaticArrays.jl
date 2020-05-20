@@ -45,6 +45,10 @@
             SVector{2}(collect(Iterators.zip(1:2, 2:3)))
         @test sacollect(SVector{3}, Iterators.take(1:10, 3)) ==
             SVector{3}(collect(Iterators.take(1:10, 3)))
+        @test sacollect(SMatrix{2,3}, Iterators.product(1:2, 1:3)) ==
+            SMatrix{2,3}(collect(Iterators.product(1:2, 1:3)))
+        @test sacollect(SArray{Tuple{2,3,4}}, 1:24) ==
+            SArray{Tuple{2,3,4}}(collect(1:24))
 
         @test ((@SArray [1])::SArray{Tuple{1}}).data === (1,)
         @test ((@SArray [1,2])::SArray{Tuple{2}}).data === (1,2)

@@ -58,14 +58,14 @@ end
     error("Generator produced too many elements: Expected exactly $(shape_string(inds)) elements, but generator yields more")
 end
 
-shape_string(inds::CartesianIndices) = join(length.(inds), '×')
+shape_string(inds::CartesianIndices) = join(length.(inds.indices), '×')
 shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
 
 @inline throw_if_nothing(x, inds, i) =
     (x === nothing && generator_too_short_error(inds, i); x)
 
 export sacollect
-@generated function sacollect(::Type{SA}, gen) where {SA <: SArray{S}} where {S <: Tuple}
+@generated function sacollect(::Type{SA}, gen) where {SA <: StaticArray{S}} where {S <: Tuple}
     stmts = [:(Base.@_inline_meta)]
     args = []
     iter = :(iterate(gen))
@@ -104,10 +104,8 @@ Equivalent:
 """
 sacollect
 
-@inline (::Type{SArray{S, T}})(gen::Base.Generator) where {S <: Tuple, T} =
-    sacollect(SArray{S, T}, gen)
-@inline (::Type{SArray{S}})(gen::Base.Generator) where {S <: Tuple} =
-    sacollect(SArray{S}, gen)
+@inline (::Type{SA})(gen::Base.Generator) where {SA <: StaticArray} =
+    sacollect(SA, gen)
 
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
