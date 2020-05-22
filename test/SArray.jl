@@ -39,15 +39,15 @@
         @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:1, j in 1:3)
         @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:3, j in 1:3)
 
-        @test sacollect(SVector{6}, Iterators.product(1:2, 1:3)) ==
+        @test StaticArrays.sacollect(SVector{6}, Iterators.product(1:2, 1:3)) ==
             SVector{6}(collect(Iterators.product(1:2, 1:3)))
-        @test sacollect(SVector{2}, Iterators.zip(1:2, 2:3)) ==
+        @test StaticArrays.sacollect(SVector{2}, Iterators.zip(1:2, 2:3)) ==
             SVector{2}(collect(Iterators.zip(1:2, 2:3)))
-        @test sacollect(SVector{3}, Iterators.take(1:10, 3)) ==
+        @test StaticArrays.sacollect(SVector{3}, Iterators.take(1:10, 3)) ==
             SVector{3}(collect(Iterators.take(1:10, 3)))
-        @test sacollect(SMatrix{2,3}, Iterators.product(1:2, 1:3)) ==
+        @test StaticArrays.sacollect(SMatrix{2,3}, Iterators.product(1:2, 1:3)) ==
             SMatrix{2,3}(collect(Iterators.product(1:2, 1:3)))
-        @test sacollect(SArray{Tuple{2,3,4}}, 1:24) ==
+        @test StaticArrays.sacollect(SArray{Tuple{2,3,4}}, 1:24) ==
             SArray{Tuple{2,3,4}}(collect(1:24))
 
         @test ((@SArray [1])::SArray{Tuple{1}}).data === (1,)
