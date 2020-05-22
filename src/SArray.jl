@@ -64,7 +64,6 @@ shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
 @inline throw_if_nothing(x, inds, i) =
     (x === nothing && generator_too_short_error(inds, i); x)
 
-export sacollect
 @generated function sacollect(::Type{SA}, gen) where {SA <: StaticArray{S}} where {S <: Tuple}
     stmts = [:(Base.@_inline_meta)]
     args = []
