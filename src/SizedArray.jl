@@ -179,3 +179,41 @@ function promote_rule(
     TU = promote_type(T, U)
     return SizedArray{S, TU, N}
 end
+
+
+### Code that makes views of statically sized arrays also statically sized (where possible)
+
+@generated function new_out_size(::Type{Size}, inds...) where Size
+    os = []
+    map(Size.parameters, inds) do s, i
+        if i <: Integer
+            # dimension is fixed
+        elseif i <: StaticVector
+            push!(os, i.parameters[1].parameters[1])
+        elseif i == Colon || i <: Base.Slice
+            push!(os, s)
+        elseif i <: SOneTo
+            push!(os, i.parameters[1])
+        else
+            error("Unknown index type: $i")
+        end
+    end
+    return Tuple{os...}
+end
+
+function Base.view(
+    a::SizedArray{S},
+    indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
+) where {S}
+    new_size = new_out_size(S, indices...)
+    return SizedArray{new_size}(view(a.data, indices...))
+end
+
+function Base.view(
+    a::MArray{S},
+    indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
+) where {S}
+    new_size = new_out_size(S, indices...)
+    view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
+    return SizedArray{new_size}(view_from_invoke)
+end

@@ -147,6 +147,43 @@
         @test Array(y2) == reshape(x2[1:8], 4, 2)
         @test convert(Array, y2) isa Matrix{Float64}
         @test convert(Array, y2) == reshape(x2[1:8], 4, 2)
+    end
 
+    @testset "views of sized arrays" begin
+        x = SizedArray{Tuple{4,3,2}}(rand(4, 3, 2))
+        x1 = view(x, :, 1, 2)
+        @test isa(x1, SizedArray{Tuple{4},Float64,1,1,<:SubArray{Float64,1}})
+        @test x1 == view(x.data, :, 1, 2)
+
+        x2 = view(x, :, SA[1], 2)
+        @test isa(x2, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x2 == view(x.data, :, SA[1], 2)
+
+        x3 = view(x, SOneTo(3), 1, SA[2])
+        @test isa(x3, SizedArray{Tuple{3,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x3 == view(x.data, SOneTo(3), 1, SA[2])
+
+        x4 = view(x, Base.Slice(SOneTo(4)), 1, SA[2])
+        @test isa(x4, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x4 == view(x.data, Base.Slice(SOneTo(4)), 1, SA[2])
+    end
+
+    @testset "views of MArray" begin
+        x = MArray{Tuple{4,3,2}}(rand(4, 3, 2))
+        x1 = view(x, :, 1, 2)
+        @test isa(x1, SizedArray{Tuple{4},Float64,1,1,<:SubArray{Float64,1}})
+        @test x1 == view(Array(x), :, 1, 2)
+
+        x2 = view(x, :, SA[1], 2)
+        @test isa(x2, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x2 == view(Array(x), :, SA[1], 2)
+
+        x3 = view(x, SOneTo(3), 1, SA[2])
+        @test isa(x3, SizedArray{Tuple{3,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x3 == view(Array(x), SOneTo(3), 1, SA[2])
+
+        x4 = view(x, Base.Slice(SOneTo(4)), 1, SA[2])
+        @test isa(x4, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
+        @test x4 == view(Array(x), Base.Slice(SOneTo(4)), 1, SA[2])
     end
 end
