@@ -208,12 +208,3 @@ function Base.view(
     new_size = new_out_size(S, indices...)
     return SizedArray{new_size}(view(a.data, indices...))
 end
-
-function Base.view(
-    a::MArray{S},
-    indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
-) where {S}
-    new_size = new_out_size(S, indices...)
-    view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
-    return SizedArray{new_size}(view_from_invoke)
-end
