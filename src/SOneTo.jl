@@ -15,6 +15,8 @@ function SOneTo{n}(r::AbstractUnitRange) where n
     errmsg(r)
 end
 
+Base.Tuple(::SOneTo{N}) where N = ntuple(identity, Val(N))
+
 Base.axes(s::SOneTo) = (s,)
 Base.size(s::SOneTo) = (length(s),)
 Base.length(s::SOneTo{n}) where {n} = n
