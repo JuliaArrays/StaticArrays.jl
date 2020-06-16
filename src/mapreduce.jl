@@ -302,8 +302,8 @@ end
 
     return quote
         @_inline_meta
-        T = typeof(one(eltype(a)) - one(eltype(a)))
-        @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
 end
 

@@ -165,6 +165,12 @@ using Statistics: mean
         @test diff(sv, dims=Val(1)) == diff(sv, dims=1) == diff(sv) == diff(v)
         @test diff(sm, dims=Val(1)) == diff(sm, dims=1) == diff(m, dims=1)
         @test diff(sm, dims=Val(2)) == diff(sm, dims=2) == diff(m, dims=2)
+
+        # diff on nested arrays should result in the correct eltype
+        @test @inferred(diff(SA[SA[1,2],SA[3,4]])) === SVector{1,SVector{2,Int}}(((2,2),))
+        @test @inferred(diff(SA[[1,2],[3,4]]))::SVector{1,Vector{Int}} == SA[[2,2]]
+        # For larger cases, check eltype infers correctly
+        @test @inferred(diff(zeros(SVector{100,SVector{2,Int}}))) == fill(SA[0,0],99)
     end
 
     @testset "broadcast and broadcast!" begin
