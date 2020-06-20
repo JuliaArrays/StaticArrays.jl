@@ -185,7 +185,11 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
 @inline copy(a::SizedArray) = typeof(a)(copy(a.data))
 
-@inline reverse(v::StaticVector) = typeof(v)(reverse(Tuple(v)))
+@inline reverse(v::StaticVector) = typeof(v)(_reverse(v))
+
+@generated function _reverse(v::StaticVector{N,T}) where {N,T}
+    return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
+end
 
 # TODO permutedims?
 
