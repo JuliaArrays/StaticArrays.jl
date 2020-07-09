@@ -14,4 +14,8 @@ end # testset
     # Issue #651
     @testinf SVector{0,Float64}(Any[]) === SVector{0,Float64}()
     @testinf SVector{0,Float64}(Int8[]) === SVector{0,Float64}()
+
+    # PR #808
+    @test Scalar{Int}[SVector{1,Int}(3), SVector{1,Float64}(2.0)] == [Scalar{Int}(3), Scalar{Int}(2)]
+    @test Scalar[SVector{1,Int}(3), SVector{1,Float64}(2.0)] == [Scalar{Int}(3), Scalar{Float64}(2.0)]
 end
