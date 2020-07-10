@@ -8,7 +8,7 @@
 
 # this covers most conversions and "statically-sized reshapes"
 @inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
-@inline convert(::Type{SA}, sa::StaticArray) where {SA<:Scalar} = SA((sa[],))
+@inline convert(::Type{SA}, sa::StaticArray) where {SA<:Scalar} = SA((sa[],)) # disambiguation
 @inline convert(::Type{SA}, sa::SA) where {SA<:StaticArray} = sa
 @inline convert(::Type{SA}, x::Tuple) where {SA<:StaticArray} = SA(x) # convert -> constructor. Hopefully no loops...
 
