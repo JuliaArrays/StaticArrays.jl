@@ -3,9 +3,9 @@
 
 const allowable_ambiguities =
     if VERSION < v"1.1"
-        4
+        3
     elseif VERSION < v"1.2"
-        2
+        1
     else
         0
     end
