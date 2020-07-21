@@ -166,6 +166,10 @@
         x4 = view(x, Base.Slice(SOneTo(4)), 1, SA[2])
         @test isa(x4, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
         @test x4 == view(x.data, Base.Slice(SOneTo(4)), 1, SA[2])
+
+        x5 = view(x, :)
+        @test isa(x5, SizedArray{Tuple{24},Float64,3,3,<:SubArray{Float64,1}})
+        @test x5 == view(x.data, :)
     end
 
     @testset "views of MArray" begin
@@ -185,5 +189,9 @@
         x4 = view(x, Base.Slice(SOneTo(4)), 1, SA[2])
         @test isa(x4, SizedArray{Tuple{4,1},Float64,2,2,<:SubArray{Float64,2}})
         @test x4 == view(Array(x), Base.Slice(SOneTo(4)), 1, SA[2])
+
+        x5 = view(x, :)
+        @test isa(x5, SizedArray{Tuple{24},Float64,3,3,<:MArray{Tuple{4,3,2}}})
+        @test x5 == view(Array(x5), :)
     end
 end

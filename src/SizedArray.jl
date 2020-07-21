@@ -201,6 +201,11 @@ end
     return Tuple{os...}
 end
 
+@generated function new_out_size(::Type{Size}, ::Colon) where Size
+    prod_size = tuple_prod(Size)
+    return Tuple{prod_size}
+end
+
 function Base.view(
     a::SizedArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
