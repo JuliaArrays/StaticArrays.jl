@@ -5,8 +5,10 @@ using Test
 
 macro test_noalloc(ex)
     esc(quote
-        $ex
-        @test(@allocated($ex) == 0)
+        if VERSION < v"1.5"
+            $ex
+            @test(@allocated($ex) == 0)
+        end
     end)
 end
 
