@@ -4,23 +4,129 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 # Manage dispatch of * and mul!
 # TODO Adjoint? (Inner product?)
 
-@inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
-@inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
-@inline *(A::StaticMatrix, B::StaticMatrix) = _mul(Size(A), Size(B), A, B)
-@inline *(A::StaticVector, B::StaticMatrix) = *(reshape(A, Size(Size(A)[1], 1)), B)
+const StaticMatMulLike{s1, s2, T} = Union{
+    StaticMatrix{s1, s2, T},
+    Symmetric{T, <:StaticMatrix{s1, s2, T}},
+    Hermitian{T, <:StaticMatrix{s1, s2, T}}}
+
+@inline *(A::StaticMatMulLike, B::AbstractVector) = _mul(Size(A), A, B)
+@inline *(A::StaticMatMulLike, B::StaticVector) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticMatMulLike, B::StaticMatMulLike) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticVector, B::StaticMatMulLike) = *(reshape(A, Size(Size(A)[1], 1)), B)
 @inline *(A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::Adjoint{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticArray{Tuple{N,1},<:Any,2}, B::Adjoint{<:Any,<:StaticVector}) where {N} = vec(A) * B
 @inline *(A::StaticArray{Tuple{N,1},<:Any,2}, B::Transpose{<:Any,<:StaticVector}) where {N} = vec(A) * B
 
+function gen_by_access(expr_gen, a::Type{<:StaticMatrix}, asym = :a)
+    return expr_gen(:any)
+end
+function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, asym = :a)
+    return quote
+        if $(asym).uplo == 'U'
+            $(expr_gen(:up))
+        else
+            $(expr_gen(:lo))
+        end
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, asym = :a)
+    return quote
+        if $(asym).uplo == 'U'
+            $(expr_gen(:up_herm))
+        else
+            $(expr_gen(:lo_herm))
+        end
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:StaticMatrix}, b::Type{<:StaticMatrix})
+    return expr_gen(:any, :any)
+end
+function gen_by_access(expr_gen, a::Type{<:StaticMatrix}, b::Type)
+    return gen_by_access(a) do access_a
+        return quote
+            return $(gen_by_access(b, :b) do access_b
+                expr_gen(:any, access_b)
+            end)
+        end
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, b::Type)
+    return gen_by_access(a) do access_a
+        return quote
+            if a.uplo == 'U'
+                return $(gen_by_access(b, :b) do access_b
+                    expr_gen(:up, access_b)
+                end)
+            else
+                return $(gen_by_access(b, :b) do access_b
+                    expr_gen(:lo, access_b)
+                end)
+            end
+        end
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, b::Type)
+    return gen_by_access(a) do access_a
+        return quote
+            if a.uplo == 'U'
+                return $(gen_by_access(b, :b) do access_b
+                    expr_gen(:up_herm, access_b)
+                end)
+            else
+                return $(gen_by_access(b, :b) do access_b
+                    expr_gen(:lo_herm, access_b)
+                end)
+            end
+        end
+    end
+end
+
+function uplo_access(sa, asym, k, j, uplo)
+    if uplo == :any
+        return :($asym[$(LinearIndices(sa)[k, j])])
+    elseif uplo == :up
+        if k <= j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :($asym[$(LinearIndices(sa)[j, k])])
+        end
+    elseif uplo == :lo
+        if j <= k
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :($asym[$(LinearIndices(sa)[j, k])])
+        end
+    elseif uplo == :up_herm
+        if k <= j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    elseif uplo == :lo_herm
+        if j <= k
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    end
+end
 
 # Implementations
 
-@generated function _mul(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
+function mul_smat_vec_exprs(sa, access_a)
+    return [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+end
+
+@generated function _mul(::Size{sa}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        retexpr = gen_by_access(a) do access_a
+            exprs = mul_smat_vec_exprs(sa, access_a)
+            return :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
+        end
     else
         exprs = [:(zero(T)) for k = 1:sa[1]]
+        retexpr = :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
     end
 
     return quote
@@ -29,27 +135,32 @@ import LinearAlgebra: BlasFloat, matprod, mul!
             throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
         end
         T = promote_op(matprod,Ta,Tb)
-        @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
+        $retexpr
     end
 end
 
-@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        retexpr = gen_by_access(a) do access_a
+            exprs = mul_smat_vec_exprs(sa, access_a)
+            return :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
+        end
     else
         exprs = [:(zero(T)) for k = 1:sa[1]]
+        retexpr = :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
     end
 
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
-        @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
+        $retexpr
     end
 end
+
 
 # outer product
 @generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta},
@@ -64,7 +175,7 @@ end
     end
 end
 
-@generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
     if sa[1]*sa[2]*sb[2] <= 8*8*8
         return quote
@@ -117,7 +228,7 @@ end
     end
 end
 
-@generated function mul_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -125,18 +236,23 @@ end
     S = Size(sa[1], sb[2])
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k1, j])]*b[$(LinearIndices(sb)[j, k2])]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        retexpr = gen_by_access(a, b) do access_a, access_b
+            exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)),
+                [:($(uplo_access(sa, :a, k1, j, access_a))*$(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
+                ) for k1 = 1:sa[1], k2 = 1:sb[2]]
+            return :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
+        end
     else
         exprs = [:(zero(T)) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        retexpr = :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
     end
 
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
-        @inbounds return similar_type(a, T, $S)(tuple($(exprs...)))
+        $retexpr
     end
 end
-
 
 @generated function mul_loop(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
