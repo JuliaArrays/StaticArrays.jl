@@ -218,7 +218,7 @@ end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
-    if sa[1]*sa[2]*sb[2] <= 8*8*8
+    if sa[1]*sa[2]*sb[2] <= 8*8*8 || !(a <: StaticMatrix) || !(b <: StaticMatrix)
         return quote
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)

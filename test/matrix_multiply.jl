@@ -146,20 +146,26 @@ mul_wrappers = [
         @test m*transpose(n) === @SMatrix [8 14; 18 32]
         @test transpose(m)*transpose(n) === @SMatrix [11 19; 16 28]
 
-        for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
-            wm = wrapper_m(m)
-            wn = wrapper_n(n)
-            res_structure = StaticArrays.mul_result_structure(wm, wn)
-            expected_type = if res_structure == identity
-                SMatrix{2,2,Int,4}
-            elseif res_structure == LowerTriangular
-                LowerTriangular{Int,SMatrix{2,2,Int,4}}
-            elseif res_structure == UpperTriangular
-                UpperTriangular{Int,SMatrix{2,2,Int,4}}
-            else
-                error("Unknown structure: ", res_structure)
+        # check different sizes because there are multiple implementations for matrices of different sizes
+        for (mm, nn) in [
+            (m, n),
+            #(SMatrix{10, 10}(collect(1:100)), SMatrix{10, 10}(collect(1:100))),
+            (SMatrix{15, 15}(collect(1:225)), SMatrix{15, 15}(collect(1:225)))]
+            for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
+                wm = wrapper_m(mm)
+                wn = wrapper_n(nn)
+                res_structure = StaticArrays.mul_result_structure(wm, wn)
+                expected_type = if res_structure == identity
+                    typeof(mm)
+                elseif res_structure == LowerTriangular
+                    LowerTriangular{Int,typeof(mm)}
+                elseif res_structure == UpperTriangular
+                    UpperTriangular{Int,typeof(mm)}
+                else
+                    error("Unknown structure: ", res_structure)
+                end
+                @test (@inferred wm * wn)::expected_type == wrapper_m(Array(mm)) * wrapper_n(Array(nn))
             end
-            @test (@inferred wm * wn)::expected_type == wrapper_m(Array(m)) * wrapper_n(Array(n))
         end
 
         m = @MMatrix [1 2; 3 4]
