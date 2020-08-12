@@ -5,7 +5,9 @@ mul_wrappers = [
     m -> Symmetric(m, :U),
     m -> Symmetric(m, :L),
     m -> Hermitian(m, :U),
-    m -> Hermitian(m, :L)]
+    m -> Hermitian(m, :L),
+    m -> UpperTriangular(m),
+    m -> LowerTriangular(m)]
 
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
@@ -29,7 +31,7 @@ mul_wrappers = [
         @test (bm*bv)::SVector{2,SVector{2,Int}} == @SVector [[10,22],[10,22]]
         for wrapper in mul_wrappers
             # there may be some problems with inferring the result type of symmetric block matrices
-            if !isa(wrapper(bm), UpperTriangular)
+            if !any(x->isa(wrapper(bm), x), [UpperTriangular, LowerTriangular])
                 @test wrapper(bm)*bv == wrapper(Array(bm))*Array(bv)
             end
         end
@@ -145,7 +147,19 @@ mul_wrappers = [
         @test transpose(m)*transpose(n) === @SMatrix [11 19; 16 28]
 
         for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
-            @test (@inferred wrapper_m(m) * wrapper_n(n))::SMatrix{2,2,Int} == wrapper_m(Array(m)) * wrapper_n(Array(n))
+            wm = wrapper_m(m)
+            wn = wrapper_n(n)
+            res_structure = StaticArrays.mul_result_structure(wm, wn)
+            expected_type = if res_structure == identity
+                SMatrix{2,2,Int,4}
+            elseif res_structure == LowerTriangular
+                LowerTriangular{Int,SMatrix{2,2,Int,4}}
+            elseif res_structure == UpperTriangular
+                UpperTriangular{Int,SMatrix{2,2,Int,4}}
+            else
+                error("Unknown structure: ", res_structure)
+            end
+            @test (@inferred wm * wn)::expected_type == wrapper_m(Array(m)) * wrapper_n(Array(n))
         end
 
         m = @MMatrix [1 2; 3 4]
