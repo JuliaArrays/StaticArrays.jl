@@ -6,13 +6,13 @@
     LinearAlgebra.LowerTriangular(transpose(A.data))
 @inline adjoint(A::LinearAlgebra.UpperTriangular{<:Any,<:StaticMatrix}) =
     LinearAlgebra.LowerTriangular(adjoint(A.data))
-@inline Base.:*(A::Adjoint{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+@inline Base.:*(A::Adjoint{<:Any,<:StaticVector}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
     adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::Transpose{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+@inline Base.:*(A::Transpose{<:Any,<:StaticVector}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
     transpose(transpose(B) * transpose(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Adjoint{<:Any,<:StaticVecOrMat}) =
+@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Adjoint{<:Any,<:StaticVector}) =
     adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVecOrMat}) =
+@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVector}) =
     transpose(transpose(B) * transpose(A))
 
 const StaticULT = Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}

@@ -7,7 +7,9 @@ mul_wrappers = [
     m -> Hermitian(m, :U),
     m -> Hermitian(m, :L),
     m -> UpperTriangular(m),
-    m -> LowerTriangular(m)]
+    m -> LowerTriangular(m),
+    m -> adjoint(m),
+    m -> transpose(m)]
 
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
@@ -149,13 +151,19 @@ mul_wrappers = [
         # check different sizes because there are multiple implementations for matrices of different sizes
         for (mm, nn) in [
             (m, n),
-            #(SMatrix{10, 10}(collect(1:100)), SMatrix{10, 10}(collect(1:100))),
-            (SMatrix{15, 15}(collect(1:225)), SMatrix{15, 15}(collect(1:225)))]
+            (SMatrix{10, 10}(collect(1:100)), SMatrix{10, 10}(collect(1:100))),
+            (SMatrix{15, 15}(collect(1:225)), SMatrix{15, 15}(collect(1:225)))
+            ]
             for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
                 wm = wrapper_m(mm)
                 wn = wrapper_n(nn)
+                if length(mm) >= 100 && (!isa(wm, StaticArray) || !isa(wn, StaticArray))
+                    continue
+                end
                 res_structure = StaticArrays.mul_result_structure(wm, wn)
-                expected_type = if res_structure == identity
+                expected_type = if length(m) >= 100
+                    Matrix{Int}
+                elseif res_structure == identity
                     typeof(mm)
                 elseif res_structure == LowerTriangular
                     LowerTriangular{Int,typeof(mm)}
