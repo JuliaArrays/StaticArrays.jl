@@ -50,6 +50,62 @@ end
     end
 end
 
+
+@noinline function generator_too_short_error(inds::CartesianIndices, i::CartesianIndex)
+    error("Generator produced too few elements: Expected exactly $(shape_string(inds)) elements, but generator stopped at $(shape_string(i))")
+end
+@noinline function generator_too_long_error(inds::CartesianIndices)
+    error("Generator produced too many elements: Expected exactly $(shape_string(inds)) elements, but generator yields more")
+end
+
+shape_string(inds::CartesianIndices) = join(length.(inds.indices), '×')
+shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
+
+@inline throw_if_nothing(x, inds, i) =
+    (x === nothing && generator_too_short_error(inds, i); x)
+
+@generated function sacollect(::Type{SA}, gen) where {SA <: StaticArray{S}} where {S <: Tuple}
+    stmts = [:(Base.@_inline_meta)]
+    args = []
+    iter = :(iterate(gen))
+    inds = CartesianIndices(size_to_tuple(S))
+    for i in inds
+        el = Symbol(:el, i)
+        push!(stmts, :(($el,st) = throw_if_nothing($iter, $inds, $i)))
+        push!(args, el)
+        iter = :(iterate(gen,st))
+    end
+    push!(stmts, :($iter === nothing || generator_too_long_error($inds)))
+    push!(stmts, :(SA($(args...))))
+    Expr(:block, stmts...)
+end
+"""
+   sacollect(SA, gen)
+
+Construct a statically-sized vector of type `SA`.from a generator
+`gen`. `SA` needs to have a size parameter since the length of `vec`
+is unknown to the compiler. `SA` can optionally specify the element
+type as well.
+
+Example:
+
+    sacollect(SVector{3, Int}, 2i+1 for i in 1:3)
+    sacollect(SMatrix{2, 3}, i+j for i in 1:2, j in 1:3)
+    sacollect(SArray{2, 3}, i+j for i in 1:2, j in 1:3)
+
+This creates the same statically-sized vector as if the generator were
+collected in an array, but is more efficient since no array is
+allocated.
+
+Equivalent:
+
+    SVector{3, Int}([2i+1 for i in 1:3])
+"""
+sacollect
+
+@inline (::Type{SA})(gen::Base.Generator) where {SA <: StaticArray} =
+    sacollect(SA, gen)
+
 @inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
 
 ####################
@@ -66,7 +122,7 @@ Base.dataids(::SArray) = ()
 
 # See #53
 Base.cconvert(::Type{Ptr{T}}, a::SArray) where {T} = Base.RefValue(a)
-Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SArray{S,T,D,L}}) where {S,T,D,L} =
+Base.unsafe_convert(::Type{Ptr{T}}, a::Base.RefValue{SA}) where {S,T,D,L,SA<:SArray{S,T,D,L}} =
     Ptr{T}(Base.unsafe_convert(Ptr{SArray{S,T,D,L}}, a))
 
 macro SArray(ex)

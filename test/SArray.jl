@@ -27,6 +27,29 @@
 
         @test SArray(SArray{Tuple{2}}(1,2)) === SArray{Tuple{2}}(1,2)
 
+        @test SArray{Tuple{}}(i for i in 1:1).data === (1,)
+        @test SArray{Tuple{3}}(i for i in 1:3).data === (1,2,3)
+        @test SArray{Tuple{3}}(float(i) for i in 1:3).data === (1.0,2.0,3.0)
+        @test SArray{Tuple{2,3}}(i+10j for i in 1:2, j in 1:3).data === (11,12,21,22,31,32)
+        @test SArray{Tuple{1,2,3}}(i+10j+100k for i in 1:1, j in 1:2, k in 1:3).data === (111,121,211,221,311,321)
+        @test_throws Exception SArray{Tuple{}}(i for i in 1:0)
+        @test_throws Exception SArray{Tuple{}}(i for i in 1:2)
+        @test_throws Exception SArray{Tuple{3}}(i for i in 1:2)
+        @test_throws Exception SArray{Tuple{3}}(i for i in 1:4)
+        @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:1, j in 1:3)
+        @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:3, j in 1:3)
+
+        @test StaticArrays.sacollect(SVector{6}, Iterators.product(1:2, 1:3)) ==
+            SVector{6}(collect(Iterators.product(1:2, 1:3)))
+        @test StaticArrays.sacollect(SVector{2}, Iterators.zip(1:2, 2:3)) ==
+            SVector{2}(collect(Iterators.zip(1:2, 2:3)))
+        @test StaticArrays.sacollect(SVector{3}, Iterators.take(1:10, 3)) ==
+            SVector{3}(collect(Iterators.take(1:10, 3)))
+        @test StaticArrays.sacollect(SMatrix{2,3}, Iterators.product(1:2, 1:3)) ==
+            SMatrix{2,3}(collect(Iterators.product(1:2, 1:3)))
+        @test StaticArrays.sacollect(SArray{Tuple{2,3,4}}, 1:24) ==
+            SArray{Tuple{2,3,4}}(collect(1:24))
+
         @test ((@SArray [1])::SArray{Tuple{1}}).data === (1,)
         @test ((@SArray [1,2])::SArray{Tuple{2}}).data === (1,2)
         @test ((@SArray Float64[1,2,3])::SArray{Tuple{3}}).data === (1.0, 2.0, 3.0)

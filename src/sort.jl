@@ -1,5 +1,5 @@
-import Base.Order: Ordering, Forward, ReverseOrdering, ord
-import Base.Sort: Algorithm, lt, sort
+import Base.Order: Forward, Ordering, Perm, ReverseOrdering, ord
+import Base.Sort: Algorithm, lt, sort, sortperm
 
 
 struct BitonicSortAlg <: Algorithm end
@@ -23,11 +23,27 @@ defalg(a::StaticVector) =
     return _sort(a, alg, ordr)
 end
 
+@inline function sortperm(a::StaticVector;
+               alg::Algorithm = defalg(a),
+               lt = isless,
+               by = identity,
+               rev::Union{Bool,Nothing} = nothing,
+               order::Ordering = Forward)
+    p = Tuple(axes(a, 1))
+    length(a) <= 1 && return SVector{length(a),Int}(p)
+
+    ordr = Perm(ord(lt, by, rev, order), a)
+    return SVector{length(a),Int}(_sort(p, alg, ordr))
+end
+
+
 @inline _sort(a::StaticVector, alg, order) =
     similar_type(a)(sort!(Base.copymutable(a); alg=alg, order=order))
 
 @inline _sort(a::StaticVector, alg::BitonicSortAlg, order) =
     similar_type(a)(_sort(Tuple(a), alg, order))
+
+_sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
 
 # Implementation loosely following
 # https://www.inf.hs-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
@@ -36,7 +52,7 @@ end
         ai = Symbol('a', i)
         aj = Symbol('a', j)
         order = rev ? :revorder : :order
-        return :( ($ai, $aj) = lt($order, $ai, $aj) ? ($ai, $aj) : ($aj, $ai) )
+        return :( ($ai, $aj) = @inbounds lt($order, $ai, $aj) ? ($ai, $aj) : ($aj, $ai) )
     end
 
     function merge_exprs(idx, rev)

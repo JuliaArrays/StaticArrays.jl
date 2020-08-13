@@ -129,9 +129,6 @@ Length(::Size{S}) where {S} = _Length(S...)
 @pure Base.:(==)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S === s
 @pure Base.:(==)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s === S
 
-@pure Base.:(!=)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S !== s
-@pure Base.:(!=)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s !== S
-
 @pure Base.prod(::Size{S}) where {S} = prod(S)
 
 Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
@@ -143,9 +140,6 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 @pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
 @pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
-
-@pure Base.:(!=)(::Length{L}, l::Int) where {L} = L != l
-@pure Base.:(!=)(l::Int, ::Length{L}) where {L} = l != L
 
 # unroll_tuple also works with `Length`
 @propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})
