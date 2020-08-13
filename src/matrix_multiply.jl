@@ -15,6 +15,9 @@ const StaticMatMulLike{s1, s2, T} = Union{
     Hermitian{T, <:StaticMatrix{s1, s2, T}},
     LowerTriangular{T, <:StaticMatrix{s1, s2, T}},
     UpperTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UnitLowerTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UpperHessenberg{T, <:StaticMatrix{s1, s2, T}},
     Adjoint{T, <:StaticMatrix{s1, s2, T}},
     Transpose{T, <:StaticMatrix{s1, s2, T}}}
 
@@ -66,6 +69,15 @@ function gen_by_access(expr_gen, a::Type{<:UpperTriangular{<:Any, <:StaticMatrix
 end
 function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix}}, asym = :a)
     return expr_gen(:lower_triangular)
+end
+function gen_by_access(expr_gen, a::Type{<:UnitUpperTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+    return expr_gen(:unit_upper_triangular)
+end
+function gen_by_access(expr_gen, a::Type{<:UnitLowerTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+    return expr_gen(:unit_lower_triangular)
+end
+function gen_by_access(expr_gen, a::Type{<:UpperHessenberg{<:Any, <:StaticMatrix}}, asym = :a)
+    return expr_gen(:upper_hessenberg)
 end
 function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticVecOrMat}}, asym = :a)
     return expr_gen(:transpose)
@@ -124,6 +136,27 @@ function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix
     return quote
         return $(gen_by_access(b, :b) do access_b
             expr_gen(:lower_triangular, access_b)
+        end)
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:UnitUpperTriangular{<:Any, <:StaticMatrix}}, b::Type)
+    return quote
+        return $(gen_by_access(b, :b) do access_b
+            expr_gen(:unit_upper_triangular, access_b)
+        end)
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:UnitLowerTriangular{<:Any, <:StaticMatrix}}, b::Type)
+    return quote
+        return $(gen_by_access(b, :b) do access_b
+            expr_gen(:unit_lower_triangular, access_b)
+        end)
+    end
+end
+function gen_by_access(expr_gen, a::Type{<:UpperHessenberg{<:Any, <:StaticMatrix}}, b::Type)
+    return quote
+        return $(gen_by_access(b, :b) do access_b
+            expr_gen(:upper_hessenberg, access_b)
         end)
     end
 end
@@ -201,6 +234,28 @@ function uplo_access(sa, asym, k, j, uplo)
         end
     elseif uplo == :lower_triangular
         if k >= j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(zero(T))
+        end
+    elseif uplo == :unit_upper_triangular
+        if k < j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(oneunit(T))
+        else
+            return :(zero(T))
+        end
+    elseif uplo == :unit_lower_triangular
+        if k > j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j 
+            return :(oneunit(T))
+        else
+            return :(zero(T))
+        end
+    elseif uplo == :upper_hessenberg
+        if k <= j+1
             return :($asym[$(LinearIndices(sa)[k, j])])
         else
             return :(zero(T))

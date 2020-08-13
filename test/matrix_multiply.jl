@@ -8,6 +8,9 @@ mul_wrappers = [
     m -> Hermitian(m, :L),
     m -> UpperTriangular(m),
     m -> LowerTriangular(m),
+    m -> UnitUpperTriangular(m),
+    m -> UnitLowerTriangular(m),
+    m -> UpperHessenberg(m),
     m -> adjoint(m),
     m -> transpose(m)]
 
