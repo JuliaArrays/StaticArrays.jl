@@ -24,19 +24,19 @@ Should pair with `parent`.
 """
 struct TSize{S,T}
     function TSize{S,T}() where {S,T}
-        new{S::Tuple{Vararg{StaticDimension}},T::Bool}()
+        new{S::Tuple{Vararg{StaticDimension}},T::Symbol}()
     end
 end
-TSize(A::Type{<:Transpose{<:Any,<:StaticArray}}) = TSize{size(A),true}()
-TSize(A::Type{<:Adjoint{<:Real,<:StaticArray}}) = TSize{size(A),true}()  # can't handle complex adjoints yet
-TSize(A::Type{<:StaticArray}) = TSize{size(A),false}()
+TSize(A::Type{<:StaticArrayLike}) = TSize{size(A), gen_by_access(identity, A)}()
 TSize(A::StaticArrayLike) = TSize(typeof(A))
-TSize(S::Size{s}, T=false) where s = TSize{s,T}()
+TSize(S::Size{s}, T=:any) where s = TSize{s,T}()
 TSize(s::Number) = TSize(Size(s))
-istranpose(::TSize{<:Any,T}) where T = T
+istranspose(::TSize{<:Any,T}) where T = (T === :transpose)
 size(::TSize{S}) where S = S
 Size(::TSize{S}) where S = Size{S}()
-Base.transpose(::TSize{S,T}) where {S,T} = TSize{reverse(S),!T}()
+access_type(::TSize{<:Any,T}) where T = T
+Base.transpose(::TSize{S,:transpose}) where {S,T} = TSize{reverse(S),:any}()
+Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
 
 # Get the parent of transposed arrays, or the array itself if it has no parent
 # Different from Base.parent because we only want to get rid of Transpose and Adjoint
@@ -97,12 +97,10 @@ end
 "Obtain an expression for the linear index of var[k,j], taking transposes into account"
 @inline _lind(A::Type{<:TSize}, k::Int, j::Int) = _lind(:a, A, k, j)
 function _lind(var::Symbol, A::Type{TSize{sa,tA}}, k::Int, j::Int) where {sa,tA}
-    if tA
-        return :($var[$(LinearIndices(reverse(sa))[j, k])])
-    else
-        return :($var[$(LinearIndices(sa)[k, j])])
-    end
+    return uplo_access(sa, var, k, j, tA)
 end
+
+
 
 # Matrix-vector multiplication
 @generated function _mul!(Sc::TSize{sc}, c::StaticVecOrMatLike, Sa::TSize{sa}, Sb::TSize{sb},
@@ -133,14 +131,21 @@ end
 end
 
 # Outer product
-@generated function _mul!(::TSize{sc}, c::StaticMatrix, ::TSize{sa,false}, ::TSize{sb,true},
+@generated function _mul!(::TSize{sc}, c::StaticMatrix, ::TSize{sa,:any}, tsb::Union{TSize{sb,:transpose},TSize{sb,:adjoint}},
         a::StaticVector, b::StaticVector, _add::MulAddMul) where {sa, sb, sc}
     if sc[1] != sa[1] || sc[2] != sb[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
     end
 
+    conjugate_b = isa(tsb, TSize{sb,:adjoint})
+
     lhs = [:(c[$(LinearIndices(sc)[i,j])]) for i = 1:sa[1], j = 1:sb[2]]
-    ab = [:(a[$i] * b[$j]) for i = 1:sa[1], j = 1:sb[2]]
+    if conjugate_b
+        ab = [:(a[$i] * adjoint(b[$j])) for i = 1:sa[1], j = 1:sb[2]]
+    else
+        ab = [:(a[$i] * b[$j]) for i = 1:sa[1], j = 1:sb[2]]
+    end
+    
     exprs = _muladd_expr(lhs, ab, _add)
 
     return quote
@@ -267,17 +272,18 @@ end
 @inline _get_raw_data(A::SizedArray) = A.data
 @inline _get_raw_data(A::StaticArray) = A
 
-function mul_blas!(::TSize{<:Any,false}, c::StaticMatrix, ::TSize{<:Any,tA}, ::TSize{<:Any,tB},
-        a::StaticMatrix, b::StaticMatrix, _add::MulAddMul) where {tA,tB}
-    mat_char(tA) = tA ? 'T' : 'N'
+function mul_blas!(::TSize{<:Any,:any}, c::StaticMatrix,
+        Sa::Union{TSize{<:Any,:any}, TSize{<:Any,:transpose}}, Sb::Union{TSize{<:Any,:any}, TSize{<:Any,:transpose}},
+        a::StaticMatrix, b::StaticMatrix, _add::MulAddMul)
+    mat_char(s) = istranspose(s) ? 'T' : 'N'
     T = eltype(a)
     A = _get_raw_data(a)
     B = _get_raw_data(b)
     C = _get_raw_data(c)
-    BLAS.gemm!(mat_char(tA), mat_char(tB), T(alpha(_add)), A, B, T(beta(_add)), C)
+    BLAS.gemm!(mat_char(Sa), mat_char(Sb), T(alpha(_add)), A, B, T(beta(_add)), C)
 end
 
 # if C is transposed, transpose the entire expression
-@inline mul_blas!(Sc::TSize{<:Any,true}, c::StaticMatrix, Sa::TSize, Sb::TSize,
+@inline mul_blas!(Sc::TSize{<:Any,:transpose}, c::StaticMatrix, Sa::TSize, Sb::TSize,
         a::StaticMatrix, b::StaticMatrix, _add::MulAddMul) =
     mul_blas!(transpose(Sc), c, transpose(Sb), transpose(Sa), b, a, _add)

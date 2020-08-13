@@ -40,7 +40,7 @@ element access.
 
 The name of the matrix to test is indicated by `asym`.
 """
-function gen_by_access(expr_gen, a::Type{<:StaticMatrix}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:StaticVecOrMat}, asym = :a)
     return expr_gen(:any)
 end
 function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, asym = :a)
@@ -67,10 +67,10 @@ end
 function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix}}, asym = :a)
     return expr_gen(:lower_triangular)
 end
-function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticVecOrMat}}, asym = :a)
     return expr_gen(:transpose)
 end
-function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :a)
     return expr_gen(:adjoint)
 end
 """
@@ -206,9 +206,9 @@ function uplo_access(sa, asym, k, j, uplo)
             return :(zero(T))
         end
     elseif uplo == :transpose
-        return :($asym[$(LinearIndices(sa)[j, k])])
+        return :($asym[$(LinearIndices(reverse(sa))[j, k])])
     elseif uplo == :ajoint
-        return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
+        return :(adjoint($asym[$(LinearIndices(reverse(sa))[j, k])]))
     end
 end
 

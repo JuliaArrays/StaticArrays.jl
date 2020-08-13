@@ -49,17 +49,17 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
 
     # TSize
     ta = StaticArrays.TSize(A)
-    @test !StaticArrays.istranpose(ta)
+    @test !StaticArrays.istranspose(ta)
     @test size(ta) == (N1,N2)
     @test Size(ta) == Size(N1,N2)
     ta = StaticArrays.TSize(At)
-    @test StaticArrays.istranpose(ta)
+    @test StaticArrays.istranspose(ta)
     @test size(ta) == (N2,N1)
     @test Size(ta) == Size(N2,N1)
     tb = StaticArrays.TSize(b')
-    @test StaticArrays.istranpose(tb)
+    @test StaticArrays.access_type(tb) === :adjoint
     ta = transpose(ta)
-    @test !StaticArrays.istranpose(ta)
+    @test !StaticArrays.istranspose(ta)
     @test size(ta) == (N1,N2)
     @test Size(ta) == Size(N1,N2)
 
