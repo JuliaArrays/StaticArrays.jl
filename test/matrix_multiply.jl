@@ -10,7 +10,6 @@ mul_wrappers = [
     m -> LowerTriangular(m),
     m -> UnitUpperTriangular(m),
     m -> UnitLowerTriangular(m),
-    m -> UpperHessenberg(m),
     m -> adjoint(m),
     m -> transpose(m)]
 
@@ -36,7 +35,8 @@ mul_wrappers = [
         @test (bm*bv)::SVector{2,SVector{2,Int}} == @SVector [[10,22],[10,22]]
         for wrapper in mul_wrappers
             # there may be some problems with inferring the result type of symmetric block matrices
-            if !any(x->isa(wrapper(bm), x), [UpperTriangular, LowerTriangular])
+            # and for some reason setindex! in Julia LinearAlgebra has == 0 and == 1 tests
+            if !any(x->isa(wrapper(bm), x), [UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular])
                 @test wrapper(bm)*bv == wrapper(Array(bm))*Array(bv)
             end
         end
@@ -166,7 +166,7 @@ mul_wrappers = [
                 res_structure = StaticArrays.mul_result_structure(wm, wn)
                 expected_type = if length(m) >= 100
                     Matrix{Int}
-                elseif res_structure == identity
+                elseif res_structure == identity || length(m) >= 100
                     typeof(mm)
                 elseif res_structure == LowerTriangular
                     LowerTriangular{Int,typeof(mm)}

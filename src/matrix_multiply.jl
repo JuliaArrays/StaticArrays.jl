@@ -4,26 +4,10 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 # Manage dispatch of * and mul!
 # TODO Adjoint? (Inner product?)
 
-"""
-    StaticMatMulLike
-
-Static wrappers used for multiplication dispatch.
-"""
-const StaticMatMulLike{s1, s2, T} = Union{
-    StaticMatrix{s1, s2, T},
-    Symmetric{T, <:StaticMatrix{s1, s2, T}},
-    Hermitian{T, <:StaticMatrix{s1, s2, T}},
-    LowerTriangular{T, <:StaticMatrix{s1, s2, T}},
-    UpperTriangular{T, <:StaticMatrix{s1, s2, T}},
-    UnitLowerTriangular{T, <:StaticMatrix{s1, s2, T}},
-    UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
-    UpperHessenberg{T, <:StaticMatrix{s1, s2, T}},
-    Adjoint{T, <:StaticMatrix{s1, s2, T}},
-    Transpose{T, <:StaticMatrix{s1, s2, T}}}
-
-
-@inline *(A::StaticMatMulLike, B::AbstractVector) = _mul(Size(A), A, B)
+# *(A::StaticMatMulLike, B::AbstractVector) causes an ambiguity with SparseArrays
+@inline *(A::StaticMatrix, B::AbstractVector) = _mul(Size(A), A, B)
 @inline *(A::StaticMatMulLike, B::StaticVector) = _mul(Size(A), Size(B), A, B)
+@inline *(A::StaticMatrix, B::StaticVector) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticMatMulLike, B::StaticMatMulLike) = _mul(Size(A), Size(B), A, B)
 @inline *(A::StaticVector, B::StaticMatMulLike) = *(reshape(A, Size(Size(A)[1], 1)), B)
 @inline *(A::StaticVector, B::Transpose{<:Any, <:StaticVector}) = _mul(Size(A), Size(B), A, B)
@@ -32,7 +16,7 @@ const StaticMatMulLike{s1, s2, T} = Union{
 @inline *(A::StaticArray{Tuple{N,1},<:Any,2}, B::Transpose{<:Any,<:StaticVector}) where {N} = vec(A) * B
 
 """
-    gen_by_access(expr_gen, a::Type{<:AbstractArray}, asym = :a)
+    gen_by_access(expr_gen, a::Type{<:AbstractArray}, asym = :wrapped_a)
 
 Statically generate outer code for fully unrolled multiplication loops.
 Returned code does wrapper-specific tests (for example if a symmetric matrix view is
@@ -43,10 +27,10 @@ element access.
 
 The name of the matrix to test is indicated by `asym`.
 """
-function gen_by_access(expr_gen, a::Type{<:StaticVecOrMat}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:StaticVecOrMat}, asym = :wrapped_a)
     return expr_gen(:any)
 end
-function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return quote
         if $(asym).uplo == 'U'
             $(expr_gen(:up))
@@ -55,7 +39,7 @@ function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, as
         end
     end
 end
-function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return quote
         if $(asym).uplo == 'U'
             $(expr_gen(:up_herm))
@@ -64,25 +48,22 @@ function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, as
         end
     end
 end
-function gen_by_access(expr_gen, a::Type{<:UpperTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:UpperTriangular{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return expr_gen(:upper_triangular)
 end
-function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return expr_gen(:lower_triangular)
 end
-function gen_by_access(expr_gen, a::Type{<:UnitUpperTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:UnitUpperTriangular{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return expr_gen(:unit_upper_triangular)
 end
-function gen_by_access(expr_gen, a::Type{<:UnitLowerTriangular{<:Any, <:StaticMatrix}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:UnitLowerTriangular{<:Any, <:StaticMatrix}}, asym = :wrapped_a)
     return expr_gen(:unit_lower_triangular)
 end
-function gen_by_access(expr_gen, a::Type{<:UpperHessenberg{<:Any, <:StaticMatrix}}, asym = :a)
-    return expr_gen(:upper_hessenberg)
-end
-function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticVecOrMat}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticVecOrMat}}, asym = :wrapped_a)
     return expr_gen(:transpose)
 end
-function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :a)
+function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :wrapped_a)
     return expr_gen(:adjoint)
 end
 """
@@ -94,19 +75,19 @@ first for matrix `a` and the second for matrix `b`.
 """
 function gen_by_access(expr_gen, a::Type{<:StaticMatrix}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:any, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        if a.uplo == 'U'
-            return $(gen_by_access(b, :b) do access_b
+        if wrapped_a.uplo == 'U'
+            return $(gen_by_access(b, :wrapped_b) do access_b
                 expr_gen(:up, access_b)
             end)
         else
-            return $(gen_by_access(b, :b) do access_b
+            return $(gen_by_access(b, :wrapped_b) do access_b
                 expr_gen(:lo, access_b)
             end)
         end
@@ -114,12 +95,12 @@ function gen_by_access(expr_gen, a::Type{<:Symmetric{<:Any, <:StaticMatrix}}, b:
 end
 function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        if a.uplo == 'U'
-            return $(gen_by_access(b, :b) do access_b
+        if wrapped_a.uplo == 'U'
+            return $(gen_by_access(b, :wrapped_b) do access_b
                 expr_gen(:up_herm, access_b)
             end)
         else
-            return $(gen_by_access(b, :b) do access_b
+            return $(gen_by_access(b, :wrapped_b) do access_b
                 expr_gen(:lo_herm, access_b)
             end)
         end
@@ -127,49 +108,42 @@ function gen_by_access(expr_gen, a::Type{<:Hermitian{<:Any, <:StaticMatrix}}, b:
 end
 function gen_by_access(expr_gen, a::Type{<:UpperTriangular{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:upper_triangular, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:LowerTriangular{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:lower_triangular, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:UnitUpperTriangular{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:unit_upper_triangular, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:UnitLowerTriangular{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:unit_lower_triangular, access_b)
-        end)
-    end
-end
-function gen_by_access(expr_gen, a::Type{<:UpperHessenberg{<:Any, <:StaticMatrix}}, b::Type)
-    return quote
-        return $(gen_by_access(b, :b) do access_b
-            expr_gen(:upper_hessenberg, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:Transpose{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:transpose, access_b)
         end)
     end
 end
 function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticMatrix}}, b::Type)
     return quote
-        return $(gen_by_access(b, :b) do access_b
+        return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:adjoint, access_b)
         end)
     end
@@ -200,29 +174,38 @@ statically known for this function to work. `uplo` is the access pattern mode ge
 by the `gen_by_access` function.
 """
 function uplo_access(sa, asym, k, j, uplo)
+    TAsym = Symbol("T"*string(asym))
     if uplo == :any
         return :($asym[$(LinearIndices(sa)[k, j])])
     elseif uplo == :up
-        if k <= j
+        if k < j
             return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.symmetric($asym[$(LinearIndices(sa)[k, j])], :U))
         else
-            return :($asym[$(LinearIndices(sa)[j, k])])
+            return :(transpose($asym[$(LinearIndices(sa)[j, k])]))
         end
     elseif uplo == :lo
-        if k >= j
+        if k > j
             return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.symmetric($asym[$(LinearIndices(sa)[k, j])], :L))
         else
-            return :($asym[$(LinearIndices(sa)[j, k])])
+            return :(transpose($asym[$(LinearIndices(sa)[j, k])]))
         end
     elseif uplo == :up_herm
-        if k <= j
+        if k < j
             return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.hermitian($asym[$(LinearIndices(sa)[k, j])], :U))
         else
             return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
         end
     elseif uplo == :lo_herm
-        if k >= j
+        if k > j
             return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.hermitian($asym[$(LinearIndices(sa)[k, j])], :L))
         else
             return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
         end
@@ -230,35 +213,35 @@ function uplo_access(sa, asym, k, j, uplo)
         if k <= j
             return :($asym[$(LinearIndices(sa)[k, j])])
         else
-            return :(zero(T))
+            return :(zero($TAsym))
         end
     elseif uplo == :lower_triangular
         if k >= j
             return :($asym[$(LinearIndices(sa)[k, j])])
         else
-            return :(zero(T))
+            return :(zero($TAsym))
         end
     elseif uplo == :unit_upper_triangular
         if k < j
             return :($asym[$(LinearIndices(sa)[k, j])])
         elseif k == j
-            return :(oneunit(T))
+            return :(oneunit($TAsym))
         else
-            return :(zero(T))
+            return :(zero($TAsym))
         end
     elseif uplo == :unit_lower_triangular
         if k > j
             return :($asym[$(LinearIndices(sa)[k, j])])
         elseif k == j 
-            return :(oneunit(T))
+            return :(oneunit($TAsym))
         else
-            return :(zero(T))
+            return :(zero($TAsym))
         end
     elseif uplo == :upper_hessenberg
         if k <= j+1
             return :($asym[$(LinearIndices(sa)[k, j])])
         else
-            return :(zero(T))
+            return :(zero($TAsym))
         end
     elseif uplo == :transpose
         return :($asym[$(LinearIndices(reverse(sa))[j, k])])
@@ -273,9 +256,9 @@ function mul_smat_vec_exprs(sa, access_a)
     return [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
 end
 
-@generated function _mul(::Size{sa}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
+@generated function _mul(::Size{sa}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
-        retexpr = gen_by_access(a) do access_a
+        retexpr = gen_by_access(wrapped_a) do access_a
             exprs = mul_smat_vec_exprs(sa, access_a)
             return :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
         end
@@ -290,17 +273,18 @@ end
             throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
         end
         T = promote_op(matprod,Ta,Tb)
+        a = mul_parent(wrapped_a)
         $retexpr
     end
 end
 
-@generated function _mul(::Size{sa}, ::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function _mul(::Size{sa}, ::Size{sb}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
 
     if sa[2] != 0
-        retexpr = gen_by_access(a) do access_a
+        retexpr = gen_by_access(wrapped_a) do access_a
             exprs = mul_smat_vec_exprs(sa, access_a)
             return :(@inbounds similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
         end
@@ -312,6 +296,7 @@ end
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
+        a = mul_parent(wrapped_a)
         $retexpr
     end
 end
@@ -362,7 +347,7 @@ end
     end
 end
 
-@generated function mul_unrolled(::Size{sa}, ::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_unrolled(::Size{sa}, ::Size{sb}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, wrapped_b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -370,20 +355,22 @@ end
     S = Size(sa[1], sb[2])
 
     if sa[2] != 0
-        retexpr = gen_by_access(a, b) do access_a, access_b
+        retexpr = gen_by_access(wrapped_a, wrapped_b) do access_a, access_b
             exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)),
                 [:($(uplo_access(sa, :a, k1, j, access_a))*$(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
                 ) for k1 = 1:sa[1], k2 = 1:sb[2]]
-            return :((mul_result_structure(a, b))(similar_type(a, T, $S)(tuple($(exprs...)))))
+            return :((mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(tuple($(exprs...)))))
         end
     else
         exprs = [:(zero(T)) for k1 = 1:sa[1], k2 = 1:sb[2]]
-        retexpr = :(return (mul_result_structure(a, b))(similar_type(a, T, $S)(tuple($(exprs...)))))
+        retexpr = :(return (mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(tuple($(exprs...)))))
     end
 
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
+        a = mul_parent(wrapped_a)
+        b = mul_parent(wrapped_b)
         @inbounds $retexpr
     end
 end

@@ -17,6 +17,23 @@ struct NoMulAdd{T} <: MulAddMul{T} end
 @inline alpha(ma::NoMulAdd{T}) where T = one(T)
 @inline beta(ma::NoMulAdd{T}) where T = zero(T)
 
+"""
+    StaticMatMulLike
+
+Static wrappers used for multiplication dispatch.
+"""
+const StaticMatMulLike{s1, s2, T} = Union{
+    StaticMatrix{s1, s2, T},
+    Symmetric{T, <:StaticMatrix{s1, s2, T}},
+    Hermitian{T, <:StaticMatrix{s1, s2, T}},
+    LowerTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UpperTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UnitLowerTriangular{T, <:StaticMatrix{s1, s2, T}},
+    UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
+    Adjoint{T, <:StaticMatrix{s1, s2, T}},
+    Transpose{T, <:StaticMatrix{s1, s2, T}}}
+
+
 """ Size that stores whether a Matrix is a Transpose
 Useful when selecting multiplication methods, and avoiding allocations when dealing with
 the `Transpose` type by passing around the original matrix.
@@ -40,8 +57,8 @@ Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
 
 # Get the parent of transposed arrays, or the array itself if it has no parent
 # Different from Base.parent because we only want to get rid of Transpose and Adjoint
-mul_parent(A::Union{<:Transpose{<:Any,<:StaticArray}, <:Adjoint{<:Any,<:StaticArray}}) = A.parent
-mul_parent(A::StaticArray) = A
+@inline mul_parent(A::Union{StaticMatMulLike, Adjoint{<:Any,<:StaticVector}, Transpose{<:Any,<:StaticVector}}) = Base.parent(A)
+@inline mul_parent(A::StaticArray) = A
 
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size
