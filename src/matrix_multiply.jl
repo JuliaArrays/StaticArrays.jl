@@ -301,13 +301,17 @@ end
     end
 end
 
-
 # outer product
 @generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta},
         b::Union{Transpose{Tb, <:StaticVector}, Adjoint{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
-    exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
-
+    conjugate_b = b <: Adjoint
+    if conjugate_b
+        exprs = [:(a[$i] * adjoint(b[$j])) for i = 1:sa[1], j = 1:sb[2]]
+    else
+        exprs = [:(a[$i] * transpose(b[$j])) for i = 1:sa[1], j = 1:sb[2]]
+    end
+    
     return quote
         @_inline_meta
         T = promote_op(*, Ta, Tb)
@@ -327,7 +331,7 @@ end
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif a <: StaticMatrix && b <:StaticMatrix && sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
         return quote
             @_inline_meta
             return mul_unrolled_chunks(Sa, Sb, a, b)
@@ -400,7 +404,7 @@ end
 
 # Concatenate a series of matrix-vector multiplications
 # Each function is N^2 not N^3 - aids in compile time.
-@generated function mul_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+@generated function mul_unrolled_chunks(::Size{sa}, ::Size{sb}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, wrapped_b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if sb[1] != sa[2]
         throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
     end
@@ -410,19 +414,27 @@ end
     # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than (possibly) a mutable type. Avoids allocation == faster
     tmp_type_in = :(SVector{$(sb[1]), T})
     tmp_type_out = :(SVector{$(sa[1]), T})
-    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(TSize(a), TSize($(sb[1])), a,
-                    $(Expr(:call, tmp_type_in, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))::$tmp_type_out)
-                  for k2 = 1:sb[2]]
 
-    exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    retexpr = gen_by_access(wrapped_a, wrapped_b) do access_a, access_b
+        vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply($(Size{sa}()), $(Size{(sb[1],)}()),
+            a, $(Expr(:call, tmp_type_in, [uplo_access(sb, :b, i, k2, access_b) for i = 1:sb[1]]...)), $(Val(access_a)))::$tmp_type_out) for k2 = 1:sb[2]]
+
+        exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+
+        return quote
+            @inbounds $(Expr(:block, vect_exprs...))
+            $(Expr(:block,
+                :(@inbounds return (mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(tuple($(exprs...)))))
+            ))
+        end
+    end
 
     return quote
         @_inline_meta
-        T = promote_op(matprod,Ta,Tb)
-        $(Expr(:block,
-            vect_exprs...,
-            :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
-        ))
+        T = promote_op(matprod, Ta, Tb)
+        a = mul_parent(wrapped_a)
+        b = mul_parent(wrapped_b)
+        $retexpr
     end
 end
 

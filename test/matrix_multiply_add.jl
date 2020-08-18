@@ -12,6 +12,20 @@ macro test_noalloc(ex)
     end)
 end
 
+mul_add_wrappers = [
+    m -> m,
+    m -> Symmetric(m, :U),
+    m -> Symmetric(m, :L),
+    m -> Hermitian(m, :U),
+    m -> Hermitian(m, :L),
+    m -> UpperTriangular(m),
+    m -> LowerTriangular(m),
+    m -> UnitUpperTriangular(m),
+    m -> UnitLowerTriangular(m),
+    m -> adjoint(m),
+    m -> transpose(m)]
+
+
 # check_dims
 @test StaticArrays.check_dims(Size(4,), Size(4,3), Size(3,))
 @test !StaticArrays.check_dims(Size(4,), Size(4,3), Size(4,))
@@ -177,4 +191,56 @@ end
     test_multiply_add(3,4,SizedArray)
     test_multiply_add(5,6,SizedArray)
     test_multiply_add(15,16,SizedArray)
+end
+
+function test_wrappers_for_size(N, test_block)
+    C = rand(MMatrix{N,N,Int})
+    Cv = rand(MVector{N,Int})
+    A = rand(SMatrix{N,N,Int})
+    B = rand(SMatrix{N,N,Int})
+    bv = rand(SVector{N,Int})
+    # matrix-vector
+    for wrapper in mul_add_wrappers
+        mul!(Cv, wrapper(A), bv)
+        @test Cv == wrapper(Array(A))*Array(bv)
+    end
+
+    # matrix-matrix
+    for wrapper_c in [identity, Transpose], wrapper_a in mul_add_wrappers, wrapper_b in mul_add_wrappers
+        mul!(wrapper_c(C), wrapper_a(A), wrapper_b(B))
+        @test wrapper_c(C) == wrapper_a(Array(A))*wrapper_b(Array(B))
+    end
+
+    # block matrices
+    if test_block
+
+        C_block = rand(MMatrix{N,N,SMatrix{2,2,Int,4}})
+        Cv_block = rand(MVector{N,SMatrix{2,2,Int,4}})
+        A_block = rand(SMatrix{N,N,SMatrix{2,2,Int,4}})
+        B_block = rand(SMatrix{N,N,SMatrix{2,2,Int,4}})
+        bv_block = rand(SVector{N,SMatrix{2,2,Int,4}})
+        
+        # matrix-vector
+        for wrapper in mul_add_wrappers
+            # LinearAlgebra can't handle these
+            if all(T -> !isa(wrapper([1 2; 3 4]), T), [Symmetric, Hermitian])
+                mul!(Cv_block, wrapper(A_block), bv_block)
+                @test Cv_block == wrapper(Array(A_block))*Array(bv_block)
+            end
+        end
+
+        # matrix-matrix
+        for wrapper_a in mul_add_wrappers, wrapper_b in mul_add_wrappers
+            if all(T -> !isa(wrapper_a([1 2; 3 4]), T) && !isa(wrapper_b([1 2; 3 4]), T), [Symmetric, Hermitian])
+                mul!(C_block, wrapper_a(A_block), wrapper_b(B_block))
+                @test C_block == wrapper_a(Array(A_block))*wrapper_b(Array(B_block))
+            end
+        end
+    end
+
+end
+
+@testset "Testing different wrappers" begin
+    test_wrappers_for_size(2, true)
+    test_wrappers_for_size(8, false)
 end

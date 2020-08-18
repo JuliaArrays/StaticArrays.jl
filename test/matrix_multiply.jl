@@ -160,7 +160,7 @@ mul_wrappers = [
             for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
                 wm = wrapper_m(mm)
                 wn = wrapper_n(nn)
-                if length(mm) >= 100 && (!isa(wm, StaticArray) || !isa(wn, StaticArray))
+                if length(mm) >= 255 && (!isa(wm, StaticArray) || !isa(wn, StaticArray))
                     continue
                 end
                 res_structure = StaticArrays.mul_result_structure(wm, wn)
@@ -340,10 +340,10 @@ mul_wrappers = [
         @test a::MMatrix{2,2,Int,4} == @MMatrix [8 14; 18 32]
         mul!(a, transpose(m), transpose(n))
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
-        #=for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
+        for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
             mul!(a, wrapper_m(m), wrapper_n(n))
             @test a::MMatrix{2,2,Int,4} == wrapper_m(Array(m))*wrapper_n(Array(n))
-        end=#
+        end
 
         a2 = MArray{Tuple{2,2},Int,2,4}(undef)
         mul!(a2, m, n)
