@@ -255,7 +255,7 @@ end
 # Implementations
 
 function mul_smat_vec_exprs(sa, access_a)
-    return [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+    return [combine_products([:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
 end
 
 @generated function _mul(::Size{sa}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
@@ -326,6 +326,25 @@ for TWR in [Adjoint, Transpose, Symmetric, Hermitian, LowerTriangular, UpperTria
     @eval _unstatic_array(::Type{$TWR{T,TSA}}) where {S, T, N, TSA<:StaticArray{S,T,N}} = $TWR{T,<:AbstractArray{T,N}}
 end
 
+function combine_products(expr_list)
+    filtered = filter(expr_list) do expr
+        if expr.head != :call || expr.args[1] != :*
+            error("expected call to *")
+        end
+        for arg in expr.args[2:end]
+            if isa(arg, Expr) && arg.head == :call && arg.args[1] == :zero
+                return false
+            end
+        end
+        return true
+    end
+    if isempty(filtered)
+        return :(zero(T))
+    else
+        return reduce((ex1,ex2) -> :(+($ex1,$ex2)), filtered)
+    end
+end
+
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
     if sa[1]*sa[2]*sb[2] <= 8*8*8 || !(a <: StaticMatrix) || !(b <: StaticMatrix)
@@ -362,8 +381,7 @@ end
 
     if sa[2] != 0
         retexpr = gen_by_access(wrapped_a, wrapped_b) do access_a, access_b
-            exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)),
-                [:($(uplo_access(sa, :a, k1, j, access_a))*$(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
+            exprs = [combine_products([:($(uplo_access(sa, :a, k1, j, access_a))*$(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
                 ) for k1 = 1:sa[1], k2 = 1:sb[2]]
             return :((mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(tuple($(exprs...)))))
         end

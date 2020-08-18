@@ -64,7 +64,7 @@ Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
 
 @inline function LinearAlgebra.mul!(dest::StaticVecOrMatLike{TDest}, A::StaticVecOrMatLike{TA},
         B::StaticVecOrMatLike{TB}) where {TDest,TA,TB}
-    TMul = typeof(one(TA)*one(TB)+one(TA)*one(TB))
+    TMul = promote_op(matprod, TA, TB)
     return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
 end
 
@@ -111,7 +111,12 @@ end
 
 "Obtain an expression for the linear index of var[k,j], taking transposes into account"
 function _lind(var::Symbol, A::Type{TSize{sa,tA}}, k::Int, j::Int) where {sa,tA}
-    return uplo_access(sa, var, k, j, tA)
+    ula = uplo_access(sa, var, k, j, tA)
+    if ula.head == :call && ula.args[1] == :transpose
+        # TODO: can this be properly fixed at all?
+        return ula.args[2]
+    end
+    return ula
 end
 
 
@@ -126,9 +131,8 @@ end
 
     if sa[2] != 0
         assign_expr = gen_by_access(wrapped_a) do access_a
-            lhs = [:($(_lind(:c,Sc,k,col))) for k = 1:sa[1]]
-            ab = [:($(reduce((ex1,ex2) -> :(+($ex1,$ex2)),
-                [:($(uplo_access(sa, :a, k, j, access_a)) * b[$j]) for j = 1:sa[2]]))) for k = 1:sa[1]]
+            lhs = [_lind(:c,Sc,k,col) for k = 1:sa[1]]
+            ab = [combine_products([:($(uplo_access(sa, :a, k, j, access_a)) * b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
             exprs = _muladd_expr(lhs, ab, _add)
 
             return :(@inbounds $(Expr(:block, exprs...)))
@@ -221,13 +225,12 @@ end
     end
 
     if sa[2] != 0
-        lhs = [:($(_lind(:c, Sc, k1, k2))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        lhs = [_lind(:c, Sc, k1, k2) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
         assign_expr = gen_by_access(wrapped_a, wrapped_b) do access_a, access_b
 
-            ab = [:($(reduce((ex1,ex2) -> :(+($ex1,$ex2)),
-                    [:($(uplo_access(sa, :a, k1, j, access_a)) * $(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
-                ))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+            ab = [combine_products([:($(uplo_access(sa, :a, k1, j, access_a)) * $(uplo_access(sb, :b, j, k2, access_b))) for j = 1:sa[2]]
+                ) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
             exprs = _muladd_expr(lhs, ab, _add)
             return :(@inbounds $(Expr(:block, exprs...)))
@@ -246,6 +249,7 @@ end
         c = mul_parent(wrapped_c)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
+        T = promote_op(matprod,Ta,Tb)
         $assign_expr
         return c
     end
@@ -259,7 +263,7 @@ end
     end
 
     # This will not work for Symmetric and Hermitian wrappers of c
-    lhs = [:($(_lind(:c, Sc, k1, k2))) for k1 = 1:sa[1], k2 = 1:sb[2]]
+    lhs = [_lind(:c, Sc, k1, k2) for k1 = 1:sa[1], k2 = 1:sb[2]]
 
     #vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply(A, B[:, $k2])) for k2 = 1:sB[2]]
 
@@ -299,7 +303,7 @@ end
     end
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        exprs = [combine_products([:($(uplo_access(sa, :a, k, j, access_a))*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
         exprs = [:(zero(promote_op(matprod,Ta,Tb))) for k = 1:sa[1]]
     end
