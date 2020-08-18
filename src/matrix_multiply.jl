@@ -244,9 +244,11 @@ function uplo_access(sa, asym, k, j, uplo)
             return :(zero($TAsym))
         end
     elseif uplo == :transpose
-        return :($asym[$(LinearIndices(reverse(sa))[j, k])])
-    elseif uplo == :ajoint
+        return :(transpose($asym[$(LinearIndices(reverse(sa))[j, k])]))
+    elseif uplo == :adjoint
         return :(adjoint($asym[$(LinearIndices(reverse(sa))[j, k])]))
+    else
+        error("Unknown uplo: $uplo")
     end
 end
 

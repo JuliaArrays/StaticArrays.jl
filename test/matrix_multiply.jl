@@ -10,8 +10,8 @@ mul_wrappers = [
     m -> LowerTriangular(m),
     m -> UnitUpperTriangular(m),
     m -> UnitLowerTriangular(m),
-    m -> adjoint(m),
-    m -> transpose(m)]
+    m -> Adjoint(m),
+    m -> Transpose(m)]
 
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
