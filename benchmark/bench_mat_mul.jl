@@ -74,7 +74,7 @@ for N in [2, 4, 8, 10, 16]
     for (wrapper_a, wrapper_a_name) in mul_wrappers, (wrapper_b, wrapper_b_name) in mul_wrappers
         thrown = false
         try
-            wrapper_a(A) * wrapper_b(B)
+            mul!(C, wrapper_a(A), wrapper_b(B))
         catch e
             thrown = true
         end
