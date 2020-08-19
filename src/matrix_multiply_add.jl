@@ -185,7 +185,7 @@ end
         a::StaticMatMulLike, b::StaticMatMulLike,
         _add::MulAddMul) where {sa, sb, sc}
     Ta,Tb,Tc = eltype(a), eltype(b), eltype(c)
-    can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat
+    can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat && a <: Union{StaticMatrix,Transpose} && b <: Union{StaticMatrix,Transpose}
 
     mult_dim = multiplied_dimension(a,b)
     if mult_dim < 4*4*4
@@ -316,6 +316,8 @@ end
 
 @inline _get_raw_data(A::SizedArray) = A.data
 @inline _get_raw_data(A::StaticArray) = A
+# we need something heap-allocated to make sure BLAS calls are safe
+@inline _get_raw_data(A::SArray) = MArray(A)
 
 function mul_blas!(::TSize{<:Any,:any}, c::StaticMatrix,
         Sa::Union{TSize{<:Any,:any}, TSize{<:Any,:transpose}}, Sb::Union{TSize{<:Any,:any}, TSize{<:Any,:transpose}},

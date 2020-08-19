@@ -243,4 +243,5 @@ end
 @testset "Testing different wrappers" begin
     test_wrappers_for_size(2, true)
     test_wrappers_for_size(8, false)
+    test_wrappers_for_size(16, false)
 end
