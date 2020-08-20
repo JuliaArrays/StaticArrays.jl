@@ -93,15 +93,16 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(b,At,c,1.0,2.0)
     @test b ≈ 5A'c
 
+    expected_transpose_allocs = VERSION < v"1.5" ? 1 : 0
     @test_noalloc mul!(c,A,b)
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
     @test minimum(bmark).allocs == 0
     # @test_noalloc mul!(c, A, b, α, β)  # records 32 bytes
     bmark = @benchmark mul!($b,Transpose($A),$c) samples=10 evals=10
-    @test minimum(bmark).allocs == 0
+    @test minimum(bmark).allocs <= expected_transpose_allocs
     # @test_noalloc mul!(b, Transpose(A), c)  # records 16 bytes
     bmark = @benchmark mul!($b,Transpose($A),$c,$α,$β) samples=10 evals=10
-    @test minimum(bmark).allocs == 0
+    @test minimum(bmark).allocs <= expected_transpose_allocs
     # @test_noalloc mul!(b, Transpose(A), c, α, β)  # records 48 bytes
 
     # outer product
@@ -116,7 +117,7 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     @test C ≈ 3a*b'
 
     b = @benchmark mul!($C,$a,$b') samples=10 evals=10
-    @test minimum(b).allocs == 0
+    @test minimum(b).allocs <= expected_transpose_allocs
     # @test_noalloc mul!(C, a, b')  # records 16 bytes
 
     # A × B
@@ -144,7 +145,7 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     @test B ≈ 4A'C
 
     b = @benchmark mul!($B,Transpose($A),$C,$α,$β) samples=10 evals=10
-    @test minimum(b).allocs == 0
+    @test minimum(b).allocs <= expected_transpose_allocs
     # @test_noalloc mul!(B, Transpose(A), C, α, β)  # records 48 bytes
 
     # A*B'
@@ -157,7 +158,7 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     @test C ≈ 4A*B'
 
     b = @benchmark mul!($C,$A,Transpose($B),$α,$β) samples=10 evals=10
-    @test minimum(b).allocs == 0
+    @test minimum(b).allocs <= expected_transpose_allocs
     # @test_noalloc mul!(C, A, Transpose(B), α, β)  # records 48 bytes
 
     # A'B'
@@ -171,7 +172,7 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     @test C ≈ 4A'B'
 
     b = @benchmark mul!($C,Transpose($A),Transpose($B),$α,$β) samples=10 evals=10
-    @test minimum(b).allocs == 0
+    @test minimum(b).allocs <= 2*expected_transpose_allocs
     # @test_noalloc mul!(C, Transpose(A), Transpose(B), α, β)  # records 64 bytes
 
     # Transpose Output
@@ -179,7 +180,7 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(Transpose(C),Transpose(A),Transpose(B))
     @test C' ≈ A'B'
     b = @benchmark mul!(Transpose($C),Transpose($A),Transpose($B),$α,$β) samples=10 evals=10
-    @test minimum(b).allocs == 0
+    @test minimum(b).allocs <= expected_transpose_allocs*3
     # @test_noalloc mul!(Transpose(C), Transpose(A), Transpose(B), α, β)  # records 80 bytes
 end
 
