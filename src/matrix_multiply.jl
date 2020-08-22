@@ -66,6 +66,9 @@ end
 function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :wrapped_a)
     return expr_gen(:adjoint)
 end
+function gen_by_access(expr_gen, a::Type{<:SDiagonal}, asym = :wrapped_a)
+    return expr_gen(:diagonal)
+end
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, b::Type{<:AbstractArray})
 
@@ -148,6 +151,13 @@ function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticMatrix}}, b::T
         end)
     end
 end
+function gen_by_access(expr_gen, a::Type{<:SDiagonal}, b::Type)
+    return quote
+        return $(gen_by_access(b, :wrapped_b) do access_b
+            expr_gen(:diagonal, access_b)
+        end)
+    end
+end
 
 """
     mul_result_structure(a::Type, b::Type)
@@ -163,6 +173,21 @@ function mul_result_structure(::UpperTriangular{<:Any, <:StaticMatrix}, ::UpperT
 end
 function mul_result_structure(::LowerTriangular{<:Any, <:StaticMatrix}, ::LowerTriangular{<:Any, <:StaticMatrix})
     return LowerTriangular
+end
+function mul_result_structure(::UpperTriangular{<:Any, <:StaticMatrix}, ::SDiagonal)
+    return UpperTriangular
+end
+function mul_result_structure(::LowerTriangular{<:Any, <:StaticMatrix}, ::SDiagonal)
+    return LowerTriangular
+end
+function mul_result_structure(::SDiagonal, ::UpperTriangular{<:Any, <:StaticMatrix})
+    return UpperTriangular
+end
+function mul_result_structure(::SDiagonal, ::LowerTriangular{<:Any, <:StaticMatrix})
+    return LowerTriangular
+end
+function mul_result_structure(::SDiagonal, ::SDiagonal)
+    return Diagonal
 end
 
 """
@@ -247,6 +272,12 @@ function uplo_access(sa, asym, k, j, uplo)
         return :(transpose($asym[$(LinearIndices(reverse(sa))[j, k])]))
     elseif uplo == :adjoint
         return :(adjoint($asym[$(LinearIndices(reverse(sa))[j, k])]))
+    elseif uplo == :diagonal
+        if k == j
+            return :($asym[$k])
+        else
+            return :(zero($TAsym))
+        end
     else
         error("Unknown uplo: $uplo")
     end
@@ -347,12 +378,12 @@ end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
-    if sa[1]*sa[2]*sb[2] <= 8*8*8 || !(a <: StaticMatrix) || !(b <: StaticMatrix)
+    if sa[1]*sa[2]*sb[2] <= 8*8*8 || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif (sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14) || !(a <: StaticMatrix) || !(b <: StaticMatrix)
         return quote
             @_inline_meta
             return mul_unrolled_chunks(Sa, Sb, a, b)
@@ -436,7 +467,7 @@ end
     tmp_type_out = :(SVector{$(sa[1]), T})
 
     retexpr = gen_by_access(wrapped_a, wrapped_b) do access_a, access_b
-        vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply($(Size{sa}()), $(Size{(sb[1],)}()),
+        vect_exprs = [:($(Symbol("tmp_$k2")) = partly_unrolled_multiply($(Size{sa}()), $(Size{(sb[1],)}()),
             a, $(Expr(:call, tmp_type_in, [uplo_access(sb, :b, i, k2, access_b) for i = 1:sb[1]]...)), $(Val(access_a)))::$tmp_type_out) for k2 = 1:sb[2]]
 
         exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]

@@ -27,7 +27,8 @@ const StaticMatMulLike{s1, s2, T} = Union{
     UnitLowerTriangular{T, <:StaticMatrix{s1, s2, T}},
     UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
     Adjoint{T, <:StaticMatrix{s1, s2, T}},
-    Transpose{T, <:StaticMatrix{s1, s2, T}}}
+    Transpose{T, <:StaticMatrix{s1, s2, T}},
+    SDiagonal{s1, T}}
 
 
 """ Size that stores whether a Matrix is a Transpose
@@ -188,7 +189,7 @@ end
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat && a <: Union{StaticMatrix,Transpose} && b <: Union{StaticMatrix,Transpose}
 
     mult_dim = multiplied_dimension(a,b)
-    if mult_dim < 4*4*4
+    if mult_dim < 4*4*4 || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
             muladd_unrolled_all!(Sc, c, Sa, Sb, a, b, _add)

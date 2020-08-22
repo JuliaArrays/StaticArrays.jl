@@ -11,7 +11,8 @@ mul_wrappers = [
     m -> UnitUpperTriangular(m),
     m -> UnitLowerTriangular(m),
     m -> Adjoint(m),
-    m -> Transpose(m)]
+    m -> Transpose(m),
+    m -> Diagonal(m)]
 
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
@@ -172,6 +173,8 @@ mul_wrappers = [
                     LowerTriangular{Int,typeof(mm)}
                 elseif res_structure == UpperTriangular
                     UpperTriangular{Int,typeof(mm)}
+                elseif res_structure == Diagonal
+                    Diagonal{Int,<:SVector}
                 else
                     error("Unknown structure: ", res_structure)
                 end

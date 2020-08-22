@@ -14,7 +14,8 @@ mul_wrappers = [
     (m -> UnitUpperTriangular(m), "uup-tri"),
     (m -> UnitLowerTriangular(m), "ulo-tri"),
     (m -> Adjoint(m), "adjoint"),
-    (m -> Transpose(m), "transpo")]
+    (m -> Transpose(m), "transpo"),
+    (m -> Diagonal(m), "diag   ")]
 
 for N in [2, 4, 8, 10, 16]
 

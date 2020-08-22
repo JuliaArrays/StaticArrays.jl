@@ -22,8 +22,9 @@ mul_add_wrappers = [
     m -> LowerTriangular(m),
     m -> UnitUpperTriangular(m),
     m -> UnitLowerTriangular(m),
-    m -> adjoint(m),
-    m -> transpose(m)]
+    m -> Adjoint(m),
+    m -> Transpose(m),
+    m -> Diagonal(m)]
 
 
 # check_dims
@@ -224,7 +225,7 @@ function test_wrappers_for_size(N, test_block)
         # matrix-vector
         for wrapper in mul_add_wrappers
             # LinearAlgebra can't handle these
-            if all(T -> !isa(wrapper([1 2; 3 4]), T), [Symmetric, Hermitian])
+            if all(T -> !isa(wrapper([1 2; 3 4]), T), [Symmetric, Hermitian, Diagonal])
                 mul!(Cv_block, wrapper(A_block), bv_block)
                 @test Cv_block == wrapper(Array(A_block))*Array(bv_block)
             end
@@ -232,7 +233,7 @@ function test_wrappers_for_size(N, test_block)
 
         # matrix-matrix
         for wrapper_a in mul_add_wrappers, wrapper_b in mul_add_wrappers
-            if all(T -> !isa(wrapper_a([1 2; 3 4]), T) && !isa(wrapper_b([1 2; 3 4]), T), [Symmetric, Hermitian])
+            if all(T -> !isa(wrapper_a([1 2; 3 4]), T) && !isa(wrapper_b([1 2; 3 4]), T), [Symmetric, Hermitian, Diagonal])
                 mul!(C_block, wrapper_a(A_block), wrapper_b(B_block))
                 @test C_block == wrapper_a(Array(A_block))*wrapper_b(Array(B_block))
             end
