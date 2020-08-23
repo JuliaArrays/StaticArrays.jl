@@ -186,6 +186,18 @@ end
 function mul_result_structure(::SDiagonal, ::LowerTriangular{<:Any, <:StaticMatrix})
     return LowerTriangular
 end
+function mul_result_structure(::UnitUpperTriangular{<:Any, <:StaticMatrix}, ::SDiagonal)
+    return UpperTriangular
+end
+function mul_result_structure(::UnitLowerTriangular{<:Any, <:StaticMatrix}, ::SDiagonal)
+    return LowerTriangular
+end
+function mul_result_structure(::SDiagonal, ::UnitUpperTriangular{<:Any, <:StaticMatrix})
+    return UpperTriangular
+end
+function mul_result_structure(::SDiagonal, ::UnitLowerTriangular{<:Any, <:StaticMatrix})
+    return LowerTriangular
+end
 function mul_result_structure(::SDiagonal, ::SDiagonal)
     return Diagonal
 end
@@ -319,7 +331,7 @@ end
     if sa[2] != 0
         retexpr = gen_by_access(wrapped_a) do access_a
             exprs = mul_smat_vec_exprs(sa, access_a)
-            return :(@inbounds similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
+            return :(@inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...))))
         end
     else
         exprs = [:(zero(T)) for k = 1:sa[1]]
@@ -353,7 +365,7 @@ end
 end
 
 _unstatic_array(::Type{TSA}) where {S, T, N, TSA<:StaticArray{S,T,N}} = AbstractArray{T,N}
-for TWR in [Adjoint, Transpose, Symmetric, Hermitian, LowerTriangular, UpperTriangular]
+for TWR in [Adjoint, Transpose, Symmetric, Hermitian, LowerTriangular, UpperTriangular, UnitUpperTriangular, UnitLowerTriangular, Diagonal]
     @eval _unstatic_array(::Type{$TWR{T,TSA}}) where {S, T, N, TSA<:StaticArray{S,T,N}} = $TWR{T,<:AbstractArray{T,N}}
 end
 
@@ -378,7 +390,10 @@ end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     # Heuristic choice for amount of codegen
-    if sa[1]*sa[2]*sb[2] <= 8*8*8 || a <: Diagonal || b <: Diagonal
+    a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 2 : 1
+    b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 2 : 1
+    ab_tri_mul = (a == 2 && b == 2) ? 2 : 1
+    if sa[1]*sa[2]*sb[2] <= 8*8*8*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)

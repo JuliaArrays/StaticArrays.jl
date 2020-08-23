@@ -189,7 +189,10 @@ end
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat && a <: Union{StaticMatrix,Transpose} && b <: Union{StaticMatrix,Transpose}
 
     mult_dim = multiplied_dimension(a,b)
-    if mult_dim < 4*4*4 || a <: Diagonal || b <: Diagonal
+    a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 2 : 1
+    b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 2 : 1
+    ab_tri_mul = (a == 2 && b == 2) ? 2 : 1
+    if mult_dim < 4*4*4*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
             muladd_unrolled_all!(Sc, c, Sa, Sb, a, b, _add)
