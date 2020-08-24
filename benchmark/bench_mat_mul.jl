@@ -42,7 +42,7 @@ for N in [2, 4, 8, 10, 16]
     A = randn(SMatrix{N,N,Float64})
     B = randn(SMatrix{N,N,Float64})
     bv = randn(SVector{N,Float64})
-    for (wrapper_a, wrapper_name) in mul_wrappers
+    for (wrapper_a, wrapper_name) in mul_wrappers_reduced
         thrown = false
         try
             wrapper_a(A) * bv
