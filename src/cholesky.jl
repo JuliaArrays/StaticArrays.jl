@@ -28,7 +28,7 @@ end
             push!(q.args, Expr(:(=), L_m_n, Expr(:call, :muladd, Expr(:call, :(-), Symbol(:L_,m,:_,k)), Symbol(:L_,n,:_,k), L_m_n)))
         end
         L_n_n = Symbol(:L_,n,:_,n)
-        push!(q.args, Expr(:(=), L_n_n, Expr(:call, Expr(:(.), :Base, QuoteNode(:sqrt_llvm)), L_n_n)))
+        push!(q.args, Expr(:(=), L_n_n, Expr(:call, :sqrt, L_n_n)))
         Linv_n_n = Symbol(:Linv_,n,:_,n)
         push!(q.args, Expr(:(=), Linv_n_n, Expr(:call, :inv, L_n_n)))
         for m ∈ n+1:M
