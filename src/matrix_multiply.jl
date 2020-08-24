@@ -89,7 +89,7 @@ end
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif sa[1] <= 12 && sa[2] <= 12 && sb[2] <= 12
         return quote
             @_inline_meta
             return mul_unrolled_chunks(Sa, Sb, a, b)
@@ -106,7 +106,7 @@ end
     S = Size(sa[1], sb[2])
 
     # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
-    if sa[1]*sa[2]*sb[2] >= 14*14*14
+    if sa[1]*sa[2]*sb[2] >= 12*12*12
         Sa = TSize{size(S),false}()
         Sb = TSize{sa,false}()
         Sc = TSize{sb,false}()
@@ -122,7 +122,7 @@ end
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif sa[1] <= 12 && sa[2] <= 12 && sb[2] <= 12
         return quote
             @_inline_meta
             return similar_type(a, T, $S)(mul_unrolled_chunks(Sa, Sb, a, b))
