@@ -12,48 +12,46 @@ end
 end
 @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (cholesky(A).U, 0)
 
-
-@generated function _cholesky(::Size{(1,1)}, A::StaticMatrix)
-    @assert size(A) == (1,1)
-
-    quote
-        $(Expr(:meta, :inline))
-        T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
-        similar_type(A,T)((sqrt(A[1]), ))
+@generated function _cholesky(::Size{S}, A::StaticMatrix{M,M}) where {S,M}
+    @assert (M,M) == S
+    M > 24 && return :(_cholesky_large(Size{$S}(), :A))
+    q = Expr(:block)
+    for n in 1:M
+        for m ∈ n:M
+	    r = Expr(:ref, :A, n, m)
+	    ln = LineNumberNode(@__LINE__,Symbol(@__FILE__))
+	    r = Expr(:macrocall, Symbol("@inbounds"), ln, r)
+            push!(q.args, Expr(:(=), Symbol(:L_,m,:_,n), r))
+        end
+        for k ∈ 1:n-1, m in n:M
+            L_m_n = Symbol(:L_,m,:_,n)
+            push!(q.args, Expr(:(=), L_m_n, Expr(:call, :muladd, Expr(:call, :(-), Symbol(:L_,m,:_,k)), Symbol(:L_,n,:_,k), L_m_n)))
+        end
+        L_n_n = Symbol(:L_,n,:_,n)
+        push!(q.args, Expr(:(=), L_n_n, Expr(:call, Expr(:(.), :Base, QuoteNode(:sqrt_llvm)), L_n_n)))
+        Linv_n_n = Symbol(:Linv_,n,:_,n)
+        push!(q.args, Expr(:(=), Linv_n_n, Expr(:call, :inv, L_n_n)))
+        for m ∈ n+1:M
+            push!(q.args, Expr(:(*=), Symbol(:L_,m,:_,n), Linv_n_n))
+        end
     end
+    push!(q.args, :(T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)))
+    ret = Expr(:tuple)
+    for n ∈ 1:M
+        for m ∈ 1:n
+            push!(ret.args, Symbol(:L_,n,:_,m))
+        end
+        for m ∈ n+1:M
+            push!(ret.args, Expr(:call, :zero, :T))
+        end
+    end
+    push!(q.args, Expr(:call, Expr(:call, :similar_type, :A, :T), ret))
+    Expr(:block, Expr(:meta, :inline), q)
 end
 
-@generated function _cholesky(::Size{(2,2)}, A::StaticMatrix)
-    @assert size(A) == (2,2)
-
-    quote
-        $(Expr(:meta, :inline))
-        @inbounds a = sqrt(A[1])
-        @inbounds b = A[3] / a
-        @inbounds c = sqrt(A[4] - b'*b)
-        T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
-        similar_type(A,T)((a, zero(T), b, c))
-    end
-end
-
-@generated function _cholesky(::Size{(3,3)}, A::StaticMatrix)
-    @assert size(A) == (3,3)
-
-    quote
-        $(Expr(:meta, :inline))
-        @inbounds a11 = sqrt(A[1])
-        @inbounds a12 = A[4] / a11
-        @inbounds a22 = sqrt(A[5] - a12'*a12)
-        @inbounds a13 = A[7] / a11
-        @inbounds a23 = (A[8] - a12'*a13) / a22
-        @inbounds a33 = sqrt(A[9] - a13'*a13 - a23'*a23)
-        T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)
-        similar_type(A,T)((a11, zero(T), zero(T), a12, a22, zero(T), a13, a23, a33))
-    end
-end
 
 # Otherwise default algorithm returning wrapped SizedArray
-@inline _cholesky(::Size{S}, A::StaticArray) where {S} =
+@inline _cholesky_large(::Size{S}, A::StaticArray) where {S} =
     SizedArray{Tuple{S...}}(Matrix(cholesky(Hermitian(Matrix(A))).U))
 
 LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}
