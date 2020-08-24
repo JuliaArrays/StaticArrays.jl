@@ -17,6 +17,13 @@ mul_wrappers = [
     (m -> Transpose(m), "transpo"),
     (m -> Diagonal(m), "diag   ")]
 
+mul_wrappers_reduced = [
+    (m -> m, "ident  "),
+    (m -> Symmetric(m, :U), "sym-u  "),
+    (m -> UpperTriangular(m), "up-tri "),
+    (m -> Transpose(m), "transpo"),
+    (m -> Diagonal(m), "diag   ")]
+
 for N in [2, 4, 8, 10, 16]
 
     matvecstr = @sprintf("mat-vec  %2d", N)
@@ -41,7 +48,7 @@ for N in [2, 4, 8, 10, 16]
             thrown = true
         end
         if !thrown
-            suite[matvecstr][wrapper_name] = @benchmarkable $(wrapper_a(A)) * $bv
+            suite[matvecstr][wrapper_name] = @benchmarkable $(Ref(wrapper_a(A)))[] * $(Ref(bv))[]
         end
     end
 
@@ -53,7 +60,7 @@ for N in [2, 4, 8, 10, 16]
             thrown = true
         end
         if !thrown
-            suite[matmatstr][wrapper_a_name * " * " * wrapper_b_name] = @benchmarkable $(wrapper_a(A)) * $(wrapper_b(B))
+            suite[matmatstr][wrapper_a_name * " * " * wrapper_b_name] = @benchmarkable $(Ref(wrapper_a(A)))[] * $(Ref(wrapper_b(B)))[]
         end
     end
 
@@ -68,7 +75,7 @@ for N in [2, 4, 8, 10, 16]
             thrown = true
         end
         if !thrown
-            suite[matvec_mut_str][wrapper_name] = @benchmarkable mul!($cv, $(wrapper_a(A)), $bv)
+            suite[matvec_mut_str][wrapper_name] = @benchmarkable mul!($cv, $(Ref(wrapper_a(A)))[], $(Ref(bv))[])
         end
     end
 
@@ -80,7 +87,7 @@ for N in [2, 4, 8, 10, 16]
             thrown = true
         end
         if !thrown
-            suite[matmat_mut_str][wrapper_a_name * " * " * wrapper_b_name] = @benchmarkable mul!($C, $(wrapper_a(A)), $(wrapper_b(B)))
+            suite[matmat_mut_str][wrapper_a_name * " * " * wrapper_b_name] = @benchmarkable mul!($C, $(Ref(wrapper_a(A)))[], $(Ref(wrapper_b(B)))[])
         end
     end
 end
@@ -110,4 +117,95 @@ function judge_results(m1, m2)
         end
     end
     return results
+end
+
+function generic_mul(size_a, size_b, a, b)
+    return invoke(*, Tuple{StaticArrays._unstatic_array(typeof(a)),StaticArrays._unstatic_array(typeof(b))}, a, b)
+end
+
+function full_benchmark(mul_wrappers, size_iter = 1:4, T = Float64)
+    suite_full = BenchmarkGroup()
+    for N in size_iter
+        for M in size_iter
+            a = randn(SMatrix{N,M,T})
+            wrappers_a = N == M ? mul_wrappers : [mul_wrappers[1]]
+            sa = Size(a)
+            for K in size_iter
+                b = randn(SMatrix{M,K,T})
+                wrappers_b = M == K ? mul_wrappers : [mul_wrappers[1]]
+                sb = Size(b)
+                for (w_a, w_a_name) in wrappers_a
+                    for (w_b, w_b_name) in wrappers_b
+                        cur_str = @sprintf("mat-mat %s %s generic  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        suite_full[cur_str] = @benchmarkable generic_mul($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        cur_str = @sprintf("mat-mat %s %s default  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        suite_full[cur_str] = @benchmarkable StaticArrays._mul($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        cur_str = @sprintf("mat-mat %s %s unrolled (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        suite_full[cur_str] = @benchmarkable StaticArrays.mul_unrolled($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        if w_a_name != "diag   " && w_b_name != "diag   "
+                            cur_str = @sprintf("mat-mat %s %s chunks   (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                            suite_full[cur_str] = @benchmarkable StaticArrays.mul_unrolled_chunks($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        end
+                        if w_a_name == "ident  " && w_b_name == "ident  "
+                            cur_str = @sprintf("mat-mat %s %s loop     (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                            suite_full[cur_str] = @benchmarkable StaticArrays.mul_loop($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        end
+                    end
+                end
+            end
+        end
+    end
+    results = run(suite_full, verbose = true)
+    results_median = map(collect(results)) do res
+        return (res[1], median(res[2]).time)
+    end
+    return results_median
+end
+
+function judge_this(new_time, old_time, tol, w_a_name, w_b_name, N, M, K, which)
+    if new_time*tol < old_time
+        msg = @sprintf("better for %s %s (%2d, %2d) x (%2d, %2d): %s", w_a_name, w_b_name, N, M, M, K, which)
+        println(msg)
+        println(">> ", new_time, " | ", old_time)
+    end
+end
+
+function pick_best(results, mul_wrappers, size_iter; tol = 1.2)
+    for N in size_iter
+        for M in size_iter
+            wrappers_a = N == M ? mul_wrappers : [mul_wrappers[1]]
+            for K in size_iter
+                wrappers_b = M == K ? mul_wrappers : [mul_wrappers[1]]
+                for (w_a, w_a_name) in wrappers_a
+                    for (w_b, w_b_name) in wrappers_b
+                        cur_default = @sprintf("mat-mat %s %s default  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        default_time = results[cur_default]
+
+                        cur_generic = @sprintf("mat-mat %s %s generic  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        generic_time = results[cur_generic]
+                        judge_this(generic_time, default_time, tol, w_a_name, w_b_name, N, M, K, "generic")
+
+                        cur_unrolled = @sprintf("mat-mat %s %s unrolled (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                        unrolled_time = results[cur_unrolled]
+                        judge_this(unrolled_time, default_time, tol, w_a_name, w_b_name, N, M, K, "unrolled")
+                        
+                        if w_a_name != "diag   " && w_b_name != "diag   "
+                            cur_chunks = @sprintf("mat-mat %s %s chunks   (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                            chunk_time = results[cur_chunks]
+                            judge_this(chunk_time, default_time, tol, w_a_name, w_b_name, N, M, K, "chunks")
+                        end
+                        if w_a_name == "ident  " && w_b_name == "ident  "
+                            cur_loop = @sprintf("mat-mat %s %s loop     (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
+                            loop_time = results[cur_loop]
+                            judge_this(loop_time, default_time, tol, w_a_name, w_b_name, N, M, K, "loop")
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+function run_1()
+    return full_benchmark(mul_wrappers_reduced, [2, 3, 4, 5, 8, 9, 14, 16])
 end

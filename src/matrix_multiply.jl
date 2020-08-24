@@ -389,11 +389,18 @@ function combine_products(expr_list)
 end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+    S = Size(sa[1], sb[2])
     # Heuristic choice for amount of codegen
-    a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 2 : 1
-    b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 2 : 1
-    ab_tri_mul = (a == 2 && b == 2) ? 2 : 1
-    if sa[1]*sa[2]*sb[2] <= 8*8*8*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
+    a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 4 : 1
+    b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 4 : 1
+    ab_tri_mul = (a == 4 && b == 4) ? 2 : 1
+    if a <: StaticMatrix && b <: StaticMatrix
+        # Julia unrolls these loops pretty well
+        return quote
+            @_inline_meta
+            return mul_loop(Sa, Sb, a, b)
+        end
+    elseif sa[1]*sa[2]*sb[2] <= 4*8*8*8*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
@@ -403,17 +410,12 @@ end
             @_inline_meta
             return mul_unrolled_chunks(Sa, Sb, a, b)
         end
-    elseif a <: StaticMatrix && b <:StaticMatrix
-        return quote
-            @_inline_meta
-            return mul_loop(Sa, Sb, a, b)
-        end
     else
         # we don't have any special code for handling this case so let's fall back to
         # the generic implementation of matrix multiplication
         return quote
             @_inline_meta
-            return invoke(*, Tuple{$(_unstatic_array(a)),$(_unstatic_array(b))}, a, b)
+            return mul_generic(Sa, Sb, a, b)
         end
     end
 end
@@ -465,6 +467,22 @@ end
             @inbounds $(Expr(:block, exprs_loop...))
         end
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
+    end
+end
+
+@generated function mul_generic(::Size{sa}, ::Size{sb}, wrapped_a::StaticMatMulLike{<:Any, <:Any, Ta}, wrapped_b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
+    end
+
+    S = Size(sa[1], sb[2])
+
+    return quote
+        @_inline_meta
+        T = promote_op(matprod, Ta, Tb)
+        a = mul_parent(wrapped_a)
+        b = mul_parent(wrapped_b)
+        return (mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(invoke(*, Tuple{$(_unstatic_array(a)),$(_unstatic_array(b))}, a, b)))
     end
 end
 
