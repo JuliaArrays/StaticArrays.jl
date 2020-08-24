@@ -1,3 +1,5 @@
+module BenchmarkMatMul
+
 using StaticArrays
 using BenchmarkTools
 using LinearAlgebra
@@ -209,3 +211,6 @@ end
 function run_1()
     return full_benchmark(mul_wrappers_reduced, [2, 3, 4, 5, 8, 9, 14, 16])
 end
+
+end #module
+BenchmarkMatMul.suite
