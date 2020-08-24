@@ -106,7 +106,7 @@ end
     S = Size(sa[1], sb[2])
 
     # Heuristic choice between BLAS and explicit unrolling (or chunk-based unrolling)
-    if sa[1]*sa[2]*sb[2] >= 12*12*12
+    if sa[1]*sa[2]*sb[2] >= 14*14*14
         Sa = TSize{size(S),false}()
         Sb = TSize{sa,false}()
         Sc = TSize{sb,false}()
