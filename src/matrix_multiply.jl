@@ -384,7 +384,7 @@ function combine_products(expr_list)
     if isempty(filtered)
         return :(zero(T))
     else
-          return reduce(filtered) do ex1, ex2
+        return reduce(filtered) do ex1, ex2
             if ex2.head != :call || ex2.args[1] != :*
                 error("expected call to *")
             end
