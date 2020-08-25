@@ -7,6 +7,7 @@ using StaticArrays, Test, LinearAlgebra
         @test length(m) == 12
         @test IndexStyle(m) == IndexLinear()
         @test Base.isassigned(m, 2, 2) == true
+        @test eachindex(m) isa SOneTo
     end
 
     @testset "strides" begin
