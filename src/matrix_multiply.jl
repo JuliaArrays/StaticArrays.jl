@@ -384,7 +384,13 @@ function combine_products(expr_list)
     if isempty(filtered)
         return :(zero(T))
     else
-        return reduce((ex1,ex2) -> :(+($ex1,$ex2)), filtered)
+          return reduce(filtered) do ex1, ex2
+            if ex2.head != :call || ex2.args[1] != :*
+                error("expected call to *")
+            end
+
+            return :(muladd($(ex2.args[2]), $(ex2.args[3]), $ex1))
+        end
     end
 end
 
