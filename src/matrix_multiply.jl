@@ -454,18 +454,44 @@ end
 
     S = Size(sa[1], sb[2])
 
-    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:sa[1], k2 = 1:sb[2]]
-    exprs_init = [:($(tmps[k1,k2])  = a[$k1] * b[1 + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
-    exprs_loop = [:($(tmps[k1,k2]) += a[$(k1-sa[1]) + $(sa[1])*j] * b[j + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
-
+    # optimal for AVX2 with `Float64
+    # AVX512 would want something more like 16x14 or 24x9 with `Float64`
+    M_r, N_r = 8, 6
+    n = 0
+    M, K = sa
+    N = sb[2]
+    q = Expr(:block)
+    atemps = [Symbol(:a_, k1) for k1 = 1:M]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:M, k2 = 1:N]
+    while n < N
+        nu = min(N, n + N_r)
+        nrange = n+1:nu
+        m = 0
+        while m < M
+            mu = min(M, m + M_r)
+            mrange = m+1:mu
+            
+            atemps_init = [:($(atemps[k1]) = a[$k1]) for k1 = mrange]
+            exprs_init = [:($(tmps[k1,k2])  = $(atemps[k1]) * b[$(1 + (k2-1) * sb[1])]) for k1 = mrange, k2 = nrange]
+            atemps_loop_init = [:($(atemps[k1]) = a[$(k1-sa[1]) + $(sa[1])*j]) for k1 = mrange]
+            exprs_loop = [:($(tmps[k1,k2]) = muladd($(atemps[k1]), b[j + $((k2-1) * sb[1])], $(tmps[k1,k2]))) for k1 = mrange, k2 = nrange]
+            qblock = quote
+                @inbounds $(Expr(:block, atemps_init...))
+                @inbounds $(Expr(:block, exprs_init...))
+                for j = 2:$(sa[2])
+                    @inbounds $(Expr(:block, atemps_loop_init...))
+                    @inbounds $(Expr(:block, exprs_loop...))
+                end
+            end
+            push!(q.args, qblock)
+            m = mu
+        end
+        n = nu
+    end
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
-
-        @inbounds $(Expr(:block, exprs_init...))
-        for j = 2:$(sa[2])
-            @inbounds $(Expr(:block, exprs_loop...))
-        end
+        $q
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
     end
 end
@@ -512,13 +538,60 @@ end
             ))
         end
     end
-
     return quote
         @_inline_meta
         T = promote_op(matprod, Ta, Tb)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
         $retexpr
+    end
+end
+
+# a special version for plain matrices
+@generated function mul_unrolled_chunks(::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
+    end
+
+    S = Size(sa[1], sb[2])
+
+    # optimal for AVX2 with `Float64
+    # AVX512 would want something more like 16x14 or 24x9 with `Float64`
+    M_r, N_r = 8, 6
+    n = 0
+    M, K = sa
+    N = sb[2]
+    q = Expr(:block)
+    atemps = [Symbol(:a_, k1) for k1 = 1:M]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:M, k2 = 1:N]
+    while n < N
+        nu = min(N, n + N_r)
+        nrange = n+1:nu
+        m = 0
+        while m < M
+            mu = min(M, m + M_r)
+            mrange = m+1:mu
+
+            atemps_init = [:($(atemps[k1]) = a[$k1]) for k1 = mrange]
+            exprs_init = [:($(tmps[k1,k2])  = $(atemps[k1]) * b[$(1 + (k2-1) * sb[1])]) for k1 = mrange, k2 = nrange]
+            push!(q.args, :(@inbounds $(Expr(:block, atemps_init...))))
+            push!(q.args, :(@inbounds $(Expr(:block, exprs_init...))))
+
+            for j in 2:K
+                atemps_loop_init = [:($(atemps[k1]) = a[$(LinearIndices(sa)[k1,j])]) for k1 = mrange]
+                exprs_loop = [:($(tmps[k1,k2]) = muladd($(atemps[k1]), b[$(LinearIndices(sb)[j,k2])], $(tmps[k1,k2]))) for k1 = mrange, k2 = nrange]
+                push!(q.args, :(@inbounds $(Expr(:block, atemps_loop_init...))))
+                push!(q.args, :(@inbounds $(Expr(:block, exprs_loop...))))
+            end
+            m = mu
+        end
+        n = nu
+    end
+    return quote
+        @_inline_meta
+        T = promote_op(matprod,Ta,Tb)
+        $q
+        @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
     end
 end
 
