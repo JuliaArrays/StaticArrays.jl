@@ -121,10 +121,6 @@ function judge_results(m1, m2)
     return results
 end
 
-function generic_mul(size_a, size_b, a, b)
-    return invoke(*, Tuple{StaticArrays._unstatic_array(typeof(a)),StaticArrays._unstatic_array(typeof(b))}, a, b)
-end
-
 function full_benchmark(mul_wrappers, size_iter = 1:4, T = Float64)
     suite_full = BenchmarkGroup()
     for N in size_iter
@@ -139,7 +135,7 @@ function full_benchmark(mul_wrappers, size_iter = 1:4, T = Float64)
                 for (w_a, w_a_name) in wrappers_a
                     for (w_b, w_b_name) in wrappers_b
                         cur_str = @sprintf("mat-mat %s %s generic  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
-                        suite_full[cur_str] = @benchmarkable generic_mul($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
+                        suite_full[cur_str] = @benchmarkable StaticArrays.mul_generic($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
                         cur_str = @sprintf("mat-mat %s %s default  (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
                         suite_full[cur_str] = @benchmarkable StaticArrays._mul($sa, $sb, $(Ref(w_a(a)))[], $(Ref(w_b(b)))[])
                         cur_str = @sprintf("mat-mat %s %s unrolled (%2d, %2d) x (%2d, %2d)", w_a_name, w_b_name, N, M, M, K)
