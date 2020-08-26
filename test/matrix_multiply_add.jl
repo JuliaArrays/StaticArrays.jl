@@ -77,7 +77,9 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(b,At,c,1.0,2.0)
     @test b ≈ 5A'c
 
-    @test_noalloc mul!(c,A,b)
+    if ArrayType == MArray
+        @test_noalloc mul!(c,A,b)
+    end
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
     @test minimum(bmark).allocs == 0
     # @test_noalloc mul!(c, A, b, α, β)  # records 32 bytes
