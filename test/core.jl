@@ -22,7 +22,7 @@
         @static if VERSION < v"1.6-"
             @test_throws DimensionMismatch("No precise constructor for SArray{Tuple{2},$Int,1,2} found. Length of input was 1.") SVector{2,Int}((1,))
         else
-            @test_throws DimensionMismatch("No precise constructor for SVector{2,$Int} found. Length of input was 1.") SVector{2,Int}((1,))
+            @test_throws DimensionMismatch("No precise constructor for SVector{2, $Int} found. Length of input was 1.") SVector{2,Int}((1,))
         end
         @test_throws Exception SVector{1,3}((1,))
 
