@@ -117,6 +117,8 @@ end
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
 @propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
 
+Base.parent(sa::SizedArray) = sa.data
+
 const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
@@ -212,4 +214,8 @@ function Base.view(
 ) where {S}
     new_size = new_out_size(S, indices...)
     return SizedArray{new_size}(view(a.data, indices...))
+end
+
+function Base.vec(a::SizedArray{S}) where {S}
+    return SizedVector{tuple_prod(S)}(vec(a.data))
 end

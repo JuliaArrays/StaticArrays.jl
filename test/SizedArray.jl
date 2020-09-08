@@ -79,6 +79,15 @@
     sa[1] = 2
     @test sa.data == [2, 4]
 
+    # parent
+    @test parent(sa) === sa.data
+
+    @testset "vec" begin
+        sa2 = SizedArray{Tuple{2, 2}, Int}([1, 2, 3, 4])
+        @test (@inferred vec(sa2)) isa SizedVector{4, Int}
+        @test vec(sa2).data === vec(sa2.data)
+    end
+
     @testset "aliasing" begin
         a1 = rand(4)
         a2 = copy(a1)
