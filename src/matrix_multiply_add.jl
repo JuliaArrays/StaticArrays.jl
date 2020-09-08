@@ -40,18 +40,18 @@ Base.transpose(::TSize{S,T}) where {S,T} = TSize{reverse(S),!T}()
 
 # Get the parent of transposed arrays, or the array itself if it has no parent
 #   QUESTION: maybe call this something else?
-Base.parent(A::Union{<:Transpose{<:Any,<:StaticArray}, <:Adjoint{<:Any,<:StaticArray}}) = A.parent
-Base.parent(A::StaticArray) = A
+mul_parent(A) = parent(A)
+mul_parent(A::StaticArray) = A
 
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
-    α::Real, β::Real) = _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B),
+    α::Real, β::Real) = _mul!(TSize(dest), mul_parent(dest), TSize(A), TSize(B), mul_parent(A), mul_parent(B),
     AlphaBeta(α,β))
 
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike{T},
         B::StaticVecOrMatLike{T}) where T =
-    _mul!(TSize(dest), parent(dest), TSize(A), TSize(B), parent(A), parent(B), NoMulAdd{T}())
+    _mul!(TSize(dest), mul_parent(dest), TSize(A), TSize(B), mul_parent(A), mul_parent(B), NoMulAdd{T}())
 
 
 "Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling."
