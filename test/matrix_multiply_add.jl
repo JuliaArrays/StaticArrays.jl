@@ -79,9 +79,15 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(b,At,c,1.0,2.0)
     @test b ≈ 5A'c
 
-    if !(ArrayType <: SizedArray)
-        # records 16 bytes for SizedArray on a 1.5 nightly
+    @static if VERSION < v"1.5-"
         @test_noalloc mul!(c,A,b)
+    else
+        if !(ArrayType <: SizedArray)
+            @test_noalloc mul!(c,A,b)
+        else
+            mul!(c,A,b)
+            @test_broken(@allocated(mul!(c,A,b)) == 0)
+        end
     end
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
     @test minimum(bmark).allocs == 0
