@@ -16,10 +16,24 @@ import LinearAlgebra: BlasFloat, matprod, mul!
 
 # Implementations
 
+function matrix_vector_quote(sa)
+    q = Expr(:block)
+    exprs = [Symbol(:x_, k) for k ∈ 1:sa[1]]
+    for j ∈ 1:sa[2]
+        for k ∈ 1:sa[1]
+            call = isone(j) ? :(a[$(LinearIndices(sa)[k, j])]*b[$j]) : :(muladd(a[$(LinearIndices(sa)[k, j])], b[$j], $(exprs[k])))
+            push!(q.args, :($(exprs[k]) = $call))
+        end
+    end
+    q, exprs
+end
+
 @generated function _mul(::Size{sa}, a::StaticMatrix{<:Any, <:Any, Ta}, b::AbstractVector{Tb}) where {sa, Ta, Tb}
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        # [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        q, exprs = matrix_vector_quote(sa)
     else
+        q = nothing
         exprs = [:(zero(T)) for k = 1:sa[1]]
     end
 
@@ -29,6 +43,7 @@ import LinearAlgebra: BlasFloat, matprod, mul!
             throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
         end
         T = promote_op(matprod,Ta,Tb)
+        $q
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
@@ -39,14 +54,17 @@ end
     end
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
+        q, exprs = matrix_vector_quote(sa)
+        # exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k, j])]*b[$j]) for j = 1:sa[2]]) for k = 1:sa[1]]
     else
+        q = nothing
         exprs = [:(zero(T)) for k = 1:sa[1]]
     end
 
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
+        $q
         @inbounds return similar_type(b, T, Size(sa[1]))(tuple($(exprs...)))
     end
 end
@@ -71,7 +89,7 @@ end
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif sa[1] <= 12 && sa[2] <= 12 && sb[2] <= 12
         return quote
             @_inline_meta
             return mul_unrolled_chunks(Sa, Sb, a, b)
@@ -104,7 +122,7 @@ end
             @_inline_meta
             return mul_unrolled(Sa, Sb, a, b)
         end
-    elseif sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14
+    elseif sa[1] <= 12 && sa[2] <= 12 && sb[2] <= 12
         return quote
             @_inline_meta
             return similar_type(a, T, $S)(mul_unrolled_chunks(Sa, Sb, a, b))
@@ -125,14 +143,30 @@ end
     S = Size(sa[1], sb[2])
 
     if sa[2] != 0
-        exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k1, j])]*b[$(LinearIndices(sb)[j, k2])]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        # exprs = [reduce((ex1,ex2) -> :(+($ex1,$ex2)), [:(a[$(LinearIndices(sa)[k1, j])]*b[$(LinearIndices(sb)[j, k2])]) for j = 1:sa[2]]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        exprs = [Symbol(:C_,k1,:_,k2) for k1 = 1:sa[1], k2 = 1:sb[2]]
+        q = Expr(:block)
+        for k2 in 1:sb[2]
+            for k1 in 1:sa[1]
+                push!(q.args, :($(exprs[k1,k2]) = a[$(LinearIndices(sa)[k1, 1])]*b[$(LinearIndices(sb)[1, k2])]))
+            end
+        end
+        for j in 2:sb[1]
+            for k2 in 1:sb[2]
+                for k1 in 1:sa[1]
+                    push!(q.args, :($(exprs[k1,k2]) = muladd(a[$(LinearIndices(sa)[k1, j])], b[$(LinearIndices(sb)[j, k2])], $(exprs[k1,k2]))))
+                end
+            end
+        end
     else
+        q = nothing
         exprs = [:(zero(T)) for k1 = 1:sa[1], k2 = 1:sb[2]]
     end
 
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
+        $q
         @inbounds return similar_type(a, T, $S)(tuple($(exprs...)))
     end
 end
@@ -145,18 +179,44 @@ end
 
     S = Size(sa[1], sb[2])
 
-    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:sa[1], k2 = 1:sb[2]]
-    exprs_init = [:($(tmps[k1,k2])  = a[$k1] * b[1 + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
-    exprs_loop = [:($(tmps[k1,k2]) += a[$(k1-sa[1]) + $(sa[1])*j] * b[j + $((k2-1) * sb[1])]) for k1 = 1:sa[1], k2 = 1:sb[2]]
-
+    # optimal for AVX2 with `Float64
+    # AVX512 would want something more like 16x14 or 24x9 with `Float64`
+    M_r, N_r = 8, 6
+    n = 0
+    M, K = sa
+    N = sb[2]
+    q = Expr(:block)
+    atemps = [Symbol(:a_, k1) for k1 = 1:M]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:M, k2 = 1:N]
+    while n < N
+        nu = min(N, n + N_r)
+        nrange = n+1:nu
+        m = 0
+        while m < M
+            mu = min(M, m + M_r)
+            mrange = m+1:mu
+            
+            atemps_init = [:($(atemps[k1]) = a[$k1]) for k1 = mrange]
+            exprs_init = [:($(tmps[k1,k2])  = $(atemps[k1]) * b[$(1 + (k2-1) * sb[1])]) for k1 = mrange, k2 = nrange]
+            atemps_loop_init = [:($(atemps[k1]) = a[$(k1-sa[1]) + $(sa[1])*j]) for k1 = mrange]
+            exprs_loop = [:($(tmps[k1,k2]) = muladd($(atemps[k1]), b[j + $((k2-1) * sb[1])], $(tmps[k1,k2]))) for k1 = mrange, k2 = nrange]
+            qblock = quote
+                @inbounds $(Expr(:block, atemps_init...))
+                @inbounds $(Expr(:block, exprs_init...))
+                for j = 2:$(sa[2])
+                    @inbounds $(Expr(:block, atemps_loop_init...))
+                    @inbounds $(Expr(:block, exprs_loop...))
+                end
+            end
+            push!(q.args, qblock)
+            m = mu
+        end
+        n = nu
+    end
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
-
-        @inbounds $(Expr(:block, exprs_init...))
-        for j = 2:$(sa[2])
-            @inbounds $(Expr(:block, exprs_loop...))
-        end
+        $q
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
     end
 end
@@ -170,22 +230,43 @@ end
 
     S = Size(sa[1], sb[2])
 
-    # Do a custom b[:, k2] to return a SVector (an isbitstype type) rather than (possibly) a mutable type. Avoids allocation == faster
-    tmp_type_in = :(SVector{$(sb[1]), T})
-    tmp_type_out = :(SVector{$(sa[1]), T})
-    vect_exprs = [:($(Symbol("tmp_$k2"))::$tmp_type_out = partly_unrolled_multiply(TSize(a), TSize($(sb[1])), a,
-                    $(Expr(:call, tmp_type_in, [Expr(:ref, :b, LinearIndices(sb)[i, k2]) for i = 1:sb[1]]...)))::$tmp_type_out)
-                  for k2 = 1:sb[2]]
+    # optimal for AVX2 with `Float64
+    # AVX512 would want something more like 16x14 or 24x9 with `Float64`
+    M_r, N_r = 8, 6
+    n = 0
+    M, K = sa
+    N = sb[2]
+    q = Expr(:block)
+    atemps = [Symbol(:a_, k1) for k1 = 1:M]
+    tmps = [Symbol("tmp_$(k1)_$(k2)") for k1 = 1:M, k2 = 1:N]
+    while n < N
+        nu = min(N, n + N_r)
+        nrange = n+1:nu
+        m = 0
+        while m < M
+            mu = min(M, m + M_r)
+            mrange = m+1:mu
 
-    exprs = [:($(Symbol("tmp_$k2"))[$k1]) for k1 = 1:sa[1], k2 = 1:sb[2]]
+            atemps_init = [:($(atemps[k1]) = a[$k1]) for k1 = mrange]
+            exprs_init = [:($(tmps[k1,k2])  = $(atemps[k1]) * b[$(1 + (k2-1) * sb[1])]) for k1 = mrange, k2 = nrange]
+            push!(q.args, :(@inbounds $(Expr(:block, atemps_init...))))
+            push!(q.args, :(@inbounds $(Expr(:block, exprs_init...))))
 
+            for j in 2:K
+                atemps_loop_init = [:($(atemps[k1]) = a[$(LinearIndices(sa)[k1,j])]) for k1 = mrange]
+                exprs_loop = [:($(tmps[k1,k2]) = muladd($(atemps[k1]), b[$(LinearIndices(sb)[j,k2])], $(tmps[k1,k2]))) for k1 = mrange, k2 = nrange]
+                push!(q.args, :(@inbounds $(Expr(:block, atemps_loop_init...))))
+                push!(q.args, :(@inbounds $(Expr(:block, exprs_loop...))))
+            end
+            m = mu
+        end
+        n = nu
+    end
     return quote
         @_inline_meta
         T = promote_op(matprod,Ta,Tb)
-        $(Expr(:block,
-            vect_exprs...,
-            :(@inbounds return similar_type(a, T, $S)(tuple($(exprs...))))
-        ))
+        $q
+        @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
     end
 end
 
