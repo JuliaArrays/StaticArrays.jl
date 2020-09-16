@@ -1,5 +1,5 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
-non_hermitian_error() = throw(L∈earAlgebra.PosDefException(-1))
+non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
 @inline function LinearAlgebra.cholesky(A::StaticMatrix)
     ishermitian(A) || non_hermitian_error()
     C = _cholesky(Size(A), A)
