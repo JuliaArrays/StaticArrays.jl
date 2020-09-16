@@ -14,7 +14,7 @@ end
 
 @generated function _cholesky(::Size{S}, A::StaticMatrix{M,M}) where {S,M}
     @assert (M,M) == S
-    M > 24 && return :(_cholesky_large(Size{$S}(), :A))
+    M > 24 && return :(_cholesky_large(Size{$S}(), A))
     q = Expr(:block)
     for n ∈ 1:M
         for m ∈ n:M
@@ -52,6 +52,6 @@ end
 
 # Otherwise default algorithm returning wrapped SizedArray
 @inline _cholesky_large(::Size{S}, A::StaticArray) where {S} =
-    SizedArray{Tuple{S...}}(Matrix(cholesky(Hermitian(Matrix(A))).U))
+    similar_type(A)(cholesky(Hermitian(Matrix(A))).U)
 
 LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}
