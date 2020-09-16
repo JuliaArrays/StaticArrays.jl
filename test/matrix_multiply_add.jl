@@ -39,7 +39,9 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     c = rand(Vec{N1})
 
     # Parent
-    @test parent(A) === A
+    if !(ArrayType <: SizedArray)
+        @test parent(A) === A
+    end
     @test parent(At) === A
     @test size(parent(At)) == (N1,N2)
     @test parent(b') === b
