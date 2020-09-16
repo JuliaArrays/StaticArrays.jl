@@ -1,5 +1,5 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
-non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
+non_hermitian_error() = throw(L∈earAlgebra.PosDefException(-1))
 @inline function LinearAlgebra.cholesky(A::StaticMatrix)
     ishermitian(A) || non_hermitian_error()
     C = _cholesky(Size(A), A)
@@ -16,12 +16,12 @@ end
     @assert (M,M) == S
     M > 24 && return :(_cholesky_large(Size{$S}(), :A))
     q = Expr(:block)
-    for n in 1:M
+    for n ∈ 1:M
         for m ∈ n:M
             L_m_n = Symbol(:L_,m,:_,n)
             push!(q.args, :($L_m_n = @inbounds A[$n, $m]))
         end
-        for k ∈ 1:n-1, m in n:M
+        for k ∈ 1:n-1, m ∈ n:M
             L_m_n = Symbol(:L_,m,:_,n)
             L_m_k = Symbol(:L_,m,:_,k)
             L_n_k = Symbol(:L_,n,:_,k)
