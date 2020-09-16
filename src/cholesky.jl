@@ -18,21 +18,22 @@ end
     q = Expr(:block)
     for n in 1:M
         for m ∈ n:M
-	    r = Expr(:ref, :A, n, m)
-	    ln = LineNumberNode(@__LINE__,Symbol(@__FILE__))
-	    r = Expr(:macrocall, Symbol("@inbounds"), ln, r)
-            push!(q.args, Expr(:(=), Symbol(:L_,m,:_,n), r))
+            L_m_n = Symbol(:L_,m,:_,n)
+            push!(q.args, :($L_m_n = @inbounds A[$n, $m]))
         end
         for k ∈ 1:n-1, m in n:M
             L_m_n = Symbol(:L_,m,:_,n)
-            push!(q.args, Expr(:(=), L_m_n, Expr(:call, :muladd, Expr(:call, :(-), Symbol(:L_,m,:_,k)), Symbol(:L_,n,:_,k), L_m_n)))
+            L_m_k = Symbol(:L_,m,:_,k)
+            L_n_k = Symbol(:L_,n,:_,k)
+            push!(q.args, :($L_m_n = muladd(-$L_m_k, $L_n_k, $L_m_n)))
         end
         L_n_n = Symbol(:L_,n,:_,n)
-        push!(q.args, Expr(:(=), L_n_n, Expr(:call, :sqrt, L_n_n)))
+        push!(q.args, :($L_n_n = sqrt($L_n_n)))
         Linv_n_n = Symbol(:Linv_,n,:_,n)
-        push!(q.args, Expr(:(=), Linv_n_n, Expr(:call, :inv, L_n_n)))
+        push!(q.args, :($Linv_n_n = inv($L_n_n)))
         for m ∈ n+1:M
-            push!(q.args, Expr(:(*=), Symbol(:L_,m,:_,n), Linv_n_n))
+            L_m_n = Symbol(:L_,m,:_,n)
+            push!(q.args, :($L_m_n *= $Linv_n_n))
         end
     end
     push!(q.args, :(T = promote_type(typeof(sqrt(one(eltype(A)))), Float32)))
@@ -42,13 +43,12 @@ end
             push!(ret.args, Symbol(:L_,n,:_,m))
         end
         for m ∈ n+1:M
-            push!(ret.args, Expr(:call, :zero, :T))
+            push!(ret.args, :(zero(T)))
         end
     end
-    push!(q.args, Expr(:call, Expr(:call, :similar_type, :A, :T), ret))
-    Expr(:block, Expr(:meta, :inline), q)
+    push!(q.args, :(similar_type(A, T)($ret)))
+    return Expr(:block, Expr(:meta, :inline), q)
 end
-
 
 # Otherwise default algorithm returning wrapped SizedArray
 @inline _cholesky_large(::Size{S}, A::StaticArray) where {S} =
