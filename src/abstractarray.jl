@@ -15,6 +15,8 @@ end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
+Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
+
 # Base.strides is intentionally not defined for SArray, see PR #658 for discussion
 Base.strides(a::MArray) = Base.size_to_strides(1, size(a)...)
 Base.strides(a::SizedArray) = strides(a.data)
