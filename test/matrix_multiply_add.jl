@@ -56,7 +56,9 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     c = rand(Vec{N1})
 
     # Parent
-    @test parent(A) === A
+    if !(ArrayType <: SizedArray)
+        @test parent(A) === A
+    end
     @test parent(At) === A
     @test size(parent(At)) == (N1,N2)
     @test parent(b') === b
@@ -94,8 +96,17 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(b,At,c,1.0,2.0)
     @test b ≈ 5A'c
 
+    @static if VERSION < v"1.5-"
+        @test_noalloc mul!(c,A,b)
+    else
+        if !(ArrayType <: SizedArray)
+            @test_noalloc mul!(c,A,b)
+        else
+            mul!(c,A,b)
+            @test_broken(@allocated(mul!(c,A,b)) == 0)
+        end
+    end
     expected_transpose_allocs = VERSION < v"1.5" ? 1 : 0
-    @test_noalloc mul!(c,A,b)
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
     @test minimum(bmark).allocs == 0
     # @test_noalloc mul!(c, A, b, α, β)  # records 32 bytes

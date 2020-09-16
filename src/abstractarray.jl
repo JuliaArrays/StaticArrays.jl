@@ -15,6 +15,8 @@ end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
+Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
+
 # Base.strides is intentionally not defined for SArray, see PR #658 for discussion
 Base.strides(a::MArray) = Base.size_to_strides(1, size(a)...)
 Base.strides(a::SizedArray) = strides(a.data)
@@ -147,10 +149,16 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
 # Support tuples of mixtures of `SOneTo`s alongside the normal `Integer` and `OneTo` options
 # by simply converting them to either a tuple of Ints or a Size, re-dispatching to either one
 # of the above methods (in the case of Size) or a base fallback (in the case of Ints).
+const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
 const HeterogeneousShape = Union{Integer, Base.OneTo, SOneTo}
+const HeterogeneousShapeTuple = Union{
+    Tuple{SOneTo, Vararg{HeterogeneousShape}},
+    Tuple{HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}},
+    Tuple{HeterogeneousBaseShape, HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}}
+}
 
-similar(A::AbstractArray, ::Type{T}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {T} = similar(A, T, homogenize_shape(shape))
-similar(::Type{A}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
+similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
 # Use an Array for StaticArrays if we don't have a statically-known size
 similar(::Type{A}, shape::Tuple{Int, Vararg{Int}}) where {A<:StaticArray} = Array{eltype(A)}(undef, shape)
 

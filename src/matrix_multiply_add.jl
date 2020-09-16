@@ -54,8 +54,11 @@ Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
 
 # Get the parent of transposed arrays, or the array itself if it has no parent
 # Different from Base.parent because we only want to get rid of Transpose and Adjoint
+# The two last methods can't be combined into one for StaticVecOrMat because then dispatch
+# goes wrong for SizedArray
 @inline mul_parent(A::Union{StaticMatMulLike, Adjoint{<:Any,<:StaticVector}, Transpose{<:Any,<:StaticVector}}) = Base.parent(A)
-@inline mul_parent(A::StaticArray) = A
+@inline mul_parent(A::StaticMatrix) = A
+@inline mul_parent(A::StaticVector) = A
 
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size

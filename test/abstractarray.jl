@@ -7,6 +7,7 @@ using StaticArrays, Test, LinearAlgebra
         @test length(m) == 12
         @test IndexStyle(m) == IndexLinear()
         @test Base.isassigned(m, 2, 2) == true
+        @test eachindex(m) isa SOneTo
     end
 
     @testset "strides" begin
@@ -101,7 +102,8 @@ using StaticArrays, Test, LinearAlgebra
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
-        @test_deprecated @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,1,2))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
