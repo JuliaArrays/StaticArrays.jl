@@ -60,10 +60,18 @@ Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
 @inline mul_parent(A::StaticMatrix) = A
 @inline mul_parent(A::StaticVector) = A
 
+# Using the full StaticVecOrMatLike in dest of that one method of mul! takes a lot of load time
+const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
+    StaticVector{<:Any, T},
+    StaticMatrix{<:Any, <:Any, T},
+    Transpose{T, <:StaticVecOrMat{T}},
+    Adjoint{T, <:StaticVecOrMat{T}}
+}
+
 # 5-argument matrix multiplication
 #    To avoid allocations, strip away Transpose type and store tranpose info in Size
-@inline LinearAlgebra.mul!(dest::StaticVecOrMatLike, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
-    α::Real, β::Real) = _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B,
+@inline LinearAlgebra.mul!(dest::StaticVecOrMatLikeForFiveArgMulDest, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
+    α::Number, β::Number) = _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B,
     AlphaBeta(α,β))
 
 @inline function LinearAlgebra.mul!(dest::StaticVecOrMatLike{TDest}, A::StaticVecOrMatLike{TA},
@@ -90,6 +98,7 @@ function check_dims(::Size{sc}, ::Size{sa}, ::Size{sb}) where {sa,sb,sc}
     end
     return true
 end
+
 
 """ Combine left and right sides of an assignment expression, short-cutting
         lhs = α * rhs + β * lhs,
@@ -341,3 +350,4 @@ end
 @inline mul_blas!(Sc::TSize{<:Any,:transpose}, c::StaticMatrix, Sa::TSize, Sb::TSize,
         a::StaticMatrix, b::StaticMatrix, _add::MulAddMul) =
     mul_blas!(transpose(Sc), c, transpose(Sb), transpose(Sa), b, a, _add)
+
