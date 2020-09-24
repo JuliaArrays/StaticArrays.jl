@@ -18,8 +18,6 @@ size(::Type{<:SDiagonal{N}}) where {N} = (N,N)
 size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
 
 # define specific methods to avoid allocating mutable arrays
-*(A::StaticMatrix, D::SDiagonal) = A .* transpose(D.diag)
-*(D::SDiagonal, A::StaticMatrix) = D.diag .* A
 \(D::SDiagonal, b::AbstractVector) = D.diag .\ b
 \(D::SDiagonal, b::StaticVector) = D.diag .\ b # catch ambiguity
 
