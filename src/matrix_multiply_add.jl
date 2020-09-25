@@ -91,6 +91,99 @@ function check_dims(::Size{sc}, ::Size{sa}, ::Size{sb}) where {sa,sb,sc}
     return true
 end
 
+"""
+    uplo_access(sa, asym, k, j, uplo)
+
+Generate code for matrix element access, for a matrix of size `sa` locally referred to
+as `asym` in the context where the result will be used. Both indices `k` and `j` need to be
+statically known for this function to work. `uplo` is the access pattern mode generated
+by the `gen_by_access` function.
+"""
+function uplo_access(sa, asym, k, j, uplo)
+    TAsym = Symbol("T"*string(asym))
+    if uplo == :any
+        return :($asym[$(LinearIndices(sa)[k, j])])
+    elseif uplo == :up
+        if k < j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.symmetric($asym[$(LinearIndices(sa)[k, j])], :U))
+        else
+            return :(transpose($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    elseif uplo == :lo
+        if k > j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.symmetric($asym[$(LinearIndices(sa)[k, j])], :L))
+        else
+            return :(transpose($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    elseif uplo == :up_herm
+        if k < j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.hermitian($asym[$(LinearIndices(sa)[k, j])], :U))
+        else
+            return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    elseif uplo == :lo_herm
+        if k > j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(LinearAlgebra.hermitian($asym[$(LinearIndices(sa)[k, j])], :L))
+        else
+            return :(adjoint($asym[$(LinearIndices(sa)[j, k])]))
+        end
+    elseif uplo == :upper_triangular
+        if k <= j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(zero($TAsym))
+        end
+    elseif uplo == :lower_triangular
+        if k >= j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(zero($TAsym))
+        end
+    elseif uplo == :unit_upper_triangular
+        if k < j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j
+            return :(oneunit($TAsym))
+        else
+            return :(zero($TAsym))
+        end
+    elseif uplo == :unit_lower_triangular
+        if k > j
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        elseif k == j 
+            return :(oneunit($TAsym))
+        else
+            return :(zero($TAsym))
+        end
+    elseif uplo == :upper_hessenberg
+        if k <= j+1
+            return :($asym[$(LinearIndices(sa)[k, j])])
+        else
+            return :(zero($TAsym))
+        end
+    elseif uplo == :transpose
+        return :(transpose($asym[$(LinearIndices(reverse(sa))[j, k])]))
+    elseif uplo == :adjoint
+        return :(adjoint($asym[$(LinearIndices(reverse(sa))[j, k])]))
+    elseif uplo == :diagonal
+        if k == j
+            return :($asym[$k])
+        else
+            return :(zero($TAsym))
+        end
+    else
+        error("Unknown uplo: $uplo")
+    end
+end
+
 """ Combine left and right sides of an assignment expression, short-cutting
         lhs = α * rhs + β * lhs,
     element-wise.
@@ -123,7 +216,30 @@ function _lind(var::Symbol, A::Type{TSize{sa,tA}}, k::Int, j::Int) where {sa,tA}
     return ula
 end
 
+function combine_products(expr_list)
+    filtered = filter(expr_list) do expr
+        if expr.head != :call || expr.args[1] != :*
+            error("expected call to *")
+        end
+        for arg in expr.args[2:end]
+            if isa(arg, Expr) && arg.head == :call && arg.args[1] == :zero
+                return false
+            end
+        end
+        return true
+    end
+    if isempty(filtered)
+        return :(zero(T))
+    else
+        return reduce(filtered) do ex1, ex2
+            if ex2.head != :call || ex2.args[1] != :*
+                error("expected call to *")
+            end
 
+            return :(muladd($(ex2.args[2]), $(ex2.args[3]), $ex1))
+        end
+    end
+end
 
 # Matrix-vector multiplication
 @generated function _mul!(Sc::TSize{sc}, c::StaticVecOrMatLike, Sa::Size{sa}, Sb::Size{sb},
