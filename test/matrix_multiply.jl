@@ -112,7 +112,7 @@ mul_wrappers = [
 
         cv = MMatrix{4,1}(cv_array)
         rv = MVector{4}(rv_array)
-        @test (cv*adjoint(rv))::SMatrix ≈ a_array
+        @test (cv*adjoint(rv))::MMatrix ≈ a_array
 
         cv = SMatrix{4,1}(cv_array)
         rv = SVector{4}(rv_array)
@@ -120,7 +120,7 @@ mul_wrappers = [
 
         cv = MMatrix{4,1}(cv_array)
         rv = MVector{4}(rv_array)
-        @test (cv*transpose(rv))::SMatrix ≈ a_array
+        @test (cv*transpose(rv))::MMatrix ≈ a_array
 
         cv_bad = @SMatrix rand(4,2)
         rv = @SVector rand(4)

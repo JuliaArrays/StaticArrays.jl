@@ -47,6 +47,12 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(similar_type(MArray{Tuple{4,4,4},Int,3,64}, Float64)) == MArray{Tuple{4,4,4}, Float64, 3, 64}
         @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == MArray{Tuple{3,3,3}, Int, 3, 27}
         @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == MArray{Tuple{3,3,3}, Float64, 3, 27}
+
+        # wrapped mutable cases (issue #828)
+        for Wrapper in [Symmetric, Hermitian, Adjoint, Transpose, UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular]
+            @test @inferred(similar_type(Wrapper{Int,MArray{Tuple{4,4},Int,2,16}}, Float64)) === MArray{Tuple{4,4}, Float64, 2, 16}
+        end
+        @test @inferred(similar_type(Diagonal{Int,MArray{Tuple{4},Int,1,4}}, Float64)) === MArray{Tuple{4,4}, Float64, 2, 16}
     end
 
     @testset "similar" begin
