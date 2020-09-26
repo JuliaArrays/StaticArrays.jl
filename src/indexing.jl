@@ -40,6 +40,7 @@ end
 @propagate_inbounds function setindex!(a::StaticArray, value, inds::Int...)
     @boundscheck checkbounds(a, inds...)
     _setindex!_scalar(Size(a), a, value, inds...)
+    return a
 end
 
 @generated function _setindex!_scalar(::Size{S}, a::StaticArray, value, inds::Int...) where S
@@ -126,7 +127,7 @@ end
 
 @inline function setindex!(a::StaticArray, v, ::Colon)
     _setindex!(a::StaticArray, v, Length(a), :)
-    return v
+    return a
 end
 
 @generated function _setindex!(a::StaticArray, v, ::Length{L}, ::Colon) where {L}
@@ -134,6 +135,7 @@ end
     return quote
         @_inline_meta
         @inbounds $(Expr(:block, exprs...))
+        return a
     end
 end
 
@@ -145,6 +147,7 @@ end
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
         end
         @inbounds $(Expr(:block, exprs...))
+        return a
     end
 end
 
@@ -156,12 +159,13 @@ end
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$L destination"))
         end
         $(Expr(:block, exprs...))
+        return a
     end
 end
 
 @propagate_inbounds function setindex!(a::StaticArray, v, inds::StaticArray{<:Tuple, Int})
     _setindex!(a, v, Size(inds), inds)
-    return v
+    return a
 end
 
 @generated function _setindex!(a::StaticArray, v, s::Size{S}, inds::StaticArray{<:Tuple, Int}) where {S}
@@ -169,6 +173,7 @@ end
     return quote
         @_propagate_inbounds_meta
         similar_type(a, s)(tuple($(exprs...)))
+        return a
     end
 end
 
@@ -180,6 +185,7 @@ end
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
+        return a
     end
 end
 
@@ -191,6 +197,7 @@ end
             throw(DimensionMismatch("tried to assign $(length(v))-element array to length-$(length(inds)) destination"))
         end
         $(Expr(:block, exprs...))
+        return a
     end
 end
 
@@ -305,7 +312,7 @@ end
     quote
         @_propagate_inbounds_meta
         $(exprs...)
-        return value
+        return a
     end
 end
 
@@ -348,7 +355,7 @@ end
         quote
             @_propagate_inbounds_meta
             $(exprs...)
-            return v
+            return a
         end
     else
         quote
@@ -358,7 +365,7 @@ end
                 throw(DimensionMismatch("tried to assign $(length(v))-element array to $newsize destination"))
             end
             $(exprs...)
-            return v
+            return a
         end
     end
 end
