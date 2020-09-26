@@ -27,6 +27,8 @@
 
         @test SArray(SArray{Tuple{2}}(1,2)) === SArray{Tuple{2}}(1,2)
 
+        @test (@inferred SArray(MMatrix{0,0,Float64}()))::SMatrix{0,0,Float64} == SMatrix{0,0,Float64}()
+
         @test SArray{Tuple{}}(i for i in 1:1).data === (1,)
         @test SArray{Tuple{3}}(i for i in 1:3).data === (1,2,3)
         @test SArray{Tuple{3}}(float(i) for i in 1:3).data === (1.0,2.0,3.0)

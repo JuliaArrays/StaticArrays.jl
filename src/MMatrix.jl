@@ -52,7 +52,7 @@ end
 end
 
 @inline convert(::Type{MMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = MMatrix{S1,S2,T}(Tuple(a))
-@inline MMatrix(a::StaticMatrix) = MMatrix{size(typeof(a),1),size(typeof(a),2)}(Tuple(a))
+@inline MMatrix(a::StaticMatrix{N,M,T}) where {N,M,T} = MMatrix{N,M,T}(Tuple(a))
 
 # Some more advanced constructor-like functions
 @inline one(::Type{MMatrix{N}}) where {N} = one(MMatrix{N,N})

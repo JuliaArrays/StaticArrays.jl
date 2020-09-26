@@ -29,6 +29,7 @@ struct SizedArray{S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} <: StaticArray{S,T,N
     end
 end
 
+@inline SizedArray(a::StaticArray{S,T}) where {S<:Tuple,T} = SizedArray{S,T}(a)
 @inline function SizedArray{S,T,N}(
     a::TData,
 ) where {S,T,N,M,TData<:AbstractArray{T,M}}
@@ -121,6 +122,7 @@ Base.parent(sa::SizedArray) = sa.data
 
 const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
+SizedVector(a::StaticVector{N,T}) where {N,T} = SizedVector{N,T}(a)
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
     return SizedArray{Tuple{S},T,1,1,TData}(a)
 end
@@ -140,6 +142,7 @@ end
 
 const SizedMatrix{S1,S2,T} = SizedArray{Tuple{S1,S2},T,2}
 
+SizedMatrix(a::StaticMatrix{N,M,T}) where {N,M,T} = SizedMatrix{N,M,T}(a)
 @inline function SizedMatrix{S1,S2}(
     a::TData,
 ) where {S1,S2,T,M,TData<:AbstractArray{T,M}}

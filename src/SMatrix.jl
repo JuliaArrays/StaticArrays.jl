@@ -58,7 +58,7 @@ end
     sacollect(SMatrix{M, N}, gen)
 
 @inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
-@inline SMatrix(a::StaticMatrix{S1, S2}) where {S1, S2} = SMatrix{S1, S2}(Tuple(a))
+@inline SMatrix(a::StaticMatrix{S1, S2, T}) where {S1, S2, T} = SMatrix{S1, S2, T}(Tuple(a))
 
 # Some more advanced constructor-like functions
 @inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
