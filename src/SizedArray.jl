@@ -31,7 +31,7 @@ end
 
 # Julia v1.0 has some weird bug that prevents this from working
 @static if VERSION >= v"1.1"
-    @inline SizedArray(a::StaticArray{S,T,N}) where {S<:Tuple,T,N} = SizedArray{S,T,N}(a)'
+    @inline SizedArray(a::StaticArray{S,T,N}) where {S<:Tuple,T,N} = SizedArray{S,T,N}(a)
 end
 @inline function SizedArray{S,T,N}(
     a::TData,
