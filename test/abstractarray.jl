@@ -132,6 +132,19 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
     end
 
+    @testset "rotate" begin
+        M = [1 2; 3 4]
+        SM = SMatrix{2, 2}(M)
+        @test @inferred(rotl90(SM)) === @SMatrix [2 4; 1 3]
+        @test @inferred(rot180(SM)) === @SMatrix [4 3; 2 1]
+        @test @inferred(rotr90(SM)) === @SMatrix [3 1; 4 2]
+        M23 = rand(2, 3)
+        SM23 = SMatrix{2, 3}(M23)
+        @test @inferred(rotl90(SM23)) == rotl90(M23)
+        @test @inferred(rot180(SM23)) == rot180(M23)
+        @test @inferred(rotr90(SM23)) == rotr90(M23)
+    end
+
     @testset "Conversion to AbstractArray" begin
         # Issue #746
         # conversion to AbstractArray changes the eltype from Int to Float64

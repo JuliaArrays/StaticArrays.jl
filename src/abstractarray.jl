@@ -199,6 +199,17 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
     return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
 end
 
+@generated function Base.rot180(A::SMatrix{M,N}) where {M,N}
+    exs = rot180([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+    return :(SMatrix{M,N}($(exs...)))
+end
+for rot in [:rotl90, :rotr90]
+    @eval @generated function Base.$rot(A::SMatrix{M,N}) where {M,N}
+        exs = $rot([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+        return :(SMatrix{N,M}($(exs...)))
+    end
+end
+
 # TODO permutedims?
 
 #--------------------------------------------------
