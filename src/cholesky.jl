@@ -25,7 +25,7 @@ end
             L_m_n = Symbol(:L_,m,:_,n)
             L_m_k = Symbol(:L_,m,:_,k)
             L_n_k = Symbol(:L_,n,:_,k)
-            push!(q.args, :($L_m_n = muladd(-$L_m_k, $L_n_k, $L_m_n)))
+            push!(q.args, :($L_m_n = muladd(-$L_m_k, $L_n_k', $L_m_n)))
         end
         L_n_n = Symbol(:L_,n,:_,n)
         push!(q.args, :($L_n_n = sqrt($L_n_n)))
