@@ -41,7 +41,9 @@
         @test size(SizedArray{Tuple{4,5},Int}(undef).data) == (4, 5)
 
         # 0-element constructor
-        @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
+        if VERSION >= v"1.1"
+            @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
+        end
 
         # From Tuple
         @test @inferred(SizedArray{Tuple{2},Float64,1,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
@@ -80,7 +82,9 @@
         @test convert(Matrix, SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
 
         # 0-element constructor
-        @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
+        if VERSION >= v"1.1"
+            @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
+        end
     end
 
     # setindex
