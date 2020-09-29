@@ -152,6 +152,7 @@
         v[2] = 12
         v[3] = 13
         @test v.data === (11, 12, 13)
+        @test setindex!(v, 11, 1) === v
 
         m = @MArray [0 0; 0 0]
         m[1] = 11
@@ -159,6 +160,7 @@
         m[3] = 13
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
+        @test setindex!(m, 11, 1, 1) === m
 
         @test_throws BoundsError setindex!(v, 4, -1)
         mm = @MArray zeros(3,3,3,3)

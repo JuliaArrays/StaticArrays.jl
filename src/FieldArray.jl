@@ -118,7 +118,7 @@ abstract type FieldVector{N, T} <: FieldArray{Tuple{N}, T, 1} end
 end
 
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)
-@propagate_inbounds setindex!(a::FieldArray, x, i::Int) = setfield!(a, i, x)
+@propagate_inbounds setindex!(a::FieldArray, x, i::Int) = (setfield!(a, i, x); a)
 
 Base.cconvert(::Type{<:Ptr}, a::FieldArray) = Base.RefValue(a)
 Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FA}) where {N,T,D,FA<:FieldArray{N,T,D}} =

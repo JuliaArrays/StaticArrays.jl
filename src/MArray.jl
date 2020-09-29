@@ -99,7 +99,7 @@ end
         error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
-    return val
+    return v
 end
 
 @inline Tuple(v::MArray) = v.data
