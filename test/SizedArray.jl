@@ -82,6 +82,9 @@
     # parent
     @test parent(sa) === sa.data
 
+    # pointer
+    @test pointer(sa) === pointer(sa.data)
+
     @testset "vec" begin
         sa2 = SizedArray{Tuple{2, 2}, Int}([1, 2, 3, 4])
         @test (@inferred vec(sa2)) isa SizedVector{4, Int}

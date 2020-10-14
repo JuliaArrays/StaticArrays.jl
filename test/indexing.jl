@@ -34,6 +34,7 @@ using StaticArrays, Test
         # SVector
         mv = MVector{4,Int}(undef)
         @test (mv[SVector(1,2,3,4)] = vec; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
+        @test setindex!(mv, vec, SVector(1,2,3,4)) === mv
 
         mv = MVector{4,Int}(undef)
         @test (mv[SVector(1,2,3,4)] = [4, 5, 6, 7]; (@inferred getindex(mv, SVector(4,3,2,1)))::MVector{4,Int} == MVector((7,6,5,4)))
@@ -53,6 +54,7 @@ using StaticArrays, Test
         @test (mv[:] = vec; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
         @test (mv[:] = [4, 5, 6, 7]; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((4,5,6,7)))
         @test (mv[:] = 2; (@inferred getindex(mv, :))::MVector{4,Int} == MVector((2,2,2,2)))
+        @test setindex!(mv, 2, :) === mv
 
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), SVector(1,2,3,4))
         @test_throws DimensionMismatch setindex!(mv, SVector(1,2,3), :)

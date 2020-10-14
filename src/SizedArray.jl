@@ -119,6 +119,8 @@ end
 
 Base.parent(sa::SizedArray) = sa.data
 
+Base.pointer(sa::SizedArray) = pointer(sa.data)
+
 const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}

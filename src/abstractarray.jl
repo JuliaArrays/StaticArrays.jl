@@ -57,11 +57,11 @@ if they wish to overload the default behavior.
 """
 function similar_type end
 
-similar_type(::SA) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
-similar_type(::Type{SA}) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
+similar_type(::SA) where {SA<:StaticArrayLike} = similar_type(SA,eltype(SA))
+similar_type(::Type{SA}) where {SA<:StaticArrayLike} = similar_type(SA,eltype(SA))
 
-similar_type(::SA,::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
-similar_type(::Type{SA},::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
+similar_type(::SA,::Type{T}) where {SA<:StaticArrayLike,T} = similar_type(SA,T,Size(SA))
+similar_type(::Type{SA},::Type{T}) where {SA<:StaticArrayLike,T} = similar_type(SA,T,Size(SA))
 
 similar_type(::A,s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
 similar_type(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
@@ -78,6 +78,22 @@ similar_type(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:Abstract
 similar_type(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
 similar_type(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
 
+
+# unwrapping arrays (see issue #828)
+const SimilarTypeArrayWrapper{T,AW} = Union{
+    Transpose{T,AW},
+    Adjoint{T,AW},
+    Symmetric{T,AW},
+    Hermitian{T,AW},
+    UpperTriangular{T,AW},
+    LowerTriangular{T,AW},
+    UnitUpperTriangular{T,AW},
+    UnitLowerTriangular{T,AW},
+    Diagonal{T,AW}}
+
+function similar_type(::Type{A}, ::Type{T}, shape::Size) where {T,AW<:AbstractArray,A<:SimilarTypeArrayWrapper{<:Any,AW}}
+    return similar_type(AW, T, shape)
+end
 
 # Default types
 # Generally, use SArray
@@ -197,6 +213,17 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 
 @generated function _reverse(v::StaticVector{N,T}) where {N,T}
     return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
+end
+
+@generated function Base.rot180(A::SMatrix{M,N}) where {M,N}
+    exs = rot180([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+    return :(SMatrix{M,N}($(exs...)))
+end
+for rot in [:rotl90, :rotr90]
+    @eval @generated function Base.$rot(A::SMatrix{M,N}) where {M,N}
+        exs = $rot([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+        return :(SMatrix{N,M}($(exs...)))
+    end
 end
 
 # TODO permutedims?
