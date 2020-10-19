@@ -267,6 +267,7 @@ end
 @inline hcat(a::StaticMatrixLike) = a
 @inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike) = _hcat(Size(a), Size(b), a, b)
 @inline hcat(a::StaticVecOrMatLike, b::StaticVecOrMatLike, c::StaticVecOrMatLike...) = hcat(hcat(a,b), hcat(c...))
+@inline hcat(a::StaticMatrix{1}) = a # disambiguation
 @inline hcat(a::StaticMatrix{1}, bs::Number...) = hcat(a, SMatrix{1,length(bs)}(bs))
 @inline hcat(a::Number, b::StaticMatrix{1}) = hcat(similar_type(b, typeof(a), Size(1))((a,)), b)
 
