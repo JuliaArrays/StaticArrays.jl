@@ -267,4 +267,7 @@ end
     @test @inferred(hcat(SMatrix{1,3}((1,2,3)), 4, 5, 6)) === SMatrix{1,6}((1,2,3,4,5,6))
     @test @inferred(hcat(0, SMatrix{1,3}((1,2,3)))) === SMatrix{1,4}((0,1,2,3))
     @test @inferred(vcat(MVector((1,2,3)), 4, 5, 6))::MVector == [1,2,3,4,5,6]
+
+    @test @inferred(vcat(SA[1,2,3])) === SA[1,2,3]
+    @test @inferred(hcat(SA[1 2 3])) === SA[1,2,3]
 end
