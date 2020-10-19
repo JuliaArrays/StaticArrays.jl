@@ -15,6 +15,7 @@ compiler (the element type may optionally also be specified).
 """
 const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 
+@inline SVector(a::StaticVector{N,T}) where {N,T} = SVector{N,T}(a)
 @inline SVector(x::NTuple{S,Any}) where {S} = SVector{S}(x)
 @inline SVector{S}(x::NTuple{S,T}) where {S, T} = SVector{S,T}(x)
 @inline SVector{S}(x::T) where {S, T <: Tuple} = SVector{S,promote_tuple_eltype(T)}(x)

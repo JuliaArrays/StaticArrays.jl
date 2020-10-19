@@ -20,6 +20,9 @@
         v = MVector(1,2)
         @test MVector(v) !== v && MVector(v) == v
 
+        # test for #557-like issues
+        @test (@inferred MVector(SVector{0,Float64}()))::MVector{0,Float64} == MVector{0,Float64}()
+
         @test ((@MVector [1.0])::MVector{1}).data === (1.0,)
         @test ((@MVector [1, 2, 3])::MVector{3}).data === (1, 2, 3)
         @test ((@MVector Float64[1,2,3])::MVector{3}).data === (1.0, 2.0, 3.0)

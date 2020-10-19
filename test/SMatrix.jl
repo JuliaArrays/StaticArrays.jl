@@ -21,6 +21,8 @@
         @test SMatrix{1,1}((1,)).data === (1,)
         @test SMatrix{1}((1,)).data === (1,)
 
+        @test (@inferred SMatrix(MMatrix{0,0,Float64}()))::SMatrix{0,0,Float64} == SMatrix{0,0,Float64}()
+
         @test SMatrix{2,2,Int}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2,2}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2}((1,2,3,4)).data === (1,2,3,4)

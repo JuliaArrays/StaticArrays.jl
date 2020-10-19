@@ -16,6 +16,7 @@ compiler (the element type may optionally also be specified).
 """
 const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 
+@inline MVector(a::StaticVector{N,T}) where {N,T} = MVector{N,T}(a)
 @inline MVector(x::NTuple{S,Any}) where {S} = MVector{S}(x)
 @inline MVector{S}(x::NTuple{S,T}) where {S, T} = MVector{S, T}(x)
 @inline MVector{S}(x::NTuple{S,Any}) where {S} = MVector{S, promote_tuple_eltype(typeof(x))}(x)

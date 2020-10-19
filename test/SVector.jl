@@ -16,6 +16,9 @@
         @test SVector((1,)).data === (1,)
         @test SVector((1.0,)).data === (1.0,)
 
+        # test for #557-like issues
+        @test (@inferred SVector(MVector{0,Float64}()))::SVector{0,Float64} == SVector{0,Float64}()
+
         @test SVector{3}(i for i in 1:3).data === (1,2,3)
         @test SVector{3}(float(i) for i in 1:3).data === (1.0,2.0,3.0)
         @test SVector{0,Int}().data === ()

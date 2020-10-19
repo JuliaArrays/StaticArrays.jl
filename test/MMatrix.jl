@@ -26,6 +26,9 @@
         @test MMatrix{2,2}((1,2,3,4)).data === (1,2,3,4)
         @test MMatrix{2}((1,2,3,4)).data === (1,2,3,4)
 
+        # test for #557-like issues
+        @test (@inferred MMatrix(SMatrix{0,0,Float64}()))::MMatrix{0,0,Float64} == MMatrix{0,0,Float64}()
+
         @test ((@MMatrix [1.0])::MMatrix{1,1}).data === (1.0,)
         @test ((@MMatrix [1 2])::MMatrix{1,2}).data === (1, 2)
         @test ((@MMatrix [1 ; 2])::MMatrix{2,1}).data === (1, 2)

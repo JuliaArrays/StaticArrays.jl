@@ -106,7 +106,7 @@ sacollect
 @inline (::Type{SA})(gen::Base.Generator) where {SA <: StaticArray} =
     sacollect(SA, gen)
 
-@inline SArray(a::StaticArray) = SArray{size_tuple(Size(a))}(Tuple(a))
+@inline SArray(a::StaticArray{S,T}) where {S<:Tuple,T} = SArray{S,T}(Tuple(a))
 
 ####################
 ## SArray methods ##

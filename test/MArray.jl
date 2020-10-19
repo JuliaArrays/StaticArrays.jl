@@ -32,6 +32,9 @@
         v = MArray{Tuple{2}}(1,2)
         @test MArray(v) !== v && MArray(v) == v
 
+        # test for #557-like issues
+        @test (@inferred MArray(SVector{0,Float64}()))::MVector{0,Float64} == MVector{0,Float64}()
+
         @test MArray{Tuple{}}(i for i in 1:1).data === (1,)
         @test MArray{Tuple{3}}(i for i in 1:3).data === (1,2,3)
         @test MArray{Tuple{3}}(float(i) for i in 1:3).data === (1.0,2.0,3.0)

@@ -29,6 +29,10 @@ struct SizedArray{S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} <: StaticArray{S,T,N
     end
 end
 
+# Julia v1.0 has some weird bug that prevents this from working
+@static if VERSION >= v"1.1"
+    @inline SizedArray(a::StaticArray{S,T,N}) where {S<:Tuple,T,N} = SizedArray{S,T,N}(a)
+end
 @inline function SizedArray{S,T,N}(
     a::TData,
 ) where {S,T,N,M,TData<:AbstractArray{T,M}}
@@ -123,6 +127,7 @@ Base.pointer(sa::SizedArray) = pointer(sa.data)
 
 const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
+SizedVector(a::StaticVector{N,T}) where {N,T} = SizedVector{N,T}(a)
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
     return SizedArray{Tuple{S},T,1,1,TData}(a)
 end
@@ -142,6 +147,10 @@ end
 
 const SizedMatrix{S1,S2,T} = SizedArray{Tuple{S1,S2},T,2}
 
+# Julia v1.0 has some weird bug that prevents this from working
+@static if VERSION >= v"1.1"
+    SizedMatrix(a::StaticMatrix{N,M,T}) where {N,M,T} = SizedMatrix{N,M,T}(a)
+end
 @inline function SizedMatrix{S1,S2}(
     a::TData,
 ) where {S1,S2,T,M,TData<:AbstractArray{T,M}}

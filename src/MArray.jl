@@ -71,7 +71,7 @@ end
     end
 end
 
-@inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
+@inline MArray(a::StaticArray{S,T}) where {S<:Tuple,T} = MArray{S,T}(Tuple(a))
 
 ####################
 ## MArray methods ##
