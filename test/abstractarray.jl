@@ -269,5 +269,5 @@ end
     @test @inferred(vcat(MVector((1,2,3)), 4, 5, 6))::MVector == [1,2,3,4,5,6]
 
     @test @inferred(vcat(SA[1,2,3])) === SA[1,2,3]
-    @test @inferred(hcat(SA[1 2 3])) === SA[1,2,3]
+    @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
