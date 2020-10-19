@@ -58,6 +58,44 @@ using Statistics: mean
         @test mapfoldl(-, +, sv1; init=0) === mapfoldl(-, +, v1, init=0)
     end
 
+    @testset "empty array" begin
+        # issue #778
+        @test iszero(SVector{0,Int}())
+
+        @testset "$fold" for fold in [reduce, foldl]
+            @test fold(+, SVector{0,Bool}()) === 0
+            @test fold(nothing, SVector{0,Int}(), init=:INIT) === :INIT
+        end
+
+        @testset "$mapfold" for mapfold in [mapreduce, mapfoldl]
+            @test mapfold(identity, +, SVector{0,Bool}()) === 0
+            @test mapfold(abs, +, SVector{0,Bool}()) === 0
+            @test mapfold(nothing, nothing, SVector{0,Int}(), init=:INIT) === :INIT
+        end
+
+        @test mapreduce(
+            (a, b) -> a + b,
+            (a, b) -> a * b,
+            SVector{0,Int}(),
+            SVector{0,Int}();
+            init = :INIT,
+        ) == :INIT
+
+        # When there are multiple inputs, the error is thrown by
+        # StaticArrays.jl:
+        @test_throws(
+            ArgumentError("reducing over an empty collection is not allowed"),
+            mapreduce((a, b) -> a + b, (a, b) -> a * b, SVector{0,Int}(), SVector{0,Int}())
+        )
+
+        # When the mapping and/or reducing functions are unsupported,
+        # the error is thrown by `Base.mapreduce_empty`:
+        @test_throws(
+            ArgumentError("reducing over an empty collection is not allowed"),
+            mapreduce(nothing, nothing, SVector{0,Int}())
+        )
+    end
+
     @testset "implemented by [map]reduce and [map]reducedim" begin
         I, J, K = 2, 2, 2
         OSArray = SArray{Tuple{I,J,K}}  # original
@@ -127,6 +165,12 @@ using Statistics: mean
         @test diff(sv, dims=Val(1)) == diff(sv, dims=1) == diff(sv) == diff(v)
         @test diff(sm, dims=Val(1)) == diff(sm, dims=1) == diff(m, dims=1)
         @test diff(sm, dims=Val(2)) == diff(sm, dims=2) == diff(m, dims=2)
+
+        # diff on nested arrays should result in the correct eltype
+        @test @inferred(diff(SA[SA[1,2],SA[3,4]])) === SVector{1,SVector{2,Int}}(((2,2),))
+        @test @inferred(diff(SA[[1,2],[3,4]]))::SVector{1,Vector{Int}} == SA[[2,2]]
+        # For larger cases, check eltype infers correctly
+        @test @inferred(diff(zeros(SVector{100,SVector{2,Int}}))) == fill(SA[0,0],99)
     end
 
     @testset "broadcast and broadcast!" begin

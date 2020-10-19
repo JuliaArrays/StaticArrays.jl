@@ -1,11 +1,28 @@
 using StaticArrays, Test, LinearAlgebra
 
+mul_wrappers = [
+    m -> m,
+    m -> Symmetric(m, :U),
+    m -> Symmetric(m, :L),
+    m -> Hermitian(m, :U),
+    m -> Hermitian(m, :L),
+    m -> UpperTriangular(m),
+    m -> LowerTriangular(m),
+    m -> UnitUpperTriangular(m),
+    m -> UnitLowerTriangular(m),
+    m -> Adjoint(m),
+    m -> Transpose(m),
+    m -> Diagonal(m)]
+
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
         v = @SVector [1, 2]
         v_bad = @SVector [1, 2, 3]
         @test m*v === @SVector [5, 11]
+        for wrapper in mul_wrappers
+            @test (@inferred wrapper(m)*v)::SVector{2} == wrapper(Array(m))*Array(v)
+        end
         @test_throws DimensionMismatch m*v_bad
         # More complicated eltype inference
         v2 = @SVector [CartesianIndex((1,3)), CartesianIndex((3,1))]
@@ -17,6 +34,13 @@ using StaticArrays, Test, LinearAlgebra
         bm = @SMatrix [m m; m m]
         bv = @SVector [v,v]
         @test (bm*bv)::SVector{2,SVector{2,Int}} == @SVector [[10,22],[10,22]]
+        for wrapper in mul_wrappers
+            # there may be some problems with inferring the result type of symmetric block matrices
+            # and for some reason setindex! in Julia LinearAlgebra has == 0 and == 1 tests
+            if !any(x->isa(wrapper(bm), x), [UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular])
+                @test wrapper(bm)*bv == wrapper(Array(bm))*Array(bv)
+            end
+        end
 
         # inner product
         @test @inferred(v'*v) === 5
@@ -88,7 +112,7 @@ using StaticArrays, Test, LinearAlgebra
 
         cv = MMatrix{4,1}(cv_array)
         rv = MVector{4}(rv_array)
-        @test (cv*adjoint(rv))::SMatrix ≈ a_array
+        @test (cv*adjoint(rv))::MMatrix ≈ a_array
 
         cv = SMatrix{4,1}(cv_array)
         rv = SVector{4}(rv_array)
@@ -96,7 +120,7 @@ using StaticArrays, Test, LinearAlgebra
 
         cv = MMatrix{4,1}(cv_array)
         rv = MVector{4}(rv_array)
-        @test (cv*transpose(rv))::SMatrix ≈ a_array
+        @test (cv*transpose(rv))::MMatrix ≈ a_array
 
         cv_bad = @SMatrix rand(4,2)
         rv = @SVector rand(4)
@@ -127,6 +151,36 @@ using StaticArrays, Test, LinearAlgebra
         @test transpose(m)*n === @SMatrix [14 18; 20 26]
         @test m*transpose(n) === @SMatrix [8 14; 18 32]
         @test transpose(m)*transpose(n) === @SMatrix [11 19; 16 28]
+
+        # check different sizes because there are multiple implementations for matrices of different sizes
+        for (mm, nn) in [
+            (m, n),
+            (SMatrix{10, 10}(collect(1:100)), SMatrix{10, 10}(collect(1:100))),
+            (SMatrix{15, 15}(collect(1:225)), SMatrix{15, 15}(collect(1:225)))
+            ]
+            for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
+                wm = wrapper_m(mm)
+                wn = wrapper_n(nn)
+                if length(mm) >= 255 && (!isa(wm, StaticArray) || !isa(wn, StaticArray))
+                    continue
+                end
+                res_structure = StaticArrays.mul_result_structure(wm, wn)
+                expected_type = if length(m) >= 100
+                    Matrix{Int}
+                elseif res_structure == identity || length(m) >= 100
+                    typeof(mm)
+                elseif res_structure == LowerTriangular
+                    LowerTriangular{Int,typeof(mm)}
+                elseif res_structure == UpperTriangular
+                    UpperTriangular{Int,typeof(mm)}
+                elseif res_structure == Diagonal
+                    Diagonal{Int,<:SVector}
+                else
+                    error("Unknown structure: ", res_structure)
+                end
+                @test (@inferred wm * wn)::expected_type == wrapper_m(Array(mm)) * wrapper_n(Array(nn))
+            end
+        end
 
         m = @MMatrix [1 2; 3 4]
         n = @MMatrix [2 3; 4 5]
@@ -289,6 +343,10 @@ using StaticArrays, Test, LinearAlgebra
         @test a::MMatrix{2,2,Int,4} == @MMatrix [8 14; 18 32]
         mul!(a, transpose(m), transpose(n))
         @test a::MMatrix{2,2,Int,4} == @MMatrix [11 19; 16 28]
+        for wrapper_m in mul_wrappers, wrapper_n in mul_wrappers
+            mul!(a, wrapper_m(m), wrapper_n(n))
+            @test a::MMatrix{2,2,Int,4} == wrapper_m(Array(m))*wrapper_n(Array(n))
+        end
 
         a2 = MArray{Tuple{2,2},Int,2,4}(undef)
         mul!(a2, m, n)

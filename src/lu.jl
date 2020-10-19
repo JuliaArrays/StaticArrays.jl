@@ -30,32 +30,61 @@ function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
 end
 
 # LU decomposition
-function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true))
-    L, U, p = _lu(A, pivot)
+function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true); check = true)
+    L, U, p = _lu(A, pivot, check)
     LU(L, U, p)
 end
 
 # For the square version, return explicit lower and upper triangular matrices.
 # We would do this for the rectangular case too, but Base doesn't support that.
-function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true)) where {N}
-    L, U, p = _lu(A, pivot)
+function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
+            check = true) where {N}
+    L, U, p = _lu(A, pivot, check)
     LU(LowerTriangular(L), UpperTriangular(U), p)
 end
 
-@generated function _lu(A::StaticMatrix{M,N,T}, pivot) where {M,N,T}
+# location of the first zero on the diagonal, 0 when not found
+function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
+    if @generated
+        quote
+            $(map(i -> :(A[$i, $i] == zero(T) && return $i), 1:min(M, N))...)
+            0
+        end
+    else
+        for i in 1:min(M, N)
+            A[i, i] == 0 && return i
+        end
+        0
+    end
+end
+
+function _first_zero_on_diagonal(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix})
+    _first_zero_on_diagonal(A.data)
+end
+
+issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
+
+@generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}
     if M*N ≤ 14*14
-        :(__lu(A, pivot))
+        quote
+            L, U, P = __lu(A, pivot)
+            if check
+                i = _first_zero_on_diagonal(U)
+                i == 0 || throw(SingularException(i))
+            end
+            L, U, P
+        end
     else
         quote
             # call through to Base to avoid excessive time spent on type inference for large matrices
-            f = lu(Matrix(A), pivot; check = false)
+            f = lu(Matrix(A), pivot; check = check)
             # Trick to get the output eltype - can't rely on the result of f.L as
             # it's not type inferrable.
             T2 = arithmetic_closure(T)
             L = similar_type(A, T2, Size($M, $(min(M,N))))(f.L)
             U = similar_type(A, T2, Size($(min(M,N)), $N))(f.U)
             p = similar_type(A, Int, Size($M))(f.p)
-            (L,U,p)
+            L, U, p
         end
     end
 end

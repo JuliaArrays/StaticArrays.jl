@@ -15,6 +15,8 @@ end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
 
+Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
+
 # Base.strides is intentionally not defined for SArray, see PR #658 for discussion
 Base.strides(a::MArray) = Base.size_to_strides(1, size(a)...)
 Base.strides(a::SizedArray) = strides(a.data)
@@ -55,11 +57,11 @@ if they wish to overload the default behavior.
 """
 function similar_type end
 
-similar_type(::SA) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
-similar_type(::Type{SA}) where {SA<:StaticArray} = similar_type(SA,eltype(SA))
+similar_type(::SA) where {SA<:StaticArrayLike} = similar_type(SA,eltype(SA))
+similar_type(::Type{SA}) where {SA<:StaticArrayLike} = similar_type(SA,eltype(SA))
 
-similar_type(::SA,::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
-similar_type(::Type{SA},::Type{T}) where {SA<:StaticArray,T} = similar_type(SA,T,Size(SA))
+similar_type(::SA,::Type{T}) where {SA<:StaticArrayLike,T} = similar_type(SA,T,Size(SA))
+similar_type(::Type{SA},::Type{T}) where {SA<:StaticArrayLike,T} = similar_type(SA,T,Size(SA))
 
 similar_type(::A,s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
 similar_type(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar_type(A,eltype(A),s)
@@ -76,6 +78,22 @@ similar_type(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:Abstract
 similar_type(::A,::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
 similar_type(::Type{A},::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray,T} = similar_type(A, T, Size(last.(shape)))
 
+
+# unwrapping arrays (see issue #828)
+const SimilarTypeArrayWrapper{T,AW} = Union{
+    Transpose{T,AW},
+    Adjoint{T,AW},
+    Symmetric{T,AW},
+    Hermitian{T,AW},
+    UpperTriangular{T,AW},
+    LowerTriangular{T,AW},
+    UnitUpperTriangular{T,AW},
+    UnitLowerTriangular{T,AW},
+    Diagonal{T,AW}}
+
+function similar_type(::Type{A}, ::Type{T}, shape::Size) where {T,AW<:AbstractArray,A<:SimilarTypeArrayWrapper{<:Any,AW}}
+    return similar_type(AW, T, shape)
+end
 
 # Default types
 # Generally, use SArray
@@ -147,10 +165,16 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
 # Support tuples of mixtures of `SOneTo`s alongside the normal `Integer` and `OneTo` options
 # by simply converting them to either a tuple of Ints or a Size, re-dispatching to either one
 # of the above methods (in the case of Size) or a base fallback (in the case of Ints).
+const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
 const HeterogeneousShape = Union{Integer, Base.OneTo, SOneTo}
+const HeterogeneousShapeTuple = Union{
+    Tuple{SOneTo, Vararg{HeterogeneousShape}},
+    Tuple{HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}},
+    Tuple{HeterogeneousBaseShape, HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}}
+}
 
-similar(A::AbstractArray, ::Type{T}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {T} = similar(A, T, homogenize_shape(shape))
-similar(::Type{A}, shape::Tuple{HeterogeneousShape, Vararg{HeterogeneousShape}}) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
+similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
 # Use an Array for StaticArrays if we don't have a statically-known size
 similar(::Type{A}, shape::Tuple{Int, Vararg{Int}}) where {A<:StaticArray} = Array{eltype(A)}(undef, shape)
 
@@ -185,7 +209,22 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
 @inline copy(a::SizedArray) = typeof(a)(copy(a.data))
 
-@inline reverse(v::StaticVector) = typeof(v)(reverse(Tuple(v)))
+@inline reverse(v::StaticVector) = typeof(v)(_reverse(v))
+
+@generated function _reverse(v::StaticVector{N,T}) where {N,T}
+    return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
+end
+
+@generated function Base.rot180(A::SMatrix{M,N}) where {M,N}
+    exs = rot180([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+    return :(SMatrix{M,N}($(exs...)))
+end
+for rot in [:rotl90, :rotr90]
+    @eval @generated function Base.$rot(A::SMatrix{M,N}) where {M,N}
+        exs = $rot([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+        return :(SMatrix{N,M}($(exs...)))
+    end
+end
 
 # TODO permutedims?
 

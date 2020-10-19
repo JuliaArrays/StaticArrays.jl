@@ -2,6 +2,14 @@ using StaticArrays, Test, LinearAlgebra
 
 using LinearAlgebra: checksquare
 
+# For one() test
+struct RotMat2 <: StaticMatrix{2,2,Float64}
+    elements::NTuple{4,Float64}
+end
+Base.getindex(m::RotMat2, i::Int) = getindex(m.elements, i)
+# Rotation matrices must be unitary so `similar_type` has to return an SMatrix.
+StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,4}
+
 @testset "Linear algebra" begin
 
     @testset "SArray as a (mathematical) vector space" begin
@@ -103,6 +111,11 @@ using LinearAlgebra: checksquare
         @test @inferred(one(MMatrix{2}))::MMatrix == @MMatrix [1.0 0.0; 0.0 1.0]
 
         @test_throws DimensionMismatch one(MMatrix{2,4})
+
+        @test one(RotMat2) isa RotMat2
+        @test one(RotMat2) == SA[1 0; 0 1]
+        # TODO: See comment in _one.
+        @test_broken one(RotMat2) isa SMatrix{2,2,Float64}
     end
 
     @testset "cross()" begin

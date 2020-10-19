@@ -71,7 +71,7 @@ end
     end
 end
 
-@inline MArray(a::StaticArray) = MArray{size_tuple(Size(a))}(Tuple(a))
+@inline MArray(a::StaticArray{S,T}) where {S<:Tuple,T} = MArray{S,T}(Tuple(a))
 
 ####################
 ## MArray methods ##
@@ -99,7 +99,7 @@ end
         error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
     end
 
-    return val
+    return v
 end
 
 @inline Tuple(v::MArray) = v.data
@@ -268,4 +268,13 @@ end
 
 function promote_rule(::Type{<:MArray{S,T,N,L}}, ::Type{<:MArray{S,U,N,L}}) where {S,T,U,N,L}
     MArray{S,promote_type(T,U),N,L}
+end
+
+function Base.view(
+    a::MArray{S},
+    indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
+) where {S}
+    new_size = new_out_size(S, indices...)
+    view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
+    return SizedArray{new_size}(view_from_invoke)
 end

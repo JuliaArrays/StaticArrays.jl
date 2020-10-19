@@ -77,7 +77,7 @@ end
 
 size(a::TrivialView) = size(a.a)
 getindex(a::TrivialView, inds...) = getindex(a.a, inds...)
-setindex!(a::TrivialView, inds...) = setindex!(a.a, inds...)
+setindex!(a::TrivialView, inds...) = (setindex!(a.a, inds...); a)
 Base.IndexStyle(::Type{<:TrivialView{A}}) where {A} = IndexStyle(A)
 
 TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)

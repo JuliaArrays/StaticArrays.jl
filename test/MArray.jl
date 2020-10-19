@@ -32,6 +32,32 @@
         v = MArray{Tuple{2}}(1,2)
         @test MArray(v) !== v && MArray(v) == v
 
+        # test for #557-like issues
+        @test (@inferred MArray(SVector{0,Float64}()))::MVector{0,Float64} == MVector{0,Float64}()
+
+        @test MArray{Tuple{}}(i for i in 1:1).data === (1,)
+        @test MArray{Tuple{3}}(i for i in 1:3).data === (1,2,3)
+        @test MArray{Tuple{3}}(float(i) for i in 1:3).data === (1.0,2.0,3.0)
+        @test MArray{Tuple{2,3}}(i+10j for i in 1:2, j in 1:3).data === (11,12,21,22,31,32)
+        @test MArray{Tuple{1,2,3}}(i+10j+100k for i in 1:1, j in 1:2, k in 1:3).data === (111,121,211,221,311,321)
+        @test_throws Exception MArray{Tuple{}}(i for i in 1:0)
+        @test_throws Exception MArray{Tuple{}}(i for i in 1:2)
+        @test_throws Exception MArray{Tuple{3}}(i for i in 1:2)
+        @test_throws Exception MArray{Tuple{3}}(i for i in 1:4)
+        @test_throws Exception MArray{Tuple{2,3}}(10i+j for i in 1:1, j in 1:3)
+        @test_throws Exception MArray{Tuple{2,3}}(10i+j for i in 1:3, j in 1:3)
+
+        @test StaticArrays.sacollect(MVector{6}, Iterators.product(1:2, 1:3)) ==
+            MVector{6}(collect(Iterators.product(1:2, 1:3)))
+        @test StaticArrays.sacollect(MVector{2}, Iterators.zip(1:2, 2:3)) ==
+            MVector{2}(collect(Iterators.zip(1:2, 2:3)))
+        @test StaticArrays.sacollect(MVector{3}, Iterators.take(1:10, 3)) ==
+            MVector{3}(collect(Iterators.take(1:10, 3)))
+        @test StaticArrays.sacollect(MMatrix{2,3}, Iterators.product(1:2, 1:3)) ==
+            MMatrix{2,3}(collect(Iterators.product(1:2, 1:3)))
+        @test StaticArrays.sacollect(MArray{Tuple{2,3,4}}, 1:24) ==
+            MArray{Tuple{2,3,4}}(collect(1:24))
+
         @test ((@MArray [1])::MArray{Tuple{1}}).data === (1,)
         @test ((@MArray [1,2])::MArray{Tuple{2}}).data === (1,2)
         @test ((@MArray Float64[1,2,3])::MArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
@@ -129,6 +155,7 @@
         v[2] = 12
         v[3] = 13
         @test v.data === (11, 12, 13)
+        @test setindex!(v, 11, 1) === v
 
         m = @MArray [0 0; 0 0]
         m[1] = 11
@@ -136,6 +163,7 @@
         m[3] = 13
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
+        @test setindex!(m, 11, 1, 1) === m
 
         @test_throws BoundsError setindex!(v, 4, -1)
         mm = @MArray zeros(3,3,3,3)

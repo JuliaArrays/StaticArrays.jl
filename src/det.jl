@@ -42,13 +42,31 @@ end
     -2*rem(s, 2) + 1
 end
 
+det(F::LU) = det(F.U) * _parity(F.p)
+
+function logabsdet(A::Union{LowerTriangular{<:Any,<:StaticMatrix},
+                            UpperTriangular{<:Any,<:StaticMatrix}})
+    checksquare(A)
+    mapreduce(x -> (log(abs(x)), sign(x)), ((l1, s1), (l2, s2)) -> (l1 + l2, s1 * s2),
+              diag(A))
+end
+
+function logdet(F::LU)
+    d, s = logabsdet(F.U)
+    d + log(s * _parity(F.p))
+end
+
+function logabsdet(F::LU)
+    d, s = logabsdet(F.U)
+    d, s * _parity(F.p)
+end
+
 @generated function _det(::Size{S}, A::StaticMatrix) where S
     checksquare(A)
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
-            det(LUp.U)*_parity(LUp.p)
+            det(lu(A, Val(true); check = false))
         end
     else
         :(@_inline_meta; det(Matrix(A)))
@@ -62,11 +80,22 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
-            d, s = logabsdet(LUp.U)
-            d + log(s*_parity(LUp.p))
+            logdet(lu(A, Val(true); check = false))
         end
     else
         :(@_inline_meta; logdet(drop_sdims(A)))
+    end
+end
+
+@inline logabsdet(A::StaticMatrix) = _logabsdet(Size(A), A)
+@generated function _logabsdet(::Size{S}, A::StaticMatrix) where S
+    checksquare(A)
+    if prod(S) ≤ 14*14
+        quote
+            @_inline_meta
+            logabsdet(lu(A, Val(true); check = false))
+        end
+    else
+        :(@_inline_meta; logabsdet(drop_sdims(A)))
     end
 end

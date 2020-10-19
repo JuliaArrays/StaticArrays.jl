@@ -37,7 +37,9 @@ function svd(A::StaticMatrix; full=Val(false))
 end
 
 # Allow plain Bool in addition to Val
-_svd(A, full) = _svd(A, Val(convert(Bool, full)))
+# Required inline as of version 1.5 to ensure Bool usage like svd(A,
+# full=false) is constant-propagated
+@inline _svd(A, full) = _svd(A, Val(convert(Bool, full)))
 
 function _svd(A, full::Val{false})
     f = svd(Matrix(A), full=false)

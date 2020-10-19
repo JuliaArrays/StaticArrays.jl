@@ -113,6 +113,17 @@ end
 @inline _mapreduce(args::Vararg{Any,N}) where N = _mapfoldl(args...)
 
 @generated function _mapfoldl(f, op, dims::Colon, init, ::Size{S}, a::StaticArray...) where {S}
+    if prod(S) == 0
+        if init === _InitialValue
+            if length(a) == 1
+                return :(Base.mapreduce_empty(f, op, $(eltype(a[1]))))
+            else
+                return :(throw(ArgumentError("reducing over an empty collection is not allowed")))
+            end
+        else
+            return :init
+        end
+    end
     tmp = [:(a[$j][1]) for j ∈ 1:length(a)]
     expr = :(f($(tmp...)))
     if init === _InitialValue
@@ -291,8 +302,8 @@ end
 
     return quote
         @_inline_meta
-        T = typeof(one(eltype(a)) - one(eltype(a)))
-        @inbounds return similar_type(a, T, Size($Snew))(tuple($(exprs...)))
+        elements = tuple($(exprs...))
+        @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
 end
 

@@ -102,27 +102,36 @@ end
 @testset "Triangular-matrix division" begin
     for n in (1, 2, 3, 4),
         eltyA in (Float64, ComplexF64, Int),
-            (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L)),
-                eltyB in (Float64, ComplexF64)
+            (t, uplo) in ((UpperTriangular, :U), (LowerTriangular, :L), (UnitUpperTriangular, :U)),
+                eltyB in (Float64, ComplexF64),
+                    tb in (identity, LowerTriangular, Symmetric)
 
         A = t(eltyA == Int ? rand(1:7, n, n) : convert(Matrix{eltyA}, (eltyA <: Complex ? complex.(randn(n, n), randn(n, n)) : randn(n, n)) |> t -> cholesky(t't).U |> t -> uplo == :U ? t : adjoint(t)))
-        B = convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n))
+        B = tb(convert(Matrix{eltyB}, eltyA <: Complex ? real(A)*ones(n, n) : A*ones(n, n)))
         SA = t(SMatrix{n,n}(A.data))
-        SB = SMatrix{n,n}(B)
+        SB = tb(SMatrix{n,n}(parent(B)))
 
-        @test (SA\SB[:,1])::SVector{n} ≈ A\B[:,1]
+        if tb === identity
+            @test (SA\SB[:,1])::SVector{n} ≈ A\B[:,1]
+            @test (transpose(SA)\SB[:,1])::SVector{n} ≈ transpose(A)\B[:,1]
+            @test (SA'\SB[:,1])::SVector{n} ≈ A'\B[:,1]
+        end
         @test (SA\SB)::SMatrix{n,n} ≈ A\B
-        @test (transpose(SA)\SB[:,1])::SVector{n} ≈ transpose(A)\B[:,1]
         @test (transpose(SA)\SB)::SMatrix{n,n} ≈ transpose(A)\B
-        @test (SA'\SB[:,1])::SVector{n} ≈ A'\B[:,1]
         @test (SA'\SB)::SMatrix{n,n} ≈ A'\B
 
         @test_throws DimensionMismatch SA\ones(SVector{n+2,eltyB})
         @test_throws DimensionMismatch transpose(SA)\ones(SVector{n+2,eltyB})
         @test_throws DimensionMismatch SA'\ones(SVector{n+2,eltyB})
 
-        @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))\ones(SVector{n,eltyB})
-        @test_throws LinearAlgebra.SingularException t(transpose(zeros(SMatrix{n,n,eltyA})))\ones(SVector{n,eltyB})
-        @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))'\ones(SVector{n,eltyB})
+        if t != UnitUpperTriangular
+            @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))\ones(SVector{n,eltyB})
+            @test_throws LinearAlgebra.SingularException t(transpose(zeros(SMatrix{n,n,eltyA})))\ones(SVector{n,eltyB})
+            @test_throws LinearAlgebra.SingularException t(zeros(SMatrix{n,n,eltyA}))'\ones(SVector{n,eltyB})
+        end
+
+        @test (SB/SA)::SMatrix{n,n} ≈ B/A
+        @test (SB/transpose(SA))::SMatrix{n,n} ≈ B/transpose(A)
+        @test (SB/SA')::SMatrix{n,n} ≈ B/A'
     end
 end

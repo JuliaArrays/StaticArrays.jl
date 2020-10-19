@@ -7,6 +7,7 @@ using StaticArrays, Test, LinearAlgebra
         @test length(m) == 12
         @test IndexStyle(m) == IndexLinear()
         @test Base.isassigned(m, 2, 2) == true
+        @test eachindex(m) isa SOneTo
     end
 
     @testset "strides" begin
@@ -46,6 +47,12 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(similar_type(MArray{Tuple{4,4,4},Int,3,64}, Float64)) == MArray{Tuple{4,4,4}, Float64, 3, 64}
         @test @inferred(similar_type(MVector{2,Int}, Size(3,3,3))) == MArray{Tuple{3,3,3}, Int, 3, 27}
         @test @inferred(similar_type(MVector{2,Int}, Float64, Size(3,3,3))) == MArray{Tuple{3,3,3}, Float64, 3, 27}
+
+        # wrapped mutable cases (issue #828)
+        for Wrapper in [Symmetric, Hermitian, Adjoint, Transpose, UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular]
+            @test @inferred(similar_type(Wrapper{Int,MArray{Tuple{4,4},Int,2,16}}, Float64)) === MArray{Tuple{4,4}, Float64, 2, 16}
+        end
+        @test @inferred(similar_type(Diagonal{Int,MArray{Tuple{4},Int,1,4}}, Float64)) === MArray{Tuple{4,4}, Float64, 2, 16}
     end
 
     @testset "similar" begin
@@ -101,7 +108,8 @@ using StaticArrays, Test, LinearAlgebra
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
-        @test_deprecated @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,1,2))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
@@ -128,6 +136,19 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reverse(SVector(1, 2, 3))) ≡ SVector(3, 2, 1)
         m = MVector(1, 2, 3)
         @test @inferred(reverse(m))::typeof(m) == MVector(3, 2, 1)
+    end
+
+    @testset "rotate" begin
+        M = [1 2; 3 4]
+        SM = SMatrix{2, 2}(M)
+        @test @inferred(rotl90(SM)) === @SMatrix [2 4; 1 3]
+        @test @inferred(rot180(SM)) === @SMatrix [4 3; 2 1]
+        @test @inferred(rotr90(SM)) === @SMatrix [3 1; 4 2]
+        M23 = rand(2, 3)
+        SM23 = SMatrix{2, 3}(M23)
+        @test @inferred(rotl90(SM23)) == rotl90(M23)
+        @test @inferred(rot180(SM23)) == rot180(M23)
+        @test @inferred(rotr90(SM23)) == rotr90(M23)
     end
 
     @testset "Conversion to AbstractArray" begin

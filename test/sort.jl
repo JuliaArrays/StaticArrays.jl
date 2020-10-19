@@ -19,4 +19,12 @@ using StaticArrays, Test
         end
     end
 
+    @testset "sortperm" for T in (Int, Float64)
+        for N in (0, 1, 2, 3, 10, 20, 30)
+            v = rand(SVector{N,T})
+            vp = sortperm(v)
+            @test v[vp] == sort(v)
+        end
+    end
+
 end

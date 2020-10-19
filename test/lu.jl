@@ -11,7 +11,7 @@ end
 
 @testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
     a = SMatrix{m,n,Int}(1:(m*n))
-    l, u, p = @inferred(lu(a, Val{pivot}()))
+    l, u, p = @inferred(lu(a, Val{pivot}(); check = false))
 
     # expected types
     @test p isa SVector{m,Int}
@@ -57,5 +57,11 @@ end
     # test if / and \ work with lu:
     @test a\b_col ≈ a_lu\b_col
     @test b_line/a ≈ b_line/a_lu
+end
 
+@testset "LU singularity check" for m in [2, 3, 20], n in [2, 3, 20]
+    # NOTE: large dimensions test fallback to LinearAlgebra.lu
+    A = ones(SMatrix{m,n})
+    @test_throws SingularException lu(A)
+    @test !issuccess(lu(A; check = false))
 end
