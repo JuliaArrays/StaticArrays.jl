@@ -236,6 +236,7 @@ end
 # A couple of hacky overloads to avoid some vcat surprises.
 # We can't really make this work a lot better in general without Base providing
 # a dispatch mechanism for output container type.
+@inline vcat(a::StaticVector) = a
 @inline vcat(a::StaticVector, bs::Number...) = vcat(a, SVector(bs))
 @inline vcat(a::Number, b::StaticVector) = vcat(similar_type(b, typeof(a), Size(1))((a,)), b)
 
