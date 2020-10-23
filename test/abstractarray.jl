@@ -260,4 +260,16 @@ end
     let A = Transpose(@SMatrix [1 2; 3 4]), B = Adjoint(@SMatrix [5 6; 7 8])
         @test @inferred(vcat(A, B)) === SMatrix{4, 2}([Matrix(A); Matrix(B)])
     end
+
+    # hcat/vcat + mixtures of Number and SVector / SMatrix
+    @test @inferred(vcat(SA[1,2,3], 4, 5, 6)) === SVector{6}((1,2,3,4,5,6))
+    @test @inferred(vcat(0, SA[1,2,3])) === SVector{4}((0,1,2,3))
+    @test @inferred(hcat(SMatrix{1,3}((1,2,3)), 4, 5, 6)) === SMatrix{1,6}((1,2,3,4,5,6))
+    @test @inferred(hcat(0, SMatrix{1,3}((1,2,3)))) === SMatrix{1,4}((0,1,2,3))
+    @test @inferred(vcat(MVector((1,2,3)), 4, 5, 6))::MVector == [1,2,3,4,5,6]
+
+    @test @inferred(vcat(SA[1,2,3])) === SA[1,2,3]
+    @test @inferred(vcat(SA[1 2 3])) === SA[1 2 3]
+    @test @inferred(hcat(SA[1,2,3])) === SMatrix{3,1}(1,2,3)
+    @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
