@@ -55,7 +55,7 @@ broadcast_indices(A::StaticArray) = indices(A)
 @inline broadcast_sizes() = ()
 @inline broadcast_size(a) = Size()
 @inline broadcast_size(a::AbstractArray) = Size(a)
-@inline broadcast_size(a::NTuple{N}) where N = Size(N)
+@inline broadcast_size(a::Tuple) = Size(length(a))
 
 function broadcasted_index(oldsize, newindex)
     index = ones(Int, length(oldsize))

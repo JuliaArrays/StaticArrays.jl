@@ -26,6 +26,9 @@ end
     end
     # test case issue #191
     @test @inferred(broadcast((a, b, c) -> 0, SVector(1, 1), 0, 0)) == SVector(0, 0)
+
+    # test case issue #841
+    @test @inferred(StaticArrays.broadcast_size((1, 2.0))) === Size(2)
 end
 
 @testset "Broadcast" begin
