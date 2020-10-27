@@ -286,3 +286,8 @@ end
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
+
+if VERSION >= v"1.6.0-DEV.1334"
+    Base.rest(a::SArray, st=(nothing, 0)) = SVector(Base.rest(Tuple(a), st[2] + 1))
+    Base.rest(a::MArray, st=(nothing, 0)) = MVector(Base.rest(Tuple(a), st[2] + 1))
+end

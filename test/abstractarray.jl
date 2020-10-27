@@ -273,3 +273,29 @@ end
     @test @inferred(hcat(SA[1,2,3])) === SMatrix{3,1}(1,2,3)
     @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
+
+if VERSION >= v"1.6.0-DEV.1334"
+    @testset "Base.rest" begin
+        x = @SVector[1, 2, 3]
+        @test Base.rest(x) == x
+        a, b... = x
+        @test b == @SVector[2, 3]
+    
+        x = @SMatrix[1 2; 3 4]
+        @test Base.rest(x) == vec(x)
+        a, b... = x
+        @test b == @SVector[3, 2, 4]
+    
+        x = @MVector[1, 2, 3]
+        @test Base.rest(x) == x
+        @test pointer(Base.rest(x)) != pointer(x)
+        a, b... = x
+        @test b == @MVector[2, 3]
+    
+        x = @MMatrix[1 2; 3 4]
+        @test Base.rest(x) == vec(x)
+        @test pointer(Base.rest(x)) != pointer(x)
+        a, b... = x
+        @test b == @MVector[3, 2, 4]
+    end
+end
