@@ -16,10 +16,7 @@ end
 @generated function promote_tuple_eltype(::Union{T,Type{T}}) where T <: Tuple
     t = Union{}
     for i = 1:length(T.parameters)
-        tmp = T.parameters[i]
-        if tmp <: Vararg
-            tmp = tmp.parameters[1]
-        end
+        tmp = Base.unwrapva(T.parameters[i])
         t = :(promote_type($t, $tmp))
     end
     return quote
