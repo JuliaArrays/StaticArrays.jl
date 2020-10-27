@@ -276,26 +276,36 @@ end
 
 @static if VERSION >= v"1.6.0-DEV.1334"
     @testset "Base.rest" begin
-        x = @SVector[1, 2, 3]
+        x = SA[1, 2, 3]
         @test Base.rest(x) == x
         a, b... = x
-        @test b == @SVector[2, 3]
+        @test b == SA[2, 3]
     
-        x = @SMatrix[1 2; 3 4]
+        x = SA[1 2; 3 4]
         @test Base.rest(x) == vec(x)
         a, b... = x
-        @test b == @SVector[3, 2, 4]
+        @test b == SA[3, 2, 4]
+
+        a, b... = SA[1]
+        @test b == []
+        @test b isa SVector{0}
     
-        x = @MVector[1, 2, 3]
-        @test Base.rest(x) == x
-        @test pointer(Base.rest(x)) != pointer(x)
-        a, b... = x
-        @test b == @MVector[2, 3]
-    
-        x = @MMatrix[1 2; 3 4]
-        @test Base.rest(x) == vec(x)
-        @test pointer(Base.rest(x)) != pointer(x)
-        a, b... = x
-        @test b == @MVector[3, 2, 4]
+        for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
+            x = Vec(1, 2, 3)
+            @test Base.rest(x) == x
+            @test pointer(Base.rest(x)) != pointer(x)
+            a, b... = x
+            @test b == Vec(2, 3)
+        
+            x = Mat{2,2}(1, 2, 3, 4)
+            @test Base.rest(x) == vec(x)
+            @test pointer(Base.rest(x)) != pointer(x)
+            a, b... = x
+            @test b == Vec(2, 3, 4)
+
+            a, b... = Vec(1)
+            @test b == []
+            @test b isa Vec{0}
+        end
     end
 end

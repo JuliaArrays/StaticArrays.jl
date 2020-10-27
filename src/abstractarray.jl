@@ -288,6 +288,10 @@ end
 end
 
 if VERSION >= v"1.6.0-DEV.1334"
-    Base.rest(a::SArray, st=(nothing, 0)) = SVector(Base.rest(Tuple(a), st[2] + 1))
-    Base.rest(a::MArray, st=(nothing, 0)) = MVector(Base.rest(Tuple(a), st[2] + 1))
+    # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
+    # don't overload iterate
+    @inline function Base.rest(a::StaticArray, (_, i) = (nothing, 0))
+        newlen = StaticArrays.tuple_prod(Size(a)) - i
+        return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
+    end
 end
