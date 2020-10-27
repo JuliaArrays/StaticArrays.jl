@@ -274,7 +274,7 @@ end
     @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
 
-if VERSION >= v"1.6.0-DEV.1334"
+@static if VERSION >= v"1.6.0-DEV.1334"
     @testset "Base.rest" begin
         x = @SVector[1, 2, 3]
         @test Base.rest(x) == x
