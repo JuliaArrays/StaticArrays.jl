@@ -153,9 +153,9 @@ number of dimensions, and their dimensions match as determined by [`dimmatch`](@
 """
 @pure sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = sizematch(S1, S2)
 @inline sizematch(::Tuple{}, ::Tuple{}) = true
-@inline sizematch(S1::Tuple{Vararg{<:StaticDimension, N}}, S2::Tuple{Vararg{<:StaticDimension, N}}) where {N} =
+@inline sizematch(S1::Tuple{Vararg{StaticDimension, N}}, S2::Tuple{Vararg{StaticDimension, N}}) where {N} =
     dimmatch(S1[1], S2[1]) && sizematch(Base.tail(S1), Base.tail(S2))
-@inline sizematch(::Tuple{Vararg{<:StaticDimension}}, ::Tuple{Vararg{<:StaticDimension}}) = false # mismatch in number of dimensions
+@inline sizematch(::Tuple{Vararg{StaticDimension}}, ::Tuple{Vararg{StaticDimension}}) = false # mismatch in number of dimensions
 
 """
     sizematch(::Size, A::AbstractArray)
