@@ -1,3 +1,5 @@
+require_one_based_indexing(A...) = !Base.has_offset_axes(A...) ||
+    throw(ArgumentError("offset arrays are not supported but got an array with index other than 1"))
 
 """
     SizedArray{Tuple{dims...}}(array)
@@ -15,6 +17,7 @@ struct SizedArray{S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} <: StaticArray{S,T,N
     data::TData
 
     function SizedArray{S,T,N,M,TData}(a::TData) where {S,T,N,M,TData<:AbstractArray{T,M}}
+        require_one_based_indexing(a)
         if size(a) != size_to_tuple(S) && size(a) != (tuple_prod(S),)
             throw(DimensionMismatch("Dimensions $(size(a)) don't match static size $S"))
         end

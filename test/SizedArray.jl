@@ -220,3 +220,8 @@
         @test x5 == view(Array(x5), :)
     end
 end
+
+struct OVector <: AbstractVector{Int} end
+Base.length(::OVector) = 10
+Base.axes(::OVector) = (0:9,)
+@test_throws ArgumentError SizedVector{10}(OVector())
