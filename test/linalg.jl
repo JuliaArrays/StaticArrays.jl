@@ -86,10 +86,17 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "diagm()" begin
+        @test @inferred(diagm(SA[1,2])) === SA[1 0; 0 2]
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
         @test @inferred(diagm(Val(-2) => SVector(1,2,3)))::SMatrix == diagm(-2 => [1,2,3])
-        @test @inferred(diagm(Val(-2) => SVector(1,2,3), Val(1) => SVector(4,5)))::SMatrix == diagm(-2 => [1,2,3], 1 => [4,5])
+        @test @inferred(diagm(Val(-2) => SVector(1,2,3), Val(1) => SVector(4,5)))::SMatrix ==
+            diagm(-2 => [1,2,3], 1 => [4,5])
+        # numeric promotion
+        @test @inferred(diagm(Val(0) => SA[1,2,3], Val(1) => SA[4.0im,5.0im]))::SMatrix{3,3,ComplexF64} ==
+            diagm(0 => [1.0,2.0,3.0], 1 => [4.0im,5.0im])
+        # diagm respects input type
+        @test @inferred(diagm(MArray(SA[1,2])))::MArray == SA[1 0; 0 2]
     end
 
     @testset "diag()" begin

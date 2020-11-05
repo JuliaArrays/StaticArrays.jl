@@ -134,22 +134,26 @@ end
 end
 
 @generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
-    N = maximum(abs(kv.parameters[1].parameters[1]) + length(kv.parameters[2]) for kv in kvs)
-    X = [Symbol("x_$(i)_$(j)") for i in 1:N, j in 1:N]
-    T = promote_type((eltype(kv.parameters[2]) for kv in kvs)...)
-    exprs = fill(:(zero($T)), N*N)
-    for m in eachindex(kvs)
-        kv = kvs[m]
-        ind = diagind(N, N, kv.parameters[1].parameters[1])
-        for n = 1:length(kv.parameters[2])
-            exprs[ind[n]] = :(kvs[$m].second[$n])
+    diag_ind_and_length = [(kv.parameters[1].parameters[1], length(kv.parameters[2])) for kv in kvs]
+    N = maximum(abs(di) + dl for (di,dl) in diag_ind_and_length)
+    vs = [Symbol("v$i") for i=1:length(kvs)]
+    vs_exprs = [:(@inbounds $(vs[i]) = kvs[$i].second) for i=eachindex(kvs)]
+    element_exprs = Any[false for _=1:N*N]
+    for (i, (di, dl)) in enumerate(diag_ind_and_length)
+        diaginds = diagind(N, N, di)
+        for n = 1:dl
+            element_exprs[diaginds[n]] = :($(vs_exprs[i])[$n])
         end
     end
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return SMatrix{$N,$N,$T}(tuple($(exprs...)))
+        $(vs_exprs...)
+        @inbounds elements = tuple($(element_exprs...))
+        T = promote_tuple_eltype(elements)
+        @inbounds return similar_type(v1, T, Size($N,$N))(elements)
     end
 end
+@inline diagm(v::StaticVector) = diagm(Val(0)=>v)
 
 @inline diag(m::StaticMatrix, k::Type{Val{D}}=Val{0}) where {D} = _diag(Size(m), m, k)
 @generated function _diag(::Size{S}, m::StaticMatrix, ::Type{Val{D}}) where {S,D}
