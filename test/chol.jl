@@ -48,6 +48,15 @@ using LinearAlgebra: PosDefException
             m = SMatrix{25,25}(m_a)
             @test cholesky(m).L ≈ cholesky(m_a).L
         end
+
+        @testset "Inverse" begin
+            m_a = randn(elty, 3, 3)
+            m_a = m_a*m_a'
+            m = SMatrix{3,3}(m_a)
+            c = cholesky(m)
+            @test (@inferred inv(c)) isa SMatrix{3,3,elty}
+            @test inv(c) ≈ SMatrix{3,3}(inv(m_a))
+        end
     end
 
     @testset "static blockmatrix" for i = 1:10

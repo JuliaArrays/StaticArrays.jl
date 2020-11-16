@@ -55,3 +55,7 @@ end
     similar_type(A)(cholesky(Hermitian(Matrix(A))).U)
 
 LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}
+
+function inv(A::Cholesky{T,<:StaticMatrix{N,N,T}}) where {N,T}
+    return A.U \ (A.U' \ SDiagonal{N}(I))
+end
