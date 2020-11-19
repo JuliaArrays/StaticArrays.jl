@@ -73,10 +73,12 @@ using LinearAlgebra: PosDefException
             @test (@inferred c \ Symmetric(d)) isa SMatrix{3,3,elty}
             @test c \ Symmetric(d) ≈ c_a \ Symmetric(d_a)
 
-            @test (@inferred d / c) isa SMatrix{3,3,elty}
-            @test d / c ≈ d_a / c_a
-            @test (@inferred Symmetric(d) / c) isa SMatrix{3,3,elty}
-            @test Symmetric(d) / c ≈ Symmetric(d_a) / c_a
+            if VERSION >= v"1.3"
+                @test (@inferred d / c) isa SMatrix{3,3,elty}
+                @test d / c ≈ d_a / c_a
+                @test (@inferred Symmetric(d) / c) isa SMatrix{3,3,elty}
+                @test Symmetric(d) / c ≈ Symmetric(d_a) / c_a
+            end
 
             v_a = randn(elty, 3)
             v = SVector{3}(v_a)
