@@ -74,6 +74,7 @@ using LinearAlgebra: PosDefException
             @test c \ Symmetric(d) ≈ c_a \ Symmetric(d_a)
 
             if VERSION >= v"1.3"
+                # on earlier versions of Julia d_a / c_a fails
                 @test (@inferred d / c) isa SMatrix{3,3,elty}
                 @test d / c ≈ d_a / c_a
                 @test (@inferred Symmetric(d) / c) isa SMatrix{3,3,elty}
