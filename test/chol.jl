@@ -48,6 +48,44 @@ using LinearAlgebra: PosDefException
             m = SMatrix{25,25}(m_a)
             @test cholesky(m).L ≈ cholesky(m_a).L
         end
+
+        @testset "Inverse" begin
+            m_a = randn(elty, 3, 3)
+            m_a = m_a*m_a'
+            m = SMatrix{3,3}(m_a)
+            c = cholesky(m)
+            @test (@inferred inv(c)) isa SMatrix{3,3,elty}
+            @test inv(c) ≈ SMatrix{3,3}(inv(m_a))
+        end
+
+        @testset "Division" begin
+            m_a = randn(elty, 3, 3)
+            m_a = m_a*m_a'
+            m = SMatrix{3,3}(m_a)
+            c = cholesky(m)
+            c_a = cholesky(m_a)
+            
+            d_a = randn(elty, 3, 3)
+            d = SMatrix{3,3}(d_a)
+
+            @test (@inferred c \ d) isa SMatrix{3,3,elty}
+            @test c \ d ≈ c_a \ d_a
+            @test (@inferred c \ Symmetric(d)) isa SMatrix{3,3,elty}
+            @test c \ Symmetric(d) ≈ c_a \ Symmetric(d_a)
+
+            if VERSION >= v"1.3"
+                # on earlier versions of Julia d_a / c_a fails
+                @test (@inferred d / c) isa SMatrix{3,3,elty}
+                @test d / c ≈ d_a / c_a
+                @test (@inferred Symmetric(d) / c) isa SMatrix{3,3,elty}
+                @test Symmetric(d) / c ≈ Symmetric(d_a) / c_a
+            end
+
+            v_a = randn(elty, 3)
+            v = SVector{3}(v_a)
+            @test (@inferred c \ v) isa SVector{3,elty}
+            @test c \ v ≈ c_a \ v_a
+        end
     end
 
     @testset "static blockmatrix" for i = 1:10
