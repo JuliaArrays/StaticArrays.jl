@@ -1,4 +1,4 @@
-import Base.Order: Forward, Ordering, Perm, ReverseOrdering, ord
+import Base.Order: Forward, Ordering, Perm, ord
 import Base.Sort: Algorithm, lt, sort, sortperm
 
 
@@ -51,8 +51,7 @@ _sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
     function swap_expr(i, j, rev)
         ai = Symbol('a', i)
         aj = Symbol('a', j)
-        order = rev ? :revorder : :order
-        return :( ($ai, $aj) = @inbounds lt($order, $ai, $aj) ? ($ai, $aj) : ($aj, $ai) )
+        return :( ($ai, $aj) = @inbounds lt(order, $ai, $aj) ⊻ $rev ? ($ai, $aj) : ($aj, $ai) )
     end
 
     function merge_exprs(idx, rev)
@@ -83,7 +82,6 @@ _sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
     symlist = (Symbol('a', i) for i in idx)
     return quote
         @_inline_meta
-        revorder = Base.Order.ReverseOrdering(order)
         ($(symlist...),) = a
         ($(sort_exprs(idx)...);)
         return ($(symlist...),)
