@@ -218,43 +218,31 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
     α::Number, β::Number) = _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B,
     AlphaBeta(α,β))
 
-if VERSION < v"1.1"
-    # See https://github.com/JuliaArrays/StaticArrays.jl/issues/857.
-    # `StaticVecOrMatLike` is a very large union, and this caused Julia 1.0.x to
-    # use a large amount of memory when compiling StaticArrays in the presence
-    # of other packages that also extend `LinearAlgebra.mul!` in a similar
-    # fashion. As an example, this led to JuMP using more than 4 GB of RAM when
-    # running `using JuMP`, causing its CI to crash.
-    #
-    # Computing the eltypes within the function, rather than specifying them in
-    # the type arguments greatly improves the issue, with `using JuMP` going
-    # from:
-    #     julia> @time using JuMP
-    #     [ Info: Precompiling JuMP [4076af6c-e467-56ae-b986-b466b2749572]
-    #     Killed
-    # to:
-    #     julia> @time using JuMP
-    #     [ Info: Precompiling JuMP [4076af6c-e467-56ae-b986-b466b2749572]
-    #      97.868305 seconds (12.75 M allocations: 805.413 MiB, 0.30% gc time)
-    @inline _eltype(::StaticVecOrMatLike{T}) where {T} = T
-    @inline function LinearAlgebra.mul!(
-        dest::StaticVecOrMatLike,
-        A::StaticVecOrMatLike,
-        B::StaticVecOrMatLike,
-    )
-        TDest, TA, TB = _eltype(dest), _eltype(A), _eltype(B)
-        TMul = promote_op(matprod, TA, TB)
-        return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
-    end
-else
-    @inline function LinearAlgebra.mul!(
-        dest::StaticVecOrMatLike{TDest},
-        A::StaticVecOrMatLike{TA},
-        B::StaticVecOrMatLike{TB},
-    ) where {TDest,TA,TB}
-        TMul = promote_op(matprod, TA, TB)
-        return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
-    end
+# See https://github.com/JuliaArrays/StaticArrays.jl/issues/857.
+# `StaticVecOrMatLike` is a very large union, and this caused Julia 1.0.x to
+# use a large amount of memory when compiling StaticArrays in the presence
+# of other packages that also extend `LinearAlgebra.mul!` in a similar
+# fashion. As an example, this led to JuMP using more than 4 GB of RAM when
+# running `using JuMP`, causing its CI to crash.
+#
+# Computing the eltypes within the function, rather than specifying them in
+# the type arguments greatly improves the issue, with `using JuMP` going
+# from:
+#     julia> @time using JuMP
+#     [ Info: Precompiling JuMP [4076af6c-e467-56ae-b986-b466b2749572]
+#     Killed
+# to:
+#     julia> @time using JuMP
+#     [ Info: Precompiling JuMP [4076af6c-e467-56ae-b986-b466b2749572]
+#     101.723598 seconds (12.85 M allocations: 812.902 MiB, 0.31% gc time)
+@inline function LinearAlgebra.mul!(
+    dest::StaticVecOrMatLike,
+    A::StaticVecOrMatLike,
+    B::StaticVecOrMatLike,
+)
+    TDest, TA, TB = eltype(dest), eltype(A), eltype(B)
+    TMul = promote_op(matprod, TA, TB)
+    return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
 end
 
 "Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling."
