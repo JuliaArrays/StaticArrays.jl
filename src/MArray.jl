@@ -278,3 +278,5 @@ function Base.view(
     view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
     return SizedArray{new_size}(view_from_invoke)
 end
+
+Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(eltype(T))

@@ -126,7 +126,8 @@ end
 
 Base.parent(sa::SizedArray) = sa.data
 
-Base.pointer(sa::SizedArray) = pointer(sa.data)
+Base.unsafe_convert(::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.unsafe_convert(Ptr{T}, sa.data)
+Base.elsize(::Type{SizedArray{S,T,M,N,A}}) where {S,T,M,N,A} = Base.elsize(A)
 
 const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
 
