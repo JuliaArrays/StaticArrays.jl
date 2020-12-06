@@ -279,4 +279,4 @@ function Base.view(
     return SizedArray{new_size}(view_from_invoke)
 end
 
-Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(eltype(T))
+Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(T)
