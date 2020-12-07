@@ -98,13 +98,15 @@
     # pointer
     @testset "pointer" begin
         @test pointer(sa) === pointer(sa.data)
-        A = MMatrix{32,3,Float64}(undef);
-        av1 = view(A, 1, :);
-        av2 = view(A, :, 1);
-        @test pointer(A) == pointer(av1) == pointer(av2)
-        @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
-        @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
-        @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
+        if VERSION ≥ v"1.5"
+            A = MMatrix{32,3,Float64}(undef);
+            av1 = view(A, 1, :);
+            av2 = view(A, :, 1);
+            @test pointer(A) == pointer(av1) == pointer(av2)
+            @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
+            @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
+            @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
+        end
     end
     
     @testset "vec" begin
