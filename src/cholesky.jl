@@ -1,8 +1,18 @@
 # Generic Cholesky decomposition for fixed-size matrices, mostly unrolled
 non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
 @inline function LinearAlgebra.cholesky(A::StaticMatrix; check=true)
-    !ishermitian(A) && (check && non_hermitian_error())
-    C = _cholesky(Size(A), A)
+    if ishermitian(A)
+        return cholesky(Hermitian(A), check=check)
+    else   # skip factorization if matrix isn't positive definite
+        C = A
+        loc = -1
+        check && non_hermitian_error()
+    end
+    return Cholesky(C, 'U', loc)
+end
+
+@inline function LinearAlgebra.cholesky(A::LinearAlgebra.RealHermSymComplexHerm{<:Number, <:StaticMatrix}; check=true)
+    C = _cholesky(Size(A), A.data)
     loc = _checkpsd(C)
     if check && loc != 0
         throw(PosDefException(loc))
@@ -13,7 +23,7 @@ end
 """
     _checkpsd(C::StaticMatrix{M,M,T})
 
-Checks of an upper-triangular Cholesky factor `C` was successfully factored.
+Checks if an upper-triangular Cholesky factor `C` was successfully factored.
 If the original matrix `A = C'C` was positive definite, return 0. 
 Otherwise, return the location of the first zero element on the diagonal of `C`.
 
@@ -25,19 +35,6 @@ function _checkpsd(C::StaticMatrix{M,M,T}) where {M,T}
     return loc
 end
 
-function LinearAlgebra.isposdef(A::StaticMatrix{M,M,T}) where {M,T}
-    C = _cholesky(Size(A), A)
-    return real(prod(diag(C))) > zero(real(T)) 
-end
-
-@inline function LinearAlgebra.cholesky(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix}; check=true)
-    C = _cholesky(Size(A), A.data)
-    loc = _checkpsd(C)
-    if check && loc != 0
-        throw(PosDefException(loc))
-    end
-    return Cholesky(C, 'U', loc)
-end
 @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (cholesky(A).U, 0)
 
 @generated function _cholesky(::Size{S}, A::StaticMatrix{M,M,TM}) where {S,M,TM}

@@ -89,6 +89,7 @@ using LinearAlgebra: PosDefException
 
         @testset "indefinite matrices" for i = 1:10
             m_a = randn(elty, 5,5)
+            @test cholesky(SMatrix{5,5}(m_a), check=false).info == -1
             @test !isposdef(SMatrix{5,5}(m_a))
             m_a = m_a*m_a'
 
@@ -100,6 +101,7 @@ using LinearAlgebra: PosDefException
 
             @test_throws PosDefException cholesky(m_a)
             @test_throws PosDefException cholesky(m)
+            @test_throws PosDefException cholesky(Hermitian(m))
             @test cholesky(m_a, check=false).info != 0 
             @test cholesky(m, check=false).info != 0 
             @test cholesky(Hermitian(m), check=false).info != 0 
