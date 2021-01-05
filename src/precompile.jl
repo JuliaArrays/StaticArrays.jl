@@ -8,23 +8,16 @@ function _precompile_()
     #     @time StaticArrays._precompile_()
 
     for T in (Float32, Float64, Int)   # some common eltypes
-        @assert precompile(Tuple{typeof(*),SMatrix{4, 4, T, 16},SMatrix{4, 4, T, 16}})
-        @assert precompile(Tuple{typeof(*),SMatrix{3, 3, T,  9},SMatrix{3, 3, T,  9}})
-        @assert precompile(Tuple{typeof(*),SMatrix{2, 2, T,  4},SMatrix{2, 2, T,  4}})
-        @assert precompile(Tuple{typeof(*),SMatrix{2, 2, T,  4},SMatrix{2, 4, T,  8}})
-
-        @assert precompile(Tuple{Core.kwftype(typeof(minimum)),NamedTuple{(:dims,), Tuple{Int}},typeof(minimum),SMatrix{2, 4, T, 8}})
-        @assert precompile(Tuple{Core.kwftype(typeof(maximum)),NamedTuple{(:dims,), Tuple{Int}},typeof(maximum),SMatrix{2, 4, T, 8}})
-
-        @assert precompile(Tuple{typeof(inv),SMatrix{4, 4, T, 16}})
-        @assert precompile(Tuple{typeof(inv),SMatrix{3, 3, T,  9}})
-
-        @assert precompile(Tuple{typeof(getindex),SMatrix{4, 4, T, 16},SOneTo{3},SOneTo{3}})
-
-        @assert precompile(Tuple{typeof(copy),Broadcasted{StaticArrayStyle{2}, Tuple{SOneTo{2}, SOneTo{1}}, typeof(-), Tuple{SMatrix{2, 1, T, 2}, SMatrix{2, 1, T, 2}}}})
-
-        @assert precompile(Tuple{typeof(transpose),SMatrix{3, 3, T, 9}})
-        @assert precompile(Tuple{typeof(_adjoint),Size{(4, 2)},SMatrix{4, 2, T, 8}})
+        for S = 2:4                    # some common sizes
+            L = S*S
+            @assert precompile(Tuple{typeof(*),SMatrix{S, S, T, L},SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{typeof(inv),SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{typeof(transpose),SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{typeof(_adjoint),Size{(S, S)},SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{Core.kwftype(typeof(minimum)),NamedTuple{(:dims,), Tuple{Int}},typeof(minimum),SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{Core.kwftype(typeof(maximum)),NamedTuple{(:dims,), Tuple{Int}},typeof(maximum),SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{typeof(getindex),SMatrix{S, S, T, L},SOneTo{S-1},SOneTo{S-1}})
+        end
     end
 
     # Some expensive generators
