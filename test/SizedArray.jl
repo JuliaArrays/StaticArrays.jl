@@ -206,6 +206,10 @@
         x5 = view(x, :)
         @test isa(x5, SizedArray{Tuple{24},Float64,1,1,<:SubArray{Float64,1}})
         @test x5 == view(x.data, :)
+
+        x6 = view(x, StaticArrays.SUnitRange(2, 3), :, 2)
+        @test isa(x6, SizedArray{Tuple{2,3},Float64,2,2,<:SubArray{Float64,2}})
+        @test x6 == view(x.data, StaticArrays.SUnitRange(2, 3), :, 2)
     end
 
     @testset "views of MArray" begin
