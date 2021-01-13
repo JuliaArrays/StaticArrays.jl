@@ -200,13 +200,16 @@ end
 
 ### Code that makes views of statically sized arrays also statically sized (where possible)
 
+# Note, _get_static_vector_length is used in a generated function so it's strictly internal and can't be extended
+_get_static_vector_length(::Type{<:StaticVector{N}}) where {N} = N
+
 @generated function new_out_size(::Type{Size}, inds...) where Size
     os = []
     map(Size.parameters, inds) do s, i
         if i <: Integer
             # dimension is fixed
         elseif i <: StaticVector
-            push!(os, i.parameters[1].parameters[1])
+            push!(os, _get_static_vector_length(i))
         elseif i == Colon || i <: Base.Slice
             push!(os, s)
         elseif i <: SOneTo
