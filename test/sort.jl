@@ -25,6 +25,9 @@ using StaticArrays, Test
             vp = sortperm(v)
             @test v[vp] == sort(v)
         end
+
+        # stability
+        @test sortperm(SA[1, 1, 1, 0]) == SA[4, 1, 2, 3]
     end
 
 end
