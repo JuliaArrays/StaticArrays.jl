@@ -348,25 +348,14 @@ end
         j += 1
     end
 
-    if v <: StaticArray
-        @boundscheck if Length(v) != prod(linearsizes)
-            return DimensionMismatch("tried to assign $(length(v))-element array to $newsize destination")
+    quote
+        @_propagate_inbounds_meta
+        if length(v) != $(prod(linearsizes))
+            newsize = $linearsizes
+            throw(DimensionMismatch("tried to assign $(length(v))-element array to $newsize destination"))
         end
-        quote
-            @_propagate_inbounds_meta
-            $(exprs...)
-            return a
-        end
-    else
-        quote
-            @_propagate_inbounds_meta
-            if length(v) != $(prod(linearsizes))
-                newsize = $linearsizes
-                throw(DimensionMismatch("tried to assign $(length(v))-element array to $newsize destination"))
-            end
-            $(exprs...)
-            return a
-        end
+        $(exprs...)
+        return a
     end
 end
 

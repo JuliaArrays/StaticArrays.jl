@@ -142,6 +142,10 @@ using StaticArrays, Test
         # SOneTo
         @test (mm = MMatrix{2,2,Int}(undef); mm[SOneTo(1),:] = sm[SOneTo(1),:]; (@inferred getindex(mm, SOneTo(1), :))::MMatrix == @MMatrix [1 3])
         @test (mm = MMatrix{2,2,Int}(undef); mm[:,SOneTo(1)] = sm[:,SOneTo(1)]; (@inferred getindex(mm, :, SOneTo(1)))::MMatrix == @MMatrix [1;2])
+
+        # #866
+        @test_throws DimensionMismatch setindex!(MMatrix(SA[1 2; 3 4], SA[3,4], 1, SA[1,2,3]))
+        @test_throws DimensionMismatch setindex!(MMatrix(SA[1 2; 3 4], [3,4], 1, SA[1,2,3]))
     end
 
     @testset "3D scalar indexing" begin
