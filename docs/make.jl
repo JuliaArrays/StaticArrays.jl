@@ -18,4 +18,4 @@ makedocs(;
     sitename = "StaticArrays.jl",
 )
 
-deploydocs(; repo = "github.com/JuliaArrays/StaticArrays.jl")
+deploydocs(; repo = "github.com/juliaarrays/StaticArrays.jl")
