@@ -1,6 +1,9 @@
 using Documenter
 using StaticArrays
 
+# Setup for doctests in docstrings
+DocMeta.setdocmeta!(StaticArrays, :DocTestSetup, :(using StaticArrays))
+
 makedocs(;
     modules = [StaticArrays],
     format = Documenter.HTML(
