@@ -4,7 +4,7 @@
 Return a new `StaticVector` with `item` inserted on the end of `vec`.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> push(@SVector[1, 2, 3], 4)
 4-element SArray{Tuple{4},Int64,1,4} with indices SOneTo(4):
  1
@@ -29,7 +29,7 @@ end
 Return a new `StaticVector` with `item` inserted at the beginning of `vec`.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> pushfirst(@SVector[1, 2, 3, 4], 5)
 5-element SArray{Tuple{5},Int64,1,5} with indices SOneTo(5):
  5
@@ -55,7 +55,7 @@ end
 Return a new vector with `item` inserted into `vec` at the given `index`.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> insert(@SVector[6, 5, 4, 2, 1], 4, 3)
 6-element SArray{Tuple{6},Int64,1,6} with indices SOneTo(6):
  6
@@ -87,7 +87,7 @@ end
 Return a new vector with the last item in `vec` removed.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> pop(@SVector[1,2,3])
 2-element SArray{Tuple{2},Int64,1,2} with indices SOneTo(2):
  1
@@ -110,7 +110,7 @@ end
 Return a new vector with the first item in `vec` removed.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> popfirst(@SVector[1,2,3])
 2-element SArray{Tuple{2},Int64,1,2} with indices SOneTo(2):
  2
@@ -133,7 +133,7 @@ end
 Return a new vector with the item at the given `index` removed.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> deleteat(@SVector[6, 5, 4, 3, 2, 1], 2)
 5-element SArray{Tuple{5},Int64,1,5} with indices SOneTo(5):
  6
@@ -169,7 +169,7 @@ import Base.setindex
 Return a new array with the item at `index` replaced by `x`.
 
 # Examples
-```jldoctest; setup = :(using StaticArrays)
+```jldoctest
 julia> setindex(@SVector[1,2,3], 4, 2)
 3-element SArray{Tuple{3},Int64,1,3} with indices SOneTo(3):
  1
