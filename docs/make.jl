@@ -15,7 +15,6 @@ makedocs(;
         "API" => "pages/api.md",
         "Quick Start" => "pages/quickstart.md",
         ],
-    repo = "https://github.com/JuliaArrays/StaticArrays.jl/blob/{commit}{path}#L{line}",
     sitename = "StaticArrays.jl",
 )
 
