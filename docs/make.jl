@@ -2,7 +2,7 @@ using Documenter
 using StaticArrays
 
 # Setup for doctests in docstrings
-DocMeta.setdocmeta!(StaticArrays, :DocTestSetup, :(using StaticArrays))
+DocMeta.setdocmeta!(StaticArrays, :DocTestSetup, :(using LinearAlgebra, StaticArrays))
 
 makedocs(;
     modules = [StaticArrays],
