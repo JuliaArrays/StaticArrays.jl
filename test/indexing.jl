@@ -241,7 +241,7 @@ using StaticArrays, Test
     @testset "Supporting external code calling to_indices on StaticArray (issue #878)" begin
         a = @SArray randn(2, 3, 4)
         ind = to_indices(a, (CartesianIndex(1, 2), SA[2, 3]))
-        @test ind[1] === StaticArrays.StaticIndexing{Int64}(1)
+        @test ind[1] === StaticArrays.StaticIndexing(1)
         @test ind[3][2] === 3
         @test (@inferred Base.to_index(ind[1])) === 1
         @test (@inferred Base.to_index(ind[2])) === 2
