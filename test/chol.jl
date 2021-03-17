@@ -34,6 +34,16 @@ using LinearAlgebra: PosDefException
             m_a = randn(elty, 4,4)
             #non hermitian
             @test_throws PosDefException cholesky(SMatrix{4,4}(m_a))
+            nonpd = SVector{4}(@view(m_a[:,1])) |> x -> x * x'
+            if elty <: Real
+                @test_throws PosDefException cholesky(nonpd)
+                @test !issuccess(cholesky(nonpd,check=false))
+                @test_throws PosDefException cholesky(Hermitian(nonpd))
+                @test !issuccess(cholesky(Symmetric(nonpd),check=false))
+            else
+                @test issuccess(cholesky(Hermitian(nonpd),check=false))
+            end
+            
             m_a = m_a*m_a'
             m = SMatrix{4,4}(m_a)
             @test cholesky(m).L ≈ cholesky(m_a).L
