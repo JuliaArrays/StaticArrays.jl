@@ -3,24 +3,21 @@ non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
 @inline function LinearAlgebra.cholesky(A::StaticMatrix; check::Bool = true)
     ishermitian(A) || non_hermitian_error()
     _cholesky(Size(A), A, check)
-    # (check && (info ≠ 0)) && throw(LinearAlgebra.PosDefException(info))
-    # return Cholesky(C, 'U', info)
 end
 
 @inline function LinearAlgebra.cholesky(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix}; check::Bool = true)
-    C = _cholesky(Size(A), A.data, check)
-    # (check && (info ≠ 0)) && throw(LinearAlgebra.PosDefException(info))
-    # return Cholesky(C, 'U', 0)
+    _cholesky(Size(A), A.data, check)
 end
 @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (cholesky(A).U, 0)
 
-@inline function _check_chol(A, info, check)
+@inline function _chol_failure(A, info, check)
     if check
         throw(LinearAlgebra.PosDefException(info))
     else
-        return Cholesky(A, 'U', info)
+        Cholesky(A, 'U', info)
     end
 end
+# x < zero(x) is check used in `sqrt`, letting LLVM eliminate that check and remove error code.
 @inline _nonpdcheck(x::Real) = x < zero(x)
 @inline _nonpdcheck(x) = false
 
@@ -41,12 +38,7 @@ end
         end
         L_n_n = Symbol(:L_,n,:_,n)
         L_n_n_ltz = Symbol(:L_,n,:_,n,:_,:ltz)
-        # x < 0.0 is check used in `sqrt`, letting LLVM eliminate that check and remove error code.
-        # push!(q.args, :($L_n_n_ltz = )
-        push!(q.args, :($L_n_n = _nonpdcheck($L_n_n) ? (return _check_chol(A, $n, check)) : sqrt($L_n_n)))
-        # push!(q.args, :(info = ($L_n_n_ltz & (!failure)) ? $n : info))
-        # push!(q.args, :(failure |= $L_n_n_ltz))
-        # push!(q.args, :($L_n_n = $L_n_n_ltz ? float(typeof($L_n_n))(NaN) : sqrt($L_n_n)))
+        push!(q.args, :($L_n_n = _nonpdcheck($L_n_n) ? (return _chol_failure(A, $n, check)) : sqrt($L_n_n)))
         Linv_n_n = Symbol(:Linv_,n,:_,n)
         push!(q.args, :($Linv_n_n = inv($L_n_n)))
         for m ∈ n+1:M
