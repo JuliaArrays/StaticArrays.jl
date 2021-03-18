@@ -34,15 +34,6 @@ using LinearAlgebra: PosDefException
             m_a = randn(elty, 4,4)
             #non hermitian
             @test_throws PosDefException cholesky(SMatrix{4,4}(m_a))
-            nonpd = SVector{4}(@view(m_a[:,1])) |> x -> x * x'
-            if elty <: Real
-                @test_throws PosDefException cholesky(nonpd)
-                @test !issuccess(cholesky(nonpd,check=false))
-                @test_throws PosDefException cholesky(Hermitian(nonpd))
-                @test !issuccess(cholesky(Symmetric(nonpd),check=false))
-            else
-                @test issuccess(cholesky(Hermitian(nonpd),check=false))
-            end
             
             m_a = m_a*m_a'
             m = SMatrix{4,4}(m_a)
@@ -95,6 +86,21 @@ using LinearAlgebra: PosDefException
             v = SVector{3}(v_a)
             @test (@inferred c \ v) isa SVector{3,elty}
             @test c \ v ≈ c_a \ v_a
+        end
+
+        @testset "Check" begin
+            for i ∈ [1,3,7,25]
+                x = SVector(ntuple(elty, i))
+                nonpd = x * x'
+                if i > 1
+                    @test_throws PosDefException cholesky(nonpd)
+                    @test !issuccess(cholesky(nonpd,check=false))
+                    @test_throws PosDefException cholesky(Hermitian(nonpd))
+                    @test !issuccess(cholesky(Hermitian(nonpd),check=false))
+                else
+                    @test issuccess(cholesky(Hermitian(nonpd),check=false))
+                end
+            end
         end
     end
 

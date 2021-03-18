@@ -18,8 +18,8 @@ end
     end
 end
 # x < zero(x) is check used in `sqrt`, letting LLVM eliminate that check and remove error code.
-@inline _nonpdcheck(x::Real) = x < zero(x)
-@inline _nonpdcheck(x) = false
+@inline _nonpdcheck(x::Real) = x ≥ zero(x)
+@inline _nonpdcheck(x) = x == x
 
 @generated function _cholesky(::Size{S}, A::StaticMatrix{M,M}, check::Bool) where {S,M}
     @assert (M,M) == S
@@ -38,7 +38,8 @@ end
         end
         L_n_n = Symbol(:L_,n,:_,n)
         L_n_n_ltz = Symbol(:L_,n,:_,n,:_,:ltz)
-        push!(q.args, :($L_n_n = _nonpdcheck($L_n_n) ? (return _chol_failure(A, $n, check)) : sqrt($L_n_n)))
+        push!(q.args, :(_nonpdcheck($L_n_n) || return _chol_failure(A, $n, check)))
+        push!(q.args, :($L_n_n = Base.FastMath.sqrt_fast($L_n_n)))
         Linv_n_n = Symbol(:Linv_,n,:_,n)
         push!(q.args, :($Linv_n_n = inv($L_n_n)))
         for m ∈ n+1:M
