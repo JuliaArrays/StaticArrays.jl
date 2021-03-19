@@ -24,7 +24,7 @@ end
 @generated function _cholesky(::Size{S}, A::StaticMatrix{M,M}, check::Bool) where {S,M}
     @assert (M,M) == S
     M > 24 && return :(_cholesky_large(Size{$S}(), A, check))
-    q = Expr(:block, :(info = 0), :(failure = false))
+    q = Expr(:block)
     for n ∈ 1:M
         for m ∈ n:M
             L_m_n = Symbol(:L_,m,:_,n)
