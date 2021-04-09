@@ -135,10 +135,13 @@ SizedVector(a::StaticVector{N,T}) where {N,T} = SizedVector{N,T}(a)
 @inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
     return SizedArray{Tuple{S},T,1,1,TData}(a)
 end
-@inline function SizedVector(x::NTuple{S,T}) where {S,T}
+@inline function SizedVector(::Type{T}, x::NTuple{S,T}) where {S,T}
     return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
 end
-@inline function SizedVector{S}(x::NTuple{S,T}) where {S,T}
+@inline function SizedVector(x::Tuple{T,Vararg{T}}) where {T}
+    return SizedVector(T, x)
+end
+@inline function SizedVector{S}(x::Tuple{T,Vararg{T}}) where {S,T}
     return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
 end
 @inline function SizedVector{S,T}(x::NTuple{S}) where {S,T}
