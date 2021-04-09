@@ -4,6 +4,6 @@
 # `SVector{0}(())`, but throwing a `T not defined` error seems benign.
 # Working around this, e.g. with `SVector{N}(::Tuple{T,Vararg{T,Nm1}}) where {N,T,Nm1}`
 # and then asserting `N == Nm1+1` also seems reasonable (the compiler should eliminate the assert).
-const allowable_unbound_args = 4
+const allowable_unbound_args = 2
 
 @test length(detect_unbound_args(StaticArrays)) <= allowable_unbound_args
