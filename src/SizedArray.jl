@@ -80,7 +80,7 @@ end
 @inline function SizedArray{S,T}(x::Tuple) where {S,T}
     return SizedArray{S,T,tuple_length(S)}(x)
 end
-@inline function SizedArray{S}(x::NTuple{L,T}) where {S,T,L}
+@inline function SizedArray{S}(x::Tuple{T,Vararg{T,L}}) where {S,T,L}
     return SizedArray{S,T}(x)
 end
 
@@ -160,10 +160,10 @@ end
 ) where {S1,S2,T,M,TData<:AbstractArray{T,M}}
     return SizedArray{Tuple{S1,S2},T,2,M,TData}(a)
 end
-@inline function SizedMatrix{S1,S2}(x::NTuple{L,T}) where {S1,S2,T,L}
+@inline function SizedMatrix{S1,S2}(x::Tuple{T,Vararg{T,L}}) where {S1,S2,T,L}
     return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
 end
-@inline function SizedMatrix{S1,S2,T}(x::NTuple{L}) where {S1,S2,T,L}
+@inline function SizedMatrix{S1,S2,T}(x::Tuple{T,Vararg{T,L}}) where {S1,S2,T,L}
     return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
 end
 # disambiguation
