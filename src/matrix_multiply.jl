@@ -113,12 +113,7 @@ end
 @generated function _mul(::Size{sa}, ::Size{sb}, a::StaticVector{<: Any, Ta},
         b::Union{Transpose{Tb, <:StaticVector}, Adjoint{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
-    conjugate_b = b <: Adjoint
-    if conjugate_b
-        exprs = [:(a[$i] * adjoint(b[$j])) for i = 1:sa[1], j = 1:sb[2]]
-    else
-        exprs = [:(a[$i] * transpose(b[$j])) for i = 1:sa[1], j = 1:sb[2]]
-    end
+    exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
     
     return quote
         @_inline_meta
