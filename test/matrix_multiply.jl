@@ -136,6 +136,27 @@ mul_wrappers = [
         @test_throws DimensionMismatch cv_bad*rv
     end
 
+    @testset "vector-column vector" begin
+        for T1 in [Float64, ComplexF64, SMatrix{2,2,Float64,4}, SMatrix{2,2,ComplexF64,4}],
+            T2 in [Float64, ComplexF64, SMatrix{2,2,Float64,4}, SMatrix{2,2,ComplexF64,4}]
+
+            v1 = @SVector randn(T1, 4)
+            v2 = @SVector randn(T2, 4)
+            if T1 <: Number
+                v1a = Array(v1)
+            else
+                v1a = Array(Array.(v1))
+            end
+            if T2 <: Number
+                v2a = Array(v2)
+            else
+                v2a = Array(Array.(v2))
+            end
+            @test all(isapprox.(v1 * adjoint(v2), v1a * adjoint(v2a)))
+            @test all(isapprox.(v1 * transpose(v2), v1a * transpose(v2a)))
+        end
+    end
+
     @testset "Matrix-matrix" begin
         m = @SMatrix [1 2; 3 4]
         n = @SMatrix [2 3; 4 5]
