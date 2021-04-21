@@ -15,8 +15,8 @@ provided explicitly.
 
 A couple of helpful type aliases are also provided:
 
-* `SA_F64[1, 2]` creates a lenght-2 `SVector` of `Float64` elements
-* `SA_F32[1, 2]` creates a lenght-2 `SVector` of `Float32` elements
+* `SA_F64[1, 2]` creates a length-2 `SVector` of `Float64` elements
+* `SA_F32[1, 2]` creates a length-2 `SVector` of `Float32` elements
 """
 struct SA{T} ; end
 
