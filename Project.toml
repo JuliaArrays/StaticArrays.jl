@@ -6,9 +6,11 @@ version = "1.1.1"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
 
 [compat]
 julia = "1"
+ConstructionBase = "1.0, 1.1.0"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"

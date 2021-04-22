@@ -34,6 +34,7 @@ addtests("SUnitRange.jl")
 addtests("SizedArray.jl")
 addtests("SDiagonal.jl")
 addtests("SHermitianCompact.jl")
+addtests("constructorof.jl")
 
 addtests("ambiguities.jl")
 addtests("custom_types.jl")

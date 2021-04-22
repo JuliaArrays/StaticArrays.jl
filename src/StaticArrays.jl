@@ -10,6 +10,7 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
 
 import Statistics: mean
 
+using ConstructionBase
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
@@ -143,6 +144,7 @@ include("qr.jl")
 include("deque.jl")
 include("flatten.jl")
 include("io.jl")
+include("constructorof.jl")
 
 if Base.VERSION >= v"1.4.2"
     include("precompile.jl")
