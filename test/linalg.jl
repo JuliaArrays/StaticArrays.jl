@@ -19,7 +19,10 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
 
         @test @inferred(v1 * c) === @SVector [4,8,12,16]
         @test @inferred(v1 / c) === @SVector [1.0,2.0,3.0,4.0]
-        @test @inferred(c \ v1)::SVector ≈ @SVector [1.0,2.0,3.0,4.0]
+        @test @inferred(c \ v1)::SVector === @SVector [1.0,2.0,3.0,4.0]
+
+        @test @inferred(+v1) === @SVector [+2,+4,+6,+8]
+        @test @inferred(-v1) === @SVector [-2,-4,-6,-8]
 
         @test @inferred(v1 + v2) === @SVector [6, 7, 8, 9]
         @test @inferred(v1 - v2) === @SVector [-2, 1, 4, 7]
@@ -36,6 +39,11 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         #@test @inferred(v3 + v2) === @SVector [6, 7, 8, 9]
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
         #@test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
+
+        # #899 matrix-of-matrix
+        A = SMatrix{1,1}([1])
+        B = SMatrix{1,1}([A])
+        @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
     end
 
     @testset "Interaction with `UniformScaling`" begin
