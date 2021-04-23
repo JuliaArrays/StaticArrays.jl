@@ -40,10 +40,12 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
         #@test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
 
-        # #899 matrix-of-matrix
-        A = SMatrix{1,1}([1])
-        B = SMatrix{1,1}([A])
-        @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        if VERSION ≥ v"1.2"
+            # #899 matrix-of-matrix
+            A = SMatrix{1,1}([1])
+            B = SMatrix{1,1}([A])
+            @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        end
     end
 
     @testset "Interaction with `UniformScaling`" begin
