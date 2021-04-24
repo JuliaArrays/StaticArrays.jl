@@ -45,6 +45,9 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
             A = SMatrix{1,1}([1])
             B = SMatrix{1,1}([A])
             @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+            @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+            @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+            @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
         end
     end
 
