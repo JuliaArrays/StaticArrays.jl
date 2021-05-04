@@ -282,7 +282,24 @@ julia> svectorscopy(M, Val{2}())
  [5, 6]
 ```
 
-### Working with mutable and immutable arrays
+### Manipulating mutable and immutable arrays
+
+The functions `setindex`, `push`, `pop`, `pushfirst`, `popfirst`, `insert` and `deleteat`
+are provided for performing certain specific operations on static arrays, in
+analogy with the standard functions `setindex!`, `push!`, `pop!`, etc. (Note that
+if the size of the static array changes, the type of the output will differ from
+the input.)
+
+When building static arrays iteratively, it is usually efficient to build up an `MArray` first and then convert. The allocation will be elided by recent Julia compilers, resulting in very efficient code:
+```julia
+function standard_basis_vector(T, ::Val{I}, ::Val{N}) where {I,N}
+    v = zero(MVector{N,T})
+    v[I] = one(T)
+    SVector(v)
+end
+```
+
+### Performance tips specific to mutable or immutable arrays
 
 Generally, it is performant to rebind an *immutable* array, such as
 ```julia
@@ -316,23 +333,23 @@ end
 ```
 Keep in mind that Julia 0.5 does not fuse calls to `.+`, etc (or `.+=` etc),
 however the `.=` and `(+).()` syntaxes are fused into a single, efficient call
-to `broadcast!`. The simpler syntax `x .+= pos` is expected to be non-allocating
-(and therefore faster) in Julia 0.6.
+to `broadcast!`. The simpler syntax `x .+= pos` is non-allocating
+(and therefore faster) in Julia 0.6 and up.
 
-The functions `setindex`, `push`, `pop`, `pushfirst`, `popfirst`, `insert` and `deleteat`
-are provided for performing certain specific operations on static arrays, in
-analogy with the standard functions `setindex!`, `push!`, `pop!`, etc. (Note that
-if the size of the static array changes, the type of the output will differ from
-the input.)
-
-When building static arrays iteratively, it is usually efficient to build up an `MArray` first and then convert. The allocation will be elided by recent Julia compilers, resulting in very efficient code:
+Finally, for `SVector`, `SMatrix`, and `SArray` types, broadcasted operations can be slower than array operations. On Julia 1.6.1 for example, broadcasting is slower than array operations for scalar multiplication and addition of vectors:
 ```julia
-function standard_basis_vector(T, ::Val{I}, ::Val{N}) where {I,N}
-    v = zero(MVector{N,T})
-    v[I] = one(T)
-    SVector(v)
-end
+julia> using StaticArrays,BenchmarkTools
+julia> x = SVector{4}(ones(4))
+julia> y = SVector{4}(ones(4))
+julia> a,b = 1.0, 2.0
+julia> @btime @. $a*$x+$b*$y # broadcasted
+  1.712 ns (0 allocations: 0 bytes)
+julia> @btime $a*$x+$b*$y    # array operations
+  0.045 ns (0 allocations: 0 bytes)
 ```
+Note that broadcasting using immutable StaticArrays is still faster than using a mutable StaticArray, and the difference between broadcast and array operations is typically negligible when using other StaticArray types. 
+
+This is currently an open issue: for more details, see Github issues [682](https://github.com/JuliaArrays/StaticArrays.jl/issues/682) and [560](https://github.com/JuliaArrays/StaticArrays.jl/issues/560) for more detailed discussion (also issue [436](https://github.com/SciML/DifferentialEquations.jl/issues/436) in DifferentialEquations.jl). 
 
 ### SIMD optimizations
 
