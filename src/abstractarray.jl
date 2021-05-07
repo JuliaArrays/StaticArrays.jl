@@ -297,4 +297,8 @@ if VERSION >= v"1.6.0-DEV.1334"
 end
 
 # SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
-Base.view(S::SArray, I...) = getindex(S, I...)
+# The output may use the broadcasting machinery defined for StaticArrays (see issue #892)
+# wrap elements in Scalar to be consistent with 0D views
+_maybewrapscalar(S::SArray{<:Any,T}, r::T) where {T} = Scalar{T}(r)
+_maybewrapscalar(S, r) = r
+Base.view(S::SArray, I...) = _maybewrapscalar(S, getindex(S, I...))

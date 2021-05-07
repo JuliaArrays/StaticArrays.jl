@@ -140,8 +140,9 @@
 
         @test Base.dataids(m) === ()
 
-        @test (@view m[:, :]) == m
-        @test all(map(isequal, (@view m[1, 1]), m[1, 1]))
+        @test (@view m[:, :]) === m
+        @test (@view m[:, 1]) === @SArray [11, 12]
+        @test (@view m[1, 1])[] === m[1, 1]
     end
 
     @testset "promotion" begin
