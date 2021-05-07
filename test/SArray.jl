@@ -142,6 +142,9 @@
 
         @test (@view m[:, :]) === m
         @test (@view m[:, 1]) === @SArray [11, 12]
+        @test (@view m[SVector{2,Int}(1,2), 1]) === @SArray [11, 12]
+        @test (@view m[SMatrix{2,2,Int}(1,2,3,4)]) === m
+        @test (@view m[SOneTo(2), 1]) === @SArray [11, 12]
         @test (@view m[1, 1])[] === m[1, 1]
     end
 
