@@ -295,3 +295,6 @@ if VERSION >= v"1.6.0-DEV.1334"
         return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
     end
 end
+
+# SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
+Base.view(S::SArray, I...) = getindex(S, I...)
