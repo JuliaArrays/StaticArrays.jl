@@ -149,7 +149,7 @@
 
     @testset "show" begin
         io = IOBuffer()
-        S = SVector{2, Float64}(1.0, 2.0)
+        S = SVector{2, Float64}(1, 2)
         show(io, S)
         S_str = String(take!(io))
         @test S_str == "SVector{2, Float64}((1.0, 2.0))"

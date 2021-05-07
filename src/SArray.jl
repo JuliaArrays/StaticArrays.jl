@@ -286,6 +286,6 @@ end
 
 function Base.show(io::IO, S::SArray)
     print(io, typeof(S), "(")
-    show(io, S.data)
+    show(io, Tuple(S))
     print(io, ")")
 end
