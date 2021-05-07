@@ -153,13 +153,16 @@
         @test reverse(m) == reverse(reverse(collect(m), dims = 2), dims = 1)
 
         m1 = reshape(m, Val(1))
+
+        m1 = @inferred reshape(m, Val(1))
+
         @test m1 isa SVector
         @test all(((x, y),) -> isequal(x,y), zip(m, m1))
 
-        m2 = reshape(m, Val(2))
+        m2 = @inferred reshape(m, Val(2))
         @test m2 === m
 
-        m3 = reshape(m, Val(3))
+        m3 = @inferred reshape(m, Val(3))
         @test eltype(m3) == eltype(m)
         @test ndims(m3) == 3
         @test size(m3) == (size(m)..., 1)
