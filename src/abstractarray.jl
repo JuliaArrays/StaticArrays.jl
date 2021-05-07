@@ -301,4 +301,4 @@ end
 # wrap elements in Scalar to be consistent with 0D views
 _maybewrapscalar(S::SArray{<:Any,T}, r::T) where {T} = Scalar{T}(r)
 _maybewrapscalar(S, r) = r
-Base.view(S::SArray, I...) = _maybewrapscalar(S, getindex(S, I...))
+Base.view(S::SArray, I::Union{Colon, Integer, SOneTo}...) = _maybewrapscalar(S, getindex(S, I...))
