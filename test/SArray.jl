@@ -139,6 +139,9 @@
         @test_throws Exception m[1] = 1
 
         @test Base.dataids(m) === ()
+
+        @test (@view m[:, :]) == m
+        @test all(map(isequal, (@view m[1, 1]), m[1, 1]))
     end
 
     @testset "promotion" begin

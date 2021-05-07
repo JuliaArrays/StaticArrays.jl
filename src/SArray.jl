@@ -283,3 +283,6 @@ end
 function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) where {S,T,U,N,L}
     SArray{S,promote_type(T,U),N,L}
 end
+
+# SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
+Base.view(S::SArray, I...) = getindex(S, I...)
