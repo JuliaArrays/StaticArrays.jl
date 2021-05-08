@@ -158,6 +158,12 @@ end
     end
 end
 
+@inline function _mapreduce(f, op, D::Tuple, init, sz::Size{S}, a::StaticArray) where {S}
+    b = _mapreduce(f, op, first(D), init, sz, a)
+    return _mapreduce(f, op, Base.tail(D), init, Size(b), b)
+end
+_mapreduce(f, op, D::Tuple{}, init, sz::Size{S}, a::StaticArray) where {S} = a
+
 @generated function _mapfoldl(f, op, dims::Val{D}, init,
                                ::Size{S}, a::StaticArray) where {S,D}
     N = length(S)
