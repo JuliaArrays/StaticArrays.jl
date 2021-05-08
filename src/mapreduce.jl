@@ -213,8 +213,8 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
     _mapreduce(identity, op, dims, init, Size(a), a)
 
 @inline function _reduce(op, a::StaticArray, dims::Tuple, init = _InitialValue())
-    b = _reduce(op, a, first(dims), init)
-    return _reduce(op, b, Base.tail(dims))
+    b = _reduce(op, a, first(dims))
+    return _reduce(op, b, Base.tail(dims), init)
 end
 _reduce(op, a::StaticArray, dims::Tuple{}, ::_InitialValue) = a
 _reduce(op, a::StaticArray, dims::Tuple{}, init) = op.(init, a)
