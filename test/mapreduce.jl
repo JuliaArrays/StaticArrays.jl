@@ -114,9 +114,10 @@ using Statistics: mean
         @test sum(sa, dims=2) === RSArray2(sum(a, dims=2))
         @test sum(sa, dims=(2,)) === RSArray2(sum(a, dims=2))
         @test sum(sa, dims=Val(2)) === RSArray2(sum(a, dims=2))
+        @test sum(sa, dims=(1,3)) === RSArray13(sum(a, dims=(1,3)))
         @test sum(abs2, sa; dims=2) === RSArray2(sum(abs2, a, dims=2))
+        @test sum(abs2, sa; dims=(2,)) === RSArray2(sum(abs2, a, dims=2))
         @test sum(abs2, sa; dims=Val(2)) === RSArray2(sum(abs2, a, dims=2))
-        @test_broken sum(abs2, sa; dims=(1,3)) === RSArray13(sum(abs2, a, dims=(1,3)))
 
         @test prod(sa) === prod(a)
         @test prod(abs2, sa) === prod(abs2, a)
