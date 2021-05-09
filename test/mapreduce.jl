@@ -41,7 +41,7 @@ using Statistics: mean
         @test reduce(max, sa; dims=Val(1), init=-1.) === SMatrix{1,J}(reduce(max, a, dims=1, init=-1.))
         @test reduce(max, sa; dims=1, init=-1.) === SMatrix{1,J}(reduce(max, a, dims=1, init=-1.))
         @test reduce(max, sa; dims=2, init=-1.) === SMatrix{I,1}(reduce(max, a, dims=2, init=-1.))
-        @test reduce(*, sa; dims=(1,2), init=2.0) === SMatrix{1,1}(reduce(*, a, dims=(1,2), init=2.0))
+        @test reduce(*, sa; dims=(1,2), init=2.0) ≈ SMatrix{1,1}(reduce(*, a, dims=(1,2), init=2.0))
         @test reduce(*, sa; dims=(), init=(1.0+im)) === SMatrix{I,J}(reduce(*, a, dims=(), init=(1.0+im)))
         @test mapreduce(-, +, sv1) === mapreduce(-, +, v1)
         @test mapreduce(-, +, sv1; init=0) === mapreduce(-, +, v1, init=0)
