@@ -91,6 +91,8 @@
         @test size(typeof(m), 2) === 2
 
         @test length(m) === 4
+
+        @test reverse(m) == reverse(collect(m))
     end
 
     @testset "setindex!" begin
