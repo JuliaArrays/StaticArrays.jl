@@ -234,6 +234,11 @@
         @test isa(x5, SizedArray{Tuple{24},Float64,1,1,<:SubArray{Float64,1}})
         @test x5 == view(Array(x5), :)
     end
+
+    @testset "reverse" begin
+        x = SizedArray{Tuple{4,3,2}}(rand(4, 3, 2))
+        @test reverse(x) == reverse(reverse(reverse(collect(x), dims = 3), dims = 2), dims = 1)
+    end
 end
 
 struct OVector <: AbstractVector{Int} end

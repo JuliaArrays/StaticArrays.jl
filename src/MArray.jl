@@ -280,5 +280,3 @@ function Base.view(
 end
 
 Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(T)
-
-Base.reverse(S::MArray) = typeof(S)(reverse(Tuple(S)))

@@ -283,5 +283,3 @@ end
 function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) where {S,T,U,N,L}
     SArray{S,promote_type(T,U),N,L}
 end
-
-Base.reverse(S::SArray) = typeof(S)(reverse(Tuple(S)))
