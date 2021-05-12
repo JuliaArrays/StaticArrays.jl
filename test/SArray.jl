@@ -139,6 +139,16 @@
         @test_throws Exception m[1] = 1
 
         @test Base.dataids(m) === ()
+
+        @test (@inferred view(m, :, :)) === m
+        @test (@inferred view(m, :, 1)) === @SArray [11, 12]
+        @test (@inferred view(m, SVector{2,Int}(1,2), 1)) === @SArray [11, 12]
+        @test (@inferred view(m, SMatrix{2,2,Int}(1,2,3,4))) === m
+        @test (@inferred view(m, SOneTo(2), 1)) === @SArray [11, 12]
+        @test (@inferred view(m, 1, 1)) === Scalar(m[1, 1])
+        @test (@inferred view(m, CartesianIndex(1, 1))) === Scalar(m[1, 1])
+        @test (@inferred view(m, CartesianIndex(1, 1, 1))) === Scalar(m[1, 1])
+        @test (@inferred view(m, 1, 1, CartesianIndex(1))) === Scalar(m[1, 1])
     end
 
     @testset "promotion" begin

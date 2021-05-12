@@ -295,3 +295,13 @@ if VERSION >= v"1.6.0-DEV.1334"
         return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
     end
 end
+
+# SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
+# The output may use the broadcasting machinery defined for StaticArrays (see issue #892)
+# wrap elements in Scalar to be consistent with 0D views
+_maybewrapscalar(S::SArray{<:Any,T}, r::T) where {T} = Scalar{T}(r)
+_maybewrapscalar(S, r) = r
+function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tuple, Int}, CartesianIndex}...)
+    V = getindex(S, I...)
+    _maybewrapscalar(S, V)
+end
