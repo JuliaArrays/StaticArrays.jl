@@ -242,8 +242,8 @@ end
     end
 
     @testset "SDiagonal" begin
-        for DS in Any[Diagonal(SVector{2}(1:2)), Diagonal(MVector{2}(1:2))],
-                S in Any[SVector{2}(1:2), MVector{2}(1:2)]
+        for DS in Any[Diagonal(SVector{2}(1:2)), Diagonal(MVector{2}(1:2)), Diagonal(SizedArray{Tuple{2}}(1:2))],
+                S in Any[SVector{2}(1:2), MVector{2}(1:2), SizedArray{Tuple{2}}(1:2)]
             @test DS .* S isa StaticArray
             @test DS .* S == collect(DS) .* collect(S)
             @test DS .* collect(S) == collect(DS) .* collect(S)
