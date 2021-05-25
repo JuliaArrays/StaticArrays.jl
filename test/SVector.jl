@@ -90,6 +90,8 @@
         @test (@inferred view(v, 1, CartesianIndex(1))) === Scalar(v[1])
         @test (@inferred view(v, SVector{2,Int}(1,2))) === @SArray [11, 12]
         @test (@inferred view(v, SOneTo(2))) === @SArray [11, 12]
+
+        @test reverse(v) == reverse(collect(v), dims = 1)
     end
 
     @testset "CartesianIndex" begin

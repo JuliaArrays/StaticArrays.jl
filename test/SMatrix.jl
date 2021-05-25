@@ -108,5 +108,7 @@
         @test length(m) === 4
 
         @test_throws Exception m[1] = 1
+
+        @test reverse(m) == reverse(reverse(collect(m), dims = 2), dims = 1)
     end
 end

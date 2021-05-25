@@ -209,10 +209,11 @@ reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
 @inline copy(a::SizedArray) = typeof(a)(copy(a.data))
 
-@inline reverse(v::StaticVector) = typeof(v)(_reverse(v))
+@inline reverse(v::StaticArray) = typeof(v)(_reverse(v))
 
-@generated function _reverse(v::StaticVector{N,T}) where {N,T}
-    return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
+@generated function _reverse(v::StaticArray{N}) where {N}
+    L = tuple_prod(N)
+    return Expr(:tuple, (:(v[$i]) for i = L:(-1):1)...)
 end
 
 @generated function Base.rot180(A::SMatrix{M,N}) where {M,N}

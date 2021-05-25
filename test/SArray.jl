@@ -149,6 +149,8 @@
         @test (@inferred view(m, CartesianIndex(1, 1))) === Scalar(m[1, 1])
         @test (@inferred view(m, CartesianIndex(1, 1, 1))) === Scalar(m[1, 1])
         @test (@inferred view(m, 1, 1, CartesianIndex(1))) === Scalar(m[1, 1])
+
+        @test reverse(m) == reverse(reverse(collect(m), dims = 2), dims = 1)
     end
 
     @testset "promotion" begin
