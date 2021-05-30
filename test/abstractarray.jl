@@ -134,6 +134,10 @@ using StaticArrays, Test, LinearAlgebra
         msr = reshape(ms, SOneTo(4))
         msr[2] = 10
         @test ms == SA[1 2; 10 4]
+
+        s = SA[1,2];
+        s2 = @inferred reshape(s, axes(s,1), axes(s,2))
+        @test s2 isa StaticArray
     end
 
     @testset "copy" begin
@@ -200,7 +204,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
         @test convert(AbstractArray{Float64}, diag) == diag
         # The following cases currently convert the SMatrix into an MMatrix, because
-        # the constructor in Base invokes `similar`, rather than `convert`, on the static 
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static
         # array. This was fixed in https://github.com/JuliaLang/julia/pull/40831; so should
         # work from Julia v1.8.0-DEV.55
         trans = Transpose(SVector(1,2))
@@ -297,7 +301,7 @@ end
         @test Base.rest(x) == x
         a, b... = x
         @test b == SA[2, 3]
-    
+
         x = SA[1 2; 3 4]
         @test Base.rest(x) == vec(x)
         a, b... = x
@@ -306,14 +310,14 @@ end
         a, b... = SA[1]
         @test b == []
         @test b isa SVector{0}
-    
+
         for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
             x = Vec(1, 2, 3)
             @test Base.rest(x) == x
             @test pointer(Base.rest(x)) != pointer(x)
             a, b... = x
             @test b == Vec(2, 3)
-        
+
             x = Mat{2,2}(1, 2, 3, 4)
             @test Base.rest(x) == vec(x)
             @test pointer(Base.rest(x)) != pointer(x)
