@@ -204,6 +204,9 @@ end
 
 reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 
+Base.rdims(out::Val{N}, inds::Tuple{SOneTo, Vararg{SOneTo}}) where {N} = Base.rdims(ntuple(i -> SOneTo(1), Val(N)), inds)
+Base.rdims(out::Tuple{Any}, inds::Tuple{SOneTo, Vararg{SOneTo}}) = (SOneTo(Base.rdims_trailing(inds...)),)
+
 @inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
