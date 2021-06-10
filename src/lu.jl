@@ -43,7 +43,7 @@ function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
     LU(LowerTriangular(L), UpperTriangular(U), p)
 end
 
-if VERSION >= v"1.7-DEV"
+@static if VERSION >= v"1.7-DEV"
     # disambiguation
     function lu(A::StaticMatrix{N,N}, pivot::Val{true}) where {N}
         Base.@invoke lu(A::StaticMatrix{N,N} where N, pivot::Union{Val{false},Val{true}})
