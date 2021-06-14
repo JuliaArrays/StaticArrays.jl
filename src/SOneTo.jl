@@ -34,6 +34,12 @@ end
     @boundscheck checkbounds(s, s2)
     return s2
 end
+if isdefined(Base, :IdentityUnitRange)
+    @propagate_inbounds function Base.getindex(s::SOneTo, s2::Base.IdentityUnitRange{<:AbstractUnitRange{<:Integer}})
+        @boundscheck checkbounds(s, s2)
+        return s2
+    end
+end
 
 Base.first(::SOneTo) = 1
 Base.last(::SOneTo{n}) where {n} = n::Int

@@ -104,6 +104,17 @@ using StaticArrays, Test, LinearAlgebra
         @test r == m[:, 2:3] * v[1:2] == Array(m)[:, 2:3] * Array(v)[1:2]
     end
 
+    if isdefined(Base, :IdentityUnitRange)
+        @testset "indexing SOneTo with IdentityUnitRange" begin
+            s = SOneTo(4)
+            for r in Any[Base.IdentityUnitRange(2:3), Base.IdentityUnitRange(SOneTo(2))]
+                si = @inferred s[r]
+                @test si == r
+                @test axes(si,1) == axes(r,1)
+            end
+            @test_throws BoundsError s[Base.IdentityUnitRange(1:5)]
+        end
+    end
 
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
@@ -280,7 +291,7 @@ end
         @test Base.rest(x) == x
         a, b... = x
         @test b == SA[2, 3]
-    
+
         x = SA[1 2; 3 4]
         @test Base.rest(x) == vec(x)
         a, b... = x
@@ -289,14 +300,14 @@ end
         a, b... = SA[1]
         @test b == []
         @test b isa SVector{0}
-    
+
         for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
             x = Vec(1, 2, 3)
             @test Base.rest(x) == x
             @test pointer(Base.rest(x)) != pointer(x)
             a, b... = x
             @test b == Vec(2, 3)
-        
+
             x = Mat{2,2}(1, 2, 3, 4)
             @test Base.rest(x) == vec(x)
             @test pointer(Base.rest(x)) != pointer(x)
