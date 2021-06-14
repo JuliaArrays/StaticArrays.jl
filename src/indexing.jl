@@ -230,12 +230,14 @@ end
 # getindex
 
 @propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Tuple, Int}, SOneTo, Colon}...)
-    _getindex(a, index_sizes(Size(a), inds...), inds)
+    ar = reshape(a, Val(length(inds)))
+    _getindex(ar, index_sizes(Size(ar), inds...), inds)
 end
 
 if isdefined(Base, :IdentityUnitRange)
     @propagate_inbounds function getindex(a::StaticArray, inds::Union{Int, StaticArray{<:Tuple, Int}, SOneTo, Colon, Base.IdentityUnitRange{<:SOneTo}}...)
-        _getindex(a, index_sizes(Size(a), inds...), inds)
+        ar = reshape(a, Val(length(inds)))
+        _getindex(ar, index_sizes(Size(ar), inds...), inds)
     end
 end
 

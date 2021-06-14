@@ -137,6 +137,12 @@ using StaticArrays, Test
         @test v[2,1] == 2
         @test_throws BoundsError v[1,2]
         @test_throws BoundsError v[3,1]
+
+        # SOneTo
+        @test (@inferred v[axes(v,1), SOneTo(1)]) === SMatrix{2,1}(v)
+        @test v[axes(v,1), SOneTo(1)] == v[Base.OneTo(length(v)), Base.OneTo(1)]
+        @test (@inferred v[axes(v,1), 1, SOneTo(1)]) === SMatrix{2,1}(v)
+        @test v[axes(v,1), 1, SOneTo(1)] == v[Base.OneTo(length(v)), 1, Base.OneTo(1)]
     end
 
     @testset "2D getindex() on SMatrix" begin
@@ -247,6 +253,29 @@ using StaticArrays, Test
         @test (@inferred getindex(a, 1, 1, SVector(1,2), 1)) == [24,32]
         @test (@inferred getindex(a, 1, SVector(1,2), 1, 1)) == [24,36]
         @test (@inferred getindex(a, SVector(1,2), 1, 1, 1)) == [24,48]
+    end
+
+    @testset "indexing with reshape for SMatrix/MMatrix" begin
+        sm = @SMatrix [1 3; 2 4]
+        mm = @MMatrix [1 3; 2 4]
+        for m in Any[sm, mm, view(sm, :, :), view(mm, :, :)]
+            sa = @inferred m[:, SOneTo(1), 1, SOneTo(1)]
+            a =  m[:, Base.OneTo(1), 1, Base.OneTo(1)]
+            @test sa == a
+            @test sa == SArray{Tuple{2,1,1}}(a)
+            if m isa SArray
+                @test sa === SArray{Tuple{2,1,1}}(a)
+            end
+
+            if isdefined(Base, :IdentityUnitRange)
+                sa = @inferred m[:, Base.IdentityUnitRange(SOneTo(1)), 1, SOneTo(1)]
+                @test sa == a
+                @test sa == SArray{Tuple{2,1,1}}(a)
+                if m isa SArray
+                    @test sa === SArray{Tuple{2,1,1}}(a)
+                end
+            end
+        end
     end
 
     @testset "Indexing with empty vectors" begin
