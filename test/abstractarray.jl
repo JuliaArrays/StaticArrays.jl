@@ -210,6 +210,39 @@ using StaticArrays, Test, LinearAlgebra
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
         @test_broken @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
     end
+
+    @testset "views" begin
+        for a in Any[SVector{2}(1:2), MVector{2}(1:2)]
+            v = view(a, :)
+            @test axes(v) === axes(a)
+            v2 = view(a, SOneTo(1))
+            @test axes(v2, 1) === SOneTo(1)
+            if isdefined(Base, :IdentityUnitRange)
+                v2 = view(a, Base.IdentityUnitRange(SOneTo(1)))
+                @test axes(v2, 1) === SOneTo(1)
+            end
+        end
+        for a in Any[SMatrix{2,2}(1:4), MMatrix{2,2}(1:4)]
+            v = view(a, :, :)
+            @test axes(v) === axes(a)
+            v2 = view(a, SOneTo(1), SOneTo(1))
+            @test axes(v2) === (SOneTo(1), SOneTo(1))
+            if isdefined(Base, :IdentityUnitRange)
+                v2 = view(a, Base.IdentityUnitRange(SOneTo(1)), Base.IdentityUnitRange(SOneTo(1)))
+                @test axes(v2) === (SOneTo(1), SOneTo(1))
+            end
+        end
+    end
+
+    @testset "SOneTo" begin
+        if isdefined(Base, :IdentityUnitRange)
+            s = Base.IdentityUnitRange(SOneTo(3))
+            @test axes(s) == (SOneTo(3),)
+            @test axes(s,1) == SOneTo(3)
+            @test Base.axes1(s) == axes(s,1)
+            @test Base.unsafe_indices(s) == axes(s)
+        end
+    end
 end
 
 @testset "vcat() and hcat()" begin

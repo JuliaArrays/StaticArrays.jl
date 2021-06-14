@@ -39,6 +39,10 @@ if isdefined(Base, :IdentityUnitRange)
         @boundscheck checkbounds(s, s2)
         return s2
     end
+    Base.axes(::Base.IdentityUnitRange{A}) where {A <: SOneTo} = (A(),)
+    Base.axes(r::Base.IdentityUnitRange{<:SOneTo}, d::Int) = d <= 1 ? axes(r)[d] : SOneTo(1)
+    Base.axes1(r::Base.IdentityUnitRange{A}) where {A <: SOneTo} = A()
+    Base.unsafe_indices(::Base.IdentityUnitRange{A}) where {A <: SOneTo} = (A(),)
 end
 
 Base.first(::SOneTo) = 1
