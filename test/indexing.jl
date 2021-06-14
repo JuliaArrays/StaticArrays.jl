@@ -195,7 +195,7 @@ using StaticArrays, Test
         if isdefined(Base, :IdentityUnitRange)
             @test begin
                 mm = MMatrix{2,2,Int}(undef);
-                mm[map(Base.IdentityUnitRange, axes(mm))...] = sv
+                mm[map(Base.IdentityUnitRange, axes(mm))...] = sm
                 (@inferred mm[map(Base.IdentityUnitRange, axes(mm))...]) == mm
                 (@inferred mm[Base.IdentityUnitRange(axes(mm,1)), :]) == mm
                 (@inferred mm[Base.IdentityUnitRange(axes(mm,1)), axes(mm,2)]) == mm
