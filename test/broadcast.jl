@@ -256,6 +256,18 @@ end
             @test DS .* DS2 isa StaticArray
             @test DS .* DS2 == collect(DS) .* collect(DS2)
             @test DS .* collect(DS2) == collect(DS) .* collect(DS2)
+
+            # inplace broadcasting for mutable diagonal types
+            DS2 = Diagonal(MVector{2}(diag(DS)))
+            DS2 .*= S
+            @test DS2 == DS .* S
+            DS2 .= DS
+            @test DS2 == DS
+            DS2 .+= DS
+            @test DS2 == DS .+ DS
+            DS2 .= DS
+            DS2 .*= DS
+            @test DS2 == DS .* DS
         end
     end
 end
