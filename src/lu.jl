@@ -43,6 +43,13 @@ function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
     LU(LowerTriangular(L), UpperTriangular(U), p)
 end
 
+@static if VERSION >= v"1.7-DEV"
+    # disambiguation
+    function lu(A::StaticMatrix{N,N}, pivot::Val{true}) where {N}
+        Base.@invoke lu(A::StaticMatrix{N,N} where N, pivot::Union{Val{false},Val{true}})
+    end
+end
+
 # location of the first zero on the diagonal, 0 when not found
 function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
     if @generated
