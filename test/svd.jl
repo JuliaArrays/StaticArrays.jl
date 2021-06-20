@@ -76,7 +76,7 @@ using StaticArrays, Test, LinearAlgebra
             # Note the placement of @inferred brackets is important.
             #
             # This only seems to work on >= v"1.5" due to unknown compiler improvements.
-            svd_full_false(A) = svd(m_sing2, full=false)
+            svd_full_false(A) = svd(A, full=false)
             @test @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
         end
 
