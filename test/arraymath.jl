@@ -86,9 +86,27 @@ import StaticArrays.arithmetic_closure
         @test (t-t) isa T
         @test (t*t) isa T
         @test (t/t) isa T
+    end
 
-        if isbitstype(T0)
-            @test @allocated(arithmetic_closure(T0)) == 0
-        end
+    @testset "arithmetic_closure allocation" begin
+        # a little icky, but `@allocated` seems to be too fragile to use in a loop with
+        # types assigned in variables (see #924); so we write out a test explicitly for
+        # every `isbitstype` type of interest
+        @test (@allocated arithmetic_closure(UInt128))        == 0
+        @test (@allocated arithmetic_closure(UInt16))         == 0
+        @test (@allocated arithmetic_closure(UInt32))         == 0
+        @test (@allocated arithmetic_closure(UInt64))         == 0
+        @test (@allocated arithmetic_closure(UInt8))          == 0
+        @test (@allocated arithmetic_closure(Int128))         == 0
+        @test (@allocated arithmetic_closure(Int16))          == 0
+        @test (@allocated arithmetic_closure(Int32))          == 0
+        @test (@allocated arithmetic_closure(Int64))          == 0
+        @test (@allocated arithmetic_closure(Int8))           == 0
+        @test (@allocated arithmetic_closure(Float16))        == 0
+        @test (@allocated arithmetic_closure(Float32))        == 0
+        @test (@allocated arithmetic_closure(Float64))        == 0
+        @test (@allocated arithmetic_closure(Bool))           == 0
+        @test (@allocated arithmetic_closure(Complex{Int64})) == 0
+        @test (@allocated arithmetic_closure(ComplexF64))     == 0
     end
 end

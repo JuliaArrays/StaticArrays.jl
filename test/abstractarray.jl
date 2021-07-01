@@ -185,19 +185,21 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
         @test convert(AbstractArray{Float64}, diag) == diag
         # The following cases currently convert the SMatrix into an MMatrix, because
-        # the constructor in Base invokes `similar`, rather than `convert`, on the static array
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static 
+        # array. This was fixed in https://github.com/JuliaLang/julia/pull/40831; so should
+        # work from Julia v1.8.0-DEV.55
         trans = Transpose(SVector(1,2))
-        @test_broken @inferred(convert(AbstractArray{Float64}, trans)) isa Transpose{Float64,SVector{2,Float64}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, trans)) isa Transpose{Float64,SVector{2,Float64}}
         adj = Adjoint(SVector(1,2))
-        @test_broken @inferred(convert(AbstractArray{Float64}, adj)) isa Adjoint{Float64,SVector{2,Float64}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, adj)) isa Adjoint{Float64,SVector{2,Float64}}
         uptri = UpperTriangular(SA[1 2; 0 3])
-        @test_broken @inferred(convert(AbstractArray{Float64}, uptri)) isa UpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, uptri)) isa UpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         lotri = LowerTriangular(SA[1 0; 2 3])
-        @test_broken @inferred(convert(AbstractArray{Float64}, lotri)) isa LowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, lotri)) isa LowerTriangular{Float64,SMatrix{2,2,Float64,4}}
         unituptri = UnitUpperTriangular(SA[1 2; 0 1])
-        @test_broken @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
-        @test_broken @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
     end
 end
 

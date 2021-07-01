@@ -71,13 +71,18 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m_sing2'; full=Val(true)) \ v2 ≈ svd(Matrix(m_sing2'); full=true) \ Vector(v2)
         @testinf svd(m_sing2; full=Val(true)) \ m23' ≈ svd(Matrix(m_sing2); full=true) \ Matrix(m23')
         @testinf svd(m_sing2'; full=Val(true)) \ m23 ≈ svd(Matrix(m_sing2'); full=true) \ Matrix(m23)
-        if VERSION >= v"1.5-DEV"
+        if VERSION >= v"1.5"
             # Test that svd of rectangular matrix is inferred.
             # Note the placement of @inferred brackets is important.
             #
-            # This only seems to work on >= v"1.5" due to unknown compiler improvements.
-            svd_full_false(A) = svd(m_sing2, full=false)
-            @test @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
+            # This only seems to work on v"1.5" due to unknown compiler improvements; seems
+            # to have stopped working again on v"1.6" and later?
+            svd_full_false(A) = svd(A, full=false)
+            if VERSION < v"1.6"
+                @test        @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
+            else
+                @test_broken @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
+            end
         end
 
         @testinf svd(mc_sing) \ v ≈ svd(Matrix(mc_sing)) \ Vector(v)

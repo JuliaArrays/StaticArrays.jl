@@ -92,6 +92,23 @@ macro inferred_maybe_allow(allow, ex)
     end
 end
 
+"""
+    @test_was_once_broken good_version ex
+
+Expands to `@test ex` if `VERSION ≥ good_version` and to `@test_broken ex` if 
+`VERSION ≥ good_version`. Useful for tests that are broken on earlier versions of Julia
+that are fixed on later versions.
+"""
+macro test_was_once_broken(good_version, ex)
+    esc(quote
+        if VERSION < $good_version
+            @test_broken $ex
+        else
+            @test $ex
+        end
+    end)
+end
+
 @testset "test utils" begin
     @testset "@testinf" begin
         @testinf [1,2] == [1,2]
