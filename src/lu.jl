@@ -45,8 +45,11 @@ end
 
 @static if VERSION >= v"1.7-DEV"
     # disambiguation
-    function lu(A::StaticMatrix{N,N}, pivot::Val{true}) where {N}
-        Base.@invoke lu(A::StaticMatrix{N,N} where N, pivot::Union{Val{false},Val{true}})
+    for p in (:true, :false)
+        @eval function lu(A::StaticMatrix{N,N}, pivot::Val{$p}; check = true) where {N}
+            Base.@invoke lu(A::StaticMatrix{N,N} where N, 
+                            pivot::Union{Val{false},Val{true}}; check)
+        end
     end
 end
 

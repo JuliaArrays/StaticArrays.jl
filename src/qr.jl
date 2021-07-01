@@ -47,6 +47,15 @@ true
     end
 end
 
+@static if VERSION >= v"1.7-DEV"
+    # disambiguation
+    for p in (:true, :false)
+        @eval function qr(A::StaticMatrix, pivot::Val{$p})
+            Base.@invoke qr(A::StaticMatrix, pivot::Union{Val{false},Val{true}})
+        end
+    end
+end
+
 function identity_perm(R::StaticMatrix{N,M,T}) where {N,M,T}
     return similar_type(R, Int, Size((M,)))(ntuple(x -> x, Val{M}()))
 end

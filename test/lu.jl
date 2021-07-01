@@ -65,3 +65,13 @@ end
     @test_throws SingularException lu(A)
     @test !issuccess(lu(A; check = false))
 end
+
+@testset "LU method ambiguity" begin
+    # Issue #920; just test that methods do not throw an ambiguity error when called
+    A = @SMatrix [1.0 2.0; 3.0 4.0]
+    @test isa(lu(A),              StaticArrays.LU)
+    @test isa(lu(A, Val(true)),   StaticArrays.LU)
+    @test isa(lu(A, Val(false)),  StaticArrays.LU)
+    @test isa(lu(A; check=false), StaticArrays.LU)
+    @test isa(lu(A; check=true),  StaticArrays.LU)
+end
