@@ -11,10 +11,26 @@ Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:p))
 Base.iterate(S::QR, ::Val{:p}) = (S.p, Val(:done))
 Base.iterate(S::QR, ::Val{:done}) = nothing
 
+for pv in (:true, :false)
+    @eval begin
+        @inline function qr(A::StaticMatrix, pivot::Val{$pv})
+            QRp = _qr(Size(A), A, pivot)
+            if length(QRp) === 2
+                # create an identity permutation since that is cheap,
+                # and much safer since, in the case of isbits types, we can't
+                # safely leave the field undefined.
+                p = identity_perm(QRp[2])
+                return QR(QRp[1], QRp[2], p)
+            else # length(QRp) === 3
+                return QR(QRp[1], QRp[2], QRp[3])
+            end 
+        end
+    end
+end
 """
-    qr(A::StaticMatrix, pivot=Val(false))
+    qr(A::StaticMatrix, pivot::Union{Val{true}, Val{false}} = Val(false))
 
-Compute the QR factorization of `A`. The factors can be obtain by iteration:
+Compute the QR factorization of `A`. The factors can be obtained by iteration:
 
 ```julia
 julia> A = @SMatrix rand(3,4);
@@ -34,18 +50,7 @@ julia> F.Q * F.R ≈ A
 true
 ```
 """
-@inline function qr(A::StaticMatrix, pivot::Union{Val{false}, Val{true}} = Val(false))
-    QRp = _qr(Size(A), A, pivot)
-    if length(QRp) === 2
-        # create an identity permutation since that is cheap,
-        # and much safer since, in the case of isbits types, we can't
-        # safely leave the field undefined.
-        p = identity_perm(QRp[2])
-        return QR(QRp[1], QRp[2], p)
-    else # length(QRp) === 3
-        return QR(QRp[1], QRp[2], QRp[3])
-    end
-end
+qr(A::StaticMatrix) = qr(A, Val(false))
 
 function identity_perm(R::StaticMatrix{N,M,T}) where {N,M,T}
     return similar_type(R, Int, Size((M,)))(ntuple(x -> x, Val{M}()))
