@@ -270,4 +270,15 @@ end
             @test DS2 == DS .* DS
         end
     end
+
+    @testset "broadcast! with reshaping" begin
+        m = @MMatrix [1 2; 3 4]
+        m[1:2] .= 10
+        @test m == SA[10 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        ms[1:2] .= 10
+        @test ms == SA[10 2; 10 4]
+    end
+
 end

@@ -119,6 +119,17 @@ using StaticArrays, Test, LinearAlgebra
         # IndexLinear
         @test reshape(view(ones(4, 4), 1, 1:4), Size(4, 1)) == SMatrix{4,1}(ones(4, 1))
         @test_throws DimensionMismatch reshape(view(ones(4,4), 1:4, 1:2), Size(5, 2))
+
+        # mutation
+        m = @MMatrix [1 2; 3 4]
+        mr = reshape(m, SOneTo(4))
+        mr[2] = 10
+        @test m == SA[1 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        msr = reshape(ms, SOneTo(4))
+        msr[2] = 10
+        @test ms == SA[1 2; 10 4]
     end
 
     @testset "copy" begin
