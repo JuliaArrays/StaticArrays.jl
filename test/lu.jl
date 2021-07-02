@@ -68,10 +68,11 @@ end
 
 @testset "LU method ambiguity" begin
     # Issue #920; just test that methods do not throw an ambiguity error when called
-    A = @SMatrix [1.0 2.0; 3.0 4.0]
-    @test isa(lu(A),              StaticArrays.LU)
-    @test isa(lu(A, Val(true)),   StaticArrays.LU)
-    @test isa(lu(A, Val(false)),  StaticArrays.LU)
-    @test isa(lu(A; check=false), StaticArrays.LU)
-    @test isa(lu(A; check=true),  StaticArrays.LU)
+    for A in ((@SMatrix [1.0 2.0; 3.0 4.0]), (@SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]))
+        @test isa(lu(A),              StaticArrays.LU)
+        @test isa(lu(A, Val(true)),   StaticArrays.LU)
+        @test isa(lu(A, Val(false)),  StaticArrays.LU)
+        @test isa(lu(A; check=false), StaticArrays.LU)
+        @test isa(lu(A; check=true),  StaticArrays.LU)
+    end
 end

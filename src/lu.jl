@@ -30,28 +30,21 @@ function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
 end
 
 # LU decomposition
-function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true); check = true)
-    L, U, p = _lu(A, pivot, check)
-    LU(L, U, p)
-end
+for pv in (:true, :false)
+    # ... define each `pivot::Val{true/false}` method individually to avoid ambiguties
+    @eval function lu(A::StaticMatrix, pivot::Val{$pv}; check = true)
+        L, U, p = _lu(A, pivot, check)
+        LU(L, U, p)
+    end
 
-# For the square version, return explicit lower and upper triangular matrices.
-# We would do this for the rectangular case too, but Base doesn't support that.
-function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
-            check = true) where {N}
-    L, U, p = _lu(A, pivot, check)
-    LU(LowerTriangular(L), UpperTriangular(U), p)
-end
-
-@static if VERSION >= v"1.7-DEV"
-    # disambiguation
-    for p in (:true, :false)
-        @eval function lu(A::StaticMatrix{N,N}, pivot::Val{$p}; check = true) where {N}
-            Base.@invoke lu(A::StaticMatrix{N,N} where N, 
-                            pivot::Union{Val{false},Val{true}}; check)
-        end
+    # For the square version, return explicit lower and upper triangular matrices.
+    # We would do this for the rectangular case too, but Base doesn't support that.
+    @eval function lu(A::StaticMatrix{N,N}, pivot::Val{$pv}; check = true) where {N}
+        L, U, p = _lu(A, pivot, check)
+        LU(LowerTriangular(L), UpperTriangular(U), p)
     end
 end
+lu(A::StaticMatrix; check = true) = lu(A, Val(true); check=check)
 
 # location of the first zero on the diagonal, 0 when not found
 function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
