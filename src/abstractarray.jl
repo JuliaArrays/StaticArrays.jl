@@ -183,26 +183,20 @@ homogenize_shape(shape::Tuple{Vararg{SOneTo}}) = Size(map(last, shape))
 homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 
 
-@inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
-@inline reshape(a::AbstractArray, s::Size) = _reshape(a, IndexStyle(a), s)
-@inline reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
-@generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
-    if indexstyle == IndexLinear
-        exprs = [:(a[$i]) for i = 1:prod(S)]
-    else
-        exprs = [:(a[$(inds)]) for inds ∈ CartesianIndices(S)]
-    end
-
-    return quote
-        @_inline_meta
-        if length(a) != prod(s)
-            throw(DimensionMismatch("Tried to resize dynamic object of size $(size(a)) to $s"))
-        end
-        return similar_type(a, s)(tuple($(exprs...)))
-    end
+@inline reshape(a::SArray, s::Size) = similar_type(a, s)(Tuple(a))
+@inline reshape(a::AbstractArray, s::Size) = __reshape(a, ((typeof(s).parameters...)...,), s)
+@inline reshape(a::SArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
+    return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
+end
+@inline function __reshape(a, shape, ::Size{S}) where {S}
+    return SizedArray{Tuple{S...}}(Base._reshape(a, shape))
+end
+@inline function __reshape(a::SizedArray, shape, ::Size{S}) where {S}
+    return SizedArray{Tuple{S...}}(Base._reshape(a.data, shape))
 end
 
-reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
+reshape(a::Vector, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
 
 Base.rdims(out::Val{N}, inds::Tuple{SOneTo, Vararg{SOneTo}}) where {N} = Base.rdims(ntuple(i -> SOneTo(1), Val(N)), inds)
 Base.rdims(out::Tuple{Any}, inds::Tuple{SOneTo, Vararg{SOneTo}}) = (SOneTo(Base.rdims_trailing(inds...)),)

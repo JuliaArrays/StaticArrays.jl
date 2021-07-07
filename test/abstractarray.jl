@@ -109,7 +109,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
-        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,1,2))
+        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,2,2))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
@@ -119,6 +119,21 @@ using StaticArrays, Test, LinearAlgebra
         # IndexLinear
         @test reshape(view(ones(4, 4), 1, 1:4), Size(4, 1)) == SMatrix{4,1}(ones(4, 1))
         @test_throws DimensionMismatch reshape(view(ones(4,4), 1:4, 1:2), Size(5, 2))
+
+        # mutation
+        m = @MMatrix [1 2; 3 4]
+        mr = reshape(m, SOneTo(4))
+        mr[2] = 10
+        @test m == SA[1 2; 10 4]
+
+        mrs = reshape(m, Size(4))
+        mrs[2] = 10
+        @test m == SA[1 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        msr = reshape(ms, SOneTo(4))
+        msr[2] = 10
+        @test ms == SA[1 2; 10 4]
     end
 
     @testset "copy" begin
