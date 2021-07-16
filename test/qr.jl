@@ -60,3 +60,11 @@ Random.seed!(42)
         test_qr(arr)
     end
 end
+
+@testset "QR method ambiguity" begin
+    # Issue #931; just test that methods do not throw an ambiguity error when called
+    A = @SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]
+    @test isa(qr(A),              StaticArrays.QR)
+    @test isa(qr(A, Val(true)),   StaticArrays.QR)
+    @test isa(qr(A, Val(false)),  StaticArrays.QR)
+end

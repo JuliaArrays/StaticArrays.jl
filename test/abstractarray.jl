@@ -109,7 +109,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
-        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,1,2))
+        @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,2,2))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
@@ -119,6 +119,21 @@ using StaticArrays, Test, LinearAlgebra
         # IndexLinear
         @test reshape(view(ones(4, 4), 1, 1:4), Size(4, 1)) == SMatrix{4,1}(ones(4, 1))
         @test_throws DimensionMismatch reshape(view(ones(4,4), 1:4, 1:2), Size(5, 2))
+
+        # mutation
+        m = @MMatrix [1 2; 3 4]
+        mr = reshape(m, SOneTo(4))
+        mr[2] = 10
+        @test m == SA[1 2; 10 4]
+
+        mrs = reshape(m, Size(4))
+        mrs[2] = 10
+        @test m == SA[1 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        msr = reshape(ms, SOneTo(4))
+        msr[2] = 10
+        @test ms == SA[1 2; 10 4]
     end
 
     @testset "copy" begin
@@ -185,19 +200,21 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
         @test convert(AbstractArray{Float64}, diag) == diag
         # The following cases currently convert the SMatrix into an MMatrix, because
-        # the constructor in Base invokes `similar`, rather than `convert`, on the static array
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static 
+        # array. This was fixed in https://github.com/JuliaLang/julia/pull/40831; so should
+        # work from Julia v1.8.0-DEV.55
         trans = Transpose(SVector(1,2))
-        @test_broken @inferred(convert(AbstractArray{Float64}, trans)) isa Transpose{Float64,SVector{2,Float64}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, trans)) isa Transpose{Float64,SVector{2,Float64}}
         adj = Adjoint(SVector(1,2))
-        @test_broken @inferred(convert(AbstractArray{Float64}, adj)) isa Adjoint{Float64,SVector{2,Float64}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, adj)) isa Adjoint{Float64,SVector{2,Float64}}
         uptri = UpperTriangular(SA[1 2; 0 3])
-        @test_broken @inferred(convert(AbstractArray{Float64}, uptri)) isa UpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, uptri)) isa UpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         lotri = LowerTriangular(SA[1 0; 2 3])
-        @test_broken @inferred(convert(AbstractArray{Float64}, lotri)) isa LowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, lotri)) isa LowerTriangular{Float64,SMatrix{2,2,Float64,4}}
         unituptri = UnitUpperTriangular(SA[1 2; 0 1])
-        @test_broken @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
-        @test_broken @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+        @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
     end
 end
 

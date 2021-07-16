@@ -240,4 +240,45 @@ end
         # Unfortunately this case of nested broadcasting is not inferred
         @test_broken @inferred(SA[1,2,3] .* (SA[1,0],))
     end
+
+    @testset "SDiagonal" begin
+        for DS in Any[Diagonal(SVector{2}(1:2)), Diagonal(MVector{2}(1:2)), Diagonal(SizedArray{Tuple{2}}(1:2))],
+                S in Any[SVector{2}(1:2), MVector{2}(1:2), SizedArray{Tuple{2}}(1:2)]
+            @test DS .* S isa StaticArray
+            @test DS .* S == collect(DS) .* collect(S)
+            @test DS .* collect(S) == collect(DS) .* collect(S)
+            @test DS .* S' isa StaticArray
+            @test DS .* S' == collect(DS) .* collect(S)
+            @test DS .* collect(S') == collect(DS) .* collect(S)
+            @test S .* DS .* S' isa StaticArray
+            @test S .* DS .* S' == collect(S) .* collect(DS) .* collect(S)
+            DS2 = Diagonal(S)
+            @test DS .* DS2 isa StaticArray
+            @test DS .* DS2 == collect(DS) .* collect(DS2)
+            @test DS .* collect(DS2) == collect(DS) .* collect(DS2)
+
+            # inplace broadcasting for mutable diagonal types
+            DS2 = Diagonal(MVector{2}(diag(DS)))
+            DS2 .*= S
+            @test DS2 == DS .* S
+            DS2 .= DS
+            @test DS2 == DS
+            DS2 .+= DS
+            @test DS2 == DS .+ DS
+            DS2 .= DS
+            DS2 .*= DS
+            @test DS2 == DS .* DS
+        end
+    end
+
+    @testset "broadcast! with reshaping" begin
+        m = @MMatrix [1 2; 3 4]
+        m[1:2] .= 10
+        @test m == SA[10 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        ms[1:2] .= 10
+        @test ms == SA[10 2; 10 4]
+    end
+
 end

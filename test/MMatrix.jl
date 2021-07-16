@@ -91,6 +91,8 @@
         @test size(typeof(m), 2) === 2
 
         @test length(m) === 4
+
+        @test reverse(m) == reverse(reverse(collect(m), dims = 2), dims = 1)
     end
 
     @testset "setindex!" begin

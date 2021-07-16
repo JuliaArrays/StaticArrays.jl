@@ -10,8 +10,8 @@ const allowable_ambiguities =
         0
     end
 
-if v"1.6.0-DEV.816" <= VERSION < v"1.6.0-rc"
-    # Revisit in 1.6.0-rc1 or before. See
+if VERSION ≥ v"1.6.0"
+    # TODO: Revisit and fix. See
     #   https://github.com/JuliaLang/julia/pull/36962
     #   https://github.com/JuliaLang/julia/issues/36951
     @test_broken length(detect_ambiguities(#=LinearAlgebra, =#StaticArrays)) <= allowable_ambiguities

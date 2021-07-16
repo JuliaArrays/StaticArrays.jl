@@ -4,6 +4,7 @@ import Base: +, -, *, /, \
 # Vector space algebra
 
 # Unary ops
+@inline +(a::StaticArray) = map(+, a)
 @inline -(a::StaticArray) = map(-, a)
 
 # Binary ops
@@ -17,11 +18,11 @@ import Base: +, -, *, /, \
 @inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
 
 # Scalar-array
-@inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
-@inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
+@inline *(a::Number, b::StaticArray) = map(c->a*c, b)
+@inline *(a::StaticArray, b::Number) = map(c->c*b, a)
 
-@inline /(a::StaticArray, b::Number) = broadcast(/, a, b)
-@inline \(a::Number, b::StaticArray) = broadcast(\, a, b)
+@inline /(a::StaticArray, b::Number) = map(c->c/b, a)
+@inline \(a::Number, b::StaticArray) = map(c->a\c, b)
 
 
 # With UniformScaling
