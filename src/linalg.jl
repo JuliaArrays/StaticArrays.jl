@@ -208,10 +208,7 @@ end
 
 #--------------------------------------------------
 # Norms
-function _inner_eltype(v::StaticArray)
-    isempty(v) && return float(norm(zero(eltype(v))))
-    return _inner_eltype(first(v))
-end
+_inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
 _inner_eltype(x::Number) = typeof(x)
 @inline _init_zero(v::StaticArray) = float(norm(zero(_inner_eltype(v))))
 
@@ -237,8 +234,8 @@ end
 end
 
 function _norm_p0(x)
-    T = isempty(x) ? eltype(x) : float(norm(zero(first(x))))
-    return iszero(x) ? zero(T) :  one(T)
+    T = _inner_eltype(x)
+    return float(norm(iszero(x) ? zero(T) : one(T)))
 end
 
 @inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
