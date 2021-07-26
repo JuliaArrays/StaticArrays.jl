@@ -13,7 +13,7 @@ import Statistics: mean
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
-import Base: sqrt, exp, log
+import Base: sqrt, exp, log, float, real
 using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals,
