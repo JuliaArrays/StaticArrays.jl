@@ -11,6 +11,7 @@ function _precompile_()
         for S = 2:4                    # some common sizes
             L = S*S
             @assert precompile(Tuple{typeof(*),SMatrix{S, S, T, L},SMatrix{S, S, T, L}})
+            @assert precompile(Tuple{typeof(*),SMatrix{S, S, T, L},SVector{S, T}})
             @assert precompile(Tuple{typeof(inv),SMatrix{S, S, T, L}})
             @assert precompile(Tuple{typeof(transpose),SMatrix{S, S, T, L}})
             @assert precompile(Tuple{typeof(_adjoint),Size{(S, S)},SMatrix{S, S, T, L}})
