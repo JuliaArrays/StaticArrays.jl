@@ -3,7 +3,8 @@ using StaticArrays, Test
 @testset "Copy constructors" begin
     M = [1 2; 3 4]
     SizeM = SizedMatrix{2,2}(M)
-    @test typeof(SizeM)(SizeM).data === M
+    @test typeof(SizeM)(SizeM).data !== M
+    @test convert(typeof(SizeM), SizeM).data === M
 end # testset
 
 @testset "Constructors of zero size arrays" begin
