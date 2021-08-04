@@ -186,6 +186,7 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 @inline reshape(a::SArray, s::Size) = similar_type(a, s)(Tuple(a))
 @inline reshape(a::AbstractArray, s::Size) = __reshape(a, ((typeof(s).parameters...)...,), s)
 @inline reshape(a::SArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline reshape(a::AbstractArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
 @inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
     return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
 end

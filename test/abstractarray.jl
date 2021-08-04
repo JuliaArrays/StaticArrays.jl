@@ -109,7 +109,10 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1,2,3,4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1 2 3 4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
         @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,2,2))
+        @test_throws DimensionMismatch reshape([1 2 3], axes(SMatrix{2,2}(1,2,3,4)))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
