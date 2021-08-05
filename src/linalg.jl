@@ -45,6 +45,11 @@ end
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
 @inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
+
+# Ternary ops
+@inline Base.muladd(scalar::Number, a::StaticArray, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::StaticArray, scalar::Number, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
+
 #--------------------------------------------------
 # Matrix algebra
 
