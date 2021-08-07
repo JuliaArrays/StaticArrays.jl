@@ -275,11 +275,11 @@ end
     end
 end
 
-@inline normalize(a::StaticVector) = inv(norm(a))*a
-@inline normalize(a::StaticVector, p::Real) = inv(norm(a, p))*a
+@inline normalize(a::StaticArray) = inv(norm(a))*a
+@inline normalize(a::StaticArray, p::Real) = inv(norm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(norm(a)); return a)
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(norm(a, p)); return a)
+@inline normalize!(a::StaticArray) = (a .*= inv(norm(a)); return a)
+@inline normalize!(a::StaticArray, p::Real) = (a .*= inv(norm(a, p)); return a)
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}

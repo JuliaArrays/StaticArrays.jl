@@ -221,6 +221,17 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         @test normalize!(MVector(1.,2.,3.)) ≈ normalize([1.,2.,3.])
         @test normalize!(MVector(1.,2.,3.), 1) ≈ normalize([1.,2.,3.], 1)
 
+        if VERSION ≥ v"1.5" # `normalize` with `AbstractArray` signature added in v1.5
+            @test normalize(SA[1 2 3; 4 5 6; 7 8 9]) ≈ normalize([1 2 3; 4 5 6; 7 8 9])
+            @test normalize(SA[1 2 3; 4 5 6; 7 8 9], 1) ≈ normalize([1 2 3; 4 5 6; 7 8 9], 1)
+            @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.])) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.])
+            @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.]), 1) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.], 1)
+
+            D3 = Array{Float64, 3}(undef, 2, 2, 3)
+            D3[:] .= 1.0:12.0
+            SA_D3 = convert(SArray{Tuple{2,2,3}, Float64, 3, 12}, D3)
+            @test normalize(SA_D3) ≈ normalize(D3)
+        end
         # nested vectors
         a  = SA[SA[1, 2], SA[3, 4]]
         av = convert(Vector{Vector{Int}}, a)
