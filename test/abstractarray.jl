@@ -109,7 +109,10 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1,2,3,4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1 2 3 4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
         @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,2,2))
+        @test_throws DimensionMismatch reshape([1 2 3], axes(SMatrix{2,2}(1,2,3,4)))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
 
@@ -216,6 +219,24 @@ using StaticArrays, Test, LinearAlgebra
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
         @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
     end
+end
+
+@testset "permutedims" begin
+    # vector -> one-row matrix
+    @test @inferred(permutedims(SVector(1,2,3))) === SMatrix{1,3}(1,2,3)
+    @test @inferred(permutedims(MVector(1,2,3))) isa MMatrix{1,3}
+    @test @inferred(permutedims(MVector(1,2,3))) == [1 2 3]
+    @test @inferred(permutedims(SizedVector{3}([1,2,3]))) isa SizedMatrix{1,3}
+    @test @inferred(permutedims(SizedVector{3}([1,2,3]))) == [1 2 3]
+
+    # matrix
+    @test @inferred(permutedims(SMatrix{2,2}(1,2,3,4))) === SMatrix{2,2}(1,3,2,4)
+    A = rand(2,3)
+    @test @inferred(permutedims(SMatrix{2,3}(A))) === SMatrix{3,2}(A')
+    @test @inferred(permutedims(MMatrix{2,3}(A))) isa MMatrix{3,2}
+    @test @inferred(permutedims(MMatrix{2,3}(A))) == A'
+    @test @inferred(permutedims(SizedMatrix{2,3}(A))) isa SizedMatrix{3,2}
+    @test @inferred(permutedims(SizedMatrix{2,3}(A))) == A'
 end
 
 @testset "vcat() and hcat()" begin

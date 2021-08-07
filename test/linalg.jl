@@ -51,6 +51,24 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         end
     end
 
+    @testset "Ternary operators" begin
+        for T in (Int, Float32, Float64)
+            c = convert(T, 2)
+            v1 = @SVector T[2, 4, 6, 8]
+            v2 = @SVector T[4, 3, 2, 1]
+            m1 = @SMatrix T[2 4; 6 8]
+            m2 = @SMatrix T[4 3; 2 1]
+
+            # Use that these small integers can be represetnted exactly
+            # as floating point numbers. In general, the comparison of
+            # floats should use `≈` instead of `===`.
+            @test @inferred(muladd(c, v1, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(v1, c, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(c, m1, m2)) === @SMatrix T[8 11; 14 17]
+            @test @inferred(muladd(m1, c, m2)) === @SMatrix T[8 11; 14 17]
+        end
+    end
+
     @testset "Interaction with `UniformScaling`" begin
         @test @inferred(@SMatrix([0 1; 2 3]) + I) === @SMatrix [1 1; 2 4]
         @test @inferred(I + @SMatrix([0 1; 2 3])) === @SMatrix [1 1; 2 4]
