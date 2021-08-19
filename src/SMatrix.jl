@@ -89,37 +89,45 @@ macro SMatrix(ex)
         s2 = length(ex.args) - 1
         return esc(Expr(:call, Expr(:curly, :SMatrix, s1, s2, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
     elseif ex.head == :vcat
-        if isa(ex.args[1], Expr) && ex.args[1].head == :row # n x m
+        if isa(ex.args[1], Expr) && (ex.args[1]::Expr).head == :row # n x m
             # Validate
             s1 = length(ex.args)
-            s2s = map(i -> ((isa(ex.args[i], Expr) && ex.args[i].head == :row) ? length(ex.args[i].args) : 1), 1:s1)
+            s2s = let s1=s1, ex=ex
+                map(i -> ((isa(ex.args[i], Expr) && (ex.args[i]::Expr).head == :row) ? length((ex.args[i]::Expr).args) : 1), 1:s1)
+            end
             s2 = minimum(s2s)
             if maximum(s2s) != s2
                 throw(ArgumentError("Rows must be of matching lengths"))
             end
 
-            exprs = [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
+            exprs = let s1=s1, s2=s2, ex=ex
+                [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
+            end
             return esc(Expr(:call, SMatrix{s1, s2}, Expr(:tuple, exprs...)))
         else # n x 1
             return esc(Expr(:call, SMatrix{length(ex.args), 1}, Expr(:tuple, ex.args...)))
         end
     elseif ex.head == :typed_vcat
-        if isa(ex.args[2], Expr) && ex.args[2].head == :row # typed, n x m
+        if isa(ex.args[2], Expr) && (ex.args[2]::Expr).head == :row # typed, n x m
             # Validate
             s1 = length(ex.args) - 1
-            s2s = map(i -> ((isa(ex.args[i+1], Expr) && ex.args[i+1].head == :row) ? length(ex.args[i+1].args) : 1), 1:s1)
+            s2s = let s1=s1, ex=ex
+                map(i -> ((isa(ex.args[i+1], Expr) && (ex.args[i+1]::Expr).head == :row) ? length((ex.args[i+1]::Expr).args) : 1), 1:s1)
+            end
             s2 = minimum(s2s)
             if maximum(s2s) != s2
                 throw(ArgumentError("Rows must be of matching lengths"))
             end
 
-            exprs = [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
+            exprs = let s1=s1, s2=s2, ex=ex
+                [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
+            end
             return esc(Expr(:call, Expr(:curly, :SMatrix,s1, s2, ex.args[1]), Expr(:tuple, exprs...)))
         else # typed, n x 1
             return esc(Expr(:call, Expr(:curly, :SMatrix, length(ex.args)-1, 1, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
         end
     elseif isa(ex, Expr) && ex.head == :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
+        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || (ex.args[1]::Expr).head != :generator
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
         end
         ex = ex.args[1]
@@ -138,7 +146,7 @@ macro SMatrix(ex)
             $(esc(Expr(:call, Expr(:curly, :SMatrix, length(rng1), length(rng2)), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :typed_comprehension
-        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
+        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || (ex.args[2]::Expr).head != :generator
             error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
         end
         T = ex.args[1]
@@ -158,7 +166,7 @@ macro SMatrix(ex)
             $(esc(Expr(:call, Expr(:curly, :SMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
         end
     elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn || ex.args[1] == :randexp
+        if ex.args[1] === :zeros || ex.args[1] === :ones || ex.args[1] === :rand || ex.args[1] === :randn || ex.args[1] === :randexp
             if length(ex.args) == 3
                 return quote
                     $(ex.args[1])(SMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
@@ -170,7 +178,7 @@ macro SMatrix(ex)
             else
                 error("@SMatrix expected a 2-dimensional array expression")
             end
-        elseif ex.args[1] == :fill
+        elseif ex.args[1] === :fill
             if length(ex.args) == 4
                 return quote
                     $(esc(ex.args[1]))($(esc(ex.args[2])), SMatrix{$(esc(ex.args[3])), $(esc(ex.args[4]))})
