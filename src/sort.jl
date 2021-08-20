@@ -1,9 +1,30 @@
-import Base.Order: Forward, Ordering, Perm, ord
-import Base.Sort: Algorithm, lt, sort, sortperm
+module Sort
 
+import Base: sort, sortperm
+
+using ..StaticArrays
+using Base: @_inline_meta
+using Base.Order: Forward, Ordering, Perm, Reverse, ord
+using Base.Sort: Algorithm, lt
+
+export BitonicSort
 
 struct BitonicSortAlg <: Algorithm end
 
+# For consistency with Julia Base, track their *Sort docstring text in base/sort.jl.
+"""
+    StaticArrays.BitonicSort
+
+Indicate that a sorting function should use a bitonic sorting network, which is *not*
+stable. By default, `StaticVector`s with at most 20 elements are sorted with `BitonicSort`.
+
+Characteristics:
+  * *not stable*: does not preserve the ordering of elements which compare equal (e.g. "a"
+    and "A" in a sort of letters which ignores case).
+  * *in-place* in memory.
+  * *good performance* for small collections.
+  * compilation time increases dramatically with the number of elements.
+"""
 const BitonicSort = BitonicSortAlg()
 
 
@@ -19,8 +40,7 @@ defalg(a::StaticVector) =
               rev::Union{Bool,Nothing} = nothing,
               order::Ordering = Forward)
     length(a) <= 1 && return a
-    ordr = ord(lt, by, rev, order)
-    return _sort(a, alg, ordr)
+    return _sort(a, alg, lt, by, rev, order)
 end
 
 @inline function sortperm(a::StaticVector;
@@ -33,21 +53,83 @@ end
     length(a) <= 1 && return SVector{length(a),Int}(p)
 
     ordr = Perm(ord(lt, by, rev, order), a)
-    return SVector{length(a),Int}(_sort(p, alg, ordr))
+    return SVector{length(a),Int}(_sort(p, alg, isless, identity, nothing, ordr))
 end
 
+@inline _sort(a::StaticVector, alg, lt, by, rev, order) =
+    similar_type(a)(sort!(Base.copymutable(a); alg=alg, lt=lt, by=by, rev=rev, order=order))
 
-@inline _sort(a::StaticVector, alg, order) =
-    similar_type(a)(sort!(Base.copymutable(a); alg=alg, order=order))
+@inline _sort(a::StaticVector, alg::BitonicSortAlg, lt, by, rev, order) =
+    similar_type(a)(_sort(Tuple(a), alg, lt, by, rev, order))
 
-@inline _sort(a::StaticVector, alg::BitonicSortAlg, order) =
-    similar_type(a)(_sort(Tuple(a), alg, order))
+@inline _sort(a::NTuple, alg, lt, by, rev, order) =
+    sort!(Base.copymutable(a); alg=alg, lt=lt, by=by, rev=rev, order=order)
 
-_sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
+@inline _sort(a::NTuple, ::BitonicSortAlg, lt, by, rev, order) =
+    _bitonic_sort(a, ord(lt, by, rev, order))
+
+# For better performance sorting floats under the isless relation, apply an order-preserving
+# bijection to sort them as integers.
+@inline function _sort(
+    a::NTuple{N, <:Union{Float16, Float32, Float64}}, ::BitonicSortAlg, lt, by, rev, order
+) where N
+    # Skip this special treatment when N = 2 to avoid a performance regression on AArch64.
+    N <= 2 && return _bitonic_sort(a, ord(lt, by, rev, order))
+    lt_rev = _simplify_order(lt, by, rev, order)
+    if lt_rev === nothing || lt_rev[1] !== isless
+        return _bitonic_sort(a, ord(lt, by, rev, order))
+    end
+    return _intfp.(_bitonic_sort(_fpint.(a), ord(isless, identity, lt_rev[2], Forward)))
+end
+
+# Given the order ord(lt, by, rev, order) on floats or integers, attempt to simplify it to
+# ord(_lt, identity, _rev, Forward), where _rev is a Bool and _lt is isless or <. If
+# successful, return (_lt, _rev). Otherwise, return `nothing`.
+@inline function _simplify_order(lt, by, rev::Union{Bool, Nothing}, order::Ordering)
+    (
+        any(Ref(lt) .=== (isless, <, >)) &&
+        any(Ref(by) .=== (identity, +, -)) &&
+        any(Ref(order) .=== (Forward, Reverse))
+    ) || return nothing
+    rev = xor(lt === >, by === -, rev === true, order === Reverse)
+    lt = ifelse(lt === >, <, lt)
+    return (lt, rev)
+end
+
+_inttype(::Type{Float64}) = Int64
+_inttype(::Type{Float32}) = Int32
+_inttype(::Type{Float16}) = Int16
+
+_floattype(::Type{Int64}) = Float64
+_floattype(::Type{Int32}) = Float32
+_floattype(::Type{Int16}) = Float16
+
+# Modified from the _fpint function added to base/float.jl in Julia 1.7. This is a strictly
+# increasing function with respect to the isless relation. `isless` is trichotomous with the
+# isequal relation and treats every NaN as identical. This function on the other hand
+# distinguishes between NaNs with different payloads and signs, but this difference is
+# inconsequential for unstable sorting. The `offset` is necessary because NaNs (in
+# particular, those with the sign bit set) must be mapped to the greatest Ints, which is
+# Julia-specific.
+@inline function _fpint(x::F) where F
+    I = _inttype(F)
+    offset = reinterpret(I, typemin(F)) ⊻ -one(I)
+    n = reinterpret(I, x)
+    return ifelse(n < zero(I), n ⊻ typemax(I), n) - offset
+end
+
+# Inverse of _fpint.
+@inline function _intfp(n::I) where I
+    F = _floattype(I)
+    offset = reinterpret(I, typemin(F)) ⊻ -one(I)
+    n += offset
+    n = ifelse(n < zero(I), n ⊻ typemax(I), n)
+    return reinterpret(F, n)
+end
 
 # Implementation loosely following
 # https://www.inf.hs-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
-@generated function _sort(a::NTuple{N}, ::BitonicSortAlg, order) where N
+@generated function _bitonic_sort(a::NTuple{N}, order) where N
     function swap_expr(i, j, rev)
         ai = Symbol('a', i)
         aj = Symbol('a', j)
@@ -87,3 +169,5 @@ _sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
         return ($(symlist...),)
     end
 end
+
+end # module Sort
