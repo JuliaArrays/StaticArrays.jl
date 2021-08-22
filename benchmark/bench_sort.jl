@@ -71,7 +71,7 @@ end
     end
 end
 
-function floats_nans!(vs::Vector{SVector{N, T}}, p) where {N, T}
+function map_floats_nans!(vs::Vector{SVector{N, T}}, p) where {N, T}
     for i in eachindex(vs)
         @inbounds vs[i] = floats_nans(SVector{N, T}, p)
     end
@@ -85,7 +85,7 @@ for p in (0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0)
     g[lt, n, T, p] = @benchmarkable(
         map_sort!($vs; alg=BitonicSort, lt=$lt),
         evals=1,
-        setup=(__params.evals = 1; floats_nans!($vs, $p)),
+        setup=(__params.evals = 1; map_floats_nans!($vs, $p)),
     )
 end
 

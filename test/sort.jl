@@ -1,13 +1,8 @@
 module SortTests
 
 using StaticArrays, Test
+using StaticArrays.Sort: _inttype
 using Base.Order: Forward, Reverse
-
-_inttype(::Type{Float64}) = Int64
-_inttype(::Type{Float32}) = Int32
-_inttype(::Type{Float16}) = Int16
-
-float_or(x::T, y::T) where T = reinterpret(T, |(reinterpret.(_inttype(T), (x, y))...))
 
 @testset "sort" begin
 
@@ -41,18 +36,14 @@ float_or(x::T, y::T) where T = reinterpret(T, |(reinterpret.(_inttype(T), (x, y)
 
     @testset "NaNs" begin
         # Return an SVector with floats and NaNs that have random sign and payload bits.
-        @generated function floats_randnans(::Type{SVector{N, T}}, p) where {N, T}
-            exprs = Base.Generator(1:N) do _
-                quote
-                    r = rand(T)
-                    # The bitwise or of any T with T(Inf) is either ±T(Inf) or a NaN.
-                    ifelse(rand(Float32) < p, float_or(typemax(T), r - T(0.5)), r)
-                end
+        function floats_randnans(::Type{SVector{N, T}}, p) where {N, T}
+            float_or(x, y) = reinterpret(T, |(reinterpret.(_inttype(T), (x, y))...))
+            a = ntuple(N) do _
+                r = rand(T)
+                # The bitwise or of any T with T(Inf) is either ±T(Inf) or a NaN.
+                ifelse(rand(Float32) < p, float_or(typemax(T), r - T(0.5)), r)
             end
-            return quote
-                Base.@_inline_meta
-                return SVector(($(exprs...),))
-            end
+            return SVector(a)
         end
 
         # Sort floats and arbitrary NaNs.
@@ -64,7 +55,7 @@ float_or(x::T, y::T) where T = reinterpret(T, |(reinterpret.(_inttype(T), (x, y)
             end
         end
 
-        # Sort signed Infs, signed zeros, and NaNs with extremal payloads.
+        # Sort signed Infs, signed zeros, and signed NaNs with extremal payloads.
         for T in (Float16, Float32, Float64)
             U = _inttype(T)
             small_nan = reinterpret(T, reinterpret(U, typemax(T)) + one(U))
@@ -77,22 +68,24 @@ float_or(x::T, y::T) where T = reinterpret(T, |(reinterpret.(_inttype(T), (x, y)
         end
     end
 
-    # These tests are selected from Julia's test/ordering.jl and test/sorting.jl.
+    # These tests are selected and modified from Julia's test/ordering.jl and test/sorting.jl.
     @testset "Base tests" begin
         # This testset partially fails on Julia versions < 1.5 because order could be
         # discarded: https://github.com/JuliaLang/julia/pull/34719
         if VERSION >= v"1.5"
             @testset "ordering" begin
-                for (s1, rev) in enumerate([nothing, true, false])
-                    for (s2, lt) in enumerate([>, <, (a, b) -> a - b > 0, (a, b) -> a - b < 0])
-                        for (s3, by) in enumerate([-, +])
-                            for (s4, order) in enumerate([Reverse, Forward])
-                                if isodd(s1 + s2 + s3 + s4)
-                                    target = SA[1, 2, 3]
-                                else
-                                    target = SA[3, 2, 1]
+                for T in (Int, Float64)
+                    for (s1, rev) in enumerate([nothing, true, false])
+                        for (s2, lt) in enumerate([>, <, (a, b) -> a - b > 0, (a, b) -> a - b < 0])
+                            for (s3, by) in enumerate([-, +])
+                                for (s4, order) in enumerate([Reverse, Forward])
+                                    if isodd(s1 + s2 + s3 + s4)
+                                        target = T.(SA[1, 2, 3])
+                                    else
+                                        target = T.(SA[3, 2, 1])
+                                    end
+                                    @test target == sort(T.(SA[2, 3, 1]), rev=rev, lt=lt, by=by, order=order)
                                 end
-                                @test target == sort(SA[2, 3, 1], rev=rev, lt=lt, by=by, order=order)
                             end
                         end
                     end
@@ -112,8 +105,10 @@ float_or(x::T, y::T) where T = reinterpret(T, |(reinterpret.(_inttype(T), (x, y)
         end
 
         @testset "sort" begin
-            @test sort(SA[2,3,1]) == SA[1,2,3] == sort(SA[2,3,1]; order=Forward)
-            @test sort(SA[2,3,1], rev=true) == SA[3,2,1] == sort(SA[2,3,1], order=Reverse)
+            for T in (Int, Float64)
+                @test sort(T.(SA[2,3,1])) == T.(SA[1,2,3]) == sort(T.(SA[2,3,1]); order=Forward)
+                @test sort(T.(SA[2,3,1]), rev=true) == T.(SA[3,2,1]) == sort(T.(SA[2,3,1]), order=Reverse)
+            end
             @test sort(SA['z':-1:'a'...]) == SA['a':'z'...]
             @test sort(SA['a':'z'...], rev=true) == SA['z':-1:'a'...]
         end

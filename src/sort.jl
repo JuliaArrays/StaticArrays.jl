@@ -71,29 +71,19 @@ end
 # For better performance sorting floats under the isless relation, apply an order-preserving
 # bijection to sort them as integers.
 @inline function _sort(
-    a::NTuple{N, <:Union{Float16, Float32, Float64}}, ::BitonicSortAlg, lt, by, rev, order
+    a::NTuple{N, <:Base.IEEEFloat},
+    ::BitonicSortAlg,
+    lt::typeof(isless),
+    by::Union{typeof.((identity, +, -))...},
+    rev::Union{Bool, Nothing},
+    order,
 ) where N
-    # Skip this special treatment when N = 2 to avoid a performance regression on AArch64.
-    N <= 2 && return _bitonic_sort(a, ord(lt, by, rev, order))
-    lt_rev = _simplify_order(lt, by, rev, order)
-    if lt_rev === nothing || lt_rev[1] !== isless
-        return _bitonic_sort(a, ord(lt, by, rev, order))
+    # Exclude N == 2 to avoid a performance regression on AArch64.
+    if N > 2 && (order === Forward || order === Reverse)
+        _rev = xor(by === -, rev === true, order === Reverse)
+        return _intfp.(_bitonic_sort(_fpint.(a), ord(lt, identity, _rev, Forward)))
     end
-    return _intfp.(_bitonic_sort(_fpint.(a), ord(isless, identity, lt_rev[2], Forward)))
-end
-
-# Given the order ord(lt, by, rev, order) on floats or integers, attempt to simplify it to
-# ord(_lt, identity, _rev, Forward), where _rev is a Bool and _lt is isless or <. If
-# successful, return (_lt, _rev). Otherwise, return `nothing`.
-@inline function _simplify_order(lt, by, rev::Union{Bool, Nothing}, order::Ordering)
-    (
-        any(Ref(lt) .=== (isless, <, >)) &&
-        any(Ref(by) .=== (identity, +, -)) &&
-        any(Ref(order) .=== (Forward, Reverse))
-    ) || return nothing
-    rev = xor(lt === >, by === -, rev === true, order === Reverse)
-    lt = ifelse(lt === >, <, lt)
-    return (lt, rev)
+    return _bitonic_sort(a, ord(lt, by, rev, order))
 end
 
 _inttype(::Type{Float64}) = Int64
@@ -113,7 +103,7 @@ _floattype(::Type{Int16}) = Float16
 # Julia-specific.
 @inline function _fpint(x::F) where F
     I = _inttype(F)
-    offset = reinterpret(I, typemin(F)) ⊻ -one(I)
+    offset = Base.significand_mask(F) % I
     n = reinterpret(I, x)
     return ifelse(n < zero(I), n ⊻ typemax(I), n) - offset
 end
@@ -121,7 +111,7 @@ end
 # Inverse of _fpint.
 @inline function _intfp(n::I) where I
     F = _floattype(I)
-    offset = reinterpret(I, typemin(F)) ⊻ -one(I)
+    offset = Base.significand_mask(F) % I
     n += offset
     n = ifelse(n < zero(I), n ⊻ typemax(I), n)
     return reinterpret(F, n)
