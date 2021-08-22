@@ -81,7 +81,7 @@ end
     # Exclude N == 2 to avoid a performance regression on AArch64.
     if N > 2 && (order === Forward || order === Reverse)
         _rev = xor(by === -, rev === true, order === Reverse)
-        return _intfp.(_bitonic_sort(_fpint.(a), ord(lt, identity, _rev, Forward)))
+        return _intfp.(_bitonic_sort(_fpint.(a), ord(isless, identity, _rev, Forward)))
     end
     return _bitonic_sort(a, ord(lt, by, rev, order))
 end
