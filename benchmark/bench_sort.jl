@@ -62,18 +62,10 @@ for (lt, n, T) in ((isless, 16, Int64), (isless, 16, Float64), (<, 16, Float64))
     )
 end
 
-# @generated to unroll the tuple.
-@generated function floats_nans(::Type{SVector{N, T}}, p) where {N, T}
-    exprs = (:(ifelse(rand(Float32) < p, T(NaN), rand(T))) for _ in 1:N)
-    return quote
-        Base.@_inline_meta
-        return SVector(($(exprs...),))
-    end
-end
-
 function map_floats_nans!(vs::Vector{SVector{N, T}}, p) where {N, T}
+    @inline _rand(_) = ifelse(rand(Float32) < p, T(NaN), rand(T))
     for i in eachindex(vs)
-        @inbounds vs[i] = floats_nans(SVector{N, T}, p)
+        @inbounds vs[i] = SVector(ntuple(_rand, Val(N)))
     end
     return vs
 end

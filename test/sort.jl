@@ -38,12 +38,12 @@ using Base.Order: Forward, Reverse
         # Return an SVector with floats and NaNs that have random sign and payload bits.
         function floats_randnans(::Type{SVector{N, T}}, p) where {N, T}
             float_or(x, y) = reinterpret(T, |(reinterpret.(_inttype(T), (x, y))...))
-            a = ntuple(N) do _
+            @inline function _rand(_)
                 r = rand(T)
                 # The bitwise or of any T with T(Inf) is either ±T(Inf) or a NaN.
                 ifelse(rand(Float32) < p, float_or(typemax(T), r - T(0.5)), r)
             end
-            return SVector(a)
+            return SVector(ntuple(_rand, Val(N)))
         end
 
         # Sort floats and arbitrary NaNs.
