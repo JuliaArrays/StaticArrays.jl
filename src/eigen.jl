@@ -31,22 +31,11 @@ end
 
 @inline function _eigvals(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
-
-    if A.uplo == 'U'
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[3]'*a[3]) # Should be real
-
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        return SVector(t_half - tmp, t_half + tmp)
-    else
-        @inbounds t_half = real(a[1] + a[4])/2
-        @inbounds d = real(a[1]*a[4] - a[2]'*a[2]) # Should be real
-
-        tmp2 = t_half*t_half - d
-        tmp2 < 0 ? tmp = zero(tmp2) : tmp = sqrt(tmp2) # Numerically stable for identity matrices, etc.
-        return SVector(t_half - tmp, t_half + tmp)
-    end
+    @inbounds t_half = (real(a[1]) + real(a[4])) / 2
+    @inbounds s_half = (real(a[1]) - real(a[4])) / 2
+    @inbounds tmp2 = A.uplo == 'U' ? s_half^2 + abs2(a[3]) : s_half^2 + abs2(a[2]) # expansion of (tr(A)^2 - 4*det(A)) / 4
+    tmp = sqrt(tmp2) # normally, tmp > 0 if tmp2 > 0
+    return SVector(t_half - tmp, t_half + tmp)
 end
 
 @inline function _eigvals(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
