@@ -1,4 +1,4 @@
-length(a::StaticArrayLike) = prod(Size(a))
+length(a::StaticArrayLike) = prod(Size(a))::Int
 length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
 
 @pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
