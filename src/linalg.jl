@@ -139,7 +139,8 @@ end
     end
 end
 
-@generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
+@generated function diagm(kv1::Pair{<:Val,<:StaticVector}, other_kvs::Pair{<:Val,<:StaticVector}...)
+    kvs = (kv1, other_kvs...)
     diag_ind_and_length = [(kv.parameters[1].parameters[1], length(kv.parameters[2])) for kv in kvs]
     N = maximum(abs(di) + dl for (di,dl) in diag_ind_and_length)
     vs = [Symbol("v$i") for i=1:length(kvs)]
@@ -153,6 +154,7 @@ end
     end
     return quote
         $(Expr(:meta, :inline))
+        kvs = (kv1, other_kvs...)
         $(vs_exprs...)
         @inbounds elements = tuple($(element_exprs...))
         T = promote_tuple_eltype(elements)
