@@ -203,7 +203,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
         @test convert(AbstractArray{Float64}, diag) == diag
         # The following cases currently convert the SMatrix into an MMatrix, because
-        # the constructor in Base invokes `similar`, rather than `convert`, on the static 
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static
         # array. This was fixed in https://github.com/JuliaLang/julia/pull/40831; so should
         # work from Julia v1.8.0-DEV.55
         trans = Transpose(SVector(1,2))
@@ -218,6 +218,16 @@ using StaticArrays, Test, LinearAlgebra
         @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
         @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+    end
+
+    @testset "type inference in length" begin
+        s1 = SA[1,2];
+        s2 = SA[1,2,3];
+        v = [s1, s2];
+        f(v, i) = length(v[i]);
+        for i in 1:2
+            @test (@inferred f(v, i)) == length(v[i])
+        end
     end
 end
 
@@ -318,7 +328,7 @@ end
         @test Base.rest(x) == x
         a, b... = x
         @test b == SA[2, 3]
-    
+
         x = SA[1 2; 3 4]
         @test Base.rest(x) == vec(x)
         a, b... = x
@@ -327,14 +337,14 @@ end
         a, b... = SA[1]
         @test b == []
         @test b isa SVector{0}
-    
+
         for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
             x = Vec(1, 2, 3)
             @test Base.rest(x) == x
             @test pointer(Base.rest(x)) != pointer(x)
             a, b... = x
             @test b == Vec(2, 3)
-        
+
             x = Mat{2,2}(1, 2, 3, 4)
             @test Base.rest(x) == vec(x)
             @test pointer(Base.rest(x)) != pointer(x)
