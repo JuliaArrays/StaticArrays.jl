@@ -268,6 +268,8 @@ end
         elseif p == 1
             @inbounds return $expr_p1
         elseif p == 2
+            maxabs = mapreduce(norm, max, a)
+            (maxabs == 0 || isinf(maxabs)) && return maxabs
             return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, a)
