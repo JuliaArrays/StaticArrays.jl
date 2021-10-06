@@ -117,6 +117,10 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "diagm()" begin
+        if VERSION >= v"1.3"
+            @test diagm() isa BitArray # issue #961: type piracy of zero-arg diagm
+            # `diagm()` fails on older version of Julia even without StaticArrays.jl
+        end
         @test @inferred(diagm(SA[1,2])) === SA[1 0; 0 2]
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])

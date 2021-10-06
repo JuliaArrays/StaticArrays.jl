@@ -1,5 +1,5 @@
-length(a::StaticArrayLike) = prod(Size(a))
-length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
+length(a::StaticArrayLike) = prod(Size(a))::Int
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 
 @pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
 @inline function size(t::Type{<:StaticArrayLike}, d::Int)
