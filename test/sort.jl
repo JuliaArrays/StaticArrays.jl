@@ -1,4 +1,5 @@
 using StaticArrays, Test
+using Statistics: median
 
 @testset "sort" begin
 
@@ -28,6 +29,16 @@ using StaticArrays, Test
 
         # stability
         @test sortperm(SA[1, 1, 1, 0]) == SA[4, 1, 2, 3]
+    end
+
+    @testset "median" begin
+        @test @inferred(median(SA[1])) == 1.
+        @test median(SA[1, 5]) == 3.
+        @test median(SA[1, 5, 2]) == 2.
+
+        @test_throws ArgumentError median(SA[])
+        @test ismissing(median(SA[1, missing]))
+        @test isnan(median(SA[1., NaN]))
     end
 
 end

@@ -9,8 +9,9 @@ const BitonicSort = BitonicSortAlg()
 
 # BitonicSort has non-optimal asymptotic behaviour, so we define a cutoff
 # length. This also prevents compilation time to skyrocket for larger vectors.
+const _bitonic_sort_limit = 20
 defalg(a::StaticVector) =
-    isimmutable(a) && length(a) <= 20 ? BitonicSort : QuickSort
+    isimmutable(a) && length(a) <= _bitonic_sort_limit ? BitonicSort : QuickSort
 
 @inline function sort(a::StaticVector;
               alg::Algorithm = defalg(a),
@@ -86,4 +87,27 @@ _sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
         ($(sort_exprs(idx)...);)
         return ($(symlist...),)
     end
+end
+
+
+@inline function median(a::StaticVector)
+    (isimmutable(a) && length(a) <= _bitonic_sort_limit) ||
+        return median!(Base.copymutable(a))
+
+    # following Statistics.median
+    isempty(a) &&
+	throw(ArgumentError("median of empty vector is undefined, $(repr(a))"))
+    eltype(a) >: Missing && any(ismissing, a) &&
+        return missing
+    any(x -> x isa Number && isnan(x), a) &&
+        return convert(eltype(a), NaN)
+
+    order = ord(isless, identity, nothing, Forward)
+    sa = _sort(Tuple(a), BitonicSort, order)
+
+    n = length(a)
+    # sa is 1-indexed
+    return isodd(n) ?
+	middle(sa[n ÷ 2 + 1]) :
+        middle(sa[n ÷ 2], sa[n ÷ 2 + 1])
 end
