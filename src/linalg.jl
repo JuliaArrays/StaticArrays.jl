@@ -237,11 +237,11 @@ end
     return quote
         $(Expr(:meta, :inline))
         zero_a = _init_zero(a)
-        aₘ = mapreduce(norm, max, a)::typeof(zero_a)
+        aₘ = mapreduce(norm, max, a)
         if iszero(aₘ)
             return zero_a
         else
-            @inbounds return aₘ * sqrt($expr)
+            @inbounds return (aₘ * sqrt($expr))::typeof(zero_a)
         end
     end
 end
@@ -270,19 +270,19 @@ end
     return quote
         $(Expr(:meta, :inline))
         zero_a = _init_zero(a)
-        aₘ = mapreduce(norm, max, a)::typeof(zero_a)
+        aₘ = mapreduce(norm, max, a)
         if iszero(aₘ)
             return zero_a
         elseif p == Inf
             return aₘ
         elseif p == 1
-            @inbounds return aₘ * $expr_p1
+            @inbounds return (aₘ * $expr_p1)::typeof(zero_a)
         elseif p == 2
             return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, a)
         else
-            @inbounds return aₘ * ($expr)^(inv(p))
+            @inbounds return (aₘ * ($expr)^(inv(p)))::typeof(zero_a)
         end
     end
 end
