@@ -229,14 +229,20 @@ end
         return :(_init_zero(a))
     end
 
-    expr = :(LinearAlgebra.norm_sqr(a[1]))
+    expr = :(LinearAlgebra.norm_sqr(a[1]/aₘ))
     for j = 2:prod(S)
-        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]))
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/aₘ))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return sqrt($expr)
+        zero_a = _init_zero(a)
+        aₘ = mapreduce(norm, max, a)::typeof(zero_a)
+        if iszero(aₘ)
+            return zero_a
+        else
+            @inbounds return aₘ * sqrt($expr)
+        end
     end
 end
 
@@ -251,28 +257,32 @@ end
         return :(_init_zero(a))
     end
 
-    expr = :(norm(a[1])^p)
+    expr = :(norm(a[1]/aₘ)^p)
     for j = 2:prod(S)
-        expr = :($expr + norm(a[$j])^p)
+        expr = :($expr + norm(a[$j]/aₘ)^p)
     end
 
-    expr_p1 = :(norm(a[1]))
+    expr_p1 = :(norm(a[1]/aₘ))
     for j = 2:prod(S)
-        expr_p1 = :($expr_p1 + norm(a[$j]))
+        expr_p1 = :($expr_p1 + norm(a[$j]/aₘ))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        if p == Inf
-            return mapreduce(norm, max, a)
+        zero_a = _init_zero(a)
+        aₘ = mapreduce(norm, max, a)::typeof(zero_a)
+        if iszero(aₘ)
+            return zero_a
+        elseif p == Inf
+            return aₘ
         elseif p == 1
-            @inbounds return $expr_p1
+            @inbounds return aₘ * $expr_p1
         elseif p == 2
             return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, a)
         else
-            @inbounds return ($expr)^(inv(p))
+            @inbounds return aₘ * ($expr)^(inv(p))
         end
     end
 end
@@ -466,4 +476,3 @@ end
 # Some shimming for special linear algebra matrix types
 @inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Hermitian{eltype(A),typeof(A)}(A, uplo))
-

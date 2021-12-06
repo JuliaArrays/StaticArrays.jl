@@ -208,6 +208,7 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "normalization" begin
+        @test norm(SVector(0.0,1e-180)) == 1e-180
         @test norm(SVector(1.0,2.0,2.0)) ≈ 3.0
         @test norm(SVector(1.0,2.0,2.0),2) ≈ 3.0
         @test norm(SVector(1.0,2.0,2.0),Inf) ≈ 2.0
