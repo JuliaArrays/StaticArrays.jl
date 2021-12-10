@@ -80,7 +80,13 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
     else
         quote
             # call through to Base to avoid excessive time spent on type inference for large matrices
-            f = lu(Matrix(A), pivot; check = check)
+            _pivot = if pivot === Val(true)
+                RowMaximum()
+            else
+                NoPivot()
+            end
+                
+            f = lu(Matrix(A), _pivot; check = check)
             # Trick to get the output eltype - can't rely on the result of f.L as
             # it's not type inferrable.
             T2 = arithmetic_closure(T)
