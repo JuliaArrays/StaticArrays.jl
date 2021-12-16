@@ -99,3 +99,24 @@ macro MVector(ex)
         error("Use @MVector [a,b,c] or @MVector([a,b,c])")
     end
 end
+
+# Named field access for the first four elements, using the conventional field
+# names from low-dimensional geometry (x,y,z) and computer graphics (w).
+let dimension_names = QuoteNode.([:x, :y, :z, :w])
+    body = :(getfield(v, name))
+    for (i,dim_name) in enumerate(dimension_names)
+        body = :(name === $(dimension_names[i]) ? getfield(v, :data)[$i] : $body)
+        @eval @inline function Base.getproperty(v::Union{SVector{$i},MVector{$i}},
+                                                name::Symbol)
+            $body
+        end
+    end
+
+    body = :(setfield!(v, name, e))
+    for (i,dim_name) in enumerate(dimension_names)
+        body = :(name === $dim_name ? @inbounds(v[$i] = e) : $body)
+        @eval @inline function Base.setproperty!(v::MVector{$i}, name::Symbol, e)
+            $body
+        end
+    end
+end
