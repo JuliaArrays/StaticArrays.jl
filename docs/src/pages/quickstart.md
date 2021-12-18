@@ -49,6 +49,23 @@ v1[SVector(3,2,1)] === @SVector [3, 2, 1]
 v1[:] === v1
 typeof(v1[[1,2,3]]) <: Vector # Can't determine size from the type of [1,2,3]
 
+# For geometric and computer graphics applications in dimensions 1 to 4, the
+# conventional dimension names x,y,z,w can be used to access elements of the
+# vector:
+
+u = SA[1,2,3,4]
+
+u.x === u[1]
+u.y === u[2]
+u.z === u[3]
+u.w === u[4]
+
+# The x,y,z and w properties also work to set values in those dimensions:
+m6 = MVector(1,2)
+m6.x = 10
+# The following is now true
+m6[1] === 10
+
 # Is (partially) hooked into BLAS, LAPACK, etc:
 rand(MMatrix{20,20}) * rand(MMatrix{20,20}) # large matrices can use BLAS
 eigen(m3) # eigen(), etc uses specialized algorithms up to 3×3, or else LAPACK
