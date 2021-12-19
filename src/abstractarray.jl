@@ -190,11 +190,17 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 @inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
     return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
 end
-@inline function __reshape(a, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a, shape))
+@inline function __reshape(a, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a, shape), Size(a), s)
 end
-@inline function __reshape(a::SizedArray, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a.data, shape))
+@inline function __reshape(a::SizedArray, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a.data, shape), Size(a), s)
+end
+@inline function _maybewrap_reshape(a, ::Size{Sa}, ::Size{S}) where {Sa,S}
+    return SizedArray{Tuple{S...}}(a)
+end
+@inline function _maybewrap_reshape(a::StaticArray, ::Size{S}, ::Size{S}) where {S}
+    return a
 end
 
 reshape(a::Vector, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)

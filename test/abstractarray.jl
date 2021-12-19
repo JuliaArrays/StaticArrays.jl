@@ -115,6 +115,11 @@ using StaticArrays, Test, LinearAlgebra
         @test_throws DimensionMismatch reshape([1 2 3], axes(SMatrix{2,2}(1,2,3,4)))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
+        a = @MVector [1, 2, 3, 4]
+        @test @inferred(vec(a)) === a
+
+        as = SizedVector(a)
+        @test @inferred(vec(as)) === as
 
         # AbstractArray
         # CartesianIndex
