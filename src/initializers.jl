@@ -37,6 +37,19 @@ const SA_F64 = SA{Float64}
 @inline Base.typed_hcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(1,length(xs)))(xs)
 @inline Base.typed_hcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(1,length(xs)))(xs)
 
+# Permute dimensions 1 and 2
+@generated function _permutedims_1_2(A::StaticArray)
+    sz = size(A)
+    elems = [:(getindex(A,$(ind...))) for ind in Iterators.product([1:s for s in sz]...)]
+    perm = [2, 1, 3:length(sz)...]
+    elems = permutedims(elems, perm)
+    newsize = Size(size(elems))
+    return quote
+        elements = tuple($(elems...))
+        similar_type(A, $newsize)(elements)
+    end
+end
+
 Base.@pure function _SA_hvcat_transposed_size(rows)
     M = rows[1]
     if any(r->r != M, rows)
@@ -53,9 +66,27 @@ end
         throw(ArgumentError("SA[...] matrix rows of length $rows are inconsistent"))
     end
     # hvcat lowering is row major ordering, so we must transpose
-    transpose(similar_type(sa, msize)(xs))
+    _permutedims_1_2(similar_type(sa, msize)(xs))
 end
 
 @inline Base.typed_hvcat(sa::Type{SA}, rows::Dims, xs::Number...)            = _SA_typed_hvcat(sa, rows, xs)
 @inline Base.typed_hvcat(sa::Type{SA{T}}, rows::Dims, xs::Number...) where T = _SA_typed_hvcat(sa, rows, xs)
 
+if VERSION >= v"1.7"
+
+# Higher dimensional array concatenation syntax
+
+# Defining this only for `rows::Dims` makes the mismatched rows case of
+# `rows::NTuple{N,Tuple}` defer to the Base implementation, yielding the
+# desired error message.
+@inline function Base.typed_hvncat(sa::Type{SA}, rows::Dims, row_first::Bool, xs::Number...)
+    msize = Size(rows)
+    a = similar_type(sa, msize)(xs)
+    if row_first
+        _permutedims_1_2(a)
+    else
+        a
+    end
+end
+
+end
