@@ -260,13 +260,10 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        zero_a = _init_zero(a)
         aₘ = maxabs_nested(a)
-        if iszero(aₘ)
-            return zero_a
-        else
-            @inbounds return aₘ * sqrt($expr)
-        end
+
+        iszero(aₘ) && return aₘ
+        return @inbounds aₘ * sqrt($expr)
     end
 end
 
@@ -283,11 +280,9 @@ end
     return quote
         $(Expr(:meta, :inline))
         l = @inbounds sqrt($expr)
-        if iszero(l) || isinf(l)
-            return norm_scaled(a)
-        else
-            return l
-        end
+
+        (iszero(l) || isinf(l)) && return norm_scaled(a)
+        return l
     end
 end
 
