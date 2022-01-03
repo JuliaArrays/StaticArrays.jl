@@ -84,7 +84,7 @@ end
     if isbitstype(T)
         return GC.@preserve v unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
     end
-    v.data[i]
+    getfield(v,:data)[i]
 end
 
 @propagate_inbounds function setindex!(v::MArray, val, i::Int)
@@ -102,7 +102,7 @@ end
     return v
 end
 
-@inline Tuple(v::MArray) = v.data
+@inline Tuple(v::MArray) = getfield(v,:data)
 
 Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
 

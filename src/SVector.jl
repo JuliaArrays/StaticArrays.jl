@@ -36,10 +36,6 @@ const SVector{S, T} = SArray{Tuple{S}, T, 1, S}
 ## SVector methods ##
 #####################
 
-@propagate_inbounds function getindex(v::SVector, i::Int)
-    v.data[i]
-end
-
 # Converting a CartesianIndex to an SVector
 convert(::Type{SVector}, I::CartesianIndex) = SVector(I.I)
 convert(::Type{SVector{N}}, I::CartesianIndex{N}) where {N} = SVector{N}(I.I)
@@ -117,3 +113,4 @@ macro SVector(ex)
         error("Use @SVector [a,b,c], @SVector Type[a,b,c] or a comprehension like [f(i) for i = i_min:i_max]")
     end
 end
+
