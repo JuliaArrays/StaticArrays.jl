@@ -234,7 +234,7 @@ end
 
 @generated function maxabs_nested(a::StaticArray)
     if prod(Size(a)) == 0
-        return :(StaticArrays._init_zero(a))
+        return :(_init_zero(a))
     end
 
     expr = :(maxabs_nested(a[1]))
