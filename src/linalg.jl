@@ -217,7 +217,7 @@ end
 # Norms
 _inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
 _inner_eltype(x::Number) = typeof(x)
-@inline _init_zero(v::StaticArray) = float(norm(zero(_inner_eltype(v))))
+@inline _init_zero(v::AbstractArray) = float(norm(zero(_inner_eltype(v))))
 
 @inline function LinearAlgebra.norm_sqr(v::StaticArray)
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
