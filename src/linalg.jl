@@ -252,11 +252,7 @@ end
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
 end
 
-@generated function norm(a::StaticArray)
-    if prod(Size(a)) == 0
-        return :(_init_zero(a))
-    end
-
+@generated function norm_scaled(a::StaticArray)
     expr = :(LinearAlgebra.norm_sqr(a[1]/aₘ))
     for j = 2:prod(Size(a))
         expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/aₘ))
@@ -274,16 +270,33 @@ end
     end
 end
 
+@generated function norm(a::StaticArray)
+    if prod(Size(a)) == 0
+        return :(_init_zero(a))
+    end
+
+    expr = :(LinearAlgebra.norm_sqr(a[1]))
+    for j = 2:prod(Size(a))
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        l = @inbounds sqrt($expr)
+        if iszero(l) || isinf(l)
+            return norm_scaled(a)
+        else
+            return l
+        end
+    end
+end
+
 function _norm_p0(x)
     T = _inner_eltype(x)
     return float(norm(iszero(x) ? zero(T) : one(T)))
 end
 
-@generated function norm(a::StaticArray, p::Real)
-    if prod(Size(a)) == 0
-        return :(_init_zero(a))
-    end
-
+@generated function norm_scaled(a::StaticArray, p::Real)
     expr = :(norm(a[1]/aₘ)^p)
     for j = 2:prod(Size(a))
         expr = :($expr + norm(a[$j]/aₘ)^p)
@@ -294,27 +307,57 @@ end
         expr_p1 = :($expr_p1 + norm(a[$j]/aₘ))
     end
 
-    expr_pInf = :(norm(a[1]/aₘ))
-    for j = 2:prod(Size(a))
-        expr_pInf = :(max($expr_pInf, norm(a[$j]/aₘ)))
-    end
-
     return quote
         $(Expr(:meta, :inline))
         zero_a = _init_zero(a)
         aₘ = maxabs_nested(a)
         if iszero(aₘ)
             return zero_a
-        elseif p == Inf
-            return aₘ * $expr_pInf
+        elseif p == 0
+            return mapreduce(_norm_p0, +, a)
         elseif p == 1
             @inbounds return aₘ * $expr_p1
         elseif p == 2
             return norm(a)
-        elseif p == 0
-            return mapreduce(_norm_p0, +, a)
         else
             @inbounds return aₘ * ($expr)^(inv(p))
+        end
+    end
+end
+
+@generated function norm(a::StaticArray, p::Real)
+    if prod(Size(a)) == 0
+        return :(_init_zero(a))
+    end
+
+    expr = :(norm(a[1])^p)
+    for j = 2:prod(Size(a))
+        expr = :($expr + norm(a[$j])^p)
+    end
+
+    expr_p1 = :(norm(a[1]))
+    for j = 2:prod(Size(a))
+        expr_p1 = :($expr_p1 + norm(a[$j]))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        p == Inf && return mapreduce(norm, max, a)  # no need to scale
+        p == 2 && return norm(a)  # norm(a) takes care of scaling
+
+        local l
+        if p == 0
+            l = mapreduce(_norm_p0, +, a)
+        elseif p == 1
+            l = @inbounds $expr_p1
+        else
+            l = @inbounds ($expr)^(inv(p))
+        end
+
+        if iszero(l) || isinf(l)
+            return norm_scaled(a, p)
+        else
+            return l
         end
     end
 end
