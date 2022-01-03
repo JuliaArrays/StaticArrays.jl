@@ -309,19 +309,12 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        zero_a = _init_zero(a)
         aₘ = maxabs_nested(a)
-        if iszero(aₘ)
-            return zero_a
-        elseif p == 0
-            return mapreduce(_norm_p0, +, a)
-        elseif p == 1
-            @inbounds return aₘ * $expr_p1
-        elseif p == 2
-            return norm(a)
-        else
-            @inbounds return aₘ * ($expr)^(inv(p))
-        end
+
+        iszero(aₘ) && return aₘ
+        p == 1 && return @inbounds aₘ * $expr_p1
+        p == 2 && return norm(a)
+        return @inbounds aₘ * ($expr)^(inv(p))
     end
 end
 
@@ -342,23 +335,13 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        p == Inf && return mapreduce(norm, max, a)  # no need to scale
+        p == 0 && return mapreduce(_norm_p0, +, a)  # no need for scaling
         p == 2 && return norm(a)  # norm(a) takes care of scaling
+        p == Inf && return mapreduce(norm, max, a)  # no need for scaling
 
-        local l
-        if p == 0
-            l = mapreduce(_norm_p0, +, a)
-        elseif p == 1
-            l = @inbounds $expr_p1
-        else
-            l = @inbounds ($expr)^(inv(p))
-        end
-
-        if iszero(l) || isinf(l)
-            return norm_scaled(a, p)
-        else
-            return l
-        end
+        l = p==1 ? @inbounds($expr_p1) : @inbounds(($expr)^(inv(p)))
+        (iszero(l) || isinf(l)) && return norm_scaled(a, p)
+        return l
     end
 end
 
