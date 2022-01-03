@@ -265,11 +265,11 @@ end
     return quote
         $(Expr(:meta, :inline))
         zero_a = _init_zero(a)
-        aₘ = mapreduce(norm, max, a)
+        aₘ = maxabs_nested(a)
         if iszero(aₘ)
             return zero_a
         else
-            @inbounds return (aₘ * sqrt($expr))::typeof(zero_a)
+            @inbounds return aₘ * sqrt($expr)
         end
     end
 end
@@ -294,22 +294,27 @@ end
         expr_p1 = :($expr_p1 + norm(a[$j]/aₘ))
     end
 
+    expr_pInf = :(norm(a[1]/aₘ))
+    for j = 2:prod(Size(a))
+        expr_pInf = :(max($expr_pInf, norm(a[$j]/aₘ)))
+    end
+
     return quote
         $(Expr(:meta, :inline))
         zero_a = _init_zero(a)
-        aₘ = mapreduce(norm, max, a)
+        aₘ = maxabs_nested(a)
         if iszero(aₘ)
             return zero_a
         elseif p == Inf
-            return aₘ
+            return aₘ * $expr_pInf
         elseif p == 1
-            @inbounds return (aₘ * $expr_p1)::typeof(zero_a)
+            @inbounds return aₘ * $expr_p1
         elseif p == 2
             return norm(a)
         elseif p == 0
             return mapreduce(_norm_p0, +, a)
         else
-            @inbounds return (aₘ * ($expr)^(inv(p)))::typeof(zero_a)
+            @inbounds return aₘ * ($expr)^(inv(p))
         end
     end
 end
