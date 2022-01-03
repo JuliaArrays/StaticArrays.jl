@@ -252,14 +252,13 @@ end
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
 end
 
-@inline norm(a::StaticArray) = _norm(Size(a), a)
-@generated function _norm(::Size{S}, a::StaticArray) where {S}
-    if prod(S) == 0
+@generated function norm(a::StaticArray)
+    if prod(Size(a)) == 0
         return :(_init_zero(a))
     end
 
     expr = :(LinearAlgebra.norm_sqr(a[1]/aₘ))
-    for j = 2:prod(S)
+    for j = 2:prod(Size(a))
         expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/aₘ))
     end
 
@@ -280,19 +279,18 @@ function _norm_p0(x)
     return float(norm(iszero(x) ? zero(T) : one(T)))
 end
 
-@inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
-@generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
-    if prod(S) == 0
+@generated function norm(a::StaticArray, p::Real)
+    if prod(Size(a)) == 0
         return :(_init_zero(a))
     end
 
     expr = :(norm(a[1]/aₘ)^p)
-    for j = 2:prod(S)
+    for j = 2:prod(Size(a))
         expr = :($expr + norm(a[$j]/aₘ)^p)
     end
 
     expr_p1 = :(norm(a[1]/aₘ))
-    for j = 2:prod(S)
+    for j = 2:prod(Size(a))
         expr_p1 = :($expr_p1 + norm(a[$j]/aₘ))
     end
 
