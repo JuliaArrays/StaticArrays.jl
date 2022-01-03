@@ -224,17 +224,17 @@ _inner_eltype(x::Number) = typeof(x)
 end
 
 @generated function norm_scaled(a::StaticArray)
-    expr = :(LinearAlgebra.norm_sqr(a[1]/aₘ))
+    expr = :(LinearAlgebra.norm_sqr(a[1]/scale))
     for j = 2:prod(Size(a))
-        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/aₘ))
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/scale))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        aₘ = LinearAlgebra.normInf(a)
+        scale = LinearAlgebra.normInf(a)
 
-        iszero(aₘ) && return aₘ
-        return @inbounds aₘ * sqrt($expr)
+        iszero(scale) && return scale
+        return @inbounds scale * sqrt($expr)
     end
 end
 
@@ -263,24 +263,24 @@ function _norm_p0(x)
 end
 
 @generated function norm_scaled(a::StaticArray, p::Real)
-    expr = :(norm(a[1]/aₘ)^p)
+    expr = :(norm(a[1]/scale)^p)
     for j = 2:prod(Size(a))
-        expr = :($expr + norm(a[$j]/aₘ)^p)
+        expr = :($expr + norm(a[$j]/scale)^p)
     end
 
-    expr_p1 = :(norm(a[1]/aₘ))
+    expr_p1 = :(norm(a[1]/scale))
     for j = 2:prod(Size(a))
-        expr_p1 = :($expr_p1 + norm(a[$j]/aₘ))
+        expr_p1 = :($expr_p1 + norm(a[$j]/scale))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        aₘ = LinearAlgebra.normInf(a)
+        scale = LinearAlgebra.normInf(a)
 
-        iszero(aₘ) && return aₘ
-        p == 1 && return @inbounds aₘ * $expr_p1
+        iszero(scale) && return scale
+        p == 1 && return @inbounds scale * $expr_p1
         p == 2 && return norm(a)
-        return @inbounds aₘ * ($expr)^(inv(p))
+        return @inbounds scale * ($expr)^(inv(p))
     end
 end
 
