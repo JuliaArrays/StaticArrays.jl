@@ -219,6 +219,35 @@ _inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v
 _inner_eltype(x::Number) = typeof(x)
 @inline _init_zero(v::AbstractArray) = float(norm(zero(_inner_eltype(v))))
 
+@inline maxabs_nested(a::Number) = abs(a)
+
+function maxabs_nested(a::AbstractArray)
+    prod(size(a)) == 0 && (return _init_zero(a))
+
+    m = maxabs_nested(a[1])
+    for j = 2:prod(size(a))
+        m = max(m, maxabs_nested(a[j]))
+    end
+
+    return m
+end
+
+@generated function maxabs_nested(a::StaticArray)
+    if prod(Size(a)) == 0
+        return :(StaticArrays._init_zero(a))
+    end
+
+    expr = :(maxabs_nested(a[1]))
+    for j = 2:prod(Size(a))
+        expr = :(max($expr, maxabs_nested(a[$j])))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        @inbounds return $expr
+    end
+end
+
 @inline function LinearAlgebra.norm_sqr(v::StaticArray)
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
 end
