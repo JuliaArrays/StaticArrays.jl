@@ -231,7 +231,7 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        scale = LinearAlgebra.normInf(a)
+        scale = mapreduce(norm, @fastmath(max), a)
 
         iszero(scale) && return scale
         return @inbounds scale * sqrt($expr)
@@ -275,7 +275,7 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        scale = LinearAlgebra.normInf(a)
+        scale = mapreduce(norm, @fastmath(max), a)
 
         iszero(scale) && return scale
         p == 1 && return @inbounds scale * $expr_p1
