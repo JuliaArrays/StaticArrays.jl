@@ -189,6 +189,10 @@ even permute the coordinates with `p[SVector(3,2,1)]`). Furthermore, `Point3D`
 is a complete `AbstractVector` implementation where you can add, subtract or
 scale vectors, multiply them by matrices, etc.
 
+*Note*: the three components of an ordinary `v::SVector{3}` can also be
+accessed as `v.x`, `v.y`, and `v.z`, so there is no need for a `FieldVector`
+to use this convention.
+
 It is also worth noting that `FieldVector`s may be mutable or immutable, and
 that `setindex!` is defined for use on mutable types. For immutable containers,
 you may want to define a method for `similar_type` so that operations leave the
