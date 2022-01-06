@@ -89,8 +89,8 @@ using StaticArrays, Test, LinearAlgebra
         m2_a = randn(2,2)
         m2_a = m2_a*m2_a'
         m2 = SMatrix{2,2}(m2_a)
-        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
-        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
+        @test (@inferred SVector{2,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+        @test (@inferred SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
     end
 
     @test_throws DimensionMismatch eigvals(SA[1 2 3; 4 5 6], SA[1 2 3; 4 5 5])
@@ -131,7 +131,7 @@ using StaticArrays, Test, LinearAlgebra
         m2_a = randn(3,3)
         m2_a = m2_a*m2_a'
         m2 = SMatrix{3,3}(m2_a)
-        @test (@inferred_maybe_allow SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+        @test (@inferred SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
     end
 
     @testset "3x3 degenerate cases" begin
@@ -256,7 +256,7 @@ using StaticArrays, Test, LinearAlgebra
 
             # Test that general eigen() gives a small union of concrete types
             SEigen{T} = Eigen{T, T, SArray{Tuple{n,n},T,2,n*n}, SArray{Tuple{n},T,1,n}}
-            @inferred_maybe_allow Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
+            @inferred Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
 
             mc = @SMatrix randn(ComplexF64, n, n)
             @inferred eigen(Hermitian(mc + mc'))

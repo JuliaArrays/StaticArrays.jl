@@ -306,13 +306,11 @@ end
     end
 end
 
-if VERSION >= v"1.6.0-DEV.1334"
-    # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
-    # don't overload iterate
-    @inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
-        newlen = tuple_prod(S) - i
-        return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
-    end
+# FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
+# don't overload iterate
+@inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
+    newlen = tuple_prod(S) - i
+    return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
 end
 
 # SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
