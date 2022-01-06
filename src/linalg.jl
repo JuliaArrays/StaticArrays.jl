@@ -53,8 +53,7 @@ end
 #--------------------------------------------------
 # Matrix algebra
 
-# Transpose, conjugate, etc
-@inline conj(a::StaticArray) = map(conj, a)
+# Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
