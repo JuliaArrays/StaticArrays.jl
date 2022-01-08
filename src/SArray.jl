@@ -113,10 +113,10 @@ sacollect
 ####################
 
 @propagate_inbounds function getindex(v::SArray, i::Int)
-    v.data[i]
+    getfield(v,:data)[i]
 end
 
-@inline Tuple(v::SArray) = v.data
+@inline Tuple(v::SArray) = getfield(v,:data)
 
 Base.dataids(::SArray) = ()
 
