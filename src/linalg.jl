@@ -291,7 +291,6 @@ end
 
         iszero(scale) && return _init_zero(a)
         p == 1 && return @inbounds scale * $expr_p1
-        p == 2 && return norm(a)
         return @inbounds scale * ($expr)^(inv(p))
     end
 end
