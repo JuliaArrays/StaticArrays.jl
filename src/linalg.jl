@@ -245,7 +245,7 @@ end
         $(Expr(:meta, :inline))
         scale = maxabs_nested(a)
 
-        iszero(scale) && return _init_zero(a)
+        scale==0 && return _init_zero(a)
         return @inbounds scale * sqrt($expr)
     end
 end
@@ -289,7 +289,7 @@ end
         $(Expr(:meta, :inline))
         scale = maxabs_nested(a)
 
-        iszero(scale) && return _init_zero(a)
+        scale==0 && return _init_zero(a)
         p == 1 && return @inbounds scale * $expr_p1
         return @inbounds scale * ($expr)^(inv(p))
     end
