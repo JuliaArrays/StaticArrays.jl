@@ -263,8 +263,8 @@ end
         $(Expr(:meta, :inline))
         l = @inbounds sqrt($expr)
 
-        (iszero(l) || isinf(l)) && return _norm_scaled(Size(a), a)
-        return l
+        0<l<Inf && return l
+        return _norm_scaled(Size(a), a)
     end
 end
 
@@ -316,8 +316,8 @@ end
         p == Inf && return mapreduce(norm, max, a)  # no need for scaling
 
         l = p==1 ? @inbounds($expr_p1) : @inbounds(($expr)^(inv(p)))
-        (iszero(l) || isinf(l)) && return _norm_scaled(Size(a), a, p)  # p != 0, 2, Inf
-        return l
+        0<l<Inf && return l
+        return _norm_scaled(Size(a), a, p)  # p != 0, 2, Inf
     end
 end
 
