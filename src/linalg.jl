@@ -223,6 +223,18 @@ _inner_eltype(x::Number) = typeof(x)
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
 end
 
+@inline maxabs_nested(a::Number) = abs(a)
+function maxabs_nested(a::AbstractArray)
+    prod(size(a)) == 0 && (return _init_zero(a))
+
+    m = maxabs_nested(a[1])
+    for j = 2:prod(size(a))
+        m = @fastmath max(m, maxabs_nested(a[j]))
+    end
+
+    return m
+end
+
 @generated function norm_scaled(a::StaticArray)
     expr = :(LinearAlgebra.norm_sqr(a[1]/scale))
     for j = 2:prod(Size(a))
@@ -231,9 +243,9 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        scale = mapreduce(norm, @fastmath(max), a)
+        scale = maxabs_nested(a)
 
-        iszero(scale) && return scale
+        iszero(scale) && return _init_zero(a)
         return @inbounds scale * sqrt($expr)
     end
 end
@@ -275,9 +287,9 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        scale = mapreduce(norm, @fastmath(max), a)
+        scale = maxabs_nested(a)
 
-        iszero(scale) && return scale
+        iszero(scale) && return _init_zero(a)
         p == 1 && return @inbounds scale * $expr_p1
         p == 2 && return norm(a)
         return @inbounds scale * ($expr)^(inv(p))
