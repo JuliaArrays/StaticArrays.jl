@@ -192,7 +192,7 @@ end
 ## reduce ##
 ############
 
-@inline reduce(op, a::StaticArray; dims = :, init = _InitialValue()) =
+@inline reduce(op::R, a::StaticArray; dims = :, init = _InitialValue()) where {R} =
     _reduce(op, a, dims, init)
 
 # disambiguation
@@ -206,7 +206,7 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
 reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
     _reduce(hcat, A, :, _InitialValue())
 
-@inline _reduce(op, a::StaticArray, dims, init = _InitialValue()) =
+@inline _reduce(op::R, a::StaticArray, dims, init = _InitialValue()) where {R} =
     _mapreduce(identity, op, dims, init, Size(a), a)
 
 ################
