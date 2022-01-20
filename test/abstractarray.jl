@@ -142,6 +142,10 @@ using StaticArrays, Test, LinearAlgebra
         msr = reshape(ms, SOneTo(4))
         msr[2] = 10
         @test ms == SA[1 2; 10 4]
+
+        s = SA[1,2];
+        s2 = @inferred reshape(s, axes(s,1), axes(s,2))
+        @test s2 isa StaticArray
     end
 
     @testset "copy" begin
