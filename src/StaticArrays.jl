@@ -1,6 +1,6 @@
 module StaticArrays
 
-import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
+import Base: @_propagate_inbounds_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
              promote_rule, map, map!, reduce, mapreduce, foldl, mapfoldl, broadcast,

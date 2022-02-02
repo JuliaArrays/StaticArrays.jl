@@ -100,7 +100,7 @@ end
         end
     end
     quote
-        Base.@_inline_meta
+        @_inline_meta
         return $(tuple(indexmat...))
     end
 end
