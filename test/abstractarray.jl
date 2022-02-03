@@ -104,6 +104,17 @@ using StaticArrays, Test, LinearAlgebra
         @test r == m[:, 2:3] * v[1:2] == Array(m)[:, 2:3] * Array(v)[1:2]
     end
 
+    if isdefined(Base, :IdentityUnitRange)
+        @testset "indexing SOneTo with IdentityUnitRange" begin
+            s = SOneTo(4)
+            for r in Any[Base.IdentityUnitRange(2:3), Base.IdentityUnitRange(SOneTo(2))]
+                si = @inferred s[r]
+                @test si == r
+                @test axes(si,1) == axes(r,1)
+            end
+            @test_throws BoundsError s[Base.IdentityUnitRange(1:5)]
+        end
+    end
 
     @testset "reshape" begin
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
@@ -232,6 +243,39 @@ using StaticArrays, Test, LinearAlgebra
         f(v, i) = length(v[i]);
         for i in 1:2
             @test (@inferred f(v, i)) == length(v[i])
+        end
+    end
+
+    @testset "views" begin
+        for a in Any[SVector{2}(1:2), MVector{2}(1:2)]
+            v = view(a, :)
+            @test axes(v) === axes(a)
+            v2 = view(a, SOneTo(1))
+            @test axes(v2, 1) === SOneTo(1)
+            if isdefined(Base, :IdentityUnitRange)
+                v2 = view(a, Base.IdentityUnitRange(SOneTo(1)))
+                @test axes(v2, 1) === SOneTo(1)
+            end
+        end
+        for a in Any[SMatrix{2,2}(1:4), MMatrix{2,2}(1:4)]
+            v = view(a, :, :)
+            @test axes(v) === axes(a)
+            v2 = view(a, SOneTo(1), SOneTo(1))
+            @test axes(v2) === (SOneTo(1), SOneTo(1))
+            if isdefined(Base, :IdentityUnitRange)
+                v2 = view(a, Base.IdentityUnitRange(SOneTo(1)), Base.IdentityUnitRange(SOneTo(1)))
+                @test axes(v2) === (SOneTo(1), SOneTo(1))
+            end
+        end
+    end
+
+    @testset "SOneTo" begin
+        if isdefined(Base, :IdentityUnitRange)
+            s = Base.IdentityUnitRange(SOneTo(3))
+            @test axes(s) == (SOneTo(3),)
+            @test axes(s,1) == SOneTo(3)
+            @test Base.axes1(s) == axes(s,1)
+            @test Base.unsafe_indices(s) == axes(s)
         end
     end
 end
