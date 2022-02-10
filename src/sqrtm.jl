@@ -1,4 +1,3 @@
-
 @inline sqrt(A::StaticMatrix) = _sqrt(Size(A),A)
 
 @inline function _sqrt(::Size{(0,0)}, A::SA) where {SA<:StaticArray}
