@@ -1,6 +1,7 @@
 using StaticArrays, Test
 
 @testset "Matrix square root" begin
+    @test sqrt(SMatrix{0,0,Int}())::SMatrix ≈ SMatrix{0,0,Bool}()
     @test sqrt(@SMatrix [2])::SMatrix ≈ SMatrix{1,1}(sqrt(2))
     @test sqrt(@SMatrix [5 2; -2 1])::SMatrix ≈ sqrt([5 2; -2 1])
     @test sqrt(@SMatrix [4 2; -2 1])::SMatrix ≈ sqrt([4 2; -2 1])

@@ -1,6 +1,10 @@
 
 @inline sqrt(A::StaticMatrix) = _sqrt(Size(A),A)
 
+@inline function _sqrt(::Size{(0,0)}, A::SA) where {SA<:StaticArray}
+    similar_type(SA,typeof(s))(())
+end
+
 @inline function _sqrt(::Size{(1,1)}, A::SA) where {SA<:StaticArray}
     s = sqrt(A[1,1])
     similar_type(SA,typeof(s))(s)
