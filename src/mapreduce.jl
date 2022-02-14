@@ -73,7 +73,7 @@ end
         @_inline_meta
         S = same_size(a...)
         @inbounds elements = tuple($(exprs...))
-        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), S)(elements)
+        @inbounds return similar_type(typeof(a[$first_staticarray]), eltype(elements), S)(elements)
     end
 end
 
