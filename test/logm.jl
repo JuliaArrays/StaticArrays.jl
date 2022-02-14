@@ -1,7 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
 @testset "Matrix logarithm" begin
-    @test log(SMatrix{0,0,Int}())::SMatrix == SMatrix{0,0,Bool}()
+    @test log(SMatrix{0,0,Int}())::SMatrix === SMatrix{0,0,Float64}()
     @test log(@SMatrix [2])::SMatrix ≈ SMatrix{1,1}(log(2))
     @test log(@SMatrix [5 2; -2 1])::SMatrix ≈ log([5 2; -2 1])
     @test log(@SMatrix [4 2; -2 1])::SMatrix ≈ log([4 2; -2 1])
