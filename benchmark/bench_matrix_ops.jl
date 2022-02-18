@@ -39,7 +39,7 @@ for f in [*, \]
         s2["SMatrix"] = @benchmarkable $f($SA, $SB)
         s2["Matrix"] = @benchmarkable $f($A, $B)
     end
-end 
+end
 
 # Multiply-add
 function benchmark_matmul(s,N1,N2,ArrayType)
