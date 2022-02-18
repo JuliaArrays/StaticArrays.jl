@@ -1,5 +1,12 @@
 @inline exp(A::StaticMatrix) = _exp(Size(A), A)
 
+@inline function _exp(::Size{(0,0)}, A::StaticMatrix)
+    T = typeof(exp(zero(eltype(A))))
+    newtype = similar_type(A,T)
+
+    (newtype)()
+end
+
 @inline function _exp(::Size{(1,1)}, A::StaticMatrix)
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)

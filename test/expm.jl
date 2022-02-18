@@ -1,6 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
 @testset "Matrix exponential" begin
+    @test exp(SMatrix{0,0,Int}())::SMatrix === SMatrix{0,0,Float64}()
     @test exp(@SMatrix [2])::SMatrix ≈ SMatrix{1,1}(exp(2))
     @test exp(@SMatrix [5 2; -2 1])::SMatrix ≈ exp([5 2; -2 1])
     @test exp(@SMatrix [4 2; -2 1])::SMatrix ≈ exp([4 2; -2 1])
