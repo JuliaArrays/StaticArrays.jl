@@ -65,7 +65,7 @@ shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
     (x === nothing && generator_too_short_error(inds, i); x)
 
 @generated function sacollect(::Type{SA}, gen) where {SA <: StaticArray{S}} where {S <: Tuple}
-    stmts = [:(Base.@_inline_meta)]
+    stmts = [:(@_inline_meta)]
     args = []
     iter = :(iterate(gen))
     inds = CartesianIndices(size_to_tuple(S))
