@@ -1,5 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
+@testset "LU" begin
+
 @testset "LU utils" begin
     F = lu(SA[1 2; 3 4])
 
@@ -76,3 +78,5 @@ end
         @test isa(lu(A; check=true),  StaticArrays.LU)
     end
 end
+
+end # @testset "LU"
