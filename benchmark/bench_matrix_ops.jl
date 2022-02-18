@@ -7,9 +7,9 @@ using StaticArrays
 
 const suite = BenchmarkGroup()
 const matrix_sizes = if haskey(ENV, "GITHUB_EVENT_PATH")
-    (1, 2, 3, 4, 10, 20)
+    (1, 2, 3, 4, 10)
 else
-    1:20
+    1:10
 end
 
 # Use same arrays across processes (at least with the same Julia version):
@@ -39,7 +39,7 @@ for f in [*, \]
         s2["SMatrix"] = @benchmarkable $f($SA, $SB)
         s2["Matrix"] = @benchmarkable $f($A, $B)
     end
-end
+end 
 
 # Multiply-add
 function benchmark_matmul(s,N1,N2,ArrayType)
