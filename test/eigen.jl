@@ -134,6 +134,15 @@ using StaticArrays, Test, LinearAlgebra
         @test (@inferred SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
     end
 
+    @testset "3×3 complex" begin
+        m = SMatrix{3,3}(ComplexF64[
+            0.0 + 0.0im -0.0 - 1.3823165541274323im -0.0 - 0.29894503384118465im;
+            0.0 + 1.3823165541274323im 0.0 + 0.0im -0.0 - 1.9507754416262268im;
+            0.0 + 0.29894503384118465im 0.0 + 1.9507754416262268im 0.0 + 0.0im])
+        vals = eigvals(m)
+        @test isapprox(vals, eigvals(Matrix(m)))
+    end
+
     @testset "3x3 degenerate cases" begin
         # Rank 1
         v = randn(SVector{3,Float64})
