@@ -41,9 +41,7 @@
         @test size(SizedArray{Tuple{4,5},Int}(undef).data) == (4, 5)
 
         # 0-element constructor
-        if VERSION >= v"1.1"
-            @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
-        end
+        @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
 
         # From Tuple
         @test @inferred(SizedArray{Tuple{2},Float64,1,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
@@ -82,9 +80,7 @@
         @test convert(Matrix, SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
 
         # 0-element constructor
-        if VERSION >= v"1.1"
-            @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
-        end
+        @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
     end
 
     # setindex
@@ -98,15 +94,14 @@
     # pointer
     @testset "pointer" begin
         @test pointer(sa) === pointer(sa.data)
-        if VERSION ≥ v"1.5"
-            A = MMatrix{32,3,Float64}(undef);
-            av1 = view(A, 1, :);
-            av2 = view(A, :, 1);
-            @test pointer(A) == pointer(av1) == pointer(av2)
-            @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
-            @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
-            @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
-        end
+
+        A = MMatrix{32,3,Float64}(undef);
+        av1 = view(A, 1, :);
+        av2 = view(A, :, 1);
+        @test pointer(A) == pointer(av1) == pointer(av2)
+        @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
+        @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
+        @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
     end
     
     @testset "vec" begin

@@ -40,15 +40,13 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
         #@test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
 
-        if VERSION ≥ v"1.2"
-            # #899 matrix-of-matrix
-            A = SMatrix{1,1}([1])
-            B = SMatrix{1,1}([A])
-            @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-        end
+        # #899 matrix-of-matrix
+        A = SMatrix{1,1}([1])
+        B = SMatrix{1,1}([A])
+        @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
     end
 
     @testset "Ternary operators" begin
@@ -142,10 +140,7 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "diagm()" begin
-        if VERSION >= v"1.3"
-            @test diagm() isa BitArray # issue #961: type piracy of zero-arg diagm
-            # `diagm()` fails on older version of Julia even without StaticArrays.jl
-        end
+        @test diagm() isa BitArray # issue #961: type piracy of zero-arg diagm
         @test @inferred(diagm(SA[1,2])) === SA[1 0; 0 2]
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
@@ -250,17 +245,16 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         @test normalize!(MVector(1.,2.,3.)) ≈ normalize([1.,2.,3.])
         @test normalize!(MVector(1.,2.,3.), 1) ≈ normalize([1.,2.,3.], 1)
 
-        if VERSION ≥ v"1.5" # `normalize` with `AbstractArray` signature added in v1.5
-            @test normalize(SA[1 2 3; 4 5 6; 7 8 9]) ≈ normalize([1 2 3; 4 5 6; 7 8 9])
-            @test normalize(SA[1 2 3; 4 5 6; 7 8 9], 1) ≈ normalize([1 2 3; 4 5 6; 7 8 9], 1)
-            @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.])) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.])
-            @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.]), 1) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.], 1)
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9]) ≈ normalize([1 2 3; 4 5 6; 7 8 9])
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9], 1) ≈ normalize([1 2 3; 4 5 6; 7 8 9], 1)
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.])) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.])
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.]), 1) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.], 1)
 
-            D3 = Array{Float64, 3}(undef, 2, 2, 3)
-            D3[:] .= 1.0:12.0
-            SA_D3 = convert(SArray{Tuple{2,2,3}, Float64, 3, 12}, D3)
-            @test normalize(SA_D3) ≈ normalize(D3)
-        end
+        D3 = Array{Float64, 3}(undef, 2, 2, 3)
+        D3[:] .= 1.0:12.0
+        SA_D3 = convert(SArray{Tuple{2,2,3}, Float64, 3, 12}, D3)
+        @test normalize(SA_D3) ≈ normalize(D3)
+
         # nested vectors
         a  = SA[SA[1, 2], SA[3, 4]]
         av = convert(Vector{Vector{Int}}, a)
@@ -296,15 +290,11 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         end
 
         # type-stability
-        if VERSION ≥ v"1.2"
-            # only test strict type-stability on v1.2+, since there were Base-related type
-            # instabilities in `norm` prior to https://github.com/JuliaLang/julia/pull/30481
-            @test (@inferred norm(a[1])) == (@inferred norm(a[1], 2))
-            @test (@inferred norm(a)) == (@inferred norm(a, 2))
-            @test (@inferred norm(aa)) == (@inferred norm(aa, 2))
-            @test (@inferred norm(float.(aa))) == (@inferred norm(float.(aa), 2))
-            @test (@inferred norm(SVector{0,Int}())) == (@inferred norm(SVector{0,Int}(), 2))
-        end
+        @test (@inferred norm(a[1])) == (@inferred norm(a[1], 2))
+        @test (@inferred norm(a)) == (@inferred norm(a, 2))
+        @test (@inferred norm(aa)) == (@inferred norm(aa, 2))
+        @test (@inferred norm(float.(aa))) == (@inferred norm(float.(aa), 2))
+        @test (@inferred norm(SVector{0,Int}())) == (@inferred norm(SVector{0,Int}(), 2))
 
         # norm of empty SVector
         @test norm(SVector{0,Int}()) isa float(Int)
