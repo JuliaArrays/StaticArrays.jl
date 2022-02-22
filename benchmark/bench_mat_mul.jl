@@ -26,7 +26,7 @@ mul_wrappers_reduced = [
     (m -> Transpose(m), "transpo"),
     (m -> Diagonal(m), "diag   ")]
 
-for N in [2, 4, 8, 10, 16]
+for N in [2, 4, 8, 10, 12]
 
     matvecstr = @sprintf("mat-vec  %2d", N)
     matmatstr = @sprintf("mat-mat  %2d", N)
@@ -205,7 +205,7 @@ function pick_best(results, mul_wrappers, size_iter; tol = 1.2)
 end
 
 function run_1()
-    return full_benchmark(mul_wrappers_reduced, [2, 3, 4, 5, 8, 9, 14, 16])
+    return full_benchmark(mul_wrappers_reduced, [2, 3, 4, 5, 8, 9, 12])
 end
 
 end #module
