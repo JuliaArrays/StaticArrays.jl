@@ -27,7 +27,7 @@ Random.seed!(42)
 
         # pivot=true cases has no StaticArrays specific version yet
         # but fallbacks to LAPACK
-        pivot = Val(true)
+        pivot = isdefined(LinearAlgebra, :PivotingStrategy) ? ColumnNorm() : Val(true)
         QRp = @inferred qr(arr, pivot)
         @test QRp isa StaticArrays.QR
         Q, R, p = QRp
