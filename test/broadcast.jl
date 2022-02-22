@@ -282,3 +282,30 @@ end
     end
 
 end
+
+# A help struct to test style-based broadcast dispatch with unknown array wrapper.
+# `WrapArray(A)` behaves like `A` during broadcast. But its not a `StaticArray`.
+struct WrapArray{T,N,P<:AbstractArray{T,N}} <: AbstractArray{T,N}
+    data::P
+end
+Base.@propagate_inbounds Base.getindex(A::WrapArray, i::Integer...) = A.data[i...]
+Base.@propagate_inbounds Base.setindex!(A::WrapArray, v::Any, i::Integer...) = setindex!(A.data, v, i...)
+Base.size(A::WrapArray) = size(A.data)
+Broadcast.BroadcastStyle(::Type{WrapArray{T,N,P}}) where {T,N,P} = Broadcast.BroadcastStyle(P)
+StaticArrays.isstatic(A::WrapArray) = StaticArrays.isstatic(A.data)
+StaticArrays.Size(::Type{WrapArray{T,N,P}}) where {T,N,P} = StaticArrays.Size(P)
+function StaticArrays.similar_type(::Type{WrapArray{T,N,P}}, ::Type{t}, s::Size{S}) where {T,N,P,t,S}
+    return StaticArrays.similar_type(P, t, s)
+end
+
+@testset "Broadcast with unknown wrapper" begin
+    data = (1, 2)
+    for T in (SVector{2}, MVector{2})
+        a = T(data)
+        b = WrapArray(a)
+        @test @inferred(b .+ a) isa T
+        @test @inferred(b .+ b) isa T
+        @test @inferred(b .+ (1, 2)) isa T
+        @test b .+ a == b .+ b == a .+ a 
+    end
+end

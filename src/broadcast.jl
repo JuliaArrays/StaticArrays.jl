@@ -97,19 +97,28 @@ end
 scalar_getindex(x) = x
 scalar_getindex(x::Ref) = x[]
 
-@generated function _broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
-    first_staticarray = a[findfirst(ai -> ai <: Union{StaticArray, Transpose{<:Any, <:StaticArray}, Adjoint{<:Any, <:StaticArray}, Diagonal{<:Any, <:StaticArray}}, a)]
+isstatic(::StaticArray) = true
+isstatic(::Transpose{<:Any, <:StaticArray}) = true
+isstatic(::Adjoint{<:Any, <:StaticArray}) = true
+isstatic(::Diagonal{<:Any, <:StaticArray}) = true
+isstatic(_) = false
 
+@inline first_statictype(x, y...) = isstatic(x) ? typeof(x) : first_statictype(y...)
+first_statictype() = error("unresolved dest type")
+
+@inline function _broadcast(f, sz::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
+    first_staticarray = first_statictype(a...)
     if prod(newsize) == 0
         # Use inference to get eltype in empty case (see also comments in _map)
-        eltys = [:(eltype(a[$i])) for i ∈ 1:length(a)]
-        return quote
-            @_inline_meta
-            T = Core.Compiler.return_type(f, Tuple{$(eltys...)})
-            @inbounds return similar_type($first_staticarray, T, Size(newsize))()
-        end
+        eltys = Tuple{map(eltype, a)...}
+        T = Core.Compiler.return_type(f, eltys)
+        @inbounds return similar_type(first_staticarray, T, Size(newsize))()
     end
+    elements = __broadcast(f, sz, s, a...)
+    @inbounds return similar_type(first_staticarray, eltype(elements), Size(newsize))(elements)
+end
 
+@generated function __broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
     sizes = [sz.parameters[1] for sz ∈ s.parameters]
     indices = CartesianIndices(newsize)
     exprs = similar(indices, Expr)
@@ -123,8 +132,7 @@ scalar_getindex(x::Ref) = x[]
 
     return quote
         @_inline_meta
-        @inbounds elements = tuple($(exprs...))
-        @inbounds return similar_type($first_staticarray, eltype(elements), Size(newsize))(elements)
+        @inbounds return elements = tuple($(exprs...))
     end
 end
 
