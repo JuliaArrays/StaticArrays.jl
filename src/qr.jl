@@ -11,9 +11,14 @@ Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:p))
 Base.iterate(S::QR, ::Val{:p}) = (S.p, Val(:done))
 Base.iterate(S::QR, ::Val{:done}) = nothing
 
-for pv in (:true, :false)
+pivot_options = if isdefined(LinearAlgebra, :PivotingStrategy) # introduced in Julia v1.7
+    (:(Val{true}), :(Val{false}), :NoPivot, :ColumnNorm)
+else
+    (:(Val{true}), :(Val{false}))
+end
+for pv in pivot_options
     @eval begin
-        @inline function qr(A::StaticMatrix, pivot::Val{$pv})
+        @inline function qr(A::StaticMatrix, pivot::$pv)
             QRp = _qr(Size(A), A, pivot)
             if length(QRp) === 2
                 # create an identity permutation since that is cheap,
@@ -28,7 +33,8 @@ for pv in (:true, :false)
     end
 end
 """
-    qr(A::StaticMatrix, pivot::Union{Val{true}, Val{false}} = Val(false))
+    qr(A::StaticMatrix,
+       pivot::Union{Val{true}, Val{false}, LinearAlgebra.PivotingStrategy} = Val(false))
 
 Compute the QR factorization of `A`. The factors can be obtained by iteration:
 
@@ -58,16 +64,17 @@ end
 
 _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
 
-
-@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA}, pivot::Union{Val{false}, Val{true}} = Val(false)) where {sA, TA}
+@generated function _qr(::Size{sA}, A::StaticMatrix{<:Any, <:Any, TA},
+                        pivot = Val(false)) where {sA, TA}
 
     SizeQ = Size( sA[1], diagsize(Size(A)) )
     SizeR = Size( diagsize(Size(A)), sA[2] )
 
-    if pivot === Val{true}
+    if pivot === Val{true} || (isdefined(LinearAlgebra, :PivotingStrategy) && pivot === ColumnNorm)
+        _pivot = isdefined(LinearAlgebra, :PivotingStrategy) ? ColumnNorm() : Val(true)
         return quote
             @_inline_meta
-            Q0, R0, p0 = qr(Matrix(A), pivot)
+            Q0, R0, p0 = qr(Matrix(A), $(_pivot))
             T = _qreltype(TA)
             return similar_type(A, T, $(SizeQ))(Matrix(Q0)),
                    similar_type(A, T, $(SizeR))(R0),
@@ -77,12 +84,13 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
         if (sA[1]*sA[1] + sA[1]*sA[2])÷2 * diagsize(Size(A)) < 17*17*17
             return quote
                 @_inline_meta
-                return qr_unrolled(Size(A), A, pivot)
+                return qr_unrolled(Size(A), A, Val(false))
             end
         else
+            _pivot = isdefined(LinearAlgebra, :PivotingStrategy) ? NoPivot() : Val(false)
             return quote
                 @_inline_meta
-                Q0R0 = qr(Matrix(A), pivot)
+                Q0R0 = qr(Matrix(A), $(_pivot))
                 Q0, R0 = Matrix(Q0R0.Q), Q0R0.R
                 T = _qreltype(TA)
                 return similar_type(A, T, $(SizeQ))(Q0),

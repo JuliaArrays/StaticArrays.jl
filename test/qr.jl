@@ -59,6 +59,14 @@ Random.seed!(42)
                ]
         test_qr(arr)
     end
+
+    if isdefined(LinearAlgebra, :PivotingStrategy)
+        for N = (3, 18)
+            A = (@SMatrix randn(N,N))
+            @test qr(A, Val(false)) == qr(A, NoPivot())
+            @test qr(A, Val(true)) == qr(A, ColumnNorm())
+        end
+    end
 end
 
 @testset "QR method ambiguity" begin

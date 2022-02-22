@@ -30,16 +30,21 @@ function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
 end
 
 # LU decomposition
-for pv in (:true, :false)
+pivot_options = if isdefined(LinearAlgebra, :PivotingStrategy) # introduced in Julia v1.7
+    (:(Val{true}), :(Val{false}), :NoPivot, :RowMaximum)
+else
+    (:(Val{true}), :(Val{false}))
+end
+for pv in pivot_options
     # ... define each `pivot::Val{true/false}` method individually to avoid ambiguties
-    @eval function lu(A::StaticMatrix, pivot::Val{$pv}; check = true)
+    @eval function lu(A::StaticMatrix, pivot::$pv; check = true)
         L, U, p = _lu(A, pivot, check)
         LU(L, U, p)
     end
 
     # For the square version, return explicit lower and upper triangular matrices.
     # We would do this for the rectangular case too, but Base doesn't support that.
-    @eval function lu(A::StaticMatrix{N,N}, pivot::Val{$pv}; check = true) where {N}
+    @eval function lu(A::StaticMatrix{N,N}, pivot::$pv; check = true) where {N}
         L, U, p = _lu(A, pivot, check)
         LU(LowerTriangular(L), UpperTriangular(U), p)
     end
@@ -69,8 +74,13 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
 
 @generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}
     if M*N ≤ 14*14
+        _pivot = if isdefined(LinearAlgebra, :PivotingStrategy) # v1.7 feature
+            pivot === RowMaximum ? Val(true) : pivot === NoPivot ? Val(false) : pivot()
+        else
+            pivot()
+        end
         quote
-            L, U, P = __lu(A, pivot)
+            L, U, P = __lu(A, $(_pivot))
             if check
                 i = _first_zero_on_diagonal(U)
                 i == 0 || throw(SingularException(i))
@@ -78,15 +88,14 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
             L, U, P
         end
     else
+        _pivot = if isdefined(LinearAlgebra, :PivotingStrategy) # v1.7 feature
+            pivot === Val{true} ? RowMaximum() : pivot === Val{false} ? NoPivot() : pivot()
+        else
+            pivot()
+        end
         quote
             # call through to Base to avoid excessive time spent on type inference for large matrices
-            _pivot = if pivot === Val(true)
-                RowMaximum()
-            else
-                NoPivot()
-            end
-                
-            f = lu(Matrix(A), _pivot; check = check)
+            f = lu(Matrix(A), $(_pivot); check = check)
             # Trick to get the output eltype - can't rely on the result of f.L as
             # it's not type inferrable.
             T2 = arithmetic_closure(T)
