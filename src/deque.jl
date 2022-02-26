@@ -69,7 +69,7 @@ julia> insert(@SVector[6, 5, 4, 2, 1], 4, 3)
 @propagate_inbounds insert(vec::StaticVector, index, x) = _insert(Size(vec), vec, index, x)
 @generated function _insert(::Size{s}, vec::StaticVector, index, x) where {s}
     newlen = s[1] + 1
-    exprs = [(i == 1 ? :(ifelse($i < index, vec[$i], x)) :
+    exprs = [(i == 1 ? :(if $i < index; vec[$i] else x; end) :
               i == newlen ? :(ifelse($i == index, x, vec[$i-1])) :
               :(ifelse($i < index, vec[$i], ifelse($i == index, x, vec[$i-1])))) for i = 1:newlen]
     return quote
