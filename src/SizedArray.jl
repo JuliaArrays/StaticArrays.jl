@@ -232,3 +232,5 @@ end
 function Base.vec(a::SizedArray{S}) where {S}
     return SizedVector{tuple_prod(S)}(vec(a.data))
 end
+
+Base.ismutable(x::SizedArray) = ismutable(x.data)

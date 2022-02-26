@@ -240,3 +240,8 @@ struct OVector <: AbstractVector{Int} end
 Base.length(::OVector) = 10
 Base.axes(::OVector) = (0:9,)
 @test_throws ArgumentError SizedVector{10}(OVector())
+
+@testset "Mutability" begin
+    @test ismutable(SizedVector{3}([1,2,3])) == true
+    @test ismutable(SizedVector{3}(1:3)) == false
+end
