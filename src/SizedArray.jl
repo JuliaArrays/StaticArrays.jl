@@ -120,7 +120,7 @@ end
 end
 
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
-@propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
+@propagate_inbounds setindex!(a::SizedArray, v, i::Int) = (setindex!(a.data, v, i); a)
 
 Base.parent(sa::SizedArray) = sa.data
 

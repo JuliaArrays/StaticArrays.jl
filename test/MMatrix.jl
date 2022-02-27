@@ -102,6 +102,8 @@
         m[3] = 13
         m[4] = 14
         @test m.data === (11, 12, 13, 14)
+        @test setindex!(m, 13, 3) === m
+        @test setindex!(m, 12, 2, 1) === m
 
         m = @MMatrix [0 0; 0 0]
         m[1] = Int8(11)
