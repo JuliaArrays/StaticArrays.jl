@@ -84,11 +84,23 @@
     end
 
     # setindex
-    sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
-    sa[1] = 2
-    @test sa.data == [2, 4]
+    @testset "setindex" begin
+        sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
+        sa[1] = 2
+        @test sa.data == [2, 4]
+        @test setindex!(sa, 2, 1) === sa
+
+        sm = SizedArray{Tuple{4,3}}(rand(4, 3))
+        sm[1] = 2
+        @test sa.data[1] == 2
+        sm[2, 3] = 4
+        @test sm.data[2, 3] == 4
+        @test setindex!(sm, 0.5, 1) === sm
+        @test setindex!(sm, 0.5, 2, 3) === sm
+    end
 
     # parent
+    sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
     @test parent(sa) === sa.data
 
     # pointer
