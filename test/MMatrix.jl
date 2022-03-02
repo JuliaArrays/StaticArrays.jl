@@ -51,6 +51,7 @@
         test_expand_error(:(@MMatrix ones))
         test_expand_error(:(@MMatrix sin(1:5)))
         test_expand_error(:(@MMatrix [1; 2; 3; 4]...))
+        test_expand_error(:(@MMatrix a))
 
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)
@@ -67,6 +68,17 @@
 
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
         @test_throws DimensionMismatch MMatrix{3}((1,2,3,4))
+
+        if VERSION >= v"1.7.0"
+            @test ((@MMatrix Float64[1;2;3;;;])::MMatrix{3,1}).data === (1.0, 2.0, 3.0)
+            @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
+            @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
+            # @test ((@MMatrix [;;])::MMatrix{0,0}).data === ()
+            @eval @test ((@MMatrix $(Expr(:ncat, 2)))::MMatrix{0,0}).data === ()
+            # test_expand_error(:(@MMatrix [;;;]))
+            @eval test_expand_error(:(@MMatrix $(Expr(:ncat, 3))))
+            test_expand_error(:(@MMatrix [1;2;;;1;2]))
+        end
     end
 
     @testset "Methods" begin

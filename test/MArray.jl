@@ -115,6 +115,35 @@
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]
+
+        # Nested cat
+        @test ((@MArray [[1;2] [3;4]])::MMatrix{2,2}).data === (1,2,3,4)
+        @test ((@MArray Float64[[1;2] [3;4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
+        @test ((@MArray [[1 3];[2 4]])::MMatrix{2,2}).data === (1,2,3,4)
+        @test ((@MArray Float64[[1 3];[2 4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
+        test_expand_error(:(@MArray [[1;2] [3]]))
+        test_expand_error(:(@MArray [[1 2]; [3]]))
+
+        if VERSION >= v"1.7.0"
+            function test_ex(ex)
+                a = eval(:(@MArray $ex))
+                b = eval(ex)
+                @test a isa MArray
+                @test eltype(a) === eltype(b)
+                @test a == b    
+            end
+            test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:([1 2 ;;; 3 4]))
+            test_ex(:(Float32[1 2 ;;; 3 4]))
+            test_ex(:([ 1 2
+                        3 4
+                        ;;;
+                        5 6
+                        7 8 ]))
+            test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
+            test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
+        end
     end
 
     @testset "Methods" begin

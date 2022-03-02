@@ -109,6 +109,35 @@
 
         # Non-square comprehensions built from SVectors - see #76
         @test @SArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
+
+        # Nested cat
+        @test ((@SArray [[1;2] [3;4]])::SMatrix{2,2}).data === (1,2,3,4)
+        @test ((@SArray Float64[[1;2] [3;4]])::SMatrix{2,2}).data === (1.,2.,3.,4.)
+        @test ((@SArray [[1 3];[2 4]])::SMatrix{2,2}).data === (1,2,3,4)
+        @test ((@SArray Float64[[1 3];[2 4]])::SMatrix{2,2}).data === (1.,2.,3.,4.)
+        test_expand_error(:(@SArray [[1;2] [3]]))
+        test_expand_error(:(@SArray [[1 2]; [3]]))
+
+        if VERSION >= v"1.7.0"
+            function test_ex(ex)
+                a = eval(:(@SArray $ex))
+                b = eval(ex)
+                @test a isa SArray
+                @test eltype(a) === eltype(b)
+                @test a == b
+            end
+            test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:([1 2 ;;; 3 4]))
+            test_ex(:(Float32[1 2 ;;; 3 4]))
+            test_ex(:([ 1 2
+                        3 4
+                        ;;;
+                        5 6
+                        7 8 ]))
+            test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
+            test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
+        end
     end
 
     @testset "Methods" begin
