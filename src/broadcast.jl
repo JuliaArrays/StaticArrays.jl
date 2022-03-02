@@ -60,8 +60,11 @@ static_check_broadcast_shape(::Tuple{}, ::Tuple{}) = ()
 @inline function Base.copy(B::Broadcasted{StaticArrayStyle{M}}) where M
     flat = Broadcast.flatten(B); as = flat.args; f = flat.f
     argsizes = broadcast_sizes(as...)
-    destsize = combine_sizes(argsizes)
-    _broadcast(f, destsize, argsizes, as...)
+    ax = axes(B)
+    if ax isa Tuple{Vararg{SOneTo}}
+        return _broadcast(f, Size(map(length, ax)), argsizes, as...)
+    end
+    return copy(convert(Broadcasted{DefaultArrayStyle{M}}, B))
 end
 # copyto! overloads
 @inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
@@ -69,12 +72,13 @@ end
 @inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
     flat = Broadcast.flatten(B); as = flat.args; f = flat.f
     argsizes = broadcast_sizes(as...)
-    destsize = combine_sizes((Size(dest), argsizes...))
-    if Length(destsize) === Length{Dynamic()}()
-        # destination dimension cannot be determined statically; fall back to generic broadcast!
-        return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
+    ax = axes(B)
+    if ax isa Tuple{Vararg{SOneTo}}
+        @boundscheck axes(dest) == ax || Broadcast.throwdm(axes(dest), ax)
+        return _broadcast!(f, Size(map(length, ax)), dest, argsizes, as...)
     end
-    _broadcast!(f, destsize, dest, argsizes, as...)
+    # destination dimension cannot be determined statically; fall back to generic broadcast!
+    return copyto!(dest, convert(Broadcasted{DefaultArrayStyle{M}}, B))
 end
 
 # Resolving priority between dynamic and static axes
@@ -101,44 +105,12 @@ broadcast_indices(A::StaticArray) = indices(A)
 @inline broadcast_size(a::AbstractArray) = Size(a)
 @inline broadcast_size(a::Tuple) = Size(length(a))
 
-function broadcasted_index(oldsize, newindex)
-    index = ones(Int, length(oldsize))
-    for i = 1:length(oldsize)
-        if oldsize[i] != 1
-            index[i] = newindex[i]
-        end
-    end
-    return LinearIndices(oldsize)[index...]
+broadcast_getindex(::Tuple{}, i::Int, I::CartesianIndex) = return :(_broadcast_getindex(a[$i], $I))
+function broadcast_getindex(oldsize::Tuple, i::Int, newindex::CartesianIndex)
+    li = LinearIndices(oldsize)
+    ind = _broadcast_getindex(li, newindex)
+    return :(a[$i][$ind])
 end
-
-# similar to Base.Broadcast.combine_indices:
-@generated function combine_sizes(s::Tuple{Vararg{Size}})
-    sizes = [sz.parameters[1] for sz ∈ s.parameters]
-    ndims = 0
-    for i = 1:length(sizes)
-        ndims = max(ndims, length(sizes[i]))
-    end
-    newsize = StaticDimension[Dynamic() for _ = 1 : ndims]
-    for i = 1:length(sizes)
-        s = sizes[i]
-        for j = 1:length(s)
-            if s[j] isa Dynamic
-                continue
-            elseif newsize[j] isa Dynamic || newsize[j] == 1
-                newsize[j] = s[j]
-            elseif newsize[j] ≠ s[j] && s[j] ≠ 1
-                throw(DimensionMismatch("Tried to broadcast on inputs sized $sizes"))
-            end
-        end
-    end
-    quote
-        @_inline_meta
-        Size($(tuple(newsize...)))
-    end
-end
-
-scalar_getindex(x) = x
-scalar_getindex(x::Ref) = x[]
 
 isstatic(::StaticArray) = true
 isstatic(::Transpose{<:Any, <:StaticArray}) = true
@@ -163,13 +135,11 @@ end
 
 @generated function __broadcast(f, ::Size{newsize}, s::Tuple{Vararg{Size}}, a...) where newsize
     sizes = [sz.parameters[1] for sz ∈ s.parameters]
+
     indices = CartesianIndices(newsize)
     exprs = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
-        exprs_vals = [
-            (!(a[i] <: AbstractArray || a[i] <: Tuple) ? :(scalar_getindex(a[$i])) : :(a[$i][$(broadcasted_index(sizes[i], current_ind))]))
-            for i = 1:length(sizes)
-        ]
+        exprs_vals = (broadcast_getindex(sz, i, current_ind) for (i, sz) in enumerate(sizes))
         exprs[j] = :(f($(exprs_vals...)))
     end
 
@@ -183,27 +153,18 @@ end
 ## Internal broadcast! machinery for StaticArrays ##
 ####################################################
 
-@generated function _broadcast!(f, ::Size{newsize}, dest::AbstractArray, s::Tuple{Vararg{Size}}, as...) where {newsize}
-    sizes = [sz.parameters[1] for sz ∈ s.parameters]
-    sizes = tuple(sizes...)
-
-    # TODO: this could also be done outside the generated function:
-    sizematch(Size{newsize}(), Size(dest)) ||
-        throw(DimensionMismatch("Tried to broadcast to destination sized $newsize from inputs sized $sizes"))
+@generated function _broadcast!(f, ::Size{newsize}, dest::AbstractArray, s::Tuple{Vararg{Size}}, a...) where {newsize}
+    sizes = [sz.parameters[1] for sz in s.parameters]
 
     indices = CartesianIndices(newsize)
     exprs = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
-        exprs_vals = [
-            (!(as[i] <: AbstractArray || as[i] <: Tuple) ? :(as[$i][]) : :(as[$i][$(broadcasted_index(sizes[i], current_ind))]))
-            for i = 1:length(sizes)
-        ]
+        exprs_vals = (broadcast_getindex(sz, i, current_ind) for (i, sz) in enumerate(sizes))
         exprs[j] = :(dest[$j] = f($(exprs_vals...)))
     end
 
     return quote
-        @_propagate_inbounds_meta
-        @boundscheck sizematch($(Size{newsize}()), dest) || throw(DimensionMismatch("array could not be broadcast to match destination"))
+        @_inline_meta
         @inbounds $(Expr(:block, exprs...))
         return dest
     end
