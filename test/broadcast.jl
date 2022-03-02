@@ -302,13 +302,14 @@ end
 @testset "Broadcast with unknown wrapper" begin
     data = (1, 2)
     for T in (SVector{2}, MVector{2})
+        destT = T <: SArray ? SArray : MArray
         a = T(data)
         for b in (WrapArray(a), WrapArray(a'))
-            @test @inferred(b .+ a) isa T
-            @test @inferred(b .+ b) isa T
-            @test @inferred(b .+ (1, 2)) isa T
-            @test @inferred(b .+ a') isa StaticMatrix
-            @test @inferred(a' .+ b) isa StaticMatrix
+            @test @inferred(b .+ a) isa destT
+            @test @inferred(b .+ b) isa destT
+            @test @inferred(b .+ (1, 2)) isa destT
+            @test @inferred(b .+ a') isa destT
+            @test @inferred(a' .+ b) isa destT
             # @test @inferred(b' .+ a') isa StaticMatrix # Adjoint doesn't propagate style
             @test b .+ b.data == b .+ b == b.data .+ b.data
         end
