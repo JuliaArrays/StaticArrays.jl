@@ -291,6 +291,7 @@ end
 Base.@propagate_inbounds Base.getindex(A::WrapArray, i::Integer...) = A.data[i...]
 Base.@propagate_inbounds Base.setindex!(A::WrapArray, v::Any, i::Integer...) = setindex!(A.data, v, i...)
 Base.size(A::WrapArray) = size(A.data)
+Base.axes(A::WrapArray) = axes(A.data)
 Broadcast.BroadcastStyle(::Type{WrapArray{T,N,P}}) where {T,N,P} = Broadcast.BroadcastStyle(P)
 StaticArrays.isstatic(A::WrapArray) = StaticArrays.isstatic(A.data)
 StaticArrays.Size(::Type{WrapArray{T,N,P}}) where {T,N,P} = StaticArrays.Size(P)
@@ -302,10 +303,14 @@ end
     data = (1, 2)
     for T in (SVector{2}, MVector{2})
         a = T(data)
-        b = WrapArray(a)
-        @test @inferred(b .+ a) isa T
-        @test @inferred(b .+ b) isa T
-        @test @inferred(b .+ (1, 2)) isa T
-        @test b .+ a == b .+ b == a .+ a 
+        for b in (WrapArray(a), WrapArray(a'))
+            @test @inferred(b .+ a) isa T
+            @test @inferred(b .+ b) isa T
+            @test @inferred(b .+ (1, 2)) isa T
+            @test @inferred(b .+ a') isa StaticMatrix
+            @test @inferred(a' .+ b) isa StaticMatrix
+            # @test @inferred(b' .+ a') isa StaticMatrix # Adjoint doesn't propagate style
+            @test b .+ b.data == b .+ b == b.data .+ b.data
+        end
     end
 end
