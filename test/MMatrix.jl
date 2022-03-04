@@ -18,6 +18,8 @@
     end
 
     @testset "Outer constructors and macro" begin
+        @test_throws Exception MMatrix(1,2,3,4) # unknown constructor
+
         @test MMatrix{1,1,Int}((1,)).data === (1,)
         @test MMatrix{1,1}((1,)).data === (1,)
         @test MMatrix{1}((1,)).data === (1,)
@@ -53,6 +55,7 @@
         test_expand_error(:(@MMatrix [1; 2; 3; 4]...))
         test_expand_error(:(@MMatrix a))
 
+        @test ((@MMatrix [1 2.;3 4])::MMatrix{2, 2, Float64}).data === (1., 3., 2., 4.) #issue #911
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)
         @test ((@MMatrix ones(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)

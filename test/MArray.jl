@@ -19,6 +19,8 @@
     end
 
     @testset "Outer constructors and macro" begin
+        @test_throws Exception MArray(1,2,3,4) # unknown constructor
+
         @test MArray{Tuple{1},Int,1}((1,)).data === (1,)
         @test MArray{Tuple{1},Int}((1,)).data === (1,)
         @test MArray{Tuple{1}}((1,)).data === (1,)
@@ -218,4 +220,20 @@
         v[] = 2
         @test v[] == 2
     end
+end
+
+@testset "some special case" begin
+    @test_throws Exception MVector{1}(1, 2)
+    @test (@inferred(MVector{1}((1, 2)))::MVector{1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(MVector{2}((1, 2)))::MVector{2,Int}).data === (1,2)
+    @test (@inferred(MVector(1, 2))::MVector{2,Int}).data === (1,2)
+    @test (@inferred(MVector((1, 2)))::MVector{2,Int}).data === (1,2)
+
+    @test_throws Exception MMatrix{1,1}(1, 2)
+    @test (@inferred(MMatrix{1,1}((1, 2)))::MMatrix{1,1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(MMatrix{1,2}((1, 2)))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{1}((1, 2)))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{1}(1, 2))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{2}((1, 2)))::MMatrix{2,1,Int}).data === (1,2)
+    @test (@inferred(MMatrix{2}(1, 2))::MMatrix{2,1,Int}).data === (1,2)
 end

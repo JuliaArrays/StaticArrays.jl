@@ -58,6 +58,11 @@ fill3(x) = fill(3, x)
     end
 
     @testset "Outer Constructors" begin
+        @test @inferred(SHermitianCompact(MVector(1,2,3))) === SHermitianCompact(SVector(1,2,3))
+        @test_throws Exception SHermitianCompact(1,2,3)
+        @test_throws Exception SHermitianCompact(1,2,3,4,5)
+        @test @inferred(SHermitianCompact(1,2,3,4)) === SHermitianCompact(SVector(1,2,4))
+
         for (N, L) in ((3, 6), (4, 10), (6, 21))
             for T in (Int32, Int64)
                 @eval begin
