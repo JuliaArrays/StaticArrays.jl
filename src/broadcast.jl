@@ -49,8 +49,6 @@ _bcs1(a::Base.OneTo, b::SOneTo) = _bcs1(a, Base.OneTo(b))
 ## Internal broadcast machinery for StaticArrays ##
 ###################################################
 
-broadcast_indices(A::StaticArray) = indices(A)
-
 # TODO: just use map(broadcast_size, as)?
 @inline broadcast_sizes(a, as...) = (broadcast_size(a), broadcast_sizes(as...)...)
 @inline broadcast_sizes() = ()
