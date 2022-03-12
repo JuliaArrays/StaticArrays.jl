@@ -48,7 +48,7 @@ Random.seed!(42)
         test_qr(arr)
     end
     # some special cases
-    for arr in [
+    for arr in (
                    (@MMatrix randn(3,2)),
                    (@MMatrix randn(2,3)),
                    (@SMatrix([0 1 2; 0 2 3; 0 3 4; 0 4 5])),
@@ -56,7 +56,7 @@ Random.seed!(42)
                    (@SMatrix([1//2 1//1])),
                    (@SMatrix randn(17,18)),    # fallback to LAPACK
                    (@SMatrix randn(18,17))
-               ]
+                )
         test_qr(arr)
     end
 
