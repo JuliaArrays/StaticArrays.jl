@@ -115,7 +115,7 @@ end
         # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
         @test @inferred(v1 .+ transpose(v2)) === @SMatrix [2 5; 3 6]
-        # Issue 382: infinite recursion in Base.Broadcast.broadcast_indices with Adjoint
+        # Issue 382: infinite recursion in broadcasting axes with Adjoint
         @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
         @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
         
