@@ -50,7 +50,7 @@ end
     else
         throw(DimensionMismatch("array could not be broadcast to match destination"))
     end
-    (ax1, static_check_broadcast_shape(Base.tail(shp), Base.tail(Ashp))...)
+    return (ax1, static_check_broadcast_shape(Base.tail(shp), Base.tail(Ashp))...)
 end
 static_check_broadcast_shape(::Tuple{}, ::Tuple{SOneTo,Vararg{SOneTo}}) =
     throw(DimensionMismatch("cannot broadcast array to have fewer non-singleton dimensions"))
