@@ -61,10 +61,8 @@ static_check_broadcast_shape(::Tuple{}, ::Tuple{}) = ()
     flat = Broadcast.flatten(B); as = flat.args; f = flat.f
     argsizes = broadcast_sizes(as...)
     ax = axes(B)
-    if ax isa Tuple{Vararg{SOneTo}}
-        return _broadcast(f, Size(map(length, ax)), argsizes, as...)
-    end
-    return copy(convert(Broadcasted{DefaultArrayStyle{M}}, B))
+    ax isa Tuple{Vararg{SOneTo}} || error("Dimension is not static. Please file a bug.")
+    return _broadcast(f, Size(map(length, ax)), argsizes, as...)
 end
 # copyto! overloads
 @inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
