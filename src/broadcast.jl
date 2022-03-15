@@ -2,9 +2,9 @@
 ## broadcast! ##
 ################
 
-import Base.Broadcast:
-BroadcastStyle, AbstractArrayStyle, Broadcasted, DefaultArrayStyle, materialize!
-import Base.Broadcast: combine_axes, instantiate, _broadcast_getindex, broadcast_shape, Style
+using Base.Broadcast: AbstractArrayStyle, DefaultArrayStyle, Style, Broadcasted
+using Base.Broadcast: broadcast_shape, _broadcast_getindex, combine_axes
+import Base.Broadcast: BroadcastStyle, materialize!, instantiate
 import Base.Broadcast: _bcs1  # for SOneTo axis information
 using Base.Broadcast: _bcsm
 # Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
