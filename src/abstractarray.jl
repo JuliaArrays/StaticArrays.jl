@@ -14,6 +14,7 @@ Base.axes(s::StaticArray) = _axes(Size(s))
 end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
+Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 

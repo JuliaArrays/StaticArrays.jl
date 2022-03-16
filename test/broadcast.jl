@@ -315,3 +315,23 @@ end
         end
     end
 end
+
+@testset "instantiate with axes updated" begin
+    f(a; ax = nothing) = Broadcast.Broadcasted{StaticArrays.StaticArrayStyle{ndims(a)}}(+,(a,),ax)
+    a = @SArray zeros(2,2,2)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{3,SOneTo}
+    ax = (ax..., Base.OneTo(2))
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{4,Base.OneTo}
+    ax = setindex(ax, Base.OneTo(1), 4)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{4,Base.OneTo}
+    a = @SArray zeros(2,1,2)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa Tuple{SOneTo,Base.OneTo,SOneTo}
+    @test_throws DimensionMismatch Broadcast.instantiate(f(a; ax = ax[1:2]))
+
+    a = @SArray zeros(2,2,1)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa Tuple{SOneTo,SOneTo,Base.OneTo}
+    @test @inferred(Broadcast.instantiate(f(a; ax = ax[1:2]))).axes isa NTuple{2,SOneTo}
+end
