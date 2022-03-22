@@ -63,8 +63,8 @@
         @test ((@MArray Float64[1,2,3])::MArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
         @test ((@MArray [1 2])::MArray{Tuple{1,2}}).data === (1, 2)
         @test ((@MArray Float64[1 2])::MArray{Tuple{1,2}}).data === (1.0, 2.0)
-        @test ((@MArray [1 ; 2])::MArray{Tuple{2,1}}).data === (1, 2)
-        @test ((@MArray Float64[1 ; 2])::MArray{Tuple{2,1}}).data === (1.0, 2.0)
+        @test ((@MArray [1 ; 2])::MArray{Tuple{2}}).data === (1, 2)
+        @test ((@MArray Float64[1 ; 2])::MArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@MArray [1 2 ; 3 4])::MArray{Tuple{2,2}}).data === (1, 3, 2, 4)
         @test ((@MArray Float64[1 2 ; 3 4])::MArray{Tuple{2,2}}).data === (1.0, 3.0, 2.0, 4.0)
 
@@ -76,7 +76,7 @@
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::MArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1, 64)
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::MArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1, 128)
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 256)
-        test_expand_error(:(@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 512)
         @test ((@MArray Float64[i for i = 1:2])::MArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@MArray Float64[i*j for i = 1:2, j = 2:3])::MArray{Tuple{2,2}}).data === (2.0, 4.0, 3.0, 6.0)
         @test ((@MArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::MArray{Tuple{2,2,2}}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
@@ -85,7 +85,7 @@
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::MArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1.0, 64)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::MArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 128)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
-        test_expand_error(:(@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
         test_expand_error(:(@MArray [1 2; 3]))
         test_expand_error(:(@MArray Float64[1 2; 3]))
