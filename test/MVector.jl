@@ -55,7 +55,7 @@
             @test ((@MVector Float64[1;2;3;;;])::MVector{3}).data === (1.0, 2.0, 3.0)
             @test ((@MVector [1;2;3;;;])::MVector{3}).data === (1, 2, 3)
             # @test ((@MVector [;])::MVector{0}).data === ()
-            @eval @test ((@MVector $(Expr(:ncat, 1)))::MVector{0}).data === ()
+            @eval @test_broken ((@MVector $(Expr(:ncat, 1)))::MVector{0}).data === ()
             # test_expand_error(:(@MVector [;;]))
             @eval test_expand_error(:(@MVector $(Expr(:ncat, 2))))
         end
