@@ -139,8 +139,12 @@ end
 @propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
-@inline convert(::Type{SA}, sa::StaticArray) where {SA<:StaticArray} = SA(Tuple(sa))
-@inline convert(::Type{SA}, sa::StaticArray) where {SA<:Scalar} = SA((sa[],)) # disambiguation
+@inline function convert(::Type{SA}, sa::StaticArray{S}) where {SA<:StaticArray,S<:Tuple}
+    SA′ = construct_type(SA, sa)
+    # `SA′((sa,))` is not valid. As we want `SA′(sa...)`
+    need_rewrap(SA′, sa) && _no_precise_size(SA, sa)
+    return SA′(Tuple(sa))
+end
 @inline convert(::Type{SA}, sa::SA) where {SA<:StaticArray} = sa
 @inline convert(::Type{SA}, x::Tuple) where {SA<:StaticArray} = SA(x) # convert -> constructor. Hopefully no loops...
 
@@ -161,21 +165,20 @@ end
     @boundscheck if length(a) != length(SA)
         dimension_mismatch_fail(SA, a)
     end
-
-    return _convert(SA, a, Length(SA))
+    SA′ = construct_type(SA, a)
+    return SA′(unroll_tuple(a, Length(SA′)))
 end
-
-@inline _convert(SA, a, l::Length) = SA(unroll_tuple(a, l))
-@inline _convert(SA::Type{<:StaticArray{<:Tuple,T}}, a, ::Length{0}) where T = similar_type(SA, T)(())
-@inline _convert(SA, a, ::Length{0}) = similar_type(SA, eltype(a))(())
 
 length_val(a::T) where {T <: StaticArrayLike} = length_val(Size(T))
 length_val(a::Type{T}) where {T<:StaticArrayLike} = length_val(Size(T))
 
+unroll_tuple(a::AbstractArray, ::Length{0}) = ()
+unroll_tuple(a::AbstractArray, ::Length{1}) = @inbounds (a[],)
 @generated function unroll_tuple(a::AbstractArray, ::Length{L}) where {L}
-    exprs = [:(a[$j]) for j = 1:L]
+    exprs = (:(a[$j+Δj]) for j = 0:L-1)
     quote
         @_inline_meta
+        Δj = firstindex(a)
         @inbounds return $(Expr(:tuple, exprs...))
     end
 end
