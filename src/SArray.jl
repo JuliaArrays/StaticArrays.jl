@@ -177,11 +177,12 @@ end
 parse_cat_ast(x) = x
 function parse_cat_ast(ex::Expr)
     head, args = ex.head, ex.args
+    head === :vect && return args
     i = 0
     if head === :typed_vcat || head === :typed_hcat || head === :typed_ncat
         i += 1 # skip Type arg
     end
-    if head === :vcat || head === :typed_vcat || head === :vect
+    if head === :vcat || head === :typed_vcat
         catdim = 1
     elseif head === :hcat || head === :row || head === :typed_hcat
         catdim = 2

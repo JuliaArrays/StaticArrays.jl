@@ -119,6 +119,8 @@
         test_expand_error(:(@SArray [[1;2] [3]]))
         test_expand_error(:(@SArray [[1 2]; [3]]))
 
+        @test (@SArray [[[1,2],1]; 2; 3]) == [[[1,2],1]; 2; 3]
+
         if VERSION >= v"1.7.0"
             function test_ex(ex)
                 a = eval(:(@SArray $ex))
