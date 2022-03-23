@@ -127,12 +127,15 @@ _no_precise_size(SA, x::Tuple) = throw(DimensionMismatch("No precise constructor
 _no_precise_size(SA, x::StaticArray) = throw(DimensionMismatch("No precise constructor for $SA found. Size of input was $(size(x))."))
 _no_precise_size(SA, x) = throw(DimensionMismatch("No precise constructor for $SA found. Input is not static sized."))
 
-(::Type{SA})(x::Tuple{Tuple{Tuple{<:Tuple}}}) where {SA <: StaticArray} =
-    throw(DimensionMismatch("No precise constructor for $SA found. Length of input was $(length(x[1][1][1]))."))
-
-@inline (::Type{SA})(x...) where {SA <: StaticArray} = SA(x)
-@inline (::Type{SA})(a::StaticArray) where {SA<:StaticArray} = SA(Tuple(a))
-@inline (::Type{SA})(a::StaticArray) where {SA<:SizedArray} = SA(a.data)
+@inline (::Type{SA})(x...) where {SA <: StaticArray} = construct_type(SA, Args(x))(x)
+@inline function (::Type{SA})(x::Tuple) where {SA <: FirstClass}
+    SA′ = construct_type(SA, x)
+    need_rewrap(SA′, x) ? SA′((x,)) : SA′(x)
+end
+@inline function (::Type{SA})(sa::StaticArray) where {SA <: StaticArray}
+    SA′ = construct_type(SA, sa)
+    need_rewrap(SA′, sa) ? SA′((sa,)) : SA′(Tuple(sa))
+end
 @propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
 
 # this covers most conversions and "statically-sized reshapes"
