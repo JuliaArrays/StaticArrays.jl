@@ -19,6 +19,8 @@ TupleN{T,N} = NTuple{N,T}
 end
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
+_NTuple{T} = Tuple{T,Vararg{T}}
+promote_tuple_eltype(::Union{_NTuple{T}, Type{<:_NTuple{T}}}) where {T} = T 
 @generated function promote_tuple_eltype(::Union{T,Type{T}}) where T <: Tuple
     t = Union{}
     for i = 1:length(T.parameters)
