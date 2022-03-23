@@ -85,11 +85,12 @@
         test_expand_error(:(@SArray Float64[1 2; 3]))
         test_expand_error(:(@SArray ones))
         test_expand_error(:(@SArray fill))
-        test_expand_error(:(@SArray ones()))
         test_expand_error(:(@SArray sin(1:5)))
         test_expand_error(:(@SArray fill()))
-        test_expand_error(:(@SArray fill(1)))
         test_expand_error(:(@SArray [1; 2; 3; 4]...))
+
+        @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
+        @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
 
         @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)

@@ -93,9 +93,10 @@
         test_expand_error(:(@MArray ones))
         test_expand_error(:(@MArray sin(1:5)))
         test_expand_error(:(@MArray fill()))
-        test_expand_error(:(@MArray ones()))
-        test_expand_error(:(@MArray fill(1)))
         test_expand_error(:(@MArray [1; 2; 3; 4]...))
+
+        @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
+        @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
 
         @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
@@ -130,7 +131,7 @@
                 b = eval(ex)
                 @test a isa MArray
                 @test eltype(a) === eltype(b)
-                @test a == b    
+                @test a == b
             end
             test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
             test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))

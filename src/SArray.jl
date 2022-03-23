@@ -156,7 +156,7 @@ function cat_any!(out, dims_before, dims_after, args::Vector{Any})
     out
 end
 
-@noinline cat_missmatch(j,sz,nsz) = throw(DimensionMismatch("mismatch in dimension $j (expected $sz got $nsz)"))
+@noinline cat_mismatch(j,sz,nsz) = throw(DimensionMismatch("mismatch in dimension $j (expected $sz got $nsz)"))
 function check_cat_size(szs::Vector{Dims{maxdim}}, catdim) where {maxdim}
     isempty(szs) && return ntuple(_ -> 0, maxdim)
     sz = szs[1]
@@ -167,7 +167,7 @@ function check_cat_size(szs::Vector{Dims{maxdim}}, catdim) where {maxdim}
             if j == catdim
                 catsz += nszⱼ
             elseif sz[j] != nszⱼ
-                cat_missmatch(j, sz[j], nszⱼ)
+                cat_mismatch(j, sz[j], nszⱼ)
             end
         end
     end
@@ -178,7 +178,7 @@ parse_cat_ast(x) = x
 function parse_cat_ast(ex::Expr)
     head, args = ex.head, ex.args   
     i = 0
-    if head === :typed_vcat || head === :typed_hcat || head === :typed_ncat# || head === :ref
+    if head === :typed_vcat || head === :typed_hcat || head === :typed_ncat
         i += 1 # skip Type arg
     end
     if head === :vcat || head === :typed_vcat || head === :vect
@@ -243,24 +243,21 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         f = ex.args[1]
         if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 1
-                error("@$SA got bad expression: $(f)()")
-            else
-                return quote
-                    if isa($((ex.args[2])), DataType)
-                        $f($SA{Tuple{$(ex.args[3:end]...)},$(ex.args[2])})
-                    else
-                        $f($SA{Tuple{$(ex.args[2:end]...)}})
-                    end
+                f === :zeros || f === :ones || error("@$SA got bad expression: $(ex)")
+                return :($f($SA{Tuple{},Float64}))
+            end
+            return quote
+                if isa($(ex.args[2]), DataType)
+                    $f($SA{Tuple{$(ex.args[3:end]...)},$(ex.args[2])})
+                else
+                    $f($SA{Tuple{$(ex.args[2:end]...)}})
                 end
             end
         elseif f === :fill
-            if length(ex.args) < 3
-                error("@$SA got bad expression: $(ex)")
-            else
-                return :($f($(ex.args[2]), $SA{Tuple{$(ex.args[3:end]...)}}))
-            end
+            length(ex.args) == 1 && error("@$SA got bad expression: $(ex)")
+            return :($f($(ex.args[2]), $SA{Tuple{$(ex.args[3:end]...)}}))
         else
-            error("@$SA only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
+            error("@$SA only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @$SA")

@@ -63,10 +63,6 @@
         if VERSION >= v"1.7.0"
             @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
             @test ((@SVector [1;2;3;;;])::SVector{3}).data === (1, 2, 3)
-            # @test ((@SVector [;])::SVector{0}).data === ()
-            @eval @test_broken ((@SVector $(Expr(:ncat, 1)))::SVector{0}).data === ()
-            # test_expand_error(:(@SVector [;;]))
-            @eval test_expand_error(:(@SVector $(Expr(:ncat, 2))))
         end
     end
 

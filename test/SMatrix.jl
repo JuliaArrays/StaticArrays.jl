@@ -87,10 +87,6 @@
         if VERSION >= v"1.7.0"
             @test ((@SMatrix Float64[1;2;3;;;])::SMatrix{3,1}).data === (1.0, 2.0, 3.0)
             @test ((@SMatrix [1;2;3;;;])::SMatrix{3,1}).data === (1, 2, 3)
-            # @test ((@SMatrix [;;])::SMatrix{0,0}).data === ()
-            @eval @test ((@SMatrix $(Expr(:ncat, 2)))::SMatrix{0,0}).data === ()
-            # test_expand_error(:(@SMatrix [;;;]))
-            @eval test_expand_error(:(@SMatrix $(Expr(:ncat, 3))))
             test_expand_error(:(@SMatrix [1;2;;;1;2]))
         end
     end

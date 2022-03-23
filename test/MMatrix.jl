@@ -73,10 +73,6 @@
             @test ((@MMatrix Float64[1;2;3;;;])::MMatrix{3,1}).data === (1.0, 2.0, 3.0)
             @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
             @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
-            # @test ((@MMatrix [;;])::MMatrix{0,0}).data === ()
-            @eval @test ((@MMatrix $(Expr(:ncat, 2)))::MMatrix{0,0}).data === ()
-            # test_expand_error(:(@MMatrix [;;;]))
-            @eval test_expand_error(:(@MMatrix $(Expr(:ncat, 3))))
             test_expand_error(:(@MMatrix [1;2;;;1;2]))
         end
     end
