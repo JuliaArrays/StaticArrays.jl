@@ -16,60 +16,12 @@ unknown to the compiler (the element type may optionally also be specified).
 """
 const SMatrix{S1, S2, T, L} = SArray{Tuple{S1, S2}, T, 2, L}
 
-@generated function SMatrix{S1}(x::NTuple{L,Any}) where {S1,L}
-    S2 = div(L, S1)
-    if S1*S2 != L
-        throw(DimensionMismatch("Incorrect matrix sizes. $S1 does not divide $L elements"))
-    end
-
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, $S2, T, L}(x)
-    end
-end
-
-@generated function SMatrix{S1,S2}(x::NTuple{L,Any}) where {S1,S2,L}
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, S2, T, L}(x)
-    end
-end
-SMatrixNoType{S1, S2, L, T} = SMatrix{S1, S2, T, L}
-@generated function SMatrixNoType{S1, S2, L}(x::NTuple{L,Any}) where {S1,S2,L}
-    return quote
-        $(Expr(:meta, :inline))
-        T = promote_tuple_eltype(typeof(x))
-        SMatrix{S1, S2, T, L}(x)
-    end
-end
-
-@generated function SMatrix{S1,S2,T}(x::NTuple{L,Any}) where {S1,S2,T,L}
-    return quote
-        $(Expr(:meta, :inline))
-        SMatrix{S1, S2, T, L}(x)
-    end
-end
-
-@inline SMatrix{M, N, T}(gen::Base.Generator) where {M, N, T} =
-    sacollect(SMatrix{M, N, T}, gen)
-@inline SMatrix{M, N}(gen::Base.Generator) where {M, N} =
-    sacollect(SMatrix{M, N}, gen)
-
-@inline convert(::Type{SMatrix{S1,S2}}, a::StaticArray{<:Tuple, T}) where {S1,S2,T} = SMatrix{S1,S2,T}(Tuple(a))
-@inline SMatrix(a::StaticMatrix{S1, S2, T}) where {S1, S2, T} = SMatrix{S1, S2, T}(Tuple(a))
-
 # Some more advanced constructor-like functions
 @inline one(::Type{SMatrix{N}}) where {N} = one(SMatrix{N,N})
 
 #####################
 ## SMatrix methods ##
 #####################
-
-@propagate_inbounds function getindex(v::SMatrix, i::Int)
-    v.data[i]
-end
 
 function check_matrix_size(x::Tuple, T = :S)
     if length(x) > 2

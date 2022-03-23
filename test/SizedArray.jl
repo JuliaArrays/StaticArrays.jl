@@ -30,7 +30,7 @@
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
         @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
-        @test_throws DimensionMismatch SizedArray{Tuple{4}}([1 2; 3 4])
+        @test_throws DimensionMismatch SizedArray{Tuple{1,4}}([1 2; 3 4])
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
