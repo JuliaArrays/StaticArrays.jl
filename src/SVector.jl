@@ -122,6 +122,14 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
     end
 end
 
+"""
+    @SVector [a, b, c, d]
+    @SVector [i for i in 1:2]
+    @SVector ones(2)
+
+A convenience macro to construct `SVector`.
+See [`@SArray`](@ref) for detailed features.
+"""
 macro SVector(ex)
     esc(static_vector_gen(SVector, ex, __module__))
 end

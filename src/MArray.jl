@@ -110,6 +110,15 @@ Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
     Base.unsafe_convert(Ptr{T}, pointer_from_objref(a))
 end
 
+"""
+    @MArray [a b; c d]
+    @MArray [[a, b];[c, d]]
+    @MArray [i+j for i in 1:2, j in 1:2]
+    @MArray ones(2, 2, 2)
+
+A convenience macro to construct `MArray` with arbitrary dimension.
+See [`@SArray`](@ref) for detailed features.
+"""
 macro MArray(ex)
     esc(static_array_gen(MArray, ex, __module__))
 end

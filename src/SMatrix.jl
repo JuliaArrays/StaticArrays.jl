@@ -154,6 +154,16 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
     end
 end
 
+
+"""
+    @SMatrix [a b c d]
+    @SMatrix [[a, b];[c, d]]
+    @SMatrix [i+j for i in 1:2, j in 1:2]
+    @SMatrix ones(2, 2, 2)
+
+A convenience macro to construct `SMatrix`.
+See [`@SArray`](@ref) for detailed features.
+"""
 macro SMatrix(ex)
     esc(static_matrix_gen(SMatrix, ex, __module__))
 end
