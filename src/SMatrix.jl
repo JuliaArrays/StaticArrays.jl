@@ -71,125 +71,99 @@ end
     v.data[i]
 end
 
-macro SMatrix(ex)
-    if !isa(ex, Expr)
-        error("Bad input for @SMatrix")
+function check_matrix_size(x::Tuple, T = :S)
+    if length(x) > 2
+        all(isone, x[3:end]) || error("Bad input for @$(T)Matrix, must be matrix like.")
     end
+    x1 = length(x) >= 1 ? x[1] : 1
+    x2 = length(x) >= 2 ? x[2] : 1
+    x1, x2
+end
 
-    if ex.head == :vect && length(ex.args) == 1 # 1 x 1
-        return esc(Expr(:call, SMatrix{1, 1}, Expr(:tuple, ex.args[1])))
-    elseif ex.head == :ref && length(ex.args) == 2 # typed, 1 x 1
-        return esc(Expr(:call, Expr(:curly, :SMatrix, 1, 1, ex.args[1]), Expr(:tuple, ex.args[2])))
-    elseif ex.head == :hcat # 1 x n
-        s1 = 1
-        s2 = length(ex.args)
-        return esc(Expr(:call, SMatrix{s1, s2}, Expr(:tuple, ex.args...)))
-    elseif ex.head == :typed_hcat # typed, 1 x n
-        s1 = 1
-        s2 = length(ex.args) - 1
-        return esc(Expr(:call, Expr(:curly, :SMatrix, s1, s2, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
-    elseif ex.head == :vcat
-        if isa(ex.args[1], Expr) && (ex.args[1]::Expr).head == :row # n x m
-            # Validate
-            s1 = length(ex.args)
-            s2s = let s1=s1, ex=ex
-                map(i -> ((isa(ex.args[i], Expr) && (ex.args[i]::Expr).head == :row) ? length((ex.args[i]::Expr).args) : 1), 1:s1)
-            end
-            s2 = minimum(s2s)
-            if maximum(s2s) != s2
-                throw(ArgumentError("Rows must be of matching lengths"))
-            end
-
-            exprs = let s1=s1, s2=s2, ex=ex
-                [ex.args[i].args[j] for i = 1:s1, j = 1:s2]
-            end
-            return esc(Expr(:call, SMatrix{s1, s2}, Expr(:tuple, exprs...)))
-        else # n x 1
-            return esc(Expr(:call, SMatrix{length(ex.args), 1}, Expr(:tuple, ex.args...)))
-        end
-    elseif ex.head == :typed_vcat
-        if isa(ex.args[2], Expr) && (ex.args[2]::Expr).head == :row # typed, n x m
-            # Validate
-            s1 = length(ex.args) - 1
-            s2s = let s1=s1, ex=ex
-                map(i -> ((isa(ex.args[i+1], Expr) && (ex.args[i+1]::Expr).head == :row) ? length((ex.args[i+1]::Expr).args) : 1), 1:s1)
-            end
-            s2 = minimum(s2s)
-            if maximum(s2s) != s2
-                throw(ArgumentError("Rows must be of matching lengths"))
-            end
-
-            exprs = let s1=s1, s2=s2, ex=ex
-                [ex.args[i+1].args[j] for i = 1:s1, j = 1:s2]
-            end
-            return esc(Expr(:call, Expr(:curly, :SMatrix,s1, s2, ex.args[1]), Expr(:tuple, exprs...)))
-        else # typed, n x 1
-            return esc(Expr(:call, Expr(:curly, :SMatrix, length(ex.args)-1, 1, ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
-        end
-    elseif isa(ex, Expr) && ex.head == :comprehension
+function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM}
+    if !isa(ex, Expr)
+        error("Bad input for @$SM")
+    end
+    head = ex.head
+    if head === :vect && length(ex.args) == 1 # 1 x 1
+        return :($SM{1,1}(tuple($(ex.args[1]))))
+    elseif head === :ref && length(ex.args) == 2 # typed, 1 x 1
+        return :($SM{1,1,$(ex.args[1])}(tuple($(ex.args[2]))))
+    elseif head === :typed_vcat || head === :typed_hcat || head === :typed_ncat # typed, cat
+        args = parse_cat_ast(ex)
+        sz1, sz2 = check_matrix_size(size(args))
+        return :($SM{$sz1,$sz2,$(ex.args[1])}(tuple($(args...))))
+    elseif head === :vcat || head === :hcat || head === :ncat # untyped, cat
+        args = parse_cat_ast(ex)
+        sz1, sz2 = check_matrix_size(size(args))
+        return :($SM{$sz1,$sz2}(tuple($(args...))))
+    elseif head === :comprehension
         if length(ex.args) != 1 || !isa(ex.args[1], Expr) || (ex.args[1]::Expr).head != :generator
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
         end
         ex = ex.args[1]
         if length(ex.args) != 3
-            error("Use a 2-dimensional comprehension for @SMatrix")
+            error("Use a 2-dimensional comprehension for @$SM")
         end
-
-        rng1 = Core.eval(__module__, ex.args[2].args[2])
-        rng2 = Core.eval(__module__, ex.args[3].args[2])
-        f = gensym()
-        f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
-        exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
-
+        rng1 = Core.eval(mod, ex.args[2].args[2])
+        rng2 = Core.eval(mod, ex.args[3].args[2])
+        exprs = (:(f($j1, $j2)) for j1 in rng1, j2 in rng2)
         return quote
-            $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :SMatrix, length(rng1), length(rng2)), Expr(:tuple, exprs...))))
+            let f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
+                $SM{$(length(rng1)),$(length(rng2))}(tuple($(exprs...)))
+            end
         end
-    elseif isa(ex, Expr) && ex.head == :typed_comprehension
+    elseif head === :typed_comprehension
         if length(ex.args) != 2 || !isa(ex.args[2], Expr) || (ex.args[2]::Expr).head != :generator
             error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
         end
         T = ex.args[1]
         ex = ex.args[2]
         if length(ex.args) != 3
-            error("Use a 2-dimensional comprehension for @SMatrix")
+            error("Use a 2-dimensional comprehension for @$SM")
         end
-
-        rng1 = Core.eval(__module__, ex.args[2].args[2])
-        rng2 = Core.eval(__module__, ex.args[3].args[2])
-        f = gensym()
-        f_expr = :($f = (($(ex.args[2].args[1]), $(ex.args[3].args[1])) -> $(ex.args[1])))
-        exprs = [:($f($j1, $j2)) for j1 in rng1, j2 in rng2]
-
+        rng1 = Core.eval(mod, ex.args[2].args[2])
+        rng2 = Core.eval(mod, ex.args[3].args[2])
+        exprs = (:(f($j1, $j2)) for j1 in rng1, j2 in rng2)
         return quote
-            $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :SMatrix, length(rng1), length(rng2), T), Expr(:tuple, exprs...))))
+            let f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
+                $SM{$(length(rng1)),$(length(rng2)),$T}(tuple($(exprs...)))
+            end
         end
-    elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] === :zeros || ex.args[1] === :ones || ex.args[1] === :rand || ex.args[1] === :randn || ex.args[1] === :randexp
+    elseif head === :call
+        f = ex.args[1]
+        if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 3
-                return quote
-                    $(ex.args[1])(SMatrix{$(esc(ex.args[2])),$(esc(ex.args[3]))})
-                end
+                return :($f($SM{$(ex.args[2:3]...)}))
             elseif length(ex.args) == 4
-                return quote
-                    $(ex.args[1])(SMatrix{$(esc(ex.args[3])), $(esc(ex.args[4])), $(esc(ex.args[2]))})
-                end
+                return :($f($SM{$(ex.args[[3,4,2]]...)}))
             else
-                error("@SMatrix expected a 2-dimensional array expression")
+                error("@$SM expected a 2-dimensional array expression")
             end
         elseif ex.args[1] === :fill
             if length(ex.args) == 4
-                return quote
-                    $(esc(ex.args[1]))($(esc(ex.args[2])), SMatrix{$(esc(ex.args[3])), $(esc(ex.args[4]))})
-                end
+                return :($f($(ex.args[2]), $SM{$(ex.args[3:4]...)}))
             else
-                error("@SMatrix expected a 2-dimensional array expression")
+                error("@$SM expected a 2-dimensional array expression")
             end
         else
-            error("@SMatrix only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
+            error("@$SM only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
         end
     else
-        error("Bad input for @SMatrix")
+        error("Bad input for @$SM")
     end
+end
+
+
+"""
+    @SMatrix [a b c d]
+    @SMatrix [[a, b];[c, d]]
+    @SMatrix [i+j for i in 1:2, j in 1:2]
+    @SMatrix ones(2, 2, 2)
+
+A convenience macro to construct `SMatrix`.
+See [`@SArray`](@ref) for detailed features.
+"""
+macro SMatrix(ex)
+    esc(static_matrix_gen(SMatrix, ex, __module__))
 end

@@ -65,6 +65,7 @@
         test_expand_error(:(@SMatrix ones))
         test_expand_error(:(@SMatrix sin(1:5)))
         test_expand_error(:(@SMatrix [1; 2; 3; 4]...))
+        test_expand_error(:(@SMatrix a))
 
         @test ((@SMatrix fill(1.3, 2,2))::SMatrix{2, 2, Float64}).data === (1.3, 1.3, 1.3, 1.3)
         @test ((@SMatrix zeros(2,2))::SMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
@@ -82,6 +83,12 @@
         @test isa(SMatrix(@SMatrix zeros(4,4)), SMatrix{4, 4, Float64})
 
         @inferred SMatrix(rand(SMatrix{3, 3})) # issue 356
+
+        if VERSION >= v"1.7.0"
+            @test ((@SMatrix Float64[1;2;3;;;])::SMatrix{3,1}).data === (1.0, 2.0, 3.0)
+            @test ((@SMatrix [1;2;3;;;])::SMatrix{3,1}).data === (1, 2, 3)
+            test_expand_error(:(@SMatrix [1;2;;;1;2]))
+        end
     end
 
     @testset "Methods" begin

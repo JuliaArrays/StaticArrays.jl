@@ -57,8 +57,8 @@
         @test ((@SArray Float64[1,2,3])::SArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
         @test ((@SArray [1 2])::SArray{Tuple{1,2}}).data === (1, 2)
         @test ((@SArray Float64[1 2])::SArray{Tuple{1,2}}).data === (1.0, 2.0)
-        @test ((@SArray [1 ; 2])::SArray{Tuple{2,1}}).data === (1, 2)
-        @test ((@SArray Float64[1 ; 2])::SArray{Tuple{2,1}}).data === (1.0, 2.0)
+        @test ((@SArray [1 ; 2])::SArray{Tuple{2}}).data === (1, 2)
+        @test ((@SArray Float64[1 ; 2])::SArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@SArray [1 2 ; 3 4])::SArray{Tuple{2,2}}).data === (1, 3, 2, 4)
         @test ((@SArray Float64[1 2 ; 3 4])::SArray{Tuple{2,2}}).data === (1.0, 3.0, 2.0, 4.0)
 
@@ -70,7 +70,7 @@
         @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::SArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1, 64)
         @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::SArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1, 128)
         @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 256)
-        test_expand_error(:(@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@SArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 512)
         @test ((@SArray Float64[i for i = 1:2])::SArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@SArray Float64[i*j for i = 1:2, j = 2:3])::SArray{Tuple{2,2}}).data === (2.0, 4.0, 3.0, 6.0)
         @test ((@SArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::SArray{Tuple{2,2,2}}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
@@ -79,17 +79,18 @@
         @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::SArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1.0, 64)
         @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::SArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 128)
         @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
-        test_expand_error(:(@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
         test_expand_error(:(@SArray [1 2; 3]))
         test_expand_error(:(@SArray Float64[1 2; 3]))
         test_expand_error(:(@SArray ones))
         test_expand_error(:(@SArray fill))
-        test_expand_error(:(@SArray ones()))
         test_expand_error(:(@SArray sin(1:5)))
         test_expand_error(:(@SArray fill()))
-        test_expand_error(:(@SArray fill(1)))
         test_expand_error(:(@SArray [1; 2; 3; 4]...))
+
+        @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
+        @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
 
         @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
@@ -109,6 +110,37 @@
 
         # Non-square comprehensions built from SVectors - see #76
         @test @SArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
+
+        # Nested cat
+        @test ((@SArray [[1;2] [3;4]])::SMatrix{2,2}).data === (1,2,3,4)
+        @test ((@SArray Float64[[1;2] [3;4]])::SMatrix{2,2}).data === (1.,2.,3.,4.)
+        @test ((@SArray [[1 3];[2 4]])::SMatrix{2,2}).data === (1,2,3,4)
+        @test ((@SArray Float64[[1 3];[2 4]])::SMatrix{2,2}).data === (1.,2.,3.,4.)
+        test_expand_error(:(@SArray [[1;2] [3]]))
+        test_expand_error(:(@SArray [[1 2]; [3]]))
+
+        @test (@SArray [[[1,2],1]; 2; 3]) == [[[1,2],1]; 2; 3]
+
+        if VERSION >= v"1.7.0"
+            function test_ex(ex)
+                a = eval(:(@SArray $ex))
+                b = eval(ex)
+                @test a isa SArray
+                @test eltype(a) === eltype(b)
+                @test a == b
+            end
+            test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:([1 2 ;;; 3 4]))
+            test_ex(:(Float32[1 2 ;;; 3 4]))
+            test_ex(:([ 1 2
+                        3 4
+                        ;;;
+                        5 6
+                        7 8 ]))
+            test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
+            test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
+        end
     end
 
     @testset "Methods" begin

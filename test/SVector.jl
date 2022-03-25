@@ -57,6 +57,13 @@
         test_expand_error(:(@SVector [i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@SVector Float32[i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@SVector [1; 2; 3]...))
+        test_expand_error(:(@SVector a))
+        test_expand_error(:(@SVector [[1 2];[3 4]]))
+
+        if VERSION >= v"1.7.0"
+            @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
+            @test ((@SVector [1;2;3;;;])::SVector{3}).data === (1, 2, 3)
+        end
     end
 
     @testset "Methods" begin
