@@ -43,6 +43,17 @@
 
         # Issue 342
         @test_throws DimensionMismatch("No precise constructor for Point3D found. Length of input was 4.") Point3D(1,2,3,4)
+
+        eval(quote
+            struct Point2DT{T} <: FieldVector{2, T}
+                x::T
+                y::T
+            end
+        end)
+
+        # eltype promotion
+        @test Point2DT(1., 2) === Point2DT(1.0, 2.0) && Tuple(Point2DT(1.0, 2.0)) === (1.0, 2.0)
+        @test Point2DT{Int}(1., 2) === Point2DT(1, 2) && Tuple(Point2DT(1, 2)) === (1, 2)
     end
 
     @testset "Mutable Point2D" begin
@@ -77,6 +88,12 @@
         @test @inferred(similar_type(Point2D{Float64}, Float32)) == Point2D{Float32}
         @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
         @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
+
+        # eltype promotion
+        @test Point2D(1f0, 2) isa Point2D{Float32}
+        @test Point2D{Int}(1f0, 2) isa Point2D{Int}
+        p = Point2D(0, 0.0)
+        @test p[1] === p[2] === 0.0
     end
 
     @testset "FieldVector with Tuple fields" begin
