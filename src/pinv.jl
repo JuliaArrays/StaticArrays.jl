@@ -1,45 +1,7 @@
 # Moore-Penrose pseudoinverse
 
-"""
-    pinv(M; atol::Real=0, rtol::Real=atol>0 ? 0 : n*ϵ)
-    pinv(M, rtol::Real) = pinv(M; rtol=rtol) # to be deprecated in Julia 2.0
-
-This function is a StaticMatrix version of `LinearAlgebra.pinv`.
-
-# Examples
-```jldoctest
-julia> M1 = @SMatrix [1.5 1.3; 1.2 1.9]
-2×2 SArray{Tuple{2,2},Float64,2,4} with indices SOneTo(2)×SOneTo(2):
- 1.5  1.3
- 1.2  1.9
-
-julia> pinv(M1)
-2×2 SArray{Tuple{2,2},Float64,2,4} with indices SOneTo(2)×SOneTo(2):
-  1.47287   -1.00775
- -0.930233   1.16279
-
-julia> M1 * pinv(M1)
-2×2 SArray{Tuple{2,2},Float64,2,4} with indices SOneTo(2)×SOneTo(2):
- 1.0          -2.22045e-16
- 1.56636e-16   1.0
-
-julia> M2 = @SMatrix [1//2 0 0;3//2 5//3 8//7;9//4 -1//3 -8//7;0 0 0]
-4×3 SArray{Tuple{4,3},Rational{Int64},2,12} with indices SOneTo(4)×SOneTo(3):
- 1//2   0//1   0//1
- 3//2   5//3   8//7
- 9//4  -1//3  -8//7
- 0//1   0//1   0//1
-
-julia> pinv(M2)
-3×4 SArray{Tuple{3,4},Float64,2,12} with indices SOneTo(3)×SOneTo(4):
-  2.0       4.05208e-17  -1.06076e-16  0.0
- -5.625     0.75          0.75         0.0
-  5.57812  -0.21875      -1.09375      0.0
-```
-"""
-@inline function pinv(A::StaticMatrix{m,n,T} where m where n; 
-                      atol::Real = 0.0,
-                      rtol::Real = (eps(real(float(one(T))))*min(size(A)...))*iszero(atol)) where T
+@inline function pinv(A::StaticMatrix{m,n,T} where m where n; atol::Real = 0.0, rtol::Real = (eps(real(float(one(T))))*min(size(A)...))*iszero(atol)) where T
+    # This function is a StaticMatrix version of `LinearAlgebra.pinv`.
     S = typeof(zero(T)/sqrt(one(T) + one(T)))
     A_S = convert(similar_type(A,S),A)
     return _pinv(A_S, atol, rtol)
