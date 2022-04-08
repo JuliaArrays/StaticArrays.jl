@@ -37,7 +37,9 @@ julia> pinv(M2)
   5.57812  -0.21875      -1.09375      0.0
 ```
 """
-@inline function pinv(A::StaticMatrix{m,n,T} where m where n; atol::Real = 0.0, rtol::Real = (eps(real(float(one(T))))*min(size(A)...))*iszero(atol)) where T
+@inline function pinv(A::StaticMatrix{m,n,T} where m where n; 
+                      atol::Real = 0.0,
+                      rtol::Real = (eps(real(float(one(T))))*min(size(A)...))*iszero(atol)) where T
     S = typeof(zero(T)/sqrt(one(T) + one(T)))
     A_S = convert(similar_type(A,S),A)
     return _pinv(A_S, atol, rtol)
