@@ -18,7 +18,7 @@ end
     end
     ssvd = svd(A, full = false)
     tol = max(rtol*maximum(ssvd.S), atol)
-    sinv = _pinv_V(ssvd.S, tol)
+    sinv = _pinv_vector(ssvd.S, tol)
     return ssvd.Vt'*SDiagonal(sinv)*ssvd.U'
 end
 
@@ -26,7 +26,7 @@ end
     V = D.diag
     S = typeof(zero(T)/sqrt(one(T) + one(T)))
     V_S = convert(similar_type(V,S),V)
-    return Diagonal(_pinv_V(V_S))
+    return Diagonal(_pinv_vector(V_S))
 end
 
 @generated function _pinv_diag(A::StaticMatrix{m,n,T}, tol) where m where n where T
@@ -41,7 +41,7 @@ end
     end
 end
 
-@generated function _pinv_V(v::StaticVector{n,T}, tol) where n where T
+@generated function _pinv_vector(v::StaticVector{n,T}, tol) where n where T
     exprs = [
         :(ifelse(v[$i] > tol, inv(v[$i]), zero(T)))
         for i in 1:n
@@ -52,7 +52,7 @@ end
     end
 end
 
-@generated function _pinv_V(v::StaticVector{n,T}) where n where T
+@generated function _pinv_vector(v::StaticVector{n,T}) where n where T
     exprs = [
         :(pinv(v[$i]))
         for i in 1:n
