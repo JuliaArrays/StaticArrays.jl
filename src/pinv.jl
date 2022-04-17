@@ -14,7 +14,7 @@ end
     if isdiag(A)
         maxabsA = maximum(abs.(diag(A)))
         tol = max(rtol*maxabsA, atol)
-        return _pinv_M(A, tol)
+        return _pinv_diag(A, tol)
     end
     ssvd = svd(A, full = false)
     tol = max(rtol*maximum(ssvd.S), atol)
