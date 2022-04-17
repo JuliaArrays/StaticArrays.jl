@@ -11,12 +11,10 @@ end
     if m == 0 || n == 0
         return similar_type(A, Size(n,m))()
     end
-    if istril(A)
-        if istriu(A)
-            maxabsA = maximum(abs.(diag(A)))
-            tol = max(rtol*maxabsA, atol)
-            return _pinv_M(A, tol)
-        end
+    if isdiag(A)
+        maxabsA = maximum(abs.(diag(A)))
+        tol = max(rtol*maxabsA, atol)
+        return _pinv_M(A, tol)
     end
     ssvd = svd(A, full = false)
     tol = max(rtol*maximum(ssvd.S), atol)
