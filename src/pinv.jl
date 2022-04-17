@@ -29,7 +29,7 @@ end
     return Diagonal(_pinv_V(V_S))
 end
 
-@generated function _pinv_M(A::StaticMatrix{m,n,T}, tol) where m where n where T
+@generated function _pinv_diag(A::StaticMatrix{m,n,T}, tol) where m where n where T
     minlen = min(m,n)
     exprs = [:(zero($T)) for i in 1:n, j in 1:m]
     for i in 1:minlen
