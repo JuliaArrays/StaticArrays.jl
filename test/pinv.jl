@@ -43,7 +43,7 @@ tol = 1e-13
     @test norm(M6*N6*M6 - M6) < tol
     @test norm(N6*M6*N6 - N6) < tol
     @test N6 isa SMatrix{3,4,Float64}
-    @test N6 ≈ I(3)/M6
+    @test N6 ≈ I(3)/Matrix(M6)
     # @test N6 ≈ pinv(Matrix(M6))  # Fails on Julia ≥v1.7 https://github.com/JuliaLang/julia/issues/44234
 
     M7 = M6'
@@ -51,7 +51,7 @@ tol = 1e-13
     @test norm(M7*N7*M7 - M7) < tol
     @test norm(N7*M7*N7 - N7) < tol
     @test N7 isa SMatrix{4,3,Float64}
-    @test N7 ≈ I(4)/M7
+    @test N7 ≈ I(4)/Matrix(M7)
     # @test N7 ≈ pinv(Matrix(M7))  # Fails on Julia ≥v1.7 https://github.com/JuliaLang/julia/issues/44234
 
     M8 = @MMatrix [0.5 1.1 0.0;0.0 -2.8 0.0;0.0 0.0 0.0;0.0 0.0 0.0]
