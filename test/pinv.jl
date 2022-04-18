@@ -43,7 +43,7 @@ tol = 1e-13
     @test norm(M6*N6*M6 - M6) < tol
     @test norm(N6*M6*N6 - N6) < tol
     @test N6 isa SMatrix{3,4,Float64}
-    @test_broken N6 ≈ I(3)/M6
+    @test N6 ≈ I(3)/M6
     # @test N6 ≈ pinv(Matrix(M6))  # Fails on Julia ≥v1.7 https://github.com/JuliaLang/julia/issues/44234
 
     M7 = M6'
