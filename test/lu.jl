@@ -1,5 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
+@testset "LU" begin
+
 @testset "LU utils" begin
     F = lu(SA[1 2; 3 4])
 
@@ -65,3 +67,24 @@ end
     @test_throws SingularException lu(A)
     @test !issuccess(lu(A; check = false))
 end
+
+@testset "LU method ambiguity" begin
+    # Issue #920; just test that methods do not throw an ambiguity error when called
+    for A in ((@SMatrix [1.0 2.0; 3.0 4.0]), (@SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]))
+        @test isa(lu(A),              StaticArrays.LU)
+        @test isa(lu(A, Val(true)),   StaticArrays.LU)
+        @test isa(lu(A, Val(false)),  StaticArrays.LU)
+        @test isa(lu(A; check=false), StaticArrays.LU)
+        @test isa(lu(A; check=true),  StaticArrays.LU)
+    end
+end
+
+if isdefined(LinearAlgebra, :PivotingStrategy)
+    for N = (3, 15)
+        A = (@SMatrix randn(N,N))
+        @test lu(A, Val(false)) == lu(A, NoPivot())
+        @test lu(A, Val(true)) == lu(A, RowMaximum())
+    end
+end
+
+end # @testset "LU"

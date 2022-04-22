@@ -47,3 +47,7 @@ length_val(a::Type{T}) where {T<:StaticArrayLike} = length_val(Size(T))
         @inbounds return $(Expr(:tuple, exprs...))
     end
 end
+
+# `float` and `real` of StaticArray types, analogously to application to scalars (issue 935)
+float(::Type{SA}) where SA<:StaticArray{_S,T,_N} where {_S,T,_N} = similar_type(SA, float(T))
+real(::Type{SA}) where SA<:StaticArray{_S,T,_N} where {_S,T,_N} = similar_type(SA, real(T))

@@ -79,17 +79,20 @@ should_be_inlined(x) = x*x
 should_not_be_inlined(x) = _should_not_be_inlined(x)
 
 """
-    @inferred_maybe_allow allow ex
+    @test_was_once_broken good_version ex
 
-Expands to `@inferred allow ex` on Julia 1.2 and newer and
-`ex` on Julia 1.0 and 1.1.
+Expands to `@test ex` if `VERSION ≥ good_version` and to `@test_broken ex` if 
+`VERSION ≥ good_version`. Useful for tests that are broken on earlier versions of Julia
+that are fixed on later versions.
 """
-macro inferred_maybe_allow(allow, ex)
-    if VERSION < v"1.2"
-        return esc(:($ex))
-    else
-        return esc(:(@inferred $allow $ex))
-    end
+macro test_was_once_broken(good_version, ex)
+    esc(quote
+        if VERSION < $good_version
+            @test_broken $ex
+        else
+            @test $ex
+        end
+    end)
 end
 
 @testset "test utils" begin

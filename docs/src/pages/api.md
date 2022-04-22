@@ -120,6 +120,10 @@ Use of `similar` will fall back to a mutable container, such as a `MVector`
 static size (or else a dynamically sized `Array` will be generated when
 specifying the size as plain integers).
 
+### Collecting directly into static arrays
+
+You can collect [iterators](https://docs.julialang.org/en/v1/manual/interfaces/#man-interface-iteration) into static arrays directly with [`StaticArrays.sacollect`](@ref). The size needs to be specified, but the element type is optional.
+
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 
 These statically sized arrays are identical to the above, but are defined as
@@ -184,6 +188,10 @@ With this type, users can easily access fields to `p = Point3D(x,y,z)` using
 even permute the coordinates with `p[SVector(3,2,1)]`). Furthermore, `Point3D`
 is a complete `AbstractVector` implementation where you can add, subtract or
 scale vectors, multiply them by matrices, etc.
+
+*Note*: the three components of an ordinary `v::SVector{3}` can also be
+accessed as `v.x`, `v.y`, and `v.z`, so there is no need for a `FieldVector`
+to use this convention.
 
 It is also worth noting that `FieldVector`s may be mutable or immutable, and
 that `setindex!` is defined for use on mutable types. For immutable containers,

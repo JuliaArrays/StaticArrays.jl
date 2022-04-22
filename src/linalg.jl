@@ -4,6 +4,7 @@ import Base: +, -, *, /, \
 # Vector space algebra
 
 # Unary ops
+@inline +(a::StaticArray) = map(+, a)
 @inline -(a::StaticArray) = map(-, a)
 
 # Binary ops
@@ -17,11 +18,11 @@ import Base: +, -, *, /, \
 @inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
 
 # Scalar-array
-@inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
-@inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
+@inline *(a::Number, b::StaticArray) = map(c->a*c, b)
+@inline *(a::StaticArray, b::Number) = map(c->c*b, a)
 
-@inline /(a::StaticArray, b::Number) = broadcast(/, a, b)
-@inline \(a::Number, b::StaticArray) = broadcast(\, a, b)
+@inline /(a::StaticArray, b::Number) = map(c->c/b, a)
+@inline \(a::Number, b::StaticArray) = map(c->a\c, b)
 
 
 # With UniformScaling
@@ -44,11 +45,24 @@ end
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
 @inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
+
+# Ternary ops
+@inline Base.muladd(scalar::Number, a::StaticArray, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::StaticArray, scalar::Number, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
+
+
+# @fastmath operators
+@inline Base.FastMath.mul_fast(a::Number, b::StaticArray) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::StaticArray, b::Number) = map(c -> Base.FastMath.mul_fast(c, b), a)
+
+@inline Base.FastMath.add_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.add_fast, a, b)
+@inline Base.FastMath.sub_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.sub_fast, a, b)
+
+
 #--------------------------------------------------
 # Matrix algebra
 
-# Transpose, conjugate, etc
-@inline conj(a::StaticArray) = map(conj, a)
+# Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
@@ -133,7 +147,8 @@ end
     end
 end
 
-@generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
+@generated function diagm(kv1::Pair{<:Val,<:StaticVector}, other_kvs::Pair{<:Val,<:StaticVector}...)
+    kvs = (kv1, other_kvs...)
     diag_ind_and_length = [(kv.parameters[1].parameters[1], length(kv.parameters[2])) for kv in kvs]
     N = maximum(abs(di) + dl for (di,dl) in diag_ind_and_length)
     vs = [Symbol("v$i") for i=1:length(kvs)]
@@ -147,6 +162,7 @@ end
     end
     return quote
         $(Expr(:meta, :inline))
+        kvs = (kv1, other_kvs...)
         $(vs_exprs...)
         @inbounds elements = tuple($(element_exprs...))
         T = promote_tuple_eltype(elements)
@@ -207,17 +223,23 @@ end
 
 #--------------------------------------------------
 # Norms
-@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v; init=zero(real(eltype(v))))
+_inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
+_inner_eltype(x::Number) = typeof(x)
+@inline _init_zero(v::StaticArray) = float(norm(zero(_inner_eltype(v))))
+
+@inline function LinearAlgebra.norm_sqr(v::StaticArray)
+    return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
+end
 
 @inline norm(a::StaticArray) = _norm(Size(a), a)
 @generated function _norm(::Size{S}, a::StaticArray) where {S}
     if prod(S) == 0
-        return :(zero(real(eltype(a))))
+        return :(_init_zero(a))
     end
 
-    expr = :(abs2(a[1]))
+    expr = :(LinearAlgebra.norm_sqr(a[1]))
     for j = 2:prod(S)
-        expr = :($expr + abs2(a[$j]))
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]))
     end
 
     return quote
@@ -226,28 +248,31 @@ end
     end
 end
 
-_norm_p0(x) = x == 0 ? zero(x) : one(x)
+function _norm_p0(x)
+    T = _inner_eltype(x)
+    return float(norm(iszero(x) ? zero(T) : one(T)))
+end
 
 @inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
 @generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
     if prod(S) == 0
-        return :(zero(real(eltype(a))))
+        return :(_init_zero(a))
     end
 
-    expr = :(abs(a[1])^p)
+    expr = :(norm(a[1])^p)
     for j = 2:prod(S)
-        expr = :($expr + abs(a[$j])^p)
+        expr = :($expr + norm(a[$j])^p)
     end
 
-    expr_p1 = :(abs(a[1]))
+    expr_p1 = :(norm(a[1]))
     for j = 2:prod(S)
-        expr_p1 = :($expr_p1 + abs(a[$j]))
+        expr_p1 = :($expr_p1 + norm(a[$j]))
     end
 
     return quote
         $(Expr(:meta, :inline))
         if p == Inf
-            return mapreduce(abs, max, a)
+            return mapreduce(norm, max, a)
         elseif p == 1
             @inbounds return $expr_p1
         elseif p == 2
@@ -260,11 +285,11 @@ _norm_p0(x) = x == 0 ? zero(x) : one(x)
     end
 end
 
-@inline normalize(a::StaticVector) = inv(norm(a))*a
-@inline normalize(a::StaticVector, p::Real) = inv(norm(a, p))*a
+@inline normalize(a::StaticArray) = inv(norm(a))*a
+@inline normalize(a::StaticArray, p::Real) = inv(norm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(norm(a)); return a)
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(norm(a, p)); return a)
+@inline normalize!(a::StaticArray) = (a .*= inv(norm(a)); return a)
+@inline normalize!(a::StaticArray, p::Real) = (a .*= inv(norm(a, p)); return a)
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}

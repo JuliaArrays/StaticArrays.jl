@@ -48,6 +48,17 @@
         test_expand_error(:(@MVector [i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@MVector Float32[i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@MVector [1; 2; 3]...))
+        test_expand_error(:(@MVector a))
+        test_expand_error(:(@MVector [[1 2];[3 4]]))
+
+        if VERSION >= v"1.7.0"
+            @test ((@MVector Float64[1;2;3;;;])::MVector{3}).data === (1.0, 2.0, 3.0)
+            @test ((@MVector [1;2;3;;;])::MVector{3}).data === (1, 2, 3)
+            # @test ((@MVector [;])::MVector{0}).data === ()
+            @eval @test_broken ((@MVector $(Expr(:ncat, 1)))::MVector{0}).data === ()
+            # test_expand_error(:(@MVector [;;]))
+            @eval test_expand_error(:(@MVector $(Expr(:ncat, 2))))
+        end
     end
 
     @testset "Methods" begin
@@ -71,6 +82,8 @@
         @test size(typeof(v), 2) === 1
 
         @test length(v) === 3
+
+        @test reverse(v) == reverse(collect(v), dims = 1)
     end
 
     @testset "setindex!" begin
@@ -79,6 +92,7 @@
         v[2] = 12
         v[3] = 13
         @test v.data === (11, 12, 13)
+        @test setindex!(v, 13, 3) === v
 
         v = @MVector [1.,2.,3.]
         v[1] = Float16(11)
@@ -90,5 +104,35 @@
         # setindex with non-elbits type
         v = MVector{2,String}(undef)
         @test_throws ErrorException setindex!(v, "a", 1)
+    end
+
+    @testset "Named field access - getproperty/setproperty!" begin
+        # getproperty
+        v4 = @MVector [10,20,30,40]
+        @test v4.x == 10
+        @test v4.y == 20
+        @test v4.z == 30
+        @test v4.w == 40
+
+        v2 = @MVector [10,20]
+        @test v2.x == 10
+        @test v2.y == 20
+        @test_throws ErrorException v2.z
+        @test_throws ErrorException v2.w
+
+        # setproperty!
+        @test (v4.x = 100) == 100
+        @test (v4.y = 200) == 200
+        @test (v4.z = 300) == 300
+        @test (v4.w = 400) == 400
+        @test v4[1] == 100
+        @test v4[2] == 200
+        @test v4[3] == 300
+        @test v4[4] == 400
+
+        @test (v2.x = 100) == 100
+        @test (v2.y = 200) == 200
+        @test_throws ErrorException (v2.z = 200)
+        @test_throws ErrorException (v2.w = 200)
     end
 end

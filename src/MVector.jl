@@ -28,74 +28,35 @@ const MVector{S, T} = MArray{Tuple{S}, T, 1, S}
 #####################
 ## MVector methods ##
 #####################
+"""
+    @MVector [a, b, c, d]
+    @MVector [i for i in 1:2]
+    @MVector ones(2)
 
+A convenience macro to construct `MVector`.
+See [`@SArray`](@ref) for detailed features.
+"""
 macro MVector(ex)
-    if isa(ex, Expr) && ex.head == :vect
-        return esc(Expr(:call, MVector{length(ex.args)}, Expr(:tuple, ex.args...)))
-    elseif isa(ex, Expr) && ex.head == :ref
-        return esc(Expr(:call, Expr(:curly, :MVector, length(ex.args[2:end]), ex.args[1]), Expr(:tuple, ex.args[2:end]...)))
-    elseif isa(ex, Expr) && ex.head == :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
-            error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
-        end
-        ex = ex.args[1]
-        if length(ex.args) != 2
-            error("Use a one-dimensional comprehension for @MVector")
-        end
+    esc(static_vector_gen(MVector, ex, __module__))
+end
 
-        rng = Core.eval(__module__, ex.args[2].args[2])
-        f = gensym()
-        f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
-        exprs = [:($f($j)) for j in rng]
+# Named field access for the first four elements, using the conventional field
+# names from low-dimensional geometry (x,y,z) and computer graphics (w).
+let dimension_names = QuoteNode.([:x, :y, :z, :w])
+    body = :(getfield(v, name))
+    for (i,dim_name) in enumerate(dimension_names)
+        body = :(name === $(dimension_names[i]) ? getfield(v, :data)[$i] : $body)
+        @eval @inline function Base.getproperty(v::Union{SVector{$i},MVector{$i}},
+                                                name::Symbol)
+            $body
+        end
+    end
 
-        return quote
-            $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :MVector, length(rng)), Expr(:tuple, exprs...))))
+    body = :(setfield!(v, name, e))
+    for (i,dim_name) in enumerate(dimension_names)
+        body = :(name === $dim_name ? @inbounds(v[$i] = e) : $body)
+        @eval @inline function Base.setproperty!(v::MVector{$i}, name::Symbol, e)
+            $body
         end
-    elseif isa(ex, Expr) && ex.head == :typed_comprehension
-        if length(ex.args) != 2 || !isa(ex.args[2], Expr) !! ex.args[2].head != :generator
-            error("Expected generator in typed comprehension, e.g. Float64[f(i) for i = 1:3]")
-        end
-        T = ex.args[1]
-        ex = ex.args[2]
-        if length(ex.args) != 2
-            error("Use a one-dimensional comprehension for @MVector")
-        end
-
-        rng = Core.eval(__module__, ex.args[2].args[2])
-        f = gensym()
-        f_expr = :($f = ($(ex.args[2].args[1]) -> $(ex.args[1])))
-        exprs = [:($f($j)) for j in rng]
-
-        return quote
-            $(esc(f_expr))
-            $(esc(Expr(:call, Expr(:curly, :MVector, length(rng), T), Expr(:tuple, exprs...))))
-        end
-    elseif isa(ex, Expr) && ex.head == :call
-        if ex.args[1] == :zeros || ex.args[1] == :ones || ex.args[1] == :rand || ex.args[1] == :randn || ex.args[1] == :randexp
-            if length(ex.args) == 2
-                return quote
-                    $(esc(ex.args[1]))(MVector{$(esc(ex.args[2]))})
-                end
-            elseif length(ex.args) == 3
-                return quote
-                    $(esc(ex.args[1]))(MVector{$(esc(ex.args[3])), $(esc(ex.args[2]))})
-                end
-            else
-                error("@MVector expected a 1-dimensional array expression")
-            end
-        elseif ex.args[1] == :fill
-            if length(ex.args) == 3
-                return quote
-                    $(esc(ex.args[1]))($(esc(ex.args[2])), MVector{$(esc(ex.args[3]))})
-                end
-            else
-                error("@MVector expected a 1-dimensional array expression")
-            end
-        else
-            error("@MVector only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
-        end
-    else
-        error("Use @MVector [a,b,c] or @MVector([a,b,c])")
     end
 end

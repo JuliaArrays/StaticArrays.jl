@@ -1,3 +1,9 @@
+@static if VERSION < v"1.8.0-DEV.410"
+    using Base: @_inline_meta
+else
+    const var"@_inline_meta" = Base.var"@inline"
+end
+
 # For convenience
 TupleN{T,N} = NTuple{N,T}
 
@@ -48,7 +54,7 @@ end
 function check_array_parameters(Size, T, N, L)
     (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
     !isa(T, Type) && throw(ArgumentError("Static Array parameter T must be a type, got $T"))
-    !isa(N.parameters[1], Int) && throw(ArgumenError("Static Array parameter N must be an integer, got $(N.parameters[1])"))
+    !isa(N.parameters[1], Int) && throw(ArgumentError("Static Array parameter N must be an integer, got $(N.parameters[1])"))
     !isa(L.parameters[1], Int) && throw(ArgumentError("Static Array parameter L must be an integer, got $(L.parameters[1])"))
     # shouldn't reach here. Anything else should have made it to the function below
     error("Internal error. Please file a bug")

@@ -6,7 +6,7 @@ using StaticArrays
 
 const suite = BenchmarkGroup()
 
-for K = 1:22
+for K = [2, 3, 4, 8, 10, 12]
     a = rand(SMatrix{K,K,Float64,K*K})
     m = Matrix(a)
     s = suite["S=$K"] = BenchmarkGroup()

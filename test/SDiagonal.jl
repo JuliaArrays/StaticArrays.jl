@@ -111,5 +111,8 @@ using StaticArrays, Test, LinearAlgebra
         @test m*SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == m
         @test SMatrix{4,4}(Matrix{Float64}(I, 4, 4))/m == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
         @test m\SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
+
+        @test m + zero(m) == m
+        @test m + zero(typeof(m)) == m
     end
 end
