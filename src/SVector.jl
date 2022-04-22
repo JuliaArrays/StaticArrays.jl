@@ -118,7 +118,7 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             error("@$SV only supports the zeros(), ones(), rand(), randn() and randexp() functions.")
         end
     else
-        error("Use @$SV [a,b,c], @$SV Type[a,b,c] or a comprehension like [f(i) for i = i_min:i_max]")
+        error("Use @$SV [a,b,c], @$SV Type[a,b,c] or a comprehension like @$SV [f(i) for i = i_min:i_max]")
     end
 end
 
