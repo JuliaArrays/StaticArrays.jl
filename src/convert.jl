@@ -1,4 +1,8 @@
-# A help wrapper to distinguish `SA(x...)` and `SA((x...，))`
+"""
+    Args
+
+A help wrapper to distinguish `SA(x...)` and `SA((x...，))`
+"""
 struct Args{T<:Tuple}
     args::T
 end
@@ -20,45 +24,64 @@ end
 _size1(::Type{<:StaticMatrix{M}}) where {M} = M
 @generated function _sqrt(::Length{L}) where {L}
     N = round(Int, sqrt(L))
-    N^2 == L || throw(DimensionMismatch("Input's length must be perfect square"))
-    return :($N)
+    N^2 == L && return :($N)
+    throw(DimensionMismatch("Input's length must be perfect square"))
 end
 
-const FirstClass = Union{SArray, MArray, SHermitianCompact, SizedArray}
-
 """
-    construct_type(::Type{<:StaticArray}, x)
+    SA′ = construct_type(::Type{SA}, x) where {SA<:StaticArray}
 
-Returns a constructor for a statically-sized array based on `x`'s size and eltype.
-The first argument is returned by default.
+Pick a proper constructor `SA′` based on `x` if `SA(x)`/`SA(x...)` has no specific definition.
+The default returned `SA′` is `SA` itself for user defined `StaticArray`s. This differs from 
+`similar_type()` in that `SA′` should always be a subtype of `SA`.
+
+!!! note
+    To distinguish `SA(x...)` and `SA(x::Tuple)`, the former calls 
+    `construct_type(SA, StaticArrays.Args(x))` instead of `construct_type(SA, x)`.
+
+!!! note
+    Please make sure `SA'(x)` has a specific definition if the default behavior is overloaded. 
+    Otherwise construction might fall into infinite recursion.
+
+---
+The adaption rules for offical `StaticArray`s could be summarized as:
+
+# `SA <: FieldArray`: `eltype` adaptable
+
+`FieldArray`s are always static-sized. We only derive `SA′`'s `eltype` using type promotion if needed.
+
+# `SA <: Union{SArray, MArray, SHermitianCompact, SizedArray}`: `size`/`eltype` adaptable
+
+- SA(x::Tuple)
+ If `SA` is fully static-sized, then we first try to fill `SA` with `x`'s elements.
+ If failed and `length(SA) == 1`, then we try to fill `SA` with `x` itself.
+
+ If `SA` is not fully static-sized, then we always try to fill `SA` with `x`'s elements,
+ and the constructor's `Size` is derived based on:
+ 1. If `SA <: StaticVector`, then we use `length(x)` as the output `Length` 
+ 2. If `SA <: StaticMatrix{M}`, then we use `(M, N)` (`N = length(x) ÷ M`) as the output `Size`
+ 3. If `SA <: StaticMatrix{M,M} where M`, then we use `(N, N)` (`N = sqrt(length(x)`) as the output `Size`.
+- SA(x...)
+ Similar to `Tuple`, but we never fill `SA` with `x` itself.
+- SA(x::StaticArray)
+ We treat `x` as `Tuple` whenever possible. If failed, then try to inherit `x`'s `Size`.
+- SA(x::AbstractArray)
+ `x` is used to provide eltype. Thus `SA` must be static sized.
 """
 function construct_type(::Type{SA}, x) where {SA<:StaticArray}
     x isa BadArgs || return SA
     _no_precise_size(SA, x.args[1][1])
 end
 
-# Here we define `construct_type(SA, x)` for `SArray`, `MArray`, `SHermitianCompact`, `SizedArray`
-# Different `x` has different rules, to summarize:
-# 1. Tuple
-#    We try to fill `SA` with elements in `x` if `SA` is static-sized.
-#    If `SA <: StaticVector`, the output `Length` is derived based on `length(x)`.
-#    If `SA <: StaticMatrix{M}`, the output `Size` is derived based on `length(x)÷M`.
-#    If `SA <: StaticMatrix{M,M} where M`, the output `Size` is derived based on `sqrt(length(x))`.
-#    If `length(SA) == 1 && length（x） > 1`, then we tries to fill `SA` with `x` itself. (rewrapping)
-# 2. Args (`SA(x...)`)
-#    Similar to `Tuple`, but rewrapping is not allowed.
-# 3. StaticArray
-#    Treat `x` as `Tuple` whenever possible. If failed, then try to inherit `x`'s `Size`.
-# 4. AbstractArray
-#    `x` is used to provide eltype. Thus `SA` must be static sized.
-function construct_type(::Type{SA}, x) where {SA<:FirstClass}
-    SA′ = adapt_eltype_size(SA, x)
+# These StaticArrays support `size`/`eltype` adaption during construction.
+const SizeEltypeAdaptable = Union{SArray, MArray, SHermitianCompact, SizedArray}
+function construct_type(::Type{SA}, x) where {SA<:SizeEltypeAdaptable}
+    SA′ = adapt_eltype(adapt_size(SA, x), x)
     check_parameters(SA′)
-    x isa Tuple && SA === SA′ && error("Constructor for $SA is missing. Please file a bug.")
-    return SA′
+    (x isa Tuple && SA === SA′) || return SA′
+    error("Constructor for $SA is missing. Please file a bug.")
 end
 
-adapt_eltype_size(SA, x) = adapt_eltype(adapt_size(SA, x), x)
 function adapt_size(::Type{SA}, x) where {SA<:StaticArray}
     if has_size(SA) && length_match_size(SA, x)
         SZ = Tuple{size(SA)...}
@@ -113,10 +136,10 @@ end
 
 need_rewrap(::Type{<:StaticArray}, x) = false
 function need_rewrap(::Type{SA}, x::Union{Tuple,StaticArray}) where {SA <: StaticArray}
-    has_size(SA) && length(SA) == 1 && length(x) > 1
+    has_size(SA) && length(SA) == 1 && length(x) != 1
 end
 
-check_parameters(::Type{<:FirstClass}) = nothing
+check_parameters(::Type{<:SizeEltypeAdaptable}) = nothing
 check_parameters(::Type{SArray{S,T,N,L}}) where {S<:Tuple,T,N,L} = check_array_parameters(S,T,Val{N},Val{L})
 check_parameters(::Type{MArray{S,T,N,L}}) where {S<:Tuple,T,N,L} = check_array_parameters(S,T,Val{N},Val{L})
 check_parameters(::Type{SHermitianCompact{N,T,L}}) where {N,T,L} = _check_hermitian_parameters(Val(N), Val(L))
@@ -127,7 +150,7 @@ _no_precise_size(SA, x::StaticArray) = throw(DimensionMismatch("No precise const
 _no_precise_size(SA, x) = throw(DimensionMismatch("No precise constructor for $SA found. Input is not static sized."))
 
 @inline (::Type{SA})(x...) where {SA <: StaticArray} = construct_type(SA, Args(x))(x)
-@inline function (::Type{SA})(x::Tuple) where {SA <: FirstClass}
+@inline function (::Type{SA})(x::Tuple) where {SA <: SizeEltypeAdaptable}
     SA′ = construct_type(SA, x)
     need_rewrap(SA′, x) ? SA′((x,)) : SA′(x)
 end
