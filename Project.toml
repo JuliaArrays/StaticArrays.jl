@@ -13,7 +13,8 @@ julia = "1.6"
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["InteractiveUtils", "Test", "BenchmarkTools"]
+test = ["InteractiveUtils", "Test", "BenchmarkTools", "OffsetArrays"]

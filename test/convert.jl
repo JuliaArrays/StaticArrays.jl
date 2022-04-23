@@ -57,3 +57,12 @@ struct BugStaticVector <: StaticVector{2,Int} end
     @test_inlined f((1,2,3,4))
 end
 
+using OffsetArrays
+@testset "constructor/convert from OffsetArray" begin
+    a = OffsetArray([-1 1;0 2], -1, -1)
+    b = OffsetArray([-1,0,1,2], -1)
+    c = OffsetArray(-1:2, -1)
+    d = Base.IdentityUnitRange(-1:2)
+    @test SVector{4}(a) === SVector{4}(b) === SVector{4}(c) === SVector{4}(d) == [-1,0,1,2]
+    @test SMatrix{2,2}(a) === SMatrix{2,2}(b) === SMatrix{2,2}(c) === SMatrix{2,2}(d) == [-1 1;0 2]
+end
