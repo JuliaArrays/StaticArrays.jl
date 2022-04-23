@@ -18,7 +18,6 @@ end
 @pure has_size1(::Type{<:StaticMatrix{M}}) where {M} = @isdefined M
 @pure has_size1(::Type{<:StaticMatrix}) = false
 _size1(::Type{<:StaticMatrix{M}}) where {M} = M
-StaticSquareMatrix{N,T} = StaticMatrix{N,N,T}
 @generated function _sqrt(::Length{L}) where {L}
     N = round(Int, sqrt(L))
     N^2 == L || throw(DimensionMismatch("Input's length must be perfect square"))
@@ -73,7 +72,7 @@ function adapt_size(::Type{SA}, x) where {SA<:StaticArray}
             M = len ÷ N
             M * N == len || throw(DimensionMismatch("Incorrect matrix sizes. $len does not divide $N elements"))
             SZ = Tuple{N, M}
-        elseif SA <: StaticSquareMatrix
+        elseif SA <: StaticMatrix{N,N} where {N}
             N = _sqrt(Length(len))
             SZ = Tuple{N, N}
         elseif x isa StaticArray

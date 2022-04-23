@@ -31,6 +31,7 @@
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
         @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test SizedArray{Tuple{4}}([1 2; 3 4]) == vec([1 2; 3 4])
         @test_throws DimensionMismatch SizedArray{Tuple{1,4}}([1 2; 3 4])
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
@@ -76,6 +77,9 @@
         # Reshaping
         @test @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         @test @inferred(SizedMatrix{2,2}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1,SVector{4,Int}}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
         # Back to Matrix
         @test Matrix(SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
         @test convert(Matrix, SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
@@ -268,6 +272,4 @@ Base.axes(::OVector) = (0:9,)
     @test (@inferred(SizedMatrix{1}(1, 2))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
     @test (@inferred(SizedMatrix{2}((1, 2)))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
     @test (@inferred(SizedMatrix{2}(1, 2))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
-
-
 end
