@@ -112,3 +112,27 @@ Base.@propagate_inbounds function invperm(p::StaticVector)
      similar_type(p)(ip)
 end
 
+"""
+    _show_shape_size_type(io, S)
+
+Utility function for printing SArray and MArray types. Caller should print the `'S'` or the
+`'M'`, then this function prints the shape name, an opening curly brace, and the size
+parameters, the type parameter, and the closing curly brace in the format that can be used
+to construct the type.
+
+NOTE: does not special-case 0-dimensional arrays ([`Scalar`](@ref)).
+"""
+function _show_shape_size_type(io::IO, S::Tuple, ::Type{T}) where T
+    _show_shape_size(io, S)
+    print(io, ",", T, "}")
+end
+
+_show_shape_size(io::IO, S::NTuple{1}) = print(io, "Vector{$(S[1])")
+
+_show_shape_size(io::IO, S::NTuple{2}) = print(io, "Matrix{$(S[1]),$(S[2])")
+
+function _show_shape_size(io::IO, S::Tuple)
+    print(io, "Array{Tuple{")
+    join(io, S, ',')
+    print(io, "}")
+end

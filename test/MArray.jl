@@ -218,4 +218,15 @@
         v[] = 2
         @test v[] == 2
     end
+
+    @testset "repr and show roundtrip" begin
+        z = MArray{Tuple{}}(1.0)
+        v = MVector{8}(float.(1:8))
+        m = MMatrix{2,4}(v)
+        a = MArray{Tuple{2,2,2}}(v)
+        for x in (z, v, m, a)
+            z = eval(Meta.parse(repr(x)))
+            @test z isa MArray && x == z && size(x) == size(z) && eltype(x) == eltype(z)
+        end
+    end
 end

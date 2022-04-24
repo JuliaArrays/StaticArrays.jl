@@ -206,4 +206,14 @@
         @test @inferred(promote_type(SVector{2,Int}, SVector{2,Float64})) === SVector{2,Float64}
         @test @inferred(promote_type(SMatrix{2,3,Float32,6}, SMatrix{2,3,Complex{Float64},6})) === SMatrix{2,3,Complex{Float64},6}
     end
+
+    @testset "repr and show roundtrip" begin
+        z = SArray{Tuple{}}(1.0)
+        v = SVector{8}(float.(1:8))
+        m = SMatrix{2,4}(v)
+        a = SArray{Tuple{2,2,2}}(v)
+        for x in (z, v, m, a)
+            @test eval(Meta.parse(repr(x))) ≡ x
+        end
+    end
 end
