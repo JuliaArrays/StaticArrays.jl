@@ -29,6 +29,12 @@ struct SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     end
 end
 
+function Base.show(io::IO, a::SArray{S,T}) where {S,T}
+    print(io, 'S')
+    _show_shape_size_type(io, size(a), T)
+    print(io, Tuple(a))
+end
+
 @generated function (::Type{SArray{S, T, N}})(x::Tuple) where {S <: Tuple, T, N}
     return quote
         @_inline_meta

@@ -36,6 +36,12 @@ mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     end
 end
 
+function Base.show(io::IO, a::MArray{S,T}) where {S,T}
+    print(io, 'M')
+    _show_shape_size_type(io, size(a), T)
+    print(io, Tuple(a))
+end
+
 @generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
     return quote
         $(Expr(:meta, :inline))
