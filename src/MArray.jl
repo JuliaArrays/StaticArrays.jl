@@ -131,9 +131,13 @@ function Base.view(
     a::MArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
-    new_size = new_out_size(S, indices...)
     view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
-    return SizedArray{new_size}(view_from_invoke)
+    if any(index -> typeof(index) <: StaticVector{<:Any,Bool}, indices)
+        return view_from_invoke
+    else
+        new_size = new_out_size(S, indices...)
+        return SizedArray{new_size}(view_from_invoke)
+    end
 end
 
 Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(T)

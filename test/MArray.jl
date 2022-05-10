@@ -218,4 +218,10 @@
         v[] = 2
         @test v[] == 2
     end
+
+    @testset "boolean indexing" begin
+        v = @MArray [1,2,3]
+        b = view(v, SA[true, false, true])
+        @test b == [1,3]
+    end
 end

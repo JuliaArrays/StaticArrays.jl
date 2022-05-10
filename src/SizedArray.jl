@@ -225,8 +225,13 @@ function Base.view(
     a::SizedArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
-    new_size = new_out_size(S, indices...)
-    return SizedArray{new_size}(view(a.data, indices...))
+    view_of_wrapped = view(a.data, indices...)
+    if any(index -> typeof(index) <: StaticVector{<:Any,Bool}, indices)
+        return view_of_wrapped
+    else
+        new_size = new_out_size(S, indices...)
+        return SizedArray{new_size}(view_of_wrapped)
+    end
 end
 
 function Base.vec(a::SizedArray{S}) where {S}
