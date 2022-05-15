@@ -1,7 +1,7 @@
 """
     Args
 
-A help wrapper to distinguish `SA(x...)` and `SA((x...，))`
+A help wrapper to distinguish `SA(x...)` and `SA((x...,))`
 """
 struct Args{T<:Tuple}
     args::T
