@@ -1,7 +1,7 @@
 # Allow no new ambiguities (see #18), unless you fix some old ones first!
 
-const allowable_ambiguities = VERSION ≥ v"1.7" ? 60 :
-                              VERSION ≥ v"1.6" ? 61 : error("version must be ≥1.6")
+const allowable_ambiguities = VERSION ≥ v"1.7" ? 10 :
+                              VERSION ≥ v"1.6" ? 11 : error("version must be ≥1.6")
 
 # TODO: Revisit and fix. See
 #   https://github.com/JuliaLang/julia/pull/36962

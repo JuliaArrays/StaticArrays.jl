@@ -42,3 +42,27 @@ end
     mInt = SA[Int16(1) Int16(2) Int16(3); Int16(4) Int16(5) Int16(6)] # SMatrix{3,2,Int16}
     @test float(typeof(mInt)) === SMatrix{2, 3, float(Int16), 6}
 end
+
+@testset "convert with missing/wrong size" begin
+    @test convert(SVector, MVector(1,2,3)) === SVector(1,2,3)
+    @test convert(SMatrix{3}, MVector(1,2,3)) === SMatrix{3,1}(1,2,3)
+    @test_throws Exception convert(SVector{1}, MVector(1,2,3)) 
+end
+
+struct BugStaticVector <: StaticVector{2,Int} end
+@testset "Unknow StaticArray" begin
+    # Make sure the new `construct_type` cause no regression.
+    @test_throws DimensionMismatch BugStaticVector(1,2,3)
+    f(x) = StaticArrays.construct_type(BugStaticVector, StaticArrays.Args(x))
+    @test_inlined f((1,2,3,4))
+end
+
+using OffsetArrays
+@testset "constructor/convert from OffsetArray" begin
+    a = OffsetArray([-1 1;0 2], -1, -1)
+    b = OffsetArray([-1,0,1,2], -1)
+    c = OffsetArray(-1:2, -1)
+    d = Base.IdentityUnitRange(-1:2)
+    @test SVector{4}(a) === SVector{4}(b) === SVector{4}(c) === SVector{4}(d) == [-1,0,1,2]
+    @test SMatrix{2,2}(a) === SMatrix{2,2}(b) === SMatrix{2,2}(c) === SMatrix{2,2}(d) == [-1 1;0 2]
+end

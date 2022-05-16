@@ -18,38 +18,18 @@ compiler (the element type may optionally also be specified).
 struct SArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
-    function SArray{S, T, N, L}(x::NTuple{L,T}) where {S, T, N, L}
+    function SArray{S, T, N, L}(x::NTuple{L,T}) where {S<:Tuple, T, N, L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S, T, N, L}(x)
     end
 
-    function SArray{S, T, N, L}(x::NTuple{L,Any}) where {S, T, N, L}
+    function SArray{S, T, N, L}(x::NTuple{L,Any}) where {S<:Tuple, T, N, L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S, T, N, L}(convert_ntuple(T, x))
     end
 end
 
-@generated function (::Type{SArray{S, T, N}})(x::Tuple) where {S <: Tuple, T, N}
-    return quote
-        @_inline_meta
-        SArray{S, T, N, $(tuple_prod(S))}(x)
-    end
-end
-
-@generated function (::Type{SArray{S, T}})(x::Tuple) where {S <: Tuple, T}
-    return quote
-        @_inline_meta
-        SArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}(x)
-    end
-end
-
-@generated function (::Type{SArray{S}})(x::T) where {S <: Tuple, T <: Tuple}
-    return quote
-        @_inline_meta
-        SArray{S, promote_tuple_eltype(T), $(tuple_length(S)), $(tuple_prod(S))}(x)
-    end
-end
-
+@inline SArray{S,T,N}(x::Tuple) where {S<:Tuple,T,N} = SArray{S,T,N,tuple_prod(S)}(x)
 
 @noinline function generator_too_short_error(inds::CartesianIndices, i::CartesianIndex)
     error("Generator produced too few elements: Expected exactly $(shape_string(inds)) elements, but generator stopped at $(shape_string(i))")
@@ -105,8 +85,6 @@ sacollect
 
 @inline (::Type{SA})(gen::Base.Generator) where {SA <: StaticArray} =
     sacollect(SA, gen)
-
-@inline SArray(a::StaticArray{S,T}) where {S<:Tuple,T} = SArray{S,T}(Tuple(a))
 
 ####################
 ## SArray methods ##

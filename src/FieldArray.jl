@@ -110,11 +110,12 @@ array operations as in the example below.
 """
 abstract type FieldVector{N, T} <: FieldArray{Tuple{N}, T, 1} end
 
-@inline function (::Type{FA})(x::Tuple{Vararg{Any, N}}) where {N, FA <: FieldArray}
-    @boundscheck if length(FA) != length(x)
-        throw(DimensionMismatch("No precise constructor for $FA found. Length of input was $(length(x))."))
-    end
-    return FA(x...)
+@inline (::Type{FA})(x::Tuple) where {FA <: FieldArray} = construct_type(FA, x)(x...)
+
+function construct_type(::Type{FA}, x) where {FA <: FieldArray}
+    has_size(FA) || error("$FA has no static size!")
+    length_match_size(FA, x)
+    return adapt_eltype(FA, x)
 end
 
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)

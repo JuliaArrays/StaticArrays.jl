@@ -19,6 +19,7 @@
     end
 
     @testset "Outer Constructors" begin
+        @test_throws DimensionMismatch SizedArray([3, 4])
         @test SizedArray{Tuple{2},Int,1}([3, 4]).data == [3, 4]
         @test SizedArray{Tuple{2},Int,1,1}([3, 4]).data == [3, 4]
 
@@ -30,7 +31,8 @@
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
         @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
-        @test_throws DimensionMismatch SizedArray{Tuple{4}}([1 2; 3 4])
+        @test SizedArray{Tuple{4}}([1 2; 3 4]) == vec([1 2; 3 4])
+        @test_throws DimensionMismatch SizedArray{Tuple{1,4}}([1 2; 3 4])
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
@@ -75,6 +77,9 @@
         # Reshaping
         @test @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         @test @inferred(SizedMatrix{2,2}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1,SVector{4,Int}}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
         # Back to Matrix
         @test Matrix(SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
         @test convert(Matrix, SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
@@ -252,3 +257,19 @@ struct OVector <: AbstractVector{Int} end
 Base.length(::OVector) = 10
 Base.axes(::OVector) = (0:9,)
 @test_throws ArgumentError SizedVector{10}(OVector())
+
+@testset "some special case" begin
+    @test_throws Exception SizedVector{1}(1, 2)
+    @test (@inferred(SizedVector{1}((1, 2)))::SizedVector{1,NTuple{2,Int}}) == [(1, 2)]
+    @test (@inferred(SizedVector{2}((1, 2)))::SizedVector{2,Int}) == [1, 2]
+    @test (@inferred(SizedVector(1, 2))::SizedVector{2,Int}) == [1, 2]
+    @test (@inferred(SizedVector((1, 2)))::SizedVector{2,Int}) == [1, 2]
+
+    @test_throws Exception SizedMatrix{1,1}(1, 2)
+    @test (@inferred(SizedMatrix{1,1}((1, 2)))::SizedMatrix{1,1,NTuple{2,Int}}) == fill((1, 2),1,1)
+    @test (@inferred(SizedMatrix{1,2}((1, 2)))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{1}((1, 2)))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{1}(1, 2))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{2}((1, 2)))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
+    @test (@inferred(SizedMatrix{2}(1, 2))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
+end

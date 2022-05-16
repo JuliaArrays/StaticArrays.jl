@@ -20,42 +20,23 @@ the compiler (the element type may optionally also be specified).
 mutable struct MArray{S <: Tuple, T, N, L} <: StaticArray{S, T, N}
     data::NTuple{L,T}
 
-    function MArray{S,T,N,L}(x::NTuple{L,T}) where {S,T,N,L}
+    function MArray{S,T,N,L}(x::NTuple{L,T}) where {S<:Tuple,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}(x)
     end
 
-    function MArray{S,T,N,L}(x::NTuple{L,Any}) where {S,T,N,L}
+    function MArray{S,T,N,L}(x::NTuple{L,Any}) where {S<:Tuple,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}(convert_ntuple(T, x))
     end
 
-    function MArray{S,T,N,L}(::UndefInitializer) where {S,T,N,L}
+    function MArray{S,T,N,L}(::UndefInitializer) where {S<:Tuple,T,N,L}
         check_array_parameters(S, T, Val{N}, Val{L})
         new{S,T,N,L}()
     end
 end
 
-@generated function (::Type{MArray{S,T,N}})(x::Tuple) where {S,T,N}
-    return quote
-        $(Expr(:meta, :inline))
-        MArray{S,T,N,$(tuple_prod(S))}(x)
-    end
-end
-
-@generated function (::Type{MArray{S,T}})(x::Tuple) where {S,T}
-    return quote
-        $(Expr(:meta, :inline))
-        MArray{S,T,$(tuple_length(S)),$(tuple_prod(S))}(x)
-    end
-end
-
-@generated function (::Type{MArray{S}})(x::T) where {S, T <: Tuple}
-    return quote
-        $(Expr(:meta, :inline))
-        MArray{S,promote_tuple_eltype(T),$(tuple_length(S)),$(tuple_prod(S))}(x)
-    end
-end
+@inline MArray{S,T,N}(x::Tuple) where {S<:Tuple,T,N} = MArray{S,T,N,tuple_prod(S)}(x)
 
 @generated function (::Type{MArray{S,T,N}})(::UndefInitializer) where {S,T,N}
     return quote
@@ -70,8 +51,6 @@ end
         MArray{S, T, $(tuple_length(S)), $(tuple_prod(S))}(undef)
     end
 end
-
-@inline MArray(a::StaticArray{S,T}) where {S<:Tuple,T} = MArray{S,T}(Tuple(a))
 
 ####################
 ## MArray methods ##
