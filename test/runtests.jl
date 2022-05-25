@@ -23,6 +23,8 @@ end
 
 TEST_GROUP = get(ENV, "STATICARRAYS_TEST_GROUP", "all")
 
+println("Using test group: ", TEST_GROUP)
+
 if TEST_GROUP ∈ ["all", "group-A"]
     addtests("SVector.jl")
     addtests("MVector.jl")

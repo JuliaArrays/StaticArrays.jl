@@ -84,10 +84,11 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+        env:
+          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
   docs:
     name: Documentation
     runs-on: ubuntu-latest
