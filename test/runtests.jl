@@ -25,7 +25,7 @@ TEST_GROUP = get(ENV, "STATICARRAYS_TEST_GROUP", "all")
 
 println("Using test group: ", TEST_GROUP)
 
-if TEST_GROUP ∈ ["all", "group-A"]
+if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("SVector.jl")
     addtests("MVector.jl")
     addtests("SMatrix.jl")
@@ -70,7 +70,7 @@ if TEST_GROUP ∈ ["all", "group-A"]
     addtests("lu.jl")
 end
 
-if TEST_GROUP ∈ ["all", "group-B"]
+if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("qr.jl")
     addtests("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
     addtests("deque.jl")
