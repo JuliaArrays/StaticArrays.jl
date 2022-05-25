@@ -20,14 +20,57 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
+        arch:
+          - x64
         include:
           - arch: x86
+            version: '1.6'
+            os: ubuntu-latest
             group: 'group-A'
           - arch: x86
+            version: '1'
+            os: ubuntu-latest
+            group: 'group-A'
+          - arch: x86
+            version: 'nightly'
+            os: ubuntu-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1.6'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: 'nightly'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1.6'
+            os: ubuntu-latest
             group: 'group-B'
-        arch:
-          - x86
-          - x64
+          - arch: x86
+            version: '1'
+            os: ubuntu-latest
+            group: 'group-B'
+          - arch: x86
+            version: 'nightly'
+            os: ubuntu-latest
+            group: 'group-B'
+          - arch: x86
+            version: '1.6'
+            os: windows-latest
+            group: 'group-B'
+          - arch: x86
+            version: '1'
+            os: windows-latest
+            group: 'group-B'
+          - arch: x86
+            version: 'nightly'
+            os: windows-latest
+            group: 'group-B'
         exclude:
           # Remove some configurations from the build matrix to reduce CI time.
           # See https://github.com/marketplace/actions/setup-julia-environment
