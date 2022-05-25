@@ -7,7 +7,7 @@ on:
   pull_request:
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ matrix.group }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.version == 'nightly' }}
     strategy:
@@ -20,6 +20,9 @@ jobs:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
+        include:
+          - arch: x86
+            group: ['group-A', 'group-B']
         arch:
           - x86
           - x64
@@ -39,6 +42,7 @@ jobs:
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
   docs:
     name: Documentation
     runs-on: ubuntu-latest
