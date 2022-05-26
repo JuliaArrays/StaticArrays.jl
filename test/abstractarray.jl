@@ -234,6 +234,15 @@ using StaticArrays, Test, LinearAlgebra
             @test (@inferred f(v, i)) == length(v[i])
         end
     end
+
+    @testset "reduced_indices" begin
+        s = SArray{Tuple{2,2,2},Int,3,8}((1,2,3,4,5,6,7,8))
+        a = Array(s)
+        for i in 1:ndims(s)
+            rs = @inferred Base.reduced_indices(axes(s), i)
+            @test rs == Base.reduced_indices(axes(a), i)
+        end
+    end
 end
 
 @testset "permutedims" begin
