@@ -50,11 +50,19 @@ end
 @inline Base.muladd(scalar::Number, a::StaticArray, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
 @inline Base.muladd(a::StaticArray, scalar::Number, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
 
+
+# @fastmath operators
+@inline Base.FastMath.mul_fast(a::Number, b::StaticArray) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::StaticArray, b::Number) = map(c -> Base.FastMath.mul_fast(c, b), a)
+
+@inline Base.FastMath.add_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.add_fast, a, b)
+@inline Base.FastMath.sub_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.sub_fast, a, b)
+
+
 #--------------------------------------------------
 # Matrix algebra
 
-# Transpose, conjugate, etc
-@inline conj(a::StaticArray) = map(conj, a)
+# Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent

@@ -1,6 +1,6 @@
 module StaticArrays
 
-import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
+import Base: @_propagate_inbounds_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
              promote_rule, map, map!, reduce, mapreduce, foldl, mapfoldl, broadcast,
@@ -13,10 +13,10 @@ import Statistics: mean
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
-import Base: sqrt, exp, log
+import Base: sqrt, exp, log, float, real
 using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
-                      kron, diag, norm, dot, diagm, lu, svd, svdvals,
+                      kron, diag, norm, dot, diagm, lu, svd, svdvals, pinv,
                       factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
 using LinearAlgebra: checksquare
@@ -144,10 +144,9 @@ include("qr.jl")
 include("deque.jl")
 include("flatten.jl")
 include("io.jl")
+include("pinv.jl")
 
-if Base.VERSION >= v"1.4.2"
-    include("precompile.jl")
-    _precompile_()
-end
+include("precompile.jl")
+_precompile_()
 
 end # module

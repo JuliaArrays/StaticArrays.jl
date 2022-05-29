@@ -1,5 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
+@testset "LU" begin
+
 @testset "LU utils" begin
     F = lu(SA[1 2; 3 4])
 
@@ -76,3 +78,13 @@ end
         @test isa(lu(A; check=true),  StaticArrays.LU)
     end
 end
+
+if isdefined(LinearAlgebra, :PivotingStrategy)
+    for N = (3, 15)
+        A = (@SMatrix randn(N,N))
+        @test lu(A, Val(false)) == lu(A, NoPivot())
+        @test lu(A, Val(true)) == lu(A, RowMaximum())
+    end
+end
+
+end # @testset "LU"

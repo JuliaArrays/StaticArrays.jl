@@ -5,10 +5,8 @@ using Test
 
 macro test_noalloc(ex)
     esc(quote
-        if VERSION < v"1.5"
-            $ex
-            @test(@allocated($ex) == 0)
-        end
+        $ex
+        @test(@allocated($ex) == 0)
     end)
 end
 
@@ -96,17 +94,13 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     mul!(b,At,c,1.0,2.0)
     @test b ≈ 5A'c
 
-    @static if VERSION < v"1.5-"
+    if !(ArrayType <: SizedArray)
         @test_noalloc mul!(c,A,b)
     else
-        if !(ArrayType <: SizedArray)
-            @test_noalloc mul!(c,A,b)
-        else
-            mul!(c,A,b)
-            @test_broken(@allocated(mul!(c,A,b)) == 0)
-        end
+        mul!(c,A,b)
+        @test_broken(@allocated(mul!(c,A,b)) == 0)
     end
-    expected_transpose_allocs = VERSION < v"1.5" ? 1 : 0
+    expected_transpose_allocs = 0
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
     @test minimum(bmark).allocs == 0
     # @test_noalloc mul!(c, A, b, α, β)  # records 32 bytes

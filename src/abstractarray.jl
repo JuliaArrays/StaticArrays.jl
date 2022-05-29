@@ -14,6 +14,7 @@ Base.axes(s::StaticArray) = _axes(Size(s))
 end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
+Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 
@@ -190,11 +191,17 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 @inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
     return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
 end
-@inline function __reshape(a, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a, shape))
+@inline function __reshape(a, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a, shape), Size(a), s)
 end
-@inline function __reshape(a::SizedArray, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a.data, shape))
+@inline function __reshape(a::SizedArray, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a.data, shape), Size(a), s)
+end
+@inline function _maybewrap_reshape(a, ::Size{Sa}, ::Size{S}) where {Sa,S}
+    return SizedArray{Tuple{S...}}(a)
+end
+@inline function _maybewrap_reshape(a::StaticArray, ::Size{S}, ::Size{S}) where {S}
+    return a
 end
 
 reshape(a::Vector, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
@@ -300,13 +307,11 @@ end
     end
 end
 
-if VERSION >= v"1.6.0-DEV.1334"
-    # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
-    # don't overload iterate
-    @inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
-        newlen = tuple_prod(S) - i
-        return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
-    end
+# FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
+# don't overload iterate
+@inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
+    newlen = tuple_prod(S) - i
+    return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
 end
 
 # SArrays may avoid the SubArray wrapper and consequently an additional level of indirection

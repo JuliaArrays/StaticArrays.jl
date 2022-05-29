@@ -7,9 +7,9 @@ using StaticArrays
 
 const suite = BenchmarkGroup()
 const matrix_sizes = if haskey(ENV, "GITHUB_EVENT_PATH")
-    (1, 2, 3, 4, 10, 20)
+    (1, 2, 3, 4, 10)
 else
-    1:20
+    1:10
 end
 
 # Use same arrays across processes (at least with the same Julia version):

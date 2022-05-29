@@ -57,6 +57,13 @@
         test_expand_error(:(@SVector [i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@SVector Float32[i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@SVector [1; 2; 3]...))
+        test_expand_error(:(@SVector a))
+        test_expand_error(:(@SVector [[1 2];[3 4]]))
+
+        if VERSION >= v"1.7.0"
+            @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
+            @test ((@SVector [1;2;3;;;])::SVector{3}).data === (1, 2, 3)
+        end
     end
 
     @testset "Methods" begin
@@ -101,5 +108,18 @@
         @test @inferred(eltype([b,c])) == SVector{2,Float32}
         @test @inferred(convert(SVector, c)) == SVector{2,Int}([1, 2])
         @test @inferred(convert(SVector{2}, c)) == SVector{2,Int}([1, 2])
+    end
+
+    @testset "Named field access - getproperty" begin
+        v4 = SA[10,20,30,40]
+        @test v4.x == 10
+        @test v4.y == 20
+        @test v4.z == 30
+        @test v4.w == 40
+        v2 = SA[10,20]
+        @test v2.x == 10
+        @test v2.y == 20
+        @test_throws ErrorException v2.z
+        @test_throws ErrorException v2.w
     end
 end

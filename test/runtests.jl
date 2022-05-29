@@ -34,6 +34,9 @@ addtests("SUnitRange.jl")
 addtests("SizedArray.jl")
 addtests("SDiagonal.jl")
 addtests("SHermitianCompact.jl")
+if VERSION >= v"1.8.0-beta1"
+    addtests("empty_array_syntax.jl")
+end
 
 addtests("ambiguities.jl")
 addtests("custom_types.jl")
@@ -53,6 +56,7 @@ addtests("matrix_multiply_add.jl")
 addtests("triangular.jl")
 addtests("det.jl")
 addtests("inv.jl")
+addtests("pinv.jl")
 addtests("solve.jl")
 addtests("eigen.jl")
 addtests("expm.jl")
