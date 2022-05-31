@@ -23,7 +23,9 @@ end
 
 TEST_GROUP = get(ENV, "STATICARRAYS_TEST_GROUP", "all")
 
-println("Using test group: ", TEST_GROUP)
+if TEST_GROUP ∈ ["group-A", "group-B"]
+    println("Using test group: ", TEST_GROUP)
+end
 
 if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("SVector.jl")
