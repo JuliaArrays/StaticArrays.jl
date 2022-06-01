@@ -7,7 +7,7 @@ on:
   pull_request:
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ matrix.group }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.version == 'nightly' }}
     strategy:
@@ -21,8 +21,56 @@ jobs:
           - macOS-latest
           - windows-latest
         arch:
-          - x86
           - x64
+        include:
+          - arch: x86
+            version: '1.6'
+            os: ubuntu-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1'
+            os: ubuntu-latest
+            group: 'group-A'
+          - arch: x86
+            version: 'nightly'
+            os: ubuntu-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1.6'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: 'nightly'
+            os: windows-latest
+            group: 'group-A'
+          - arch: x86
+            version: '1.6'
+            os: ubuntu-latest
+            group: 'group-B'
+          - arch: x86
+            version: '1'
+            os: ubuntu-latest
+            group: 'group-B'
+          - arch: x86
+            version: 'nightly'
+            os: ubuntu-latest
+            group: 'group-B'
+          - arch: x86
+            version: '1.6'
+            os: windows-latest
+            group: 'group-B'
+          - arch: x86
+            version: '1'
+            os: windows-latest
+            group: 'group-B'
+          - arch: x86
+            version: 'nightly'
+            os: windows-latest
+            group: 'group-B'
         exclude:
           # Remove some configurations from the build matrix to reduce CI time.
           # See https://github.com/marketplace/actions/setup-julia-environment
@@ -36,6 +84,8 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+        env:
+          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

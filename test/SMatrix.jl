@@ -17,6 +17,8 @@
     end
 
     @testset "Outer constructors and macro" begin
+        @test_throws Exception SMatrix(1,2,3,4) # unknown constructor
+
         @test SMatrix{1,1,Int}((1,)).data === (1,)
         @test SMatrix{1,1}((1,)).data === (1,)
         @test SMatrix{1}((1,)).data === (1,)

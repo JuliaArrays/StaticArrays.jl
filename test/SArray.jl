@@ -17,6 +17,8 @@
     end
 
     @testset "Outer constructors and macro" begin
+        @test_throws Exception SArray(1,2,3,4) # unknown constructor
+
         @test SArray{Tuple{1},Int,1}((1,)).data === (1,)
         @test SArray{Tuple{1},Int}((1,)).data === (1,)
         @test SArray{Tuple{1}}((1,)).data === (1,)
@@ -206,4 +208,22 @@
         @test @inferred(promote_type(SVector{2,Int}, SVector{2,Float64})) === SVector{2,Float64}
         @test @inferred(promote_type(SMatrix{2,3,Float32,6}, SMatrix{2,3,Complex{Float64},6})) === SMatrix{2,3,Complex{Float64},6}
     end
+end
+
+@testset "some special case" begin
+    @test_throws Exception (SArray{Tuple{2,M,N}} where {M,N})(SArray{Tuple{3,2,1}}(1,2,3,4,5,6))
+
+    @test_throws Exception SVector{1}(1, 2)
+    @test (@inferred(SVector{1}((1, 2)))::SVector{1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(SVector{2}((1, 2)))::SVector{2,Int}).data === (1,2)
+    @test (@inferred(SVector(1, 2))::SVector{2,Int}).data === (1,2)
+    @test (@inferred(SVector((1, 2)))::SVector{2,Int}).data === (1,2)
+
+    @test_throws Exception SMatrix{1,1}(1, 2)
+    @test (@inferred(SMatrix{1,1}((1, 2)))::SMatrix{1,1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(SMatrix{1,2}((1, 2)))::SMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(SMatrix{1}((1, 2)))::SMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(SMatrix{1}(1, 2))::SMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(SMatrix{2}((1, 2)))::SMatrix{2,1,Int}).data === (1,2)
+    @test (@inferred(SMatrix{2}(1, 2))::SMatrix{2,1,Int}).data === (1,2)
 end
