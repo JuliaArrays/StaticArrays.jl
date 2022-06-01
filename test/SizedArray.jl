@@ -19,6 +19,7 @@
     end
 
     @testset "Outer Constructors" begin
+        @test_throws DimensionMismatch SizedArray([3, 4])
         @test SizedArray{Tuple{2},Int,1}([3, 4]).data == [3, 4]
         @test SizedArray{Tuple{2},Int,1,1}([3, 4]).data == [3, 4]
 
@@ -30,7 +31,8 @@
         @test @inferred(SizedArray{Tuple{2,2}}([1 2;3 4]))::SizedArray{Tuple{2,2},Int,2,2} == [1 2; 3 4]
         # From Array, reshaped
         @test @inferred(SizedArray{Tuple{2,2}}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
-        @test_throws DimensionMismatch SizedArray{Tuple{4}}([1 2; 3 4])
+        @test SizedArray{Tuple{4}}([1 2; 3 4]) == vec([1 2; 3 4])
+        @test_throws DimensionMismatch SizedArray{Tuple{1,4}}([1 2; 3 4])
         # Uninitialized
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
         @test @inferred(SizedArray{Tuple{2,2},Int,2,2}(undef)) isa SizedArray{Tuple{2,2},Int,2,2,Matrix{Int}}
@@ -41,9 +43,7 @@
         @test size(SizedArray{Tuple{4,5},Int}(undef).data) == (4, 5)
 
         # 0-element constructor
-        if VERSION >= v"1.1"
-            @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
-        end
+        @test (@inferred SizedArray(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
 
         # From Tuple
         @test @inferred(SizedArray{Tuple{2},Float64,1,1}((1,2)))::SizedArray{Tuple{2},Float64,1,1,Vector{Float64}} == [1.0, 2.0]
@@ -77,36 +77,48 @@
         # Reshaping
         @test @inferred(SizedMatrix{2,2}([1,2,3,4]))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
         @test @inferred(SizedMatrix{2,2}((1,2,3,4)))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,2} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
+        @test @inferred(SizedMatrix{2,2,Int,1,SVector{4,Int}}(SVector(1,2,3,4)))::SizedMatrix{2,2,Int,1} == [1 3; 2 4]
         # Back to Matrix
         @test Matrix(SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
         @test convert(Matrix, SizedMatrix{2,2}([1 2;3 4])) == [1 2; 3 4]
 
         # 0-element constructor
-        if VERSION >= v"1.1"
-            @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
-        end
+        @test (@inferred SizedMatrix(MMatrix{0,0,Float64}()))::SizedMatrix{0,0,Float64} == SizedMatrix{0,0,Float64}()
     end
 
     # setindex
-    sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
-    sa[1] = 2
-    @test sa.data == [2, 4]
+    @testset "setindex" begin
+        sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
+        sa[1] = 2
+        @test sa.data == [2, 4]
+        @test setindex!(sa, 2, 1) === sa
+
+        sm = SizedArray{Tuple{4,3}}(rand(4, 3))
+        sm[1] = 2
+        @test sa.data[1] == 2
+        sm[2, 3] = 4
+        @test sm.data[2, 3] == 4
+        @test setindex!(sm, 0.5, 1) === sm
+        @test setindex!(sm, 0.5, 2, 3) === sm
+    end
 
     # parent
+    sa = SizedArray{Tuple{2}, Int, 1}([3, 4])
     @test parent(sa) === sa.data
 
     # pointer
     @testset "pointer" begin
         @test pointer(sa) === pointer(sa.data)
-        if VERSION ≥ v"1.5"
-            A = MMatrix{32,3,Float64}(undef);
-            av1 = view(A, 1, :);
-            av2 = view(A, :, 1);
-            @test pointer(A) == pointer(av1) == pointer(av2)
-            @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
-            @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
-            @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
-        end
+
+        A = MMatrix{32,3,Float64}(undef);
+        av1 = view(A, 1, :);
+        av2 = view(A, :, 1);
+        @test pointer(A) == pointer(av1) == pointer(av2)
+        @test pointer(A, LinearIndices(A)[1,2]) == pointer(av1, 2)
+        @test pointer(A, LinearIndices(A)[2,1]) == pointer(av2, 2)
+        @test pointer(A, LinearIndices(A)[4,3]) == pointer(view(A, :, 3), 4) == pointer(view(A, 4, :), 3)
     end
     
     @testset "vec" begin
@@ -245,3 +257,19 @@ struct OVector <: AbstractVector{Int} end
 Base.length(::OVector) = 10
 Base.axes(::OVector) = (0:9,)
 @test_throws ArgumentError SizedVector{10}(OVector())
+
+@testset "some special case" begin
+    @test_throws Exception SizedVector{1}(1, 2)
+    @test (@inferred(SizedVector{1}((1, 2)))::SizedVector{1,NTuple{2,Int}}) == [(1, 2)]
+    @test (@inferred(SizedVector{2}((1, 2)))::SizedVector{2,Int}) == [1, 2]
+    @test (@inferred(SizedVector(1, 2))::SizedVector{2,Int}) == [1, 2]
+    @test (@inferred(SizedVector((1, 2)))::SizedVector{2,Int}) == [1, 2]
+
+    @test_throws Exception SizedMatrix{1,1}(1, 2)
+    @test (@inferred(SizedMatrix{1,1}((1, 2)))::SizedMatrix{1,1,NTuple{2,Int}}) == fill((1, 2),1,1)
+    @test (@inferred(SizedMatrix{1,2}((1, 2)))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{1}((1, 2)))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{1}(1, 2))::SizedMatrix{1,2,Int}) == reshape(1:2, 1, 2)
+    @test (@inferred(SizedMatrix{2}((1, 2)))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
+    @test (@inferred(SizedMatrix{2}(1, 2))::SizedMatrix{2,1,Int}) == reshape(1:2, 2, 1)
+end

@@ -14,6 +14,9 @@ using StaticArrays, Test
 
     @test @inferred(setindex(v, -2, 2)) === @SVector [1, -2, 3]
 
+    # issue https://github.com/JuliaArrays/StaticArrays.jl/issues/1003
+    @test @inferred(insert(SVector{0,Int}(), 1, 10)) === @SVector [10]
+
     @test_throws BoundsError insert(v, -2, 2)
     @test_throws BoundsError deleteat(v, -2)
     @test_throws BoundsError setindex(v, 2, -2)

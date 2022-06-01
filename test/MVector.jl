@@ -48,6 +48,13 @@
         test_expand_error(:(@MVector [i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@MVector Float32[i*j for i in 1:2, j in 2:3]))
         test_expand_error(:(@MVector [1; 2; 3]...))
+        test_expand_error(:(@MVector a))
+        test_expand_error(:(@MVector [[1 2];[3 4]]))
+
+        if VERSION >= v"1.7.0"
+            @test ((@MVector Float64[1;2;3;;;])::MVector{3}).data === (1.0, 2.0, 3.0)
+            @test ((@MVector [1;2;3;;;])::MVector{3}).data === (1, 2, 3)
+        end
     end
 
     @testset "Methods" begin
@@ -81,6 +88,7 @@
         v[2] = 12
         v[3] = 13
         @test v.data === (11, 12, 13)
+        @test setindex!(v, 13, 3) === v
 
         v = @MVector [1.,2.,3.]
         v[1] = Float16(11)

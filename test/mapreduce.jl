@@ -5,6 +5,8 @@ using Statistics: mean
     @testset "map and map!" begin
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
+        mv1 = @MVector [2,4,6,8]
+        mv2 = @MVector [4,3,2,1]
         mv = MVector{4, Int}(undef)
 
         normal_v1 = [2,4,6,8]
@@ -12,8 +14,12 @@ using Statistics: mean
 
         @test @inferred(map(-, v1)) === @SVector [-2, -4, -6, -8]
         @test @inferred(map(+, v1, v2)) === @SVector [6, 7, 8, 9]
-        # @test @inferred(map(+, normal_v1, v2)) === @SVector [6, 7, 8, 9] # Maybe could fix this up
+        @test @inferred(map(+, normal_v1, v2)) === @SVector [6, 7, 8, 9]
         @test @inferred(map(+, v1, normal_v2)) === @SVector [6, 7, 8, 9]
+
+        # Make sure similar_type is based on first <: StaticArray
+        @test @inferred(map(+, normal_v1, mv2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
+        @test @inferred(map(+, mv1, normal_v2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
 
         map!(+, mv, v1, v2)
         @test mv == @MVector [6, 7, 8, 9]
@@ -29,6 +35,9 @@ using Statistics: mean
         @test @inferred(map(/, SVector{0,Int}(), SVector{0,Int}())) === SVector{0,Float64}()
         @test @inferred(map(+, SVector{0,Int}(), SVector{0,Float32}())) === SVector{0,Float32}()
         @test @inferred(map(length, SVector{0,String}())) === SVector{0,Int}()
+        # similar_type based on first <: StaticArray
+        @test @inferred(map(+, MVector{0,Int}(), Int[]))::MVector{0,Int} == MVector{0,Int}()
+        @test @inferred(map(+, Int[], MVector{0,Int}()))::MVector{0,Int} == MVector{0,Int}()
     end
 
     @testset "[map]reduce and [map]reducedim" begin

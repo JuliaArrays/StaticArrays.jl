@@ -19,6 +19,7 @@ function almost_singular_matrix(N, rank, ϵ)
 end
 
 @testset "Matrix inverse" begin
+    @test inv(SMatrix{0,0,Int}())::SMatrix === SMatrix{0,0,Float64}()
     @test inv(@SMatrix [2])::SMatrix ≈ @SMatrix [0.5]
     @test inv(@SMatrix [1 2; 2 1])::SMatrix ≈ [-1/3 2/3; 2/3 -1/3]
     @test inv(@SMatrix [1 2 0; 2 1 0; 0 0 1])::SMatrix ≈ [-1/3 2/3 0; 2/3 -1/3 0; 0 0 1]

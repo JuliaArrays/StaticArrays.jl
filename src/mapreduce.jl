@@ -73,7 +73,7 @@ end
         @_inline_meta
         S = same_size(a...)
         @inbounds elements = tuple($(exprs...))
-        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), S)(elements)
+        @inbounds return similar_type(typeof(a[$first_staticarray]), eltype(elements), S)(elements)
     end
 end
 
@@ -192,7 +192,7 @@ end
 ## reduce ##
 ############
 
-@inline reduce(op, a::StaticArray; dims = :, init = _InitialValue()) =
+@inline reduce(op::R, a::StaticArray; dims = :, init = _InitialValue()) where {R} =
     _reduce(op, a, dims, init)
 
 # disambiguation
@@ -206,7 +206,7 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
 reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
     _reduce(hcat, A, :, _InitialValue())
 
-@inline _reduce(op, a::StaticArray, dims, init = _InitialValue()) =
+@inline _reduce(op::R, a::StaticArray, dims, init = _InitialValue()) where {R} =
     _mapreduce(identity, op, dims, init, Size(a), a)
 
 ################
@@ -274,10 +274,10 @@ _mean_denom(a, ::Type{Val{D}}) where {D} = size(a, D)
 @inline mean(a::StaticArray; dims=:) = _reduce(+, a, dims) / _mean_denom(a, dims)
 @inline mean(f::Function, a::StaticArray; dims=:) = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
 
-@inline minimum(a::StaticArray; dims=:) = _reduce(min, a, dims) # base has mapreduce(idenity, scalarmin, a)
+@inline minimum(a::StaticArray; dims=:) = _reduce(min, a, dims) # base has mapreduce(identity, scalarmin, a)
 @inline minimum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, min, dims, _InitialValue(), Size(a), a)
 
-@inline maximum(a::StaticArray; dims=:) = _reduce(max, a, dims) # base has mapreduce(idenity, scalarmax, a)
+@inline maximum(a::StaticArray; dims=:) = _reduce(max, a, dims) # base has mapreduce(identity, scalarmax, a)
 @inline maximum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, max, dims, _InitialValue(), Size(a), a)
 
 # Diff is slightly different

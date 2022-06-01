@@ -234,6 +234,15 @@ using StaticArrays, Test, LinearAlgebra
             @test (@inferred f(v, i)) == length(v[i])
         end
     end
+
+    @testset "reduced_indices" begin
+        s = SArray{Tuple{2,2,2},Int,3,8}((1,2,3,4,5,6,7,8))
+        a = Array(s)
+        for i in 1:ndims(s)
+            rs = @inferred Base.reduced_indices(axes(s), i)
+            @test rs == Base.reduced_indices(axes(a), i)
+        end
+    end
 end
 
 @testset "permutedims" begin
@@ -327,38 +336,36 @@ end
     @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
 
-@static if VERSION >= v"1.6.0-DEV.1334"
-    @testset "Base.rest" begin
-        x = SA[1, 2, 3]
+@testset "Base.rest" begin
+    x = SA[1, 2, 3]
+    @test Base.rest(x) == x
+    a, b... = x
+    @test b == SA[2, 3]
+
+    x = SA[1 2; 3 4]
+    @test Base.rest(x) == vec(x)
+    a, b... = x
+    @test b == SA[3, 2, 4]
+
+    a, b... = SA[1]
+    @test b == []
+    @test b isa SVector{0}
+
+    for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
+        x = Vec(1, 2, 3)
         @test Base.rest(x) == x
+        @test pointer(Base.rest(x)) != pointer(x)
         a, b... = x
-        @test b == SA[2, 3]
+        @test b == Vec(2, 3)
 
-        x = SA[1 2; 3 4]
+        x = Mat{2,2}(1, 2, 3, 4)
         @test Base.rest(x) == vec(x)
+        @test pointer(Base.rest(x)) != pointer(x)
         a, b... = x
-        @test b == SA[3, 2, 4]
+        @test b == Vec(2, 3, 4)
 
-        a, b... = SA[1]
+        a, b... = Vec(1)
         @test b == []
-        @test b isa SVector{0}
-
-        for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
-            x = Vec(1, 2, 3)
-            @test Base.rest(x) == x
-            @test pointer(Base.rest(x)) != pointer(x)
-            a, b... = x
-            @test b == Vec(2, 3)
-
-            x = Mat{2,2}(1, 2, 3, 4)
-            @test Base.rest(x) == vec(x)
-            @test pointer(Base.rest(x)) != pointer(x)
-            a, b... = x
-            @test b == Vec(2, 3, 4)
-
-            a, b... = Vec(1)
-            @test b == []
-            @test b isa Vec{0}
-        end
+        @test b isa Vec{0}
     end
 end
