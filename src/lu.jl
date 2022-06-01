@@ -39,14 +39,14 @@ else
 end
 for pv in pivot_options
     # ... define each `pivot::Val{true/false}` method individually to avoid ambiguties
-    @eval function lu(A::StaticMatrix, pivot::$pv; check = true)
+    @eval function lu(A::StaticLUMatrix, pivot::$pv; check = true)
         L, U, p = _lu(A, pivot, check)
         LU(L, U, p)
     end
 
     # For the square version, return explicit lower and upper triangular matrices.
     # We would do this for the rectangular case too, but Base doesn't support that.
-    @eval function lu(A::StaticMatrix{N,N}, pivot::$pv; check = true) where {N}
+    @eval function lu(A::StaticLUMatrix{N,N}, pivot::$pv; check = true) where {N}
         L, U, p = _lu(A, pivot, check)
         LU(LowerTriangular(L), UpperTriangular(U), p)
     end
