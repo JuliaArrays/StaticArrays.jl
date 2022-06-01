@@ -196,3 +196,4 @@ end
 
 # TODO proper multidimension boundscheck
 @propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])
+@propagate_inbounds setindex(a::StaticArray, x, I::CartesianIndex) = setindex(a, x, I.I...)

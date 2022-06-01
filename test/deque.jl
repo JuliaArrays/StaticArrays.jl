@@ -34,6 +34,10 @@ end
     @test @inferred(setindex(v1, 5.0, 2)) == @SVector [1., 5., 3.]
     @test_throws BoundsError setindex(v1, 5.0, 0)
     @test_throws BoundsError setindex(v1, 5.0, 4)
+    @test @inferred(setindex(v1, 5, CartesianIndex(2))) == setindex(v1, 5, 2)
+    @test @inferred(setindex(v1, 5.0, CartesianIndex(2))) == setindex(v1, 5.0, 2)
+    @test_throws BoundsError setindex(v1, 5.0, CartesianIndex(0))
+    @test_throws BoundsError setindex(v1, 5.0, CartesianIndex(4))
 
     v2 = @SMatrix [1 2; 3 4]
     @test @inferred(setindex(v2, 7, 1)) == @SMatrix [7 2; 3 4]
@@ -46,11 +50,16 @@ end
     @test @inferred(setindex(v2, 7, 2, 2)) == @SMatrix [1 2; 3 7]
     @test_throws BoundsError setindex(v2, 7, 0)
     @test_throws BoundsError setindex(v2, 7, 5)
+    @test @inferred(setindex(v2, 7, CartesianIndex(1, 1))) == setindex(v2, 7, 1, 1)
+    @test @inferred(setindex(v2, 7, CartesianIndex(2, 1))) == setindex(v2, 7, 2, 1)
+    @test @inferred(setindex(v2, 7, CartesianIndex(1, 2))) == setindex(v2, 7, 1, 2)
+    @test @inferred(setindex(v2, 7, CartesianIndex(2, 2))) == setindex(v2, 7, 2, 2)
 
     v3 = @SArray ones(2, 2, 2)
     @test @inferred(setindex(v3, 7, 2, 1, 2)) == reshape([1, 1, 1, 1, 1, 7, 1, 1], (2, 2, 2))
     @test_throws BoundsError setindex(v3, 7, 0)
     @test_throws BoundsError setindex(v3, 7, 9)
+    @test @inferred(setindex(v3, 7, CartesianIndex(2, 1, 2))) == setindex(v3, 7, 2, 1, 2)
 
     # TODO: still missing proper multidimensional bounds checking
     # These should throw BoundsError, but don't
