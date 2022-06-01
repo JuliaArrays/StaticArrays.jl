@@ -195,5 +195,4 @@ julia> setindex(@SMatrix[2 4; 6 8], 1, 2)
 end
 
 # TODO proper multidimension boundscheck
-@propagate_inbounds setindex(a::StaticArray, x, inds::Int...) = setindex(a, x, LinearIndices(a)[inds...])
-@propagate_inbounds setindex(a::StaticArray, x, I::CartesianIndex) = setindex(a, x, I.I...)
+@propagate_inbounds setindex(a::StaticArray, x, inds::Union{Integer, CartesianIndex}...) = setindex(a, x, LinearIndices(a)[inds...])
