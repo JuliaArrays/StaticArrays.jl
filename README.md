@@ -64,9 +64,9 @@ using LinearAlgebra
 using StaticArrays
 
 # Use the convenience constructor type `SA` to create vectors and matrices
-SA[1, 2, 3]     isa SVector{3,Int}
-SA_F64[1, 2, 3] isa SVector{3,Float64}
-SA_F32[1, 2, 3] isa SVector{3,Float32}
+SA[1, 2, 3]      isa SVector{3,Int}
+SA_F64[1, 2, 3]  isa SVector{3,Float64}
+SA_F32[1, 2, 3]  isa SVector{3,Float32}
 SA[1 2; 3 4]     isa SMatrix{2,2,Int}
 SA_F64[1 2; 3 4] isa SMatrix{2,2,Float64}
 
