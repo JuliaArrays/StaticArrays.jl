@@ -119,4 +119,4 @@ function Base.view(
     end
 end
 
-Base.elsize(::Type{<:MArray{S,T}}) where {S,T} = sizeof(T)
+Base.elsize(::Type{<:MArray{<:Any, T}}) where T = Base.elsize(Vector{T})

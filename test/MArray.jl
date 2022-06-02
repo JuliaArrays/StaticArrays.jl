@@ -226,6 +226,20 @@
         b = view(v, SA[true, false, true])
         @test b == [1,3]
     end
+    
+    @testset "non-power-of-2 element size" begin
+        primitive type Test24 24 end
+        Test24(n) = Base.trunc_int(Test24, n)
+        a = Test24.(1:4)
+        m = MVector{4}(a)
+        @test m == m[:] == m[1:4] == a
+        @test getindex.(Ref(m), 1:4) == a
+        @test GC.@preserve m unsafe_load.(pointer(m), 1:4) == a
+        @test GC.@preserve m unsafe_load.(pointer.(Ref(m), 1:4)) == a
+        b = Test24.(5:8)
+        setindex!.(Ref(m), b, 1:4)
+        @test m == b
+    end
 end
 
 @testset "some special case" begin

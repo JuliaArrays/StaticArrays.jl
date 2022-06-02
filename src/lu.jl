@@ -29,6 +29,8 @@ function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
     show(io, mime, F.U)
 end
 
+const StaticLUMatrix{N,M,T} = Union{StaticMatrix{N,M,T}, Symmetric{T,<:StaticMatrix{N,M,T}}, Hermitian{T,<:StaticMatrix{N,M,T}}}
+
 # LU decomposition
 pivot_options = if isdefined(LinearAlgebra, :PivotingStrategy) # introduced in Julia v1.7
     (:(Val{true}), :(Val{false}), :NoPivot, :RowMaximum)
@@ -37,22 +39,22 @@ else
 end
 for pv in pivot_options
     # ... define each `pivot::Val{true/false}` method individually to avoid ambiguties
-    @eval function lu(A::StaticMatrix, pivot::$pv; check = true)
+    @eval function lu(A::StaticLUMatrix, pivot::$pv; check = true)
         L, U, p = _lu(A, pivot, check)
         LU(L, U, p)
     end
 
     # For the square version, return explicit lower and upper triangular matrices.
     # We would do this for the rectangular case too, but Base doesn't support that.
-    @eval function lu(A::StaticMatrix{N,N}, pivot::$pv; check = true) where {N}
+    @eval function lu(A::StaticLUMatrix{N,N}, pivot::$pv; check = true) where {N}
         L, U, p = _lu(A, pivot, check)
         LU(LowerTriangular(L), UpperTriangular(U), p)
     end
 end
-lu(A::StaticMatrix; check = true) = lu(A, Val(true); check=check)
+lu(A::StaticLUMatrix; check = true) = lu(A, Val(true); check=check)
 
 # location of the first zero on the diagonal, 0 when not found
-function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
+function _first_zero_on_diagonal(A::StaticLUMatrix{M,N,T}) where {M,N,T}
     if @generated
         quote
             $(map(i -> :(A[$i, $i] == zero(T) && return $i), 1:min(M, N))...)
@@ -72,7 +74,7 @@ end
 
 issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
 
-@generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}
+@generated function _lu(A::StaticLUMatrix{M,N,T}, pivot, check) where {M,N,T}
     if M*N ≤ 14*14
         _pivot = if isdefined(LinearAlgebra, :PivotingStrategy) # v1.7 feature
             pivot === RowMaximum ? Val(true) : pivot === NoPivot ? Val(false) : pivot()
@@ -125,6 +127,9 @@ __lu(A::StaticMatrix{M,0,T}, ::Val{Pivot}) where {T,M,Pivot} =
 __lu(A::StaticMatrix{1,1,T}, ::Val{Pivot}) where {T,Pivot} =
     (SMatrix{1,1}(one(T)), A, SVector(1))
 
+__lu(A::LinearAlgebra.HermOrSym{T,<:StaticMatrix{1,1,T}}, ::Val{Pivot}) where {T,Pivot} =
+    (SMatrix{1,1}(one(T)), A.data, SVector(1))
+
 __lu(A::StaticMatrix{1,N,T}, ::Val{Pivot}) where {N,T,Pivot} =
     (SMatrix{1,1,T}(one(T)), A, SVector{1,Int}(1))
 
@@ -158,7 +163,7 @@ function __lu(A::StaticMatrix{M,1}, ::Val{Pivot}) where {M,Pivot}
     return (SMatrix{M,1}(L), U, p)
 end
 
-function __lu(A::StaticMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
+function __lu(A::StaticLUMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
     @inbounds begin
         kp = 1
         if Pivot
