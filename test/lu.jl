@@ -11,8 +11,15 @@ using StaticArrays, Test, LinearAlgebra
     @test occursin(r"^StaticArrays.LU.*L factor.*U factor"s, sprint(show, MIME("text/plain"), F))
 end
 
-@testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
-    a = SMatrix{m,n,Int}(1:(m*n))
+@testset "LU decomposition ($m×$n, pivot=$pivot, wrapper=$wrapper)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15], wrapper in [identity, Symmetric, Hermitian]
+
+    a = if m == n && m > 0
+        wrapper(SMatrix{m,n,Int}(1:(m*n)))
+    elseif wrapper !== identity
+        continue
+    else
+        SMatrix{m,n,Int}(1:(m*n))
+    end
     l, u, p = @inferred(lu(a, Val{pivot}(); check = false))
 
     # expected types
@@ -48,6 +55,7 @@ end
     # decomposition is correct
     l_u = l*u
     @test l*u ≈ a[p,:]
+
 end
 
 @testset "LU division ($m×$n)" for m in [1:4..., 15], n in [1:4..., 15]
