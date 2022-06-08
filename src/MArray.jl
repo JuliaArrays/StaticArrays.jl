@@ -106,12 +106,16 @@ function promote_rule(::Type{<:MArray{S,T,N,L}}, ::Type{<:MArray{S,U,N,L}}) wher
     MArray{S,promote_type(T,U),N,L}
 end
 
+@generated function _indices_have_bools(indices::Tuple)
+    return any(index -> index <: StaticVector{<:Any,Bool}, indices.parameters)
+end
+
 function Base.view(
     a::MArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
     view_from_invoke = invoke(view, Tuple{AbstractArray, typeof(indices).parameters...}, a, indices...)
-    if any(index -> typeof(index) <: StaticVector{<:Any,Bool}, indices)
+    if _indices_have_bools(indices)
         return view_from_invoke
     else
         new_size = new_out_size(S, indices...)

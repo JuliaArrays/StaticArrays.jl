@@ -194,7 +194,7 @@ function Base.view(
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
     view_of_wrapped = view(a.data, indices...)
-    if any(index -> typeof(index) <: StaticVector{<:Any,Bool}, indices)
+    if _indices_have_bools(indices)
         return view_of_wrapped
     else
         new_size = new_out_size(S, indices...)
