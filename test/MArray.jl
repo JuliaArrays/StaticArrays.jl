@@ -221,6 +221,12 @@
         @test v[] == 2
     end
 
+    @testset "boolean indexing" begin
+        v = @MArray [1,2,3]
+        b = view(v, SA[true, false, true])
+        @test b == [1,3]
+    end
+    
     @testset "non-power-of-2 element size" begin
         primitive type Test24 24 end
         Test24(n) = Base.trunc_int(Test24, n)
