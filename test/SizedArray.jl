@@ -125,6 +125,9 @@
         sa2 = SizedArray{Tuple{2, 2}, Int}([1, 2, 3, 4])
         @test (@inferred vec(sa2)) isa SizedVector{4, Int}
         @test vec(sa2).data === vec(sa2.data)
+
+        M = @MMatrix [1 2; 3 4]
+        @test copy(vec(M)) isa SizedVector{4, Int}
     end
 
     @testset "aliasing" begin
