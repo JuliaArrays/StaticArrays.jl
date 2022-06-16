@@ -47,9 +47,10 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             error("Use a one-dimensional comprehension for @$SV")
         end
         rng = Core.eval(mod, ex.args[2].args[2])
-        exprs = (:(f($j)) for j in rng)
+        f = gensym()
+        exprs = (:($f($j)) for j in rng)
         return quote
-            let f($(ex.args[2].args[1])) = $(ex.args[1])
+            let $f($(ex.args[2].args[1])) = $(ex.args[1])
                 $SV{$(length(rng))}(tuple($(exprs...)))
             end
         end
@@ -63,9 +64,10 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             error("Use a one-dimensional comprehension for @$SV")
         end
         rng = Core.eval(mod, ex.args[2].args[2])
-        exprs = (:(f($j)) for j in rng)
+        f = gensym()
+        exprs = (:($f($j)) for j in rng)
         return quote
-            let f($(ex.args[2].args[1])) = $(ex.args[1])
+            let $f($(ex.args[2].args[1])) = $(ex.args[1])
                 $SV{$(length(rng)),$T}(tuple($(exprs...)))
             end
         end

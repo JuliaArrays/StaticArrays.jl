@@ -165,9 +165,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
-        exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
+        f = gensym()
+        exprs = (:($f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let f($(rng_args...)) = $(ex.args[1])
+            let $f($(rng_args...)) = $(ex.args[1])
                 $SA{Tuple{$(size(exprs)...)}}(tuple($(exprs...)))
             end
         end
@@ -180,9 +181,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
-        exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
+        f = gensym()
+        exprs = (:($f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let f($(rng_args...)) = $(ex.args[1])
+            let $f($(rng_args...)) = $(ex.args[1])
                 $SA{Tuple{$(size(exprs)...)},$T}(tuple($(exprs...)))
             end
         end

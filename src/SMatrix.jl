@@ -42,9 +42,10 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         end
         rng1 = Core.eval(mod, ex.args[2].args[2])
         rng2 = Core.eval(mod, ex.args[3].args[2])
-        exprs = (:(f($j1, $j2)) for j1 in rng1, j2 in rng2)
+        f = gensym()
+        exprs = (:($f($j1, $j2)) for j1 in rng1, j2 in rng2)
         return quote
-            let f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
+            let $f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
                 $SM{$(length(rng1)),$(length(rng2))}(tuple($(exprs...)))
             end
         end
@@ -59,9 +60,10 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         end
         rng1 = Core.eval(mod, ex.args[2].args[2])
         rng2 = Core.eval(mod, ex.args[3].args[2])
-        exprs = (:(f($j1, $j2)) for j1 in rng1, j2 in rng2)
+        f = gensym()
+        exprs = (:($f($j1, $j2)) for j1 in rng1, j2 in rng2)
         return quote
-            let f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
+            let $f($(ex.args[2].args[1]), $(ex.args[3].args[1])) = $(ex.args[1])
                 $SM{$(length(rng1)),$(length(rng2)),$T}(tuple($(exprs...)))
             end
         end
