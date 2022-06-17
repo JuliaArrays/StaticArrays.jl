@@ -33,13 +33,16 @@ import StaticArraysCore: SizedArray, SizedVector, SizedMatrix
 import StaticArraysCore: check_array_parameters, convert_ntuple
 
 # end of StaticArraysCore imports
-
-export SOneTo
+# StaticArraysCore exports
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
+# end of StaticArraysCore exports
+
+export SOneTo
+export Scalar
+export FieldVector, FieldMatrix, FieldArray
 export SDiagonal
 export SHermitianCompact
 
