@@ -23,6 +23,11 @@ Further, the abstract `FieldVector` can be used to make fast `StaticVector`s
 out of any uniform Julia "struct".
 Full documentation can be found [here](https://JuliaArrays.github.io/StaticArrays.jl/stable/).
 
+Some of the array types are defined in the interface package [StaticArraysCore.jl](https://github.com/JuliaArrays/StaticArraysCore.jl).
+That package can be used to implement methods specialized for static arrays
+without depending on StaticArrays.jl, which has a non-negligible load time
+(around 0.6s for StaticArrays 1.4 on Julia 1.7).
+
 ## Speed
 
 The speed of *small* `SVector`s, `SMatrix`s and `SArray`s is often > 10 × faster
