@@ -142,21 +142,22 @@ function parse_cat_ast(ex::Expr)
     cat_any(Val(maxdim), Val(catdim), nargs)
 end
 
+escall(args) = Iterators.map(esc, args)
 function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
     if !isa(ex, Expr)
         error("Bad input for @$SA")
     end
     head = ex.head
     if head === :vect    # vector
-        return :($SA{Tuple{$(length(ex.args))}}(tuple($(ex.args...))))
+        return :($SA{$Tuple{$(length(ex.args))}}($tuple($(escall(ex.args)...))))
     elseif head === :ref # typed, vector
-        return :($SA{Tuple{$(length(ex.args)-1)},$(ex.args[1])}(tuple($(ex.args[2:end]...))))
+        return :($SA{$Tuple{$(length(ex.args)-1)},$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
     elseif head === :typed_vcat || head === :typed_hcat || head === :typed_ncat # typed, cat
         args = parse_cat_ast(ex)
-        return :($SA{Tuple{$(size(args)...)},$(ex.args[1])}(tuple($(args...))))
+        return :($SA{$Tuple{$(size(args)...)},$(esc(ex.args[1]))}($tuple($(escall(args)...))))
     elseif head === :vcat || head === :hcat || head === :ncat # untyped, cat
         args = parse_cat_ast(ex)
-        return :($SA{Tuple{$(size(args)...)}}(tuple($(args...))))
+        return :($SA{$Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
     elseif head === :comprehension
         if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
@@ -165,27 +166,27 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
-        f = gensym()
-        exprs = (:($f($(j...))) for j in Iterators.product(rngs...))
+        exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let $f($(rng_args...)) = $(ex.args[1])
-                $SA{Tuple{$(size(exprs)...)}}(tuple($(exprs...)))
+            let 
+                f($(escall(rng_args)...)) = $(esc(ex.args[1]))
+                $SA{$Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
             end
         end
     elseif head === :typed_comprehension
         if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
             error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
         end
-        T = ex.args[1]
+        T = esc(ex.args[1])
         ex = ex.args[2]
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
-        f = gensym()
-        exprs = (:($f($(j...))) for j in Iterators.product(rngs...))
+        exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let $f($(rng_args...)) = $(ex.args[1])
-                $SA{Tuple{$(size(exprs)...)},$T}(tuple($(exprs...)))
+            let 
+                f($(escall(rng_args)...)) = $(esc(ex.args[1]))
+                $SA{$Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
             end
         end
     elseif head === :call
@@ -193,18 +194,18 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 1
                 f === :zeros || f === :ones || error("@$SA got bad expression: $(ex)")
-                return :($f($SA{Tuple{},Float64}))
+                return :($f($SA{$Tuple{},$Float64}))
             end
             return quote
-                if isa($(ex.args[2]), DataType)
-                    $f($SA{Tuple{$(ex.args[3:end]...)},$(ex.args[2])})
+                if isa($(esc(ex.args[2])), DataType)
+                    $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
                 else
-                    $f($SA{Tuple{$(ex.args[2:end]...)}})
+                    $f($SA{$Tuple{$(escall(ex.args[2:end])...)}})
                 end
             end
         elseif f === :fill
             length(ex.args) == 1 && error("@$SA got bad expression: $(ex)")
-            return :($f($(ex.args[2]), $SA{Tuple{$(ex.args[3:end]...)}}))
+            return :($f($(esc(ex.args[2])), $SA{$Tuple{$(escall(ex.args[3:end])...)}}))
         else
             error("@$SA only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
@@ -237,7 +238,7 @@ It supports:
     Only support `zeros()`, `ones()`, `fill()`, `rand()`, `randn()`, and `randexp()`
 """
 macro SArray(ex)
-    esc(static_array_gen(SArray, ex, __module__))
+    static_array_gen(SArray, ex, __module__)
 end
 
 function promote_rule(::Type{<:SArray{S,T,N,L}}, ::Type{<:SArray{S,U,N,L}}) where {S,T,U,N,L}

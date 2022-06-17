@@ -27,17 +27,17 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
     end
     head = ex.head
     if head === :vect
-        return :($SV{$(length(ex.args))}(tuple($(ex.args...))))
+        return :($SV{$(length(ex.args))}($tuple($(escall(ex.args)...))))
     elseif head === :ref
-        return :($SV{$(length(ex.args)-1),$(ex.args[1])}(tuple($(ex.args[2:end]...))))
+        return :($SV{$(length(ex.args)-1),$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
     elseif head === :typed_vcat || head === :typed_hcat || head === :typed_ncat # typed, cat
         args = parse_cat_ast(ex)
         len = check_vector_length(size(args))
-        return :($SV{$len,$(ex.args[1])}(tuple($(args...))))
+        return :($SV{$len,$(esc(ex.args[1]))}($tuple($(escall(args)...))))
     elseif head === :vcat || head === :hcat || head === :ncat # untyped, cat
         args = parse_cat_ast(ex)
         len = check_vector_length(size(args))
-        return :($SV{$len}(tuple($(args...))))
+        return :($SV{$len}($tuple($(escall(args)...))))
     elseif head === :comprehension
         if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
             error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
@@ -47,43 +47,43 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             error("Use a one-dimensional comprehension for @$SV")
         end
         rng = Core.eval(mod, ex.args[2].args[2])
-        f = gensym()
-        exprs = (:($f($j)) for j in rng)
+        exprs = (:(f($j)) for j in rng)
         return quote
-            let $f($(ex.args[2].args[1])) = $(ex.args[1])
-                $SV{$(length(rng))}(tuple($(exprs...)))
+            let
+                f($(esc(ex.args[2].args[1]))) = $(esc(ex.args[1]))
+                $SV{$(length(rng))}($tuple($(exprs...)))
             end
         end
     elseif head === :typed_comprehension
         if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
             error("Expected generator in typed comprehension, e.g. Float64[f(i) for i = 1:3]")
         end
-        T = ex.args[1]
+        T = esc(ex.args[1])
         ex = ex.args[2]
         if length(ex.args) != 2
             error("Use a one-dimensional comprehension for @$SV")
         end
         rng = Core.eval(mod, ex.args[2].args[2])
-        f = gensym()
-        exprs = (:($f($j)) for j in rng)
+        exprs = (:(f($j)) for j in rng)
         return quote
-            let $f($(ex.args[2].args[1])) = $(ex.args[1])
-                $SV{$(length(rng)),$T}(tuple($(exprs...)))
+            let 
+                f($(esc(ex.args[2].args[1]))) = $(esc(ex.args[1]))
+                $SV{$(length(rng)),$T}($tuple($(exprs...)))
             end
         end
     elseif head === :call
         f = ex.args[1]
         if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 2
-                return :($f($SV{$(ex.args[2])}))
+                return :($f($SV{$(esc(ex.args[2]))}))
             elseif length(ex.args) == 3
-                return :($f($SV{$(ex.args[3:-1:2]...)}))
+                return :($f($SV{$(escall(ex.args[3:-1:2])...)}))
             else
                 error("@$SV expected a 1-dimensional array expression")
             end
         elseif ex.args[1] === :fill
             if length(ex.args) == 3
-                return :($f($(ex.args[2]), $SV{$(ex.args[3])}))
+                return :($f($(esc(ex.args[2])), $SV{$(esc(ex.args[3]))}))
             else
                 error("@$SV expected a 1-dimensional array expression")
             end
@@ -104,6 +104,6 @@ A convenience macro to construct `SVector`.
 See [`@SArray`](@ref) for detailed features.
 """
 macro SVector(ex)
-    esc(static_vector_gen(SVector, ex, __module__))
+    static_vector_gen(SVector, ex, __module__)
 end
 
