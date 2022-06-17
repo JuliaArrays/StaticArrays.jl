@@ -1,36 +1,3 @@
-require_one_based_indexing(A...) = !Base.has_offset_axes(A...) ||
-    throw(ArgumentError("offset arrays are not supported but got an array with index other than 1"))
-
-"""
-    SizedArray{Tuple{dims...}}(array)
-
-Wraps an `AbstractArray` with a static size, so to take advantage of the (faster)
-methods defined by the static array package. The size is checked once upon
-construction to determine if the number of elements (`length`) match, but the
-array may be reshaped.
-
-The aliases `SizedVector{N}` and `SizedMatrix{N,M}` are provided as more
-convenient names for one and two dimensional `SizedArray`s. For example, to
-wrap a 2x3 array `a` in a `SizedArray`, use `SizedMatrix{2,3}(a)`.
-"""
-struct SizedArray{S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} <: StaticArray{S,T,N}
-    data::TData
-
-    function SizedArray{S,T,N,M,TData}(a::TData) where {S<:Tuple,T,N,M,TData<:AbstractArray{T,M}}
-        require_one_based_indexing(a)
-        if size(a) != size_to_tuple(S) && size(a) != (tuple_prod(S),)
-            throw(DimensionMismatch("Dimensions $(size(a)) don't match static size $S"))
-        end
-        return new{S,T,N,M,TData}(a)
-    end
-
-    function SizedArray{S,T,N,1,TData}(::UndefInitializer) where {S<:Tuple,T,N,TData<:AbstractArray{T,1}}
-        return new{S,T,N,1,TData}(TData(undef, tuple_prod(S)))
-    end
-    function SizedArray{S,T,N,N,TData}(::UndefInitializer) where {S<:Tuple,T,N,TData<:AbstractArray{T,N}}
-        return new{S,T,N,N,TData}(TData(undef, size_to_tuple(S)...))
-    end
-end
 
 @inline function SizedArray{S,T,N,M}(a::AbstractArray) where {S<:Tuple,T,N,M}
     if eltype(a) == T && (M == 1 || M == ndims(a))
@@ -129,10 +96,6 @@ Base.parent(sa::SizedArray) = sa.data
 
 Base.unsafe_convert(::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.unsafe_convert(Ptr{T}, sa.data)
 Base.elsize(::Type{SizedArray{S,T,M,N,A}}) where {S,T,M,N,A} = Base.elsize(A)
-
-const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
-
-const SizedMatrix{S1,S2,T} = SizedArray{Tuple{S1,S2},T,2}
 
 Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
 
