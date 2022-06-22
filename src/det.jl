@@ -18,21 +18,17 @@ end
     return bilinear_vecdot(x0, cross(x1, x2))
 end
 
-@inline function _det(::Size{(4,4)}, A::StaticMatrix)
-    @inbounds return (
-        A[13] * A[10]  * A[7]  * A[4]  - A[9] * A[14] * A[7]  * A[4]   -
-        A[13] * A[6]   * A[11] * A[4]  + A[5] * A[14] * A[11] * A[4]   +
-        A[9]  * A[6]   * A[15] * A[4]  - A[5] * A[10] * A[15] * A[4]   -
-        A[13] * A[10]  * A[3]  * A[8]  + A[9] * A[14] * A[3]  * A[8]   +
-        A[13] * A[2]   * A[11] * A[8]  - A[1] * A[14] * A[11] * A[8]   -
-        A[9]  * A[2]   * A[15] * A[8]  + A[1] * A[10] * A[15] * A[8]   +
-        A[13] * A[6]   * A[3]  * A[12] - A[5] * A[14] * A[3]  * A[12]  -
-        A[13] * A[2]   * A[7]  * A[12] + A[1] * A[14] * A[7]  * A[12]  +
-        A[5]  * A[2]   * A[15] * A[12] - A[1] * A[6]  * A[15] * A[12]  -
-        A[9]  * A[6]   * A[3]  * A[16] + A[5] * A[10] * A[3]  * A[16]  +
-        A[9]  * A[2]   * A[7]  * A[16] - A[1] * A[10] * A[7]  * A[16]  -
-        A[5]  * A[2]   * A[11] * A[16] + A[1] * A[6]  * A[11] * A[16])
+@inline function _prod2x2minors(A, a,b,c,d)
+ #   @assert all(Base.isbetween.(1, (a,b,c,d),4))
+     @inbounds return (A[a]*A[b+4] - A[b]*A[a+4])*(A[c+8]*A[d+12] - A[c+12]*A[d+8])
+ #    @inbounds return muladd(A[a], A[b+4], -A[b]*A[a+4])*muladd(A[c+8],A[d+12], -A[c+12]*A[d+8])
 end
+
+@inline function _det(::Size{(4,4)}, A::StaticMatrix)
+    @inbounds return (_prod2x2minors(A,1,2,3,4) - _prod2x2minors(A,1,3,2,4) + _prod2x2minors(A,1,4,2,3) 
+                     +_prod2x2minors(A,2,3,1,4) - _prod2x2minors(A,2,4,1,3) + _prod2x2minors(A,3,4,1,2))
+end
+
 
 @inline function _parity(p)    # inefficient compared to computing cycle lengths, but non-allocating
     s = 0
