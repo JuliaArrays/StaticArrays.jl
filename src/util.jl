@@ -10,13 +10,6 @@ TupleN{T,N} = NTuple{N,T}
 # Cast any Tuple to an TupleN{T}
 @inline convert_ntuple(::Type{T},d::T) where {T} = T # For zero-dimensional arrays
 @inline convert_ntuple(::Type{T},d::NTuple{N,T}) where {N,T} = d
-@generated function convert_ntuple(::Type{T}, d::NTuple{N,Any}) where {N,T}
-    exprs = ntuple(i -> :(convert(T, d[$i])), Val(N))
-    return quote
-        @_inline_meta
-        $(Expr(:tuple, exprs...))
-    end
-end
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
 _TupleOf{T} = Tuple{T,Vararg{T}}
@@ -33,25 +26,6 @@ promote_tuple_eltype(::Union{_TupleOf{T}, Type{<:_TupleOf{T}}}) where {T} = T
     end
 end
 
-# The ::Tuple variants exist to make sure that anything that calls with a tuple
-# instead of a Tuple gets through to the constructor, so the user gets a nice
-# error message
-@pure tuple_length(T::Type{<:Tuple}) = length(T.parameters)
-@pure tuple_length(T::Tuple) = length(T)
-@pure tuple_prod(T::Type{<:Tuple}) = length(T.parameters) == 0 ? 1 : *(T.parameters...)
-@pure tuple_prod(T::Tuple) = prod(T)
-@pure tuple_minimum(T::Type{<:Tuple}) = length(T.parameters) == 0 ? 0 : minimum(tuple(T.parameters...))
-@pure tuple_minimum(T::Tuple) = minimum(T)
-
-"""
-    size_to_tuple(::Type{S}) where S<:Tuple
-
-Converts a size given by `Tuple{N, M, ...}` into a tuple `(N, M, ...)`.
-"""
-@pure function size_to_tuple(::Type{S}) where S<:Tuple
-    return tuple(S.parameters...)
-end
-
 # Something doesn't match up type wise
 function check_array_parameters(Size, T, N, L)
     (!isa(Size, DataType) || (Size.name !== Tuple.name)) && throw(ArgumentError("Static Array parameter Size must be a Tuple type, got $Size"))
@@ -61,19 +35,6 @@ function check_array_parameters(Size, T, N, L)
     # shouldn't reach here. Anything else should have made it to the function below
     error("Internal error. Please file a bug")
 end
-
-@generated function check_array_parameters(::Type{Size}, ::Type{T}, ::Type{Val{N}}, ::Type{Val{L}}) where {Size,T,N,L}
-    if !all(x->isa(x, Int), Size.parameters)
-        return :(throw(ArgumentError("Static Array parameter Size must be a tuple of Ints (e.g. `SArray{Tuple{3,3}}` or `SMatrix{3,3}`).")))
-    end
-
-    if L != tuple_prod(Size) || L < 0 || tuple_minimum(Size) < 0 || tuple_length(Size) != N
-        return :(throw(ArgumentError("Size mismatch in Static Array parameters. Got size $Size, dimension $N and length $L.")))
-    end
-
-    return nothing
-end
-
 
 # Trivial view used to drop static dimensions to override dispatch
 struct TrivialView{A,T,N} <: AbstractArray{T,N}

@@ -356,5 +356,5 @@ faster!
 Pages   = ["api.md"]
 ```
 ```@autodocs
-Modules = [StaticArrays]
+Modules = [StaticArrays, StaticArraysCore]
 ```

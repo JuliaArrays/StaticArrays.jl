@@ -21,12 +21,28 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
 using LinearAlgebra: checksquare
 
-export SOneTo
+# StaticArraysCore imports
+# there is intentionally no "using StaticArraysCore" to not take all symbols exported
+# from StaticArraysCore to make transitioning definitions to StaticArraysCore easier.
+using StaticArraysCore: StaticArraysCore, StaticArray, StaticScalar, StaticVector,
+                        StaticMatrix, StaticVecOrMat, tuple_length, tuple_prod,
+                        tuple_minimum, size_to_tuple, require_one_based_indexing
+import StaticArraysCore: SArray, SVector, SMatrix
+import StaticArraysCore: MArray, MVector, MMatrix
+import StaticArraysCore: SizedArray, SizedVector, SizedMatrix
+import StaticArraysCore: check_array_parameters, convert_ntuple
+
+# end of StaticArraysCore imports
+# StaticArraysCore exports
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
+# end of StaticArraysCore exports
+
+export SOneTo
+export Scalar
+export FieldVector, FieldMatrix, FieldArray
 export SDiagonal
 export SHermitianCompact
 
@@ -40,41 +56,6 @@ export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
 
 include("SOneTo.jl")
-
-"""
-    abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
-    StaticScalar{T}     = StaticArray{Tuple{}, T, 0}
-    StaticVector{N,T}   = StaticArray{Tuple{N}, T, 1}
-    StaticMatrix{N,M,T} = StaticArray{Tuple{N,M}, T, 2}
-
-`StaticArray`s are Julia arrays with fixed, known size.
-
-## Dev docs
-
-They must define the following methods:
- - Constructors that accept a flat tuple of data.
- - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
- - `Tuple()`, returning the data in a flat Tuple.
-
-It may be useful to implement:
-
-- `similar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`, returning a
-  type (or type constructor) that accepts a flat tuple of data.
-
-For mutable containers you may also need to define the following:
-
- - `setindex!` for a single element (linear indexing).
- - `similar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`.
- - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
-   is assumed to exist.
-
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray`, `FieldVector`, `FieldMatrix` and `FieldArray`)
-"""
-abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
-const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
-const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
-const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
-const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
 # Being a member of StaticMatrixLike, StaticVecOrMatLike, or StaticArrayLike implies that Size(A)
 # returns a static Size instance (none of the dimensions are Dynamic). The converse may not be true.
