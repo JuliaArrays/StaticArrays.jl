@@ -385,18 +385,10 @@ Base.SubArray(A::AbstractArray, indices::Tuple{StaticIndexing, Vararg{StaticInde
 # SDiagonal uses Cartesian indexing, and the canonical indexing methods shadow getindex for Diagonal
 # these are needed for ambiguity resolution
 @inline function getindex(D::SDiagonal, i::Int, j::Int)
-    @boundscheck checkbounds(D, i, j)
-    if i == j
-        @inbounds r = diag(D)[i]
-    else
-        r = LinearAlgebra.diagzero(D, i, j)
-    end
-    r
+    invoke(getindex, Tuple{Diagonal, Int, Int}, D, i, j)
 end
 @inline function getindex(D::SDiagonal, i::Int...)
-    @boundscheck checkbounds(D, i...)
-    @inbounds r = D[eachindex(D)[i...]]
-    r
+    invoke(getindex, Tuple{Diagonal, Vararg{Int}}, D, i...)
 end
 # Ensure that vector indexing with static types lead to SArrays
 @propagate_inbounds function getindex(a::SDiagonal, inds::Union{Int, StaticArray{<:Tuple, Int}, SOneTo, Colon}...)

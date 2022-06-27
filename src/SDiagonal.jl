@@ -17,7 +17,6 @@ SDiagonal(a::StaticMatrix{N,N,T}) where {N,T} = Diagonal(diag(a))
 size(::Type{<:SDiagonal{N}}) where {N} = (N,N)
 size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
 
-Base.axes(D::SDiagonal) = (ax = axes(diag(D), 1); (ax, ax))
 Base.axes(D::SDiagonal, d) = d <= 2 ? axes(D)[d] : SOneTo(1)
 
 Base.reshape(a::SDiagonal, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
