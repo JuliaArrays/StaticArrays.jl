@@ -71,7 +71,7 @@ using StaticArrays, Test, LinearAlgebra
         @test length(m) === 4*4
 
         m2 = SMatrix{4,4}(m)
-        @test axes(m) === axes(m2)
+        @test (@inferred axes(m)) === axes(m2)
         @test axes(m, 1) === axes(m2, 1)
         @test axes(m, 3) == SOneTo(1)
 
