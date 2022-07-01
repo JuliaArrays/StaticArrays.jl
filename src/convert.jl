@@ -19,6 +19,9 @@ end
 @pure has_eltype(::Type{<:StaticArray}) = false
 @pure has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = @isdefined S
 @pure has_size(::Type{<:StaticArray}) = false
+# workaround for https://github.com/JuliaArrays/StaticArrays.jl/issues/1047
+@pure has_size(::Type{SVector}) = false
+
 @pure has_size1(::Type{<:StaticMatrix{M}}) where {M} = @isdefined M
 @pure has_size1(::Type{<:StaticMatrix}) = false
 _size1(::Type{<:StaticMatrix{M}}) where {M} = M
