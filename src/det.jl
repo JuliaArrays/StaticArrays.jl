@@ -19,9 +19,7 @@ end
 end
 
 @inline function _prod2x2minors(A, a,b,c,d)
- #   @assert all(Base.isbetween.(1, (a,b,c,d),4))
      @inbounds return (A[a]*A[b+4] - A[b]*A[a+4])*(A[c+8]*A[d+12] - A[c+12]*A[d+8])
- #    @inbounds return muladd(A[a], A[b+4], -A[b]*A[a+4])*muladd(A[c+8],A[d+12], -A[c+12]*A[d+8])
 end
 
 @inline function _det(::Size{(4,4)}, A::StaticMatrix)
