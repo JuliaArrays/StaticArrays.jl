@@ -20,7 +20,11 @@ end
 @pure has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = @isdefined S
 @pure has_size(::Type{<:StaticArray}) = false
 # workaround for https://github.com/JuliaArrays/StaticArrays.jl/issues/1047
-@pure has_size(::Type{SVector}) = false
+for T in (:S, :M)
+    @eval has_size(::Type{$(Symbol(T,:Vector))}) = false
+    @eval has_size(::Type{$(Symbol(T,:Matrix))}) = false
+    @eval has_size(::Type{$(Symbol(T,:Matrix)){N}}) where {N} = false
+ end
 
 @pure has_size1(::Type{<:StaticMatrix{M}}) where {M} = @isdefined M
 @pure has_size1(::Type{<:StaticMatrix}) = false
