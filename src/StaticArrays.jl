@@ -55,6 +55,8 @@ export @MVector, @MMatrix, @MArray
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
 
+export StaticArraysCore
+
 include("SOneTo.jl")
 
 # Being a member of StaticMatrixLike, StaticVecOrMatLike, or StaticArrayLike implies that Size(A)
