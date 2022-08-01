@@ -12,6 +12,7 @@ import Statistics: mean
 
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
+using ChainRulesCore
 using Core.Compiler: return_type
 import Base: sqrt, exp, log, float, real
 using LinearAlgebra
