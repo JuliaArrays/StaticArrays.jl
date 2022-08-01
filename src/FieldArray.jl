@@ -125,14 +125,21 @@ Base.cconvert(::Type{<:Ptr}, a::FieldArray) = Base.RefValue(a)
 Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FA}) where {N,T,D,FA<:FieldArray{N,T,D}} =
     Ptr{T}(Base.unsafe_convert(Ptr{FA}, m))
 
-# We can automatically preserve FieldArrays in array operations which do not
-# change their eltype or Size. This should cover all non-parametric FieldArray,
-# but for those which are parametric on the eltype the user will still need to
-# overload similar_type themselves.
-similar_type(::Type{A}, ::Type{T}, S::Size) where {N, T, A<:FieldArray{N, T}} =
-    _fieldarray_similar_type(A, T, S, Size(A))
+# We can preserve FieldArrays in array operations which do not change their `Size` and `eltype`.
+# FieldArrays with parametric `eltype` would be adapted to the new `eltype` automatically.
+# Otherwise, we fallback to `S/MArray` based on it's mutability.
+function similar_type(::Type{A}, ::Type{T}, S::Size) where {T,A<:FieldArray}
+    A′ = Base.typeintersect(base_type(A), StaticArray{Tuple{Tuple(S)...},T,length(S)})
+    isabstracttype(A′) || A′ === Union{} || return A′
+    if ismutabletype(A)
+        return mutable_similar_type(T, S, length_val(S))
+    else
+        return default_similar_type(T, S, length_val(S))
+    end
+end
 
-# Extra layer of dispatch to match NewSize and OldSize
-_fieldarray_similar_type(A, T, NewSize::S, OldSize::S) where {S} = A
-_fieldarray_similar_type(A, T, NewSize, OldSize) =
-    default_similar_type(T, NewSize, length_val(NewSize))
+# return `Union{}` for Union Type. Otherwise return the constructor with no parameters.
+@pure base_type(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T); T′ isa DataType ? T′.name.wrapper : Union{})
+if VERSION < v"1.7"
+    @pure ismutabletype(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T); T′ isa DataType && T′.mutable)
+end

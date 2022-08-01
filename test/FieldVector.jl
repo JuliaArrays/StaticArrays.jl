@@ -63,7 +63,6 @@
                 y::T
             end
 
-            StaticArrays.similar_type(::Type{<:Point2D}, ::Type{T}, s::Size{(2,)}) where {T} = Point2D{T}
         end)
 
         p = Point2D(0.0, 0.0)
@@ -86,8 +85,8 @@
 
         @test @inferred(similar_type(Point2D{Float64})) == Point2D{Float64}
         @test @inferred(similar_type(Point2D{Float64}, Float32)) == Point2D{Float32}
-        @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
-        @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
+        @test @inferred(similar_type(Point2D{Float64}, Size(4))) == MVector{4,Float64}
+        @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == MVector{4,Float32}
 
         # eltype promotion
         @test Point2D(1f0, 2) isa Point2D{Float32}
@@ -122,7 +121,7 @@
             # No similar_type defined - test fallback codepath
         end)
 
-        @test @inferred(similar_type(FVT{Float64}, Float32)) == SVector{2,Float32} # Fallback code path
+        @test @inferred(similar_type(FVT{Float64}, Float32)) == FVT{Float32}
         @test @inferred(similar_type(FVT{Float64}, Size(2))) == FVT{Float64}
         @test @inferred(similar_type(FVT{Float64}, Size(3))) == SVector{3,Float64}
         @test @inferred(similar_type(FVT{Float64}, Float32, Size(3))) == SVector{3,Float32}
