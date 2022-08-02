@@ -125,12 +125,14 @@ Base.cconvert(::Type{<:Ptr}, a::FieldArray) = Base.RefValue(a)
 Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FA}) where {N,T,D,FA<:FieldArray{N,T,D}} =
     Ptr{T}(Base.unsafe_convert(Ptr{FA}, m))
 
-# We can preserve FieldArrays in array operations which do not change their `Size` and `eltype`.
-# FieldArrays with parametric `eltype` would be adapted to the new `eltype` automatically.
-# Otherwise, we fallback to `S/MArray` based on it's mutability.
 function similar_type(::Type{A}, ::Type{T}, S::Size) where {T,A<:FieldArray}
+    # We can preserve FieldArrays in array operations which do not change their `Size` and `eltype`.
+    has_eltype(A) && eltype(A) === T && has_size(A) && Size(A) === S && return A
+    # FieldArrays with parametric `eltype` would be adapted to the new `eltype` automatically.
     A′ = Base.typeintersect(base_type(A), StaticArray{Tuple{Tuple(S)...},T,length(S)})
-    isabstracttype(A′) || A′ === Union{} || return A′
+    # But extra parameters are disallowed here. Also we check `fieldtypes` to make sure the result is valid.
+    isconcretetype(A′) && fieldtypes(A′) === ntuple(Returns(T), Val(prod(S))) && return A′
+    # Otherwise, we fallback to `S/MArray` based on it's mutability.
     if ismutabletype(A)
         return mutable_similar_type(T, S, length_val(S))
     else

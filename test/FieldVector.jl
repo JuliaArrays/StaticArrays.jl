@@ -126,4 +126,28 @@
         @test @inferred(similar_type(FVT{Float64}, Size(3))) == SVector{3,Float64}
         @test @inferred(similar_type(FVT{Float64}, Float32, Size(3))) == SVector{3,Float32}
     end
+
+    @testset "similar_type for some ill FieldVector" begin
+        # extra parameters
+        struct IllFV{T,N} <: FieldVector{3,T}
+            x::T
+            y::T
+            z::T
+        end
+
+        @test @inferred(similar_type(IllFV{Float64}, Float64)) == IllFV{Float64}
+        @test @inferred(similar_type(IllFV{Float64,Int}, Float64)) == IllFV{Float64,Int}
+        @test @inferred(similar_type(IllFV{Float64}, Float32)) == SVector{3,Float32}
+        @test @inferred(similar_type(IllFV{Float64,Int}, Float32)) == SVector{3,Float32}
+
+        # invalid `eltype`
+        struct IllFV2{T} <: FieldVector{3,T}
+            x::Int
+            y::Float64
+            z::Int8
+        end
+
+        @test @inferred(similar_type(IllFV2{Float64}, Float64)) == IllFV2{Float64}
+        @test @inferred(similar_type(IllFV2{Float64}, Float32)) == SVector{3,Float32}
+    end
 end
