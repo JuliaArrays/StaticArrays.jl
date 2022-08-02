@@ -69,15 +69,12 @@ end
 @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
 @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _transpose(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, Base.promote_op(transpose, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -86,15 +83,12 @@ end
 @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 @inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _adjoint(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, Base.promote_op(adjoint, T), Size($(n2,n1)))(elements)
     end
 end
 
