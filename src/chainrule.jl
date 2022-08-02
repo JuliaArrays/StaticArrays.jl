@@ -1,39 +1,33 @@
-#####
-##### constructors
-#####
+### Projecting a tuple to SMatrix leads to ChainRulesCore._projection_mismatch by default, so overloaded here
+function (project::ChainRulesCore.ProjectTo{<:Tangent{<:Tuple}})(dx::SArray)
+    # for d in 1:ndims(dx)
+    #     if size(dx, d) != get(length(project.elements), d, 1)
+    #         throw(ChainRulesCore._projection_mismatch(axes(project.elements), size(dx)))
+    #     end
+    # end
+    dy = reshape(dx, axes(project.elements))  # allows for dx::OffsetArray
+    dz = ntuple(i -> project.elements[i](dy[i]), length(project.elements))
+    return ChainRulesCore.project_type(project)(dz...)
+end
+### Project SArray to SArray
+function ChainRulesCore.ProjectTo(x::SArray{S,T}) where {S, T}
+    return ChainRulesCore.ProjectTo{SArray}(; element=ChainRulesCore._eltype_projectto(T), axes=S)
+end
 
-ChainRulesCore.@non_differentiable (::Type{T} where {T<:Union{SArray, SizedArray}})(::UndefInitializer, args...)
+function (project::ChainRulesCore.ProjectTo{SArray})(dx::AbstractArray{S,M}) where {S,M}
+    return SArray{project.axes}(dx)
+end
 
-function ChainRulesCore.frule((_, ẋ), ::Type{T}, x::Tuple) where {T<:Union{SArray, SizedArray}}
+### Adjoint for SArray constructor
+
+ChainRulesCore.@non_differentiable (::Type{T} where {T<:SArray})(::UndefInitializer, args...)
+
+function ChainRulesCore.frule((_, ẋ), ::Type{T}, x::Tuple) where {T<:SArray}
     return T(x), T(ẋ)
 end
 
-function ChainRulesCore.rrule(::Type{T}, x::Tuple) where {T<:Union{SArray, SizedArray}}
+function ChainRulesCore.rrule(::Type{T}, x::Tuple) where {T<:SArray}
     project_x = ProjectTo(x)
     Array_pullback(ȳ) = (NoTangent(), project_x(ȳ))
     return T(x), Array_pullback
-end
-
-function (project::ChainRulesCore.ProjectTo{AbstractArray})(dx::AbstractArray{S,M}) where {S,M}
-    # First deal with shape. The rule is that we reshape to add or remove trivial dimensions
-    # like dx = ones(4,1), where x = ones(4), but throw an error on dx = ones(1,4) etc.
-    dy = if axes(dx) === project.axes
-        dx
-    else
-        for d in 1:max(M, length(project.axes))
-            if size(dx, d) != length(get(project.axes, d, 1))
-                throw(_projection_mismatch(project.axes, size(dx)))
-            end
-        end
-        reshape(dx, project.axes)
-    end
-    # Then deal with the elements. One projector if AbstractArray{<:Number},
-    # or one per element for arrays of anything else, including arrays of arrays:
-    dz = if hasproperty(project, :element)
-        T = project_type(project.element)
-        S <: T ? dy : map(project.element, dy)
-    else
-        map((f, y) -> f(y), project.elements, dy)
-    end
-    return dz
 end

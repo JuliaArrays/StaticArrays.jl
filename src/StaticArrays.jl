@@ -130,6 +130,7 @@ include("io.jl")
 include("pinv.jl")
 
 include("precompile.jl")
+include("chainrule.jl")
 _precompile_()
 
 end # module
