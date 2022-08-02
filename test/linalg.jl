@@ -225,6 +225,14 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         # Recursive adjoint/transpose correctly handles eltype (#708)
         @test (@inferred(adjoint(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(adjoint([1,2]), 2,2))
         @test (@inferred(transpose(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(transpose([1,2]), 2,2))
+
+        # 0×0 matrix
+        for T in (SMatrix{0,0,Float64}, MMatrix{0,0,Float64}, SizedMatrix{0,0,Float64})
+            m = T()
+            @test adjoint(m)::T == transpose(m)::T == m
+        end
+        @test adjoint(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Adjoint{Int,Vector{Int}}}
+        @test transpose(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Transpose{Int,Vector{Int}}}
     end
 
     @testset "normalization" begin
