@@ -131,7 +131,7 @@ function similar_type(::Type{A}, ::Type{T}, S::Size) where {T,A<:FieldArray}
     # FieldArrays with parametric `eltype` would be adapted to the new `eltype` automatically.
     A′ = Base.typeintersect(base_type(A), StaticArray{Tuple{Tuple(S)...},T,length(S)})
     # But extra parameters are disallowed here. Also we check `fieldtypes` to make sure the result is valid.
-    isconcretetype(A′) && fieldtypes(A′) === ntuple(Returns(T), Val(prod(S))) && return A′
+    isconcretetype(A′) && fieldtypes(A′) === ntuple(_ -> T, Val(prod(S))) && return A′
     # Otherwise, we fallback to `S/MArray` based on it's mutability.
     if ismutabletype(A)
         return mutable_similar_type(T, S, length_val(S))
@@ -141,7 +141,12 @@ function similar_type(::Type{A}, ::Type{T}, S::Size) where {T,A<:FieldArray}
 end
 
 # return `Union{}` for Union Type. Otherwise return the constructor with no parameters.
-@pure base_type(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T); T′ isa DataType ? T′.name.wrapper : Union{})
-if VERSION < v"1.7"
-    @pure ismutabletype(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T); T′ isa DataType && T′.mutable)
+@pure base_type(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T);
+T′ isa DataType ? T′.name.wrapper : Union{})
+if VERSION < v"1.8"
+    fieldtypes(::Type{T}) where {T} = ntuple(i -> fieldtype(T, i), Val(fieldcount(T)))
+    @eval @pure function ismutabletype(@nospecialize(T::Type))
+        T′ = Base.unwrap_unionall(T)
+        T′ isa DataType && $(VERSION < v"1.7" ? :(T′.mutable) : :(T′.name.flags & 0x2 == 0x2))
+    end
 end
