@@ -15,11 +15,11 @@ end
 @inline (::Type{SZA})(a::AbstractArray) where {SZA<:SizedArray} = construct_type(SZA, a)(a)
 
 # disambiguation
-@inline SizedArray{S,T,N,M}(a::StaticArray) where {S<:Tuple,T,N,M} = construct_type(SizedArray{S,T,N,M}, a)(a.data)
-@inline SizedArray{S,T,N}(a::StaticArray) where {S<:Tuple,T,N} = construct_type(SizedArray{S,T,N}, a)(a.data)
-@inline (::Type{SZA})(a::StaticArray) where {SZA<:SizedArray} = construct_type(SZA, a)(a.data)
+@inline SizedArray{S,T,N,M}(a::StaticArray) where {S<:Tuple,T,N,M} = construct_type(SizedArray{S,T,N,M}, a)(Tuple(a))
+@inline SizedArray{S,T,N}(a::StaticArray) where {S<:Tuple,T,N} = construct_type(SizedArray{S,T,N}, a)(Tuple(a))
+@inline (::Type{SZA})(a::StaticArray) where {SZA<:SizedArray} = construct_type(SZA, a)(Tuple(a))
 # TODO: Should we respect `TData`?
-SizedArray{S,T,N,M,TData}(a::TData) where {S<:Tuple,T,N,M,TData<:StaticArray{<:Tuple,T,M}} = SizedArray{S,T,N,M}(a.data)
+SizedArray{S,T,N,M,TData}(a::TData) where {S<:Tuple,T,N,M,TData<:StaticArray{<:Tuple,T,M}} = SizedArray{S,T,N,M}(Tuple(a))
 
 function SizedArray{S,T,N,N}(::UndefInitializer) where {S<:Tuple,T,N}
     return SizedArray{S,T,N,N,Array{T,N}}(undef)
