@@ -5,6 +5,8 @@
     _inv(Size(A_S),A_S)
 end
 
+@inline _inv(::Size{(0,0)}, A) = similar_type(A,typeof(inv(one(eltype(A)))))()
+
 @inline _inv(::Size{(1,1)}, A) = similar_type(A)(inv(A[1]))
 
 @inline function _inv(::Size{(2,2)}, A)

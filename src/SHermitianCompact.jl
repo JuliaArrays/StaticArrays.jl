@@ -60,6 +60,7 @@ lowertriangletype(::Type{SHermitianCompact{N}}) where {N} = SVector{triangularnu
 end
 
 @generated function SHermitianCompact{N, T, L}(a::Tuple) where {N, T, L}
+    _check_hermitian_parameters(Val(N), Val(L))
     expr = Vector{Expr}(undef, L)
     i = 0
     for col = 1 : N, row = col : N
@@ -77,14 +78,12 @@ end
     SHermitianCompact{N, T, L}(a)
 end
 
-@inline SHermitianCompact{N}(a::Tuple) where {N} = SHermitianCompact{N, promote_tuple_eltype(a)}(a)
-@inline SHermitianCompact{N}(a::Tuple{T,Vararg{T,M}}) where {N, T, M} = SHermitianCompact{N, T}(a)
-@inline SHermitianCompact(a::StaticMatrix{N, N, T}) where {N, T} = SHermitianCompact{N, T}(a)
-
 @inline (::Type{SSC})(a::SHermitianCompact) where {SSC <: SHermitianCompact} = SSC(a.lowertriangle)
-@inline (::Type{SSC})(a::SSC) where {SSC <: SHermitianCompact} = a
 
 @inline (::Type{SSC})(a::AbstractVector) where {SSC <: SHermitianCompact} = SSC(convert(lowertriangletype(SSC), a))
+
+# disambiguation
+@inline (::Type{SSC})(a::StaticArray{<:Tuple,<:Any,1}) where {SSC <: SHermitianCompact} = SSC(convert(SVector, a))
 
 @generated function _hermitian_compact_indices(::Val{N}) where N
     # Returns a Tuple{Pair{Int, Bool}} I such that for linear index i,
@@ -100,7 +99,7 @@ end
         end
     end
     quote
-        Base.@_inline_meta
+        @_inline_meta
         return $(tuple(indexmat...))
     end
 end

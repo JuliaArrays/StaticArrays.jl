@@ -40,11 +40,6 @@ end
 
 fill3(x) = fill(3, x)
 
-# @allocated behaves differently on 1.4, but the differences appear spurious in
-# practice. See
-# https://github.com/JuliaArrays/StaticArrays.jl/issues/710
-allocated_workaround = VERSION >= v"1.4-DEV"
-
 @testset "SHermitianCompact" begin
     @testset "Inner Constructor" begin
         for (N, L) in ((3, 6), (4, 10), (6, 21))
@@ -63,6 +58,11 @@ allocated_workaround = VERSION >= v"1.4-DEV"
     end
 
     @testset "Outer Constructors" begin
+        @test @inferred(SHermitianCompact(MVector(1,2,3))) === SHermitianCompact(SVector(1,2,3))
+        @test_throws Exception SHermitianCompact(1,2,3)
+        @test_throws Exception SHermitianCompact(1,2,3,4,5)
+        @test @inferred(SHermitianCompact(1,2,3,4)) === SHermitianCompact(SVector(1,2,4))
+
         for (N, L) in ((3, 6), (4, 10), (6, 21))
             for T in (Int32, Int64)
                 @eval begin
@@ -164,9 +164,6 @@ allocated_workaround = VERSION >= v"1.4-DEV"
         let a = a
             @test -a == -SMatrix(a)
             @test -a isa SHermitianCompact{3, Int, 6}
-            if !allocated_workaround
-                @test_noalloc -a
-            end
         end
         for (x, y) in ((a, b), (a, c), (c, a))
             @eval begin
@@ -210,15 +207,9 @@ allocated_workaround = VERSION >= v"1.4-DEV"
         let a = SHermitianCompact(SVector{21, Int}(1 : 21))
             @test a + 3I == SMatrix(a) + 3I
             @test a + 3I isa typeof(a)
-            if !allocated_workaround
-                @test_noalloc a + 3I
-            end
 
             @test a - 4I == SMatrix(a) - 4I
             @test a - 4I isa typeof(a)
-            if !allocated_workaround
-                @test_noalloc a - 4I
-            end
 
             @test a * 3I === a * 3
             @test 3I * a === 3 * a

@@ -39,6 +39,7 @@ one(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 one(::SDiagonal{N,T}) where {N,T} = SDiagonal(ones(SVector{N,T}))
 
 Base.zero(::SDiagonal{N,T}) where {N,T} = SDiagonal(zeros(SVector{N,T}))
+Base.zero(::Type{SDiagonal{N,T}}) where {N,T} = SDiagonal(zeros(SVector{N,T}))
 
 function LinearAlgebra.cholesky(D::SDiagonal)
     any(x -> x < 0, D.diag) && throw(LinearAlgebra.PosDefException(1))

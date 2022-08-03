@@ -6,7 +6,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 [![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/latest)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/dev)
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia, using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
@@ -22,6 +22,15 @@ as `SizedArray` for annotating standard `Array`s with static size information.
 Further, the abstract `FieldVector` can be used to make fast `StaticVector`s
 out of any uniform Julia "struct".
 Full documentation can be found [here](https://JuliaArrays.github.io/StaticArrays.jl/stable/).
+
+Most of the primary array types exported by StaticArrays.jl are defined in the small interface
+package [StaticArraysCore.jl](https://github.com/JuliaArrays/StaticArraysCore.jl). This includes
+e.g., the definitions of the abstract type `StaticArray` and the concrete types `SArray`,
+`MArray`, and `SizedArray` (as well as their dimension-specific aliases).
+This enables downstream packages to implement new methods for these types without depending
+on (and hence loading) the entirety of StaticArrays.jl, and thereby to avoid incurring the full
+load-time of StaticArrays.jl (which is on the order of 0.6 s for StaticArrays.jl v1.4 on Julia
+v1.7).
 
 ## Speed
 
@@ -64,9 +73,9 @@ using LinearAlgebra
 using StaticArrays
 
 # Use the convenience constructor type `SA` to create vectors and matrices
-SA[1, 2, 3]     isa SVector{3,Int}
-SA_F64[1, 2, 3] isa SVector{3,Float64}
-SA_F32[1, 2, 3] isa SVector{3,Float32}
+SA[1, 2, 3]      isa SVector{3,Int}
+SA_F64[1, 2, 3]  isa SVector{3,Float64}
+SA_F32[1, 2, 3]  isa SVector{3,Float32}
 SA[1 2; 3 4]     isa SMatrix{2,2,Int}
 SA_F64[1 2; 3 4] isa SMatrix{2,2,Float64}
 

@@ -11,4 +11,10 @@
     @test Scalar(a)[] == 2
     s = Scalar(a)
     @test convert(typeof(s), s) === s
+    @test Scalar(SVector(1,2,3))[] === SVector(1,2,3)
+    @test Scalar(MArray{Tuple{}}(1)) === Scalar(1)
+end
+
+@testset "issue #809" begin
+    @test_throws DimensionMismatch Scalar(1, 2)
 end

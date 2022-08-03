@@ -10,4 +10,13 @@
 
     @test_throws Exception StaticArrays.SUnitRange{1, -1}()
     @test_throws TypeError StaticArrays.SUnitRange{1, 1.5}()
+
+    let su = StaticArrays.SUnitRange(1, 2),
+        str = "SUnitRange(1,2)",
+        str2 = "($(str), $(str))"
+        @test repr(su) == str
+        @test repr("text/plain", su) == str
+        @test repr((su, su)) == str2
+        @test repr("text/plain", (su, su)) == str2
+    end
 end

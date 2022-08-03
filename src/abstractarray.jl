@@ -1,5 +1,5 @@
-length(a::StaticArrayLike) = prod(Size(a))
-length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
+length(a::StaticArrayLike) = prod(Size(a))::Int
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 
 @pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
 @inline function size(t::Type{<:StaticArrayLike}, d::Int)
@@ -14,6 +14,7 @@ Base.axes(s::StaticArray) = _axes(Size(s))
 end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
+Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 
@@ -183,36 +184,41 @@ homogenize_shape(shape::Tuple{Vararg{SOneTo}}) = Size(map(last, shape))
 homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 
 
-@inline reshape(a::StaticArray, s::Size) = similar_type(a, s)(Tuple(a))
-@inline reshape(a::AbstractArray, s::Size) = _reshape(a, IndexStyle(a), s)
-@inline reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
-@generated function _reshape(a::AbstractArray, indexstyle, s::Size{S}) where {S}
-    if indexstyle == IndexLinear
-        exprs = [:(a[$i]) for i = 1:prod(S)]
-    else
-        exprs = [:(a[$(inds)]) for inds ∈ CartesianIndices(S)]
-    end
-
-    return quote
-        @_inline_meta
-        if length(a) != prod(s)
-            throw(DimensionMismatch("Tried to resize dynamic object of size $(size(a)) to $s"))
-        end
-        return similar_type(a, s)(tuple($(exprs...)))
-    end
+@inline reshape(a::SArray, s::Size) = similar_type(a, s)(Tuple(a))
+@inline reshape(a::AbstractArray, s::Size) = __reshape(a, ((typeof(s).parameters...)...,), s)
+@inline reshape(a::SArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline reshape(a::AbstractArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
+    return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
+end
+@inline function __reshape(a, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a, shape), Size(a), s)
+end
+@inline function __reshape(a::SizedArray, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a.data, shape), Size(a), s)
+end
+@inline function _maybewrap_reshape(a, ::Size{Sa}, ::Size{S}) where {Sa,S}
+    return SizedArray{Tuple{S...}}(a)
+end
+@inline function _maybewrap_reshape(a::StaticArray, ::Size{S}, ::Size{S}) where {S}
+    return a
 end
 
-reshape(a::Array, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
+reshape(a::Vector, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
+
+Base.rdims(out::Val{N}, inds::Tuple{SOneTo, Vararg{SOneTo}}) where {N} = Base.rdims(ntuple(i -> SOneTo(1), Val(N)), inds)
+Base.rdims(out::Tuple{Any}, inds::Tuple{SOneTo, Vararg{SOneTo}}) = (SOneTo(Base.rdims_trailing(inds...)),)
 
 @inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
-@inline copy(a::SizedArray) = typeof(a)(copy(a.data))
+@inline copy(a::SizedArray{S,T}) where {S,T} = SizedArray{S,T}(copy(a.data))
 
-@inline reverse(v::StaticVector) = typeof(v)(_reverse(v))
+@inline reverse(v::StaticArray) = typeof(v)(_reverse(v))
 
-@generated function _reverse(v::StaticVector{N,T}) where {N,T}
-    return Expr(:tuple, (:(v[$i]) for i = N:(-1):1)...)
+@generated function _reverse(v::StaticArray{N}) where {N}
+    L = tuple_prod(N)
+    return Expr(:tuple, (:(v[$i]) for i = L:(-1):1)...)
 end
 
 @generated function Base.rot180(A::SMatrix{M,N}) where {M,N}
@@ -226,7 +232,21 @@ for rot in [:rotl90, :rotr90]
     end
 end
 
-# TODO permutedims?
+# TODO permutedims? So far just the cases without perm:
+
+Base.permutedims(A::SVector{N}) where {N} = SMatrix{1,N}(A.data...)
+Base.permutedims(A::MVector{N}) where {N} = MMatrix{1,N}(A.data...)
+Base.permutedims(A::SizedVector{N}) where {N} = SizedMatrix{1,N}(permutedims(A.data))
+
+@generated function Base.permutedims(A::SMatrix{M,N}) where {M,N}
+    exs = permutedims([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+    return :(SMatrix{N,M}($(exs...)))
+end
+@generated function Base.permutedims(A::MMatrix{M,N}) where {M,N}
+    exs = permutedims([:(getindex(A,$i,$j)) for i in 1:M, j in 1:N])
+    return :(MMatrix{N,M}($(exs...)))
+end
+Base.permutedims(A::SizedMatrix{M,N}) where {M,N} = SizedMatrix{N,M}(permutedims(A.data))
 
 #--------------------------------------------------
 # Concatenation
@@ -287,11 +307,19 @@ end
     end
 end
 
-if VERSION >= v"1.6.0-DEV.1334"
-    # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
-    # don't overload iterate
-    @inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
-        newlen = tuple_prod(S) - i
-        return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
-    end
+# FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
+# don't overload iterate
+@inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
+    newlen = tuple_prod(S) - i
+    return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
+end
+
+# SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
+# The output may use the broadcasting machinery defined for StaticArrays (see issue #892)
+# wrap elements in Scalar to be consistent with 0D views
+_maybewrapscalar(S::SArray{<:Any,T}, r::T) where {T} = Scalar{T}(r)
+_maybewrapscalar(S, r) = r
+function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tuple, Int}, CartesianIndex}...)
+    V = getindex(S, I...)
+    _maybewrapscalar(S, V)
 end

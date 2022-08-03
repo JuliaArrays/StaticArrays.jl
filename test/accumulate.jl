@@ -33,7 +33,6 @@ using StaticArrays, Test
         ]
             @test cumsum(a; dims = 2) == cumsum(collect(a); dims = 2)
             @test cumsum(a; dims = 2) isa similar_type(a)
-            v"1.1" <= VERSION < v"1.2" && continue
             @inferred cumsum(a; dims = Val(2))
         end
     end
@@ -43,7 +42,6 @@ using StaticArrays, Test
         a = similar_type(SArray, Int, Size(shape))(1:prod(shape))
         @test cumsum(a; dims = i) == cumsum(collect(a); dims = i)
         @test cumsum(a; dims = i) isa SArray
-        v"1.1" <= VERSION < v"1.2" && continue
         @inferred cumsum(a; dims = Val(i))
     end
 

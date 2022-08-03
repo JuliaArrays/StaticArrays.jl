@@ -50,7 +50,11 @@ end
 end
 
 @inline function _eigvals(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    S = arithmetic_closure(T)
+    S = if typeof(A) <: Hermitian{Complex{T}}
+        complex(arithmetic_closure(T))
+    else
+        arithmetic_closure(T)
+    end
     Sreal = real(S)
 
     @inbounds a11 = convert(Sreal, A.data[1])

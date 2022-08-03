@@ -1,5 +1,7 @@
 using StaticArrays, Test, LinearAlgebra
 
+@testset "LU" begin
+
 @testset "LU utils" begin
     F = lu(SA[1 2; 3 4])
 
@@ -9,8 +11,15 @@ using StaticArrays, Test, LinearAlgebra
     @test occursin(r"^StaticArrays.LU.*L factor.*U factor"s, sprint(show, MIME("text/plain"), F))
 end
 
-@testset "LU decomposition ($m×$n, pivot=$pivot)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15]
-    a = SMatrix{m,n,Int}(1:(m*n))
+@testset "LU decomposition ($m×$n, pivot=$pivot, wrapper=$wrapper)" for pivot in (true, false), m in [0:4..., 15], n in [0:4..., 15], wrapper in [identity, Symmetric, Hermitian]
+
+    a = if m == n && m > 0
+        wrapper(SMatrix{m,n,Int}(1:(m*n)))
+    elseif wrapper !== identity
+        continue
+    else
+        SMatrix{m,n,Int}(1:(m*n))
+    end
     l, u, p = @inferred(lu(a, Val{pivot}(); check = false))
 
     # expected types
@@ -46,6 +55,7 @@ end
     # decomposition is correct
     l_u = l*u
     @test l*u ≈ a[p,:]
+
 end
 
 @testset "LU division ($m×$n)" for m in [1:4..., 15], n in [1:4..., 15]
@@ -65,3 +75,24 @@ end
     @test_throws SingularException lu(A)
     @test !issuccess(lu(A; check = false))
 end
+
+@testset "LU method ambiguity" begin
+    # Issue #920; just test that methods do not throw an ambiguity error when called
+    for A in ((@SMatrix [1.0 2.0; 3.0 4.0]), (@SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]))
+        @test isa(lu(A),              StaticArrays.LU)
+        @test isa(lu(A, Val(true)),   StaticArrays.LU)
+        @test isa(lu(A, Val(false)),  StaticArrays.LU)
+        @test isa(lu(A; check=false), StaticArrays.LU)
+        @test isa(lu(A; check=true),  StaticArrays.LU)
+    end
+end
+
+if isdefined(LinearAlgebra, :PivotingStrategy)
+    for N = (3, 15)
+        A = (@SMatrix randn(N,N))
+        @test lu(A, Val(false)) == lu(A, NoPivot())
+        @test lu(A, Val(true)) == lu(A, RowMaximum())
+    end
+end
+
+end # @testset "LU"
