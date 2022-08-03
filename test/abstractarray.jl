@@ -109,9 +109,17 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(reshape(SVector(1,2,3,4), axes(SMatrix{2,2}(1,2,3,4)))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape(SVector(1,2,3,4), Size(2,2))) === SMatrix{2,2}(1,2,3,4)
         @test @inferred(reshape([1,2,3,4], Size(2,2)))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1,2,3,4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,1} == [1 3; 2 4]
+        @test @inferred(reshape([1 2 3 4], axes(SMatrix{2,2}(1,2,3,4))))::SizedArray{Tuple{2,2},Int,2,2} == [1 3; 2 4]
         @test_throws DimensionMismatch reshape([1 2; 3 4], Size(2,2,2))
+        @test_throws DimensionMismatch reshape([1 2 3], axes(SMatrix{2,2}(1,2,3,4)))
 
         @test @inferred(vec(SMatrix{2, 2}([1 2; 3 4])))::SVector{4,Int} == [1, 3, 2, 4]
+        a = @MVector [1, 2, 3, 4]
+        @test @inferred(vec(a)) === a
+
+        as = SizedVector(a)
+        @test @inferred(vec(as)) === as
 
         # AbstractArray
         # CartesianIndex
@@ -200,7 +208,7 @@ using StaticArrays, Test, LinearAlgebra
         @test @inferred(convert(AbstractArray{Float64}, diag)) isa Diagonal{Float64,SVector{2,Float64}}
         @test convert(AbstractArray{Float64}, diag) == diag
         # The following cases currently convert the SMatrix into an MMatrix, because
-        # the constructor in Base invokes `similar`, rather than `convert`, on the static 
+        # the constructor in Base invokes `similar`, rather than `convert`, on the static
         # array. This was fixed in https://github.com/JuliaLang/julia/pull/40831; so should
         # work from Julia v1.8.0-DEV.55
         trans = Transpose(SVector(1,2))
@@ -215,6 +223,25 @@ using StaticArrays, Test, LinearAlgebra
         @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unituptri)) isa UnitUpperTriangular{Float64,SMatrix{2,2,Float64,4}}
         unitlotri = UnitLowerTriangular(SA[1 0; 2 1])
         @test_was_once_broken v"1.8.0-DEV.55" @inferred(convert(AbstractArray{Float64}, unitlotri)) isa UnitLowerTriangular{Float64,SMatrix{2,2,Float64,4}}
+    end
+
+    @testset "type inference in length" begin
+        s1 = SA[1,2];
+        s2 = SA[1,2,3];
+        v = [s1, s2];
+        f(v, i) = length(v[i]);
+        for i in 1:2
+            @test (@inferred f(v, i)) == length(v[i])
+        end
+    end
+
+    @testset "reduced_indices" begin
+        s = SArray{Tuple{2,2,2},Int,3,8}((1,2,3,4,5,6,7,8))
+        a = Array(s)
+        for i in 1:ndims(s)
+            rs = @inferred Base.reduced_indices(axes(s), i)
+            @test rs == Base.reduced_indices(axes(a), i)
+        end
     end
 end
 
@@ -309,38 +336,36 @@ end
     @test @inferred(hcat(SA[1 2 3])) === SA[1 2 3]
 end
 
-@static if VERSION >= v"1.6.0-DEV.1334"
-    @testset "Base.rest" begin
-        x = SA[1, 2, 3]
+@testset "Base.rest" begin
+    x = SA[1, 2, 3]
+    @test Base.rest(x) == x
+    a, b... = x
+    @test b == SA[2, 3]
+
+    x = SA[1 2; 3 4]
+    @test Base.rest(x) == vec(x)
+    a, b... = x
+    @test b == SA[3, 2, 4]
+
+    a, b... = SA[1]
+    @test b == []
+    @test b isa SVector{0}
+
+    for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
+        x = Vec(1, 2, 3)
         @test Base.rest(x) == x
+        @test pointer(Base.rest(x)) != pointer(x)
         a, b... = x
-        @test b == SA[2, 3]
-    
-        x = SA[1 2; 3 4]
+        @test b == Vec(2, 3)
+
+        x = Mat{2,2}(1, 2, 3, 4)
         @test Base.rest(x) == vec(x)
+        @test pointer(Base.rest(x)) != pointer(x)
         a, b... = x
-        @test b == SA[3, 2, 4]
+        @test b == Vec(2, 3, 4)
 
-        a, b... = SA[1]
+        a, b... = Vec(1)
         @test b == []
-        @test b isa SVector{0}
-    
-        for (Vec, Mat) in [(MVector, MMatrix), (SizedVector, SizedMatrix)]
-            x = Vec(1, 2, 3)
-            @test Base.rest(x) == x
-            @test pointer(Base.rest(x)) != pointer(x)
-            a, b... = x
-            @test b == Vec(2, 3)
-        
-            x = Mat{2,2}(1, 2, 3, 4)
-            @test Base.rest(x) == vec(x)
-            @test pointer(Base.rest(x)) != pointer(x)
-            a, b... = x
-            @test b == Vec(2, 3, 4)
-
-            a, b... = Vec(1)
-            @test b == []
-            @test b isa Vec{0}
-        end
+        @test b isa Vec{0}
     end
 end

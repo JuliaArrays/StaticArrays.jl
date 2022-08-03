@@ -1,5 +1,5 @@
-length(a::StaticArrayLike) = prod(Size(a))
-length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))
+length(a::StaticArrayLike) = prod(Size(a))::Int
+length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 
 @pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
 @inline function size(t::Type{<:StaticArrayLike}, d::Int)
@@ -14,6 +14,7 @@ Base.axes(s::StaticArray) = _axes(Size(s))
 end
 Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
 Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
+Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 
@@ -186,14 +187,21 @@ homogenize_shape(shape::Tuple{Vararg{HeterogeneousShape}}) = map(last, shape)
 @inline reshape(a::SArray, s::Size) = similar_type(a, s)(Tuple(a))
 @inline reshape(a::AbstractArray, s::Size) = __reshape(a, ((typeof(s).parameters...)...,), s)
 @inline reshape(a::SArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
+@inline reshape(a::AbstractArray, s::Tuple{SOneTo,Vararg{SOneTo}}) = reshape(a, homogenize_shape(s))
 @inline function reshape(a::StaticArray, s::Tuple{SOneTo,Vararg{SOneTo}})
     return __reshape(a, map(u -> last(u), s), homogenize_shape(s))
 end
-@inline function __reshape(a, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a, shape))
+@inline function __reshape(a, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a, shape), Size(a), s)
 end
-@inline function __reshape(a::SizedArray, shape, ::Size{S}) where {S}
-    return SizedArray{Tuple{S...}}(Base._reshape(a.data, shape))
+@inline function __reshape(a::SizedArray, shape, s::Size)
+    return _maybewrap_reshape(Base._reshape(a.data, shape), Size(a), s)
+end
+@inline function _maybewrap_reshape(a, ::Size{Sa}, ::Size{S}) where {Sa,S}
+    return SizedArray{Tuple{S...}}(a)
+end
+@inline function _maybewrap_reshape(a::StaticArray, ::Size{S}, ::Size{S}) where {S}
+    return a
 end
 
 reshape(a::Vector, ::Size{S}) where {S} = SizedArray{Tuple{S...}}(a)
@@ -204,7 +212,7 @@ Base.rdims(out::Tuple{Any}, inds::Tuple{SOneTo, Vararg{SOneTo}}) = (SOneTo(Base.
 @inline vec(a::StaticArray) = reshape(a, Size(prod(Size(typeof(a)))))
 
 @inline copy(a::StaticArray) = typeof(a)(Tuple(a))
-@inline copy(a::SizedArray) = typeof(a)(copy(a.data))
+@inline copy(a::SizedArray{S,T}) where {S,T} = SizedArray{S,T}(copy(a.data))
 
 @inline reverse(v::StaticArray) = typeof(v)(_reverse(v))
 
@@ -299,13 +307,11 @@ end
     end
 end
 
-if VERSION >= v"1.6.0-DEV.1334"
-    # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
-    # don't overload iterate
-    @inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
-        newlen = tuple_prod(S) - i
-        return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
-    end
+# FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
+# don't overload iterate
+@inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
+    newlen = tuple_prod(S) - i
+    return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
 end
 
 # SArrays may avoid the SubArray wrapper and consequently an additional level of indirection

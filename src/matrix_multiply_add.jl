@@ -390,11 +390,11 @@ end
 
 function combine_products(expr_list)
     filtered = filter(expr_list) do expr
-        if expr.head != :call || expr.args[1] != :*
+        if expr.head != :call || expr.args[1] !== :*
             error("expected call to *")
         end
         for arg in expr.args[2:end]
-            if isa(arg, Expr) && arg.head == :call && arg.args[1] == :zero
+            if isa(arg, Expr) && arg.head == :call && arg.args[1] === :zero
                 return false
             end
         end
@@ -404,7 +404,7 @@ function combine_products(expr_list)
         return :(zero(T))
     else
         return reduce(filtered) do ex1, ex2
-            if ex2.head != :call || ex2.args[1] != :*
+            if ex2.head != :call || ex2.args[1] !== :*
                 error("expected call to *")
             end
 

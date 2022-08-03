@@ -45,26 +45,36 @@ end
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
 @inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
+
+# Ternary ops
+@inline Base.muladd(scalar::Number, a::StaticArray, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::StaticArray, scalar::Number, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
+
+
+# @fastmath operators
+@inline Base.FastMath.mul_fast(a::Number, b::StaticArray) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::StaticArray, b::Number) = map(c -> Base.FastMath.mul_fast(c, b), a)
+
+@inline Base.FastMath.add_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.add_fast, a, b)
+@inline Base.FastMath.sub_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.sub_fast, a, b)
+
+
 #--------------------------------------------------
 # Matrix algebra
 
-# Transpose, conjugate, etc
-@inline conj(a::StaticArray) = map(conj, a)
+# Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
 @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _transpose(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, Base.promote_op(transpose, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -73,15 +83,12 @@ end
 @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 @inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _adjoint(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, Base.promote_op(adjoint, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -134,7 +141,8 @@ end
     end
 end
 
-@generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
+@generated function diagm(kv1::Pair{<:Val,<:StaticVector}, other_kvs::Pair{<:Val,<:StaticVector}...)
+    kvs = (kv1, other_kvs...)
     diag_ind_and_length = [(kv.parameters[1].parameters[1], length(kv.parameters[2])) for kv in kvs]
     N = maximum(abs(di) + dl for (di,dl) in diag_ind_and_length)
     vs = [Symbol("v$i") for i=1:length(kvs)]
@@ -148,6 +156,7 @@ end
     end
     return quote
         $(Expr(:meta, :inline))
+        kvs = (kv1, other_kvs...)
         $(vs_exprs...)
         @inbounds elements = tuple($(element_exprs...))
         T = promote_tuple_eltype(elements)
@@ -270,11 +279,11 @@ end
     end
 end
 
-@inline normalize(a::StaticVector) = inv(norm(a))*a
-@inline normalize(a::StaticVector, p::Real) = inv(norm(a, p))*a
+@inline normalize(a::StaticArray) = inv(norm(a))*a
+@inline normalize(a::StaticArray, p::Real) = inv(norm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(norm(a)); return a)
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(norm(a, p)); return a)
+@inline normalize!(a::StaticArray) = (a .*= inv(norm(a)); return a)
+@inline normalize!(a::StaticArray, p::Real) = (a .*= inv(norm(a, p)); return a)
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}

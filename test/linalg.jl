@@ -40,14 +40,55 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
         #@test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
 
-        if VERSION ≥ v"1.2"
-            # #899 matrix-of-matrix
-            A = SMatrix{1,1}([1])
-            B = SMatrix{1,1}([A])
-            @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
-            @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        # #899 matrix-of-matrix
+        A = SMatrix{1,1}([1])
+        B = SMatrix{1,1}([A])
+        @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+    end
+
+    @testset "Ternary operators" begin
+        for T in (Int, Float32, Float64)
+            c = convert(T, 2)
+            v1 = @SVector T[2, 4, 6, 8]
+            v2 = @SVector T[4, 3, 2, 1]
+            m1 = @SMatrix T[2 4; 6 8]
+            m2 = @SMatrix T[4 3; 2 1]
+
+            # Use that these small integers can be represetnted exactly
+            # as floating point numbers. In general, the comparison of
+            # floats should use `≈` instead of `===`.
+            @test @inferred(muladd(c, v1, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(v1, c, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(c, m1, m2)) === @SMatrix T[8 11; 14 17]
+            @test @inferred(muladd(m1, c, m2)) === @SMatrix T[8 11; 14 17]
+        end
+    end
+
+    @testset "@fastmath operators" begin
+        for T in (Int, Float32, Float64)
+            s0 = convert(T, 2)
+            v1 = @SVector T[2, 4, 6, 8]
+            v2 = @SVector T[4, 3, 2, 1]
+            m1 = @SMatrix T[2 4; 6 8]
+            m2 = @SMatrix T[4 3; 2 1]
+
+            # Use that these small integers can be represetnted exactly
+            # as floating point numbers. In general, the comparison of
+            # floats should use `≈` instead of `===`.
+            # These should be turned into `vfmadd...` calls
+            @test @fastmath(@inferred(s0 * v1 + v2)) === @SVector T[8, 11, 14, 17]
+            @test @fastmath(@inferred(v1 * s0 + v2)) === @SVector T[8, 11, 14, 17]
+            @test @fastmath(@inferred(s0 * m1 + m2)) === @SMatrix T[8 11; 14 17]
+            @test @fastmath(@inferred(m1 * s0 + m2)) === @SMatrix T[8 11; 14 17]
+
+            # These should be turned into `vfmsub...` calls
+            @test @fastmath(@inferred(s0 * v1 - v2)) === @SVector T[0, 5, 10, 15]
+            @test @fastmath(@inferred(v1 * s0 - v2)) === @SVector T[0, 5, 10, 15]
+            @test @fastmath(@inferred(s0 * m1 - m2)) === @SMatrix T[0 5; 10 15]
+            @test @fastmath(@inferred(m1 * s0 - m2)) === @SMatrix T[0 5; 10 15]
         end
     end
 
@@ -99,6 +140,7 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "diagm()" begin
+        @test diagm() isa BitArray # issue #961: type piracy of zero-arg diagm
         @test @inferred(diagm(SA[1,2])) === SA[1 0; 0 2]
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
@@ -183,6 +225,14 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         # Recursive adjoint/transpose correctly handles eltype (#708)
         @test (@inferred(adjoint(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(adjoint([1,2]), 2,2))
         @test (@inferred(transpose(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(transpose([1,2]), 2,2))
+
+        # 0×0 matrix
+        for T in (SMatrix{0,0,Float64}, MMatrix{0,0,Float64}, SizedMatrix{0,0,Float64})
+            m = T()
+            @test adjoint(m)::T == transpose(m)::T == m
+        end
+        @test adjoint(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Adjoint{Int,Vector{Int}}}
+        @test transpose(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Transpose{Int,Vector{Int}}}
     end
 
     @testset "normalization" begin
@@ -202,6 +252,16 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         @test normalize(SVector(1,2,3), 1) ≈ normalize([1,2,3], 1)
         @test normalize!(MVector(1.,2.,3.)) ≈ normalize([1.,2.,3.])
         @test normalize!(MVector(1.,2.,3.), 1) ≈ normalize([1.,2.,3.], 1)
+
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9]) ≈ normalize([1 2 3; 4 5 6; 7 8 9])
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9], 1) ≈ normalize([1 2 3; 4 5 6; 7 8 9], 1)
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.])) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.])
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.]), 1) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.], 1)
+
+        D3 = Array{Float64, 3}(undef, 2, 2, 3)
+        D3[:] .= 1.0:12.0
+        SA_D3 = convert(SArray{Tuple{2,2,3}, Float64, 3, 12}, D3)
+        @test normalize(SA_D3) ≈ normalize(D3)
 
         # nested vectors
         a  = SA[SA[1, 2], SA[3, 4]]
@@ -238,15 +298,11 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         end
 
         # type-stability
-        if VERSION ≥ v"1.2"
-            # only test strict type-stability on v1.2+, since there were Base-related type
-            # instabilities in `norm` prior to https://github.com/JuliaLang/julia/pull/30481
-            @test (@inferred norm(a[1])) == (@inferred norm(a[1], 2))
-            @test (@inferred norm(a)) == (@inferred norm(a, 2))
-            @test (@inferred norm(aa)) == (@inferred norm(aa, 2))
-            @test (@inferred norm(float.(aa))) == (@inferred norm(float.(aa), 2))
-            @test (@inferred norm(SVector{0,Int}())) == (@inferred norm(SVector{0,Int}(), 2))
-        end
+        @test (@inferred norm(a[1])) == (@inferred norm(a[1], 2))
+        @test (@inferred norm(a)) == (@inferred norm(a, 2))
+        @test (@inferred norm(aa)) == (@inferred norm(aa, 2))
+        @test (@inferred norm(float.(aa))) == (@inferred norm(float.(aa), 2))
+        @test (@inferred norm(SVector{0,Int}())) == (@inferred norm(SVector{0,Int}(), 2))
 
         # norm of empty SVector
         @test norm(SVector{0,Int}()) isa float(Int)

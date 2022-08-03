@@ -85,6 +85,10 @@
         @test @inferred(similar_type(Tensor2x2{Float64}, Float32)) == Tensor2x2{Float32}
         @test @inferred(similar_type(Tensor2x2{Float64}, Size(3,3))) == SMatrix{3,3,Float64,9}
         @test @inferred(similar_type(Tensor2x2{Float64}, Float32, Size(4,4))) == SMatrix{4,4,Float32,16}
+
+        # eltype promotion
+        @test Tuple(@inferred(Tensor2x2(1., 2, 3, 4f0))) === (1.,2.,3.,4.)
+        @test Tuple(@inferred(Tensor2x2{Int}(1., 2, 3, 4f0))) === (1,2,3,4)
     end
 
     @testset "FieldMatrix with Tuple fields" begin
