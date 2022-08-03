@@ -18,6 +18,8 @@ BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 
 [targets]
-test = ["InteractiveUtils", "Test", "BenchmarkTools", "OffsetArrays"]
+test = ["InteractiveUtils", "Test", "BenchmarkTools", "OffsetArrays", "Zygote", "ForwardDiff"]

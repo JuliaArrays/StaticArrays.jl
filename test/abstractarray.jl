@@ -1,4 +1,4 @@
-using StaticArrays, Test, LinearAlgebra
+using StaticArrays, Test, LinearAlgebra, Zygote, ForwardDiff
 
 @testset "AbstractArray interface" begin
     @testset "size and length" begin
@@ -242,6 +242,43 @@ using StaticArrays, Test, LinearAlgebra
             rs = @inferred Base.reduced_indices(axes(s), i)
             @test rs == Base.reduced_indices(axes(a), i)
         end
+    end
+
+    @testset "AutoDiff" begin
+        u0 = @SVector rand(2)
+        p = @SVector rand(4)
+
+        function lotka(u, p, svec=true)
+            du1 = p[1]*u[1] - p[2]*u[1]*u[2]
+            du2 = -p[3]*u[2] + p[4]*u[1]*u[2]
+            if svec
+                @SVector [du1, du2]
+            else
+                @SMatrix [du1 du2 du1; du2 du1 du1]
+            end
+        end
+
+        #SVector constructor adjoint
+        function loss(p)
+            u = lotka(u0, p)
+            sum(1 .- u)
+        end
+        
+        grad = Zygote.gradient(loss, p)
+        @test typeof(grad[1]) <: SArray
+        grad2 = ForwardDiff.gradient(loss, p)
+        @test grad[1] ≈ grad2 rtol=1e-12
+        
+        #SMatrix constructor adjoint
+        function loss_mat(p)
+            u = lotka(u0, p, false)
+            sum(1 .- u)
+        end
+
+        grad = Zygote.gradient(loss_mat, p)
+        @test typeof(grad[1]) <: SArray
+        grad2 = ForwardDiff.gradient(loss_mat, p)
+        @test grad[1] ≈ grad2 rtol=1e-12
     end
 end
 
