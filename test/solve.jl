@@ -3,7 +3,7 @@ using StaticArrays, Test, LinearAlgebra
 @testset "Solving linear system" begin
     @testset "Problem size: $n x $n. Matrix type: $m. Element type: $elty, Wrapper: $wrapper" for n in (1,2,3,4,5,8,15),
             (m, v) in ((SMatrix{n,n}, SVector{n}), (MMatrix{n,n}, MVector{n})),
-                elty in (Float64, Int), wrapper in (identity, Symmetric, Hermitian)
+                elty in (Float64, Int, BigFloat), wrapper in (identity, Symmetric, Hermitian)
 
         A = wrapper(elty.(rand(-99:2:99, n, n)))
         b = A * elty.(rand(2:5, n))
@@ -33,7 +33,7 @@ end
 @testset "Solving linear system (multiple RHS)" begin
     @testset "Problem size: $n x $n. Matrix type: $m1. Element type: $elty" for n in (1,2,3,4,5,8,15),
             (m1, m2) in ((SMatrix{n,n}, SMatrix{n,2}), (MMatrix{n,n}, MMatrix{n,2})),
-                elty in (Float64, Int)
+                elty in (Float64, Int, BigFloat)
 
         A = elty.(rand(-99:2:99, n, n))
         b = A * elty.(rand(2:5, n, 2))
