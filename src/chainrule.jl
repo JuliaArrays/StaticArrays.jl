@@ -16,12 +16,6 @@ end
 
 ### Adjoint for SArray constructor
 
-ChainRulesCore.@non_differentiable (::Type{T} where {T<:SArray})(::UndefInitializer, args...)
-
-function ChainRulesCore.frule((_, ẋ), ::Type{T}, x::Tuple) where {T<:SArray}
-    return T(x), T(ẋ)
-end
-
 function ChainRulesCore.rrule(::Type{T}, x::Tuple) where {T<:SArray}
     project_x = ProjectTo(x)
     Array_pullback(ȳ) = (NoTangent(), project_x(ȳ))
