@@ -98,6 +98,9 @@
         eval(quote
             struct TupleField2 <: FieldMatrix{1, 1, NTuple{2, Int}}
                 x::NTuple{2, Int}
+                function TupleField2(x::NTuple{2,Int})
+                    new(x)
+                end
             end
         end)
 

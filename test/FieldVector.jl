@@ -103,6 +103,9 @@
         eval(quote
             struct TupleField <: FieldVector{1, NTuple{2, Int}}
                 x::NTuple{2, Int}
+                function TupleField(x::NTuple{2,Int})
+                    new(x)
+                end
             end
         end)
 
