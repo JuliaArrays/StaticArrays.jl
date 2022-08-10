@@ -1,6 +1,6 @@
 # Default error messages to help users with new types and to avoid subsequent stack overflows
 getindex(a::StaticArray, i::Int) = error("getindex(::$(typeof(a)), ::Int) is not defined.")
-setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), value, ::Int) is not defined.")
+setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), value, ::Int) is not defined.\n Hint: Use `MArray` to create a mutable static array")
 
 #######################################
 ## Multidimensional scalar indexing  ##
