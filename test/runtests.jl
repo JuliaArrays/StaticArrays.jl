@@ -65,13 +65,13 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("det.jl")
     addtests("inv.jl")
     addtests("pinv.jl")
+end
+
+if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("solve.jl")
     addtests("eigen.jl")
     addtests("expm.jl")
     addtests("sqrtm.jl")
-end
-
-if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("lyap.jl")
     addtests("lu.jl")
     addtests("qr.jl")
