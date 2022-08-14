@@ -15,6 +15,7 @@ end
 @inline (::Type{SZA})(a::AbstractArray) where {SZA<:SizedArray} = construct_type(SZA, a)(a)
 
 # disambiguation
+@inline SizedArray{S,T,N,M,TData}(a::SizedArray{S,T,N,M,TData}) where {S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} = construct_type(SizedArray{S,T,N,M}, a)(Tuple(a))
 @inline SizedArray{S,T,N,M}(a::StaticArray) where {S<:Tuple,T,N,M} = construct_type(SizedArray{S,T,N,M}, a)(Tuple(a))
 @inline SizedArray{S,T,N}(a::StaticArray) where {S<:Tuple,T,N} = construct_type(SizedArray{S,T,N}, a)(Tuple(a))
 @inline (::Type{SZA})(a::StaticArray) where {SZA<:SizedArray} = construct_type(SZA, a)(Tuple(a))
