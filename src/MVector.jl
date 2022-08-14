@@ -1,4 +1,3 @@
-
 # Some more advanced constructor-like functions
 @inline zeros(::Type{MVector{N}}) where {N} = zeros(MVector{N,Float64})
 @inline ones(::Type{MVector{N}}) where {N} = ones(MVector{N,Float64})
