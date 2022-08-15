@@ -27,6 +27,7 @@ using LinearAlgebra: checksquare
 using StaticArraysCore: StaticArraysCore, StaticArray, StaticScalar, StaticVector,
                         StaticMatrix, StaticVecOrMat, tuple_length, tuple_prod,
                         tuple_minimum, size_to_tuple, require_one_based_indexing
+using StaticArraysCore: FieldArray, FieldMatrix, FieldVector
 import StaticArraysCore: SArray, SVector, SMatrix
 import StaticArraysCore: MArray, MVector, MMatrix
 import StaticArraysCore: SizedArray, SizedVector, SizedMatrix

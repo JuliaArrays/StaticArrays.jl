@@ -66,13 +66,13 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("inv.jl")
     addtests("pinv.jl")
     addtests("solve.jl")
+end
+
+if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("eigen.jl")
     addtests("expm.jl")
     addtests("sqrtm.jl")
     addtests("lyap.jl")
-end
-
-if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("lu.jl")
     addtests("qr.jl")
     addtests("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
