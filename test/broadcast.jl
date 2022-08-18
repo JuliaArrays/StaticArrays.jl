@@ -335,3 +335,20 @@ end
     @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa Tuple{SOneTo,SOneTo,Base.OneTo}
     @test @inferred(Broadcast.instantiate(f(a; ax = ax[1:2]))).axes isa NTuple{2,SOneTo}
 end
+
+@testset "`broadcast`'s stability" begin
+    issue1078(t) = t ./ (1 .- t .^ 2)
+    a = @SVector rand(3)
+    @test @inferred(issue1078(a)) == issue1078(Vector(a))
+    issue560(ũ, u₀, u₁, ρ) = ũ ./ (1e-6 .+ max.(abs.(u₀), abs.(u₁)) .* ρ)
+    issue797(a, b, c, d) = @. a + 5 * b + 3 * c - d
+    manual(a, b, c, d) = @. 0.1a^2 + 0.2b^3 * 0.4c^1 + 0.5d
+    manual2(a, b, c, d) = @. Float32(a) * Float32(b) + Float32(c) * Float32(d)
+    args = rand(3), rand(3), rand(3), rand(3)
+    @test @inferred(issue560(map(SVector{3}, args)...)) == issue560(args...)
+    @test @inferred(issue797(map(SVector{3}, args)...)) == issue797(args...)
+    @test @inferred(manual(map(SVector{3}, args)...)) == manual(args...)
+    @test @inferred(manual2(map(SVector{3}, args)...)) == manual2(args...)
+    issue609(s, c::Integer) = (s .- s.^2) ./ c
+    @test @inferred(issue609(SA[1.], 2)) == issue609([1.], 2)
+end
