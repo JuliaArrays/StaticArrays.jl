@@ -14,7 +14,7 @@ A convenience macro to construct `MVector`.
 See [`@SArray`](@ref) for detailed features.
 """
 macro MVector(ex)
-    esc(static_vector_gen(MVector, ex, __module__))
+    static_vector_gen(MVector, ex, __module__)
 end
 
 # Named field access for the first four elements, using the conventional field

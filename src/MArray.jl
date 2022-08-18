@@ -60,7 +60,7 @@ A convenience macro to construct `MArray` with arbitrary dimension.
 See [`@SArray`](@ref) for detailed features.
 """
 macro MArray(ex)
-    esc(static_array_gen(MArray, ex, __module__))
+    static_array_gen(MArray, ex, __module__)
 end
 
 function promote_rule(::Type{<:MArray{S,T,N,L}}, ::Type{<:MArray{S,U,N,L}}) where {S,T,U,N,L}

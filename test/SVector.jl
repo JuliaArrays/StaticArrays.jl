@@ -122,4 +122,9 @@
         @test_throws ErrorException v2.z
         @test_throws ErrorException v2.w
     end
+
+    @testset "issue 1042" begin
+        f = [1,2,3]
+        @test f == @SVector [f[i] for i in 1:3]
+    end
 end
