@@ -38,7 +38,7 @@ tol = 1e-13
     @test N5 isa SMatrix{5,0,Float64}
     @test N5 ≈ pinv(Matrix(M5))
 
-    M6 = @SMatrix [1/2 0 0;0 5/3 0;0 0 0;0 0 0]
+    M6 = @SMatrix [1/2 0 0;0 -5/3 0;0 0 0;0 0 0]
     N6 = pinv(M6)
     @test norm(M6*N6*M6 - M6) < tol
     @test norm(N6*M6*N6 - N6) < tol
