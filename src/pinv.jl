@@ -33,7 +33,7 @@ end
     minlen = min(m,n)
     exprs = [:(zero($T)) for i in 1:n, j in 1:m]
     for i in 1:minlen
-        exprs[i,i] = :(ifelse(A[$i,$i] > tol, inv(A[$i,$i]), zero($T)))
+        exprs[i,i] = :(ifelse(abs(A[$i,$i]) > tol, inv(A[$i,$i]), zero($T)))
     end
     return quote
         Base.@_inline_meta
