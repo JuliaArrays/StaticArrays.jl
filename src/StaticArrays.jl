@@ -28,10 +28,12 @@ using StaticArraysCore: StaticArraysCore, StaticArray, StaticScalar, StaticVecto
                         StaticMatrix, StaticVecOrMat, tuple_length, tuple_prod,
                         tuple_minimum, size_to_tuple, require_one_based_indexing
 using StaticArraysCore: FieldArray, FieldMatrix, FieldVector
+using StaticArraysCore: StaticArrayStyle
 import StaticArraysCore: SArray, SVector, SMatrix
 import StaticArraysCore: MArray, MVector, MMatrix
 import StaticArraysCore: SizedArray, SizedVector, SizedMatrix
 import StaticArraysCore: check_array_parameters, convert_ntuple
+import StaticArraysCore: similar_type
 
 # end of StaticArraysCore imports
 # StaticArraysCore exports

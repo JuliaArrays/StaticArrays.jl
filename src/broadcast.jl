@@ -7,10 +7,7 @@ using Base.Broadcast: broadcast_shape, _broadcast_getindex, combine_axes
 import Base.Broadcast: BroadcastStyle, materialize!, instantiate
 import Base.Broadcast: _bcs1  # for SOneTo axis information
 using Base.Broadcast: _bcsm
-# Add a new BroadcastStyle for StaticArrays, derived from AbstractArrayStyle
-# A constructor that changes the style parameter N (array dimension) is also required
-struct StaticArrayStyle{N} <: AbstractArrayStyle{N} end
-StaticArrayStyle{M}(::Val{N}) where {M,N} = StaticArrayStyle{N}()
+
 BroadcastStyle(::Type{<:StaticArray{<:Tuple, <:Any, N}}) where {N} = StaticArrayStyle{N}()
 BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
 BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
