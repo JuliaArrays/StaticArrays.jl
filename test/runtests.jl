@@ -78,6 +78,7 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("chol.jl") # hermitian_type(::Type{Any}) for block algorithm
     addtests("deque.jl")
     addtests("flatten.jl")
+    addtests("constructorof.jl")
     addtests("io.jl")
     addtests("svd.jl")
 end
