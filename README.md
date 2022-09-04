@@ -7,6 +7,9 @@
 [![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/dev)
+[![deps](https://juliahub.com/docs/StaticArrays/deps.svg)](https://juliahub.com/ui/Packages/StaticArrays/yY9vm?t=2)
+[![version](https://juliahub.com/docs/StaticArrays/version.svg)](https://juliahub.com/ui/Packages/StaticArrays/yY9vm)
+
 
 **StaticArrays** provides a framework for implementing statically sized arrays
 in Julia, using the abstract type `StaticArray{Size,T,N} <: AbstractArray{T,N}`.
