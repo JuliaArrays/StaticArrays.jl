@@ -59,7 +59,6 @@
                 yy::T
             end
 
-            StaticArrays.similar_type(::Type{<:Tensor2x2}, ::Type{T}, s::Size{(2,2)}) where {T} = Tensor2x2{T}
         end)
 
         p = Tensor2x2(0.0, 0.0, 0.0, 0.0)
@@ -83,8 +82,8 @@
 
         @test @inferred(similar_type(Tensor2x2{Float64})) == Tensor2x2{Float64}
         @test @inferred(similar_type(Tensor2x2{Float64}, Float32)) == Tensor2x2{Float32}
-        @test @inferred(similar_type(Tensor2x2{Float64}, Size(3,3))) == SMatrix{3,3,Float64,9}
-        @test @inferred(similar_type(Tensor2x2{Float64}, Float32, Size(4,4))) == SMatrix{4,4,Float32,16}
+        @test @inferred(similar_type(Tensor2x2{Float64}, Size(3, 3))) == MMatrix{3,3,Float64,9}
+        @test @inferred(similar_type(Tensor2x2{Float64}, Float32, Size(4, 4))) == MMatrix{4,4,Float32,16}
 
         # eltype promotion
         @test Tuple(@inferred(Tensor2x2(1., 2, 3, 4f0))) === (1.,2.,3.,4.)

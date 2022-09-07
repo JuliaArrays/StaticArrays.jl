@@ -14,14 +14,28 @@ Base.cconvert(::Type{<:Ptr}, a::FieldArray) = Base.RefValue(a)
 Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FA}) where {N,T,D,FA<:FieldArray{N,T,D}} =
     Ptr{T}(Base.unsafe_convert(Ptr{FA}, m))
 
-# We can automatically preserve FieldArrays in array operations which do not
-# change their eltype or Size. This should cover all non-parametric FieldArray,
-# but for those which are parametric on the eltype the user will still need to
-# overload similar_type themselves.
-similar_type(::Type{A}, ::Type{T}, S::Size) where {N, T, A<:FieldArray{N, T}} =
-    _fieldarray_similar_type(A, T, S, Size(A))
+function similar_type(::Type{A}, ::Type{T}, S::Size) where {T,A<:FieldArray}
+    # We can preserve FieldArrays in array operations which do not change their `Size` and `eltype`.
+    has_eltype(A) && eltype(A) === T && has_size(A) && Size(A) === S && return A
+    # FieldArrays with parametric `eltype` would be adapted to the new `eltype` automatically.
+    A′ = Base.typeintersect(base_type(A), StaticArray{Tuple{Tuple(S)...},T,length(S)})
+    # But extra parameters are disallowed here. Also we check `fieldtypes` to make sure the result is valid.
+    isconcretetype(A′) && fieldtypes(A′) === ntuple(_ -> T, Val(prod(S))) && return A′
+    # Otherwise, we fallback to `S/MArray` based on it's mutability.
+    if ismutabletype(A)
+        return mutable_similar_type(T, S, length_val(S))
+    else
+        return default_similar_type(T, S, length_val(S))
+    end
+end
 
-# Extra layer of dispatch to match NewSize and OldSize
-_fieldarray_similar_type(A, T, NewSize::S, OldSize::S) where {S} = A
-_fieldarray_similar_type(A, T, NewSize, OldSize) =
-    default_similar_type(T, NewSize, length_val(NewSize))
+# return `Union{}` for Union Type. Otherwise return the constructor with no parameters.
+@pure base_type(@nospecialize(T::Type)) = (T′ = Base.unwrap_unionall(T);
+T′ isa DataType ? T′.name.wrapper : Union{})
+if VERSION < v"1.8"
+    fieldtypes(::Type{T}) where {T} = ntuple(i -> fieldtype(T, i), Val(fieldcount(T)))
+    @eval @pure function ismutabletype(@nospecialize(T::Type))
+        T′ = Base.unwrap_unionall(T)
+        T′ isa DataType && $(VERSION < v"1.7" ? :(T′.mutable) : :(T′.name.flags & 0x2 == 0x2))
+    end
+end
