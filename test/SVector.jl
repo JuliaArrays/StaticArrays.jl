@@ -127,4 +127,10 @@
         f = [1,2,3]
         @test f == @SVector [f[i] for i in 1:3]
     end
+
+    @testset "issue 1118" begin
+        a = SVector{1}(1)
+        @test SVector{1, Tuple{SVector{1, Int}, SVector{1, Int}}}((a,a)) === SVector{1}((a,a))
+        @test SVector{1, NTuple}((a,a))[1] === (a,a)
+    end
 end
