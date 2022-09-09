@@ -4,7 +4,9 @@
 function construct_type(::Type{FA}, x) where {FA <: FieldArray}
     has_size(FA) || error("$FA has no static size!")
     length_match_size(FA, x)
-    return adapt_eltype(FA, x)
+    FA′ = adapt_eltype(FA, x)
+    FA′ === FA && x isa Args && error("the constructor for $FA is missing!")
+    return FA′
 end
 
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)
