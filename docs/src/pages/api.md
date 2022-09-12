@@ -305,7 +305,7 @@ end
 so long as the `Type` of the rebound variable (`x`, above) does not change.
 
 On the other hand, the above code for mutable containers like `Array`, `MArray`
-or `SizedArray` is *not* very efficient. Mutable containers in Julia 0.5 must
+or `SizedArray` is *not* very efficient. Mutable containers must
 be *allocated* and later *garbage collected*, and for small, fixed-size arrays
 this can be a leading contribution to the cost. In the above code, a new array
 will be instantiated and allocated on each iteration of the loop. In order to
@@ -315,17 +315,12 @@ apply mutating functions to it:
 function average_position(positions::Vector{SVector{3,Float64}})
     x = zeros(MVector{3,Float64})
     for pos ∈ positions
-        # Take advantage of Julia 0.5 broadcast fusion
-        x .= (+).(x, pos) # same as broadcast!(+, x, x, positions[i])
+        x .+= pos
     end
-    x .= (/).(x, length(positions))
+    x ./= length(positions)
     return x
 end
 ```
-Keep in mind that Julia 0.5 does not fuse calls to `.+`, etc (or `.+=` etc),
-however the `.=` and `(+).()` syntaxes are fused into a single, efficient call
-to `broadcast!`. The simpler syntax `x .+= pos` is expected to be non-allocating
-(and therefore faster) in Julia 0.6.
 
 The functions `setindex`, `push`, `pop`, `pushfirst`, `popfirst`, `insert` and `deleteat`
 are provided for performing certain specific operations on static arrays, in
