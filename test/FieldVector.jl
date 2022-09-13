@@ -130,4 +130,14 @@
         @test @inferred(similar_type(FVT{Float64}, Size(3))) == SVector{3,Float64}
         @test @inferred(similar_type(FVT{Float64}, Float32, Size(3))) == SVector{3,Float32}
     end
+
+    @testset "FieldVector with constructor missing" begin
+        struct Position1088{T} <: FieldVector{3, T}
+            x::T
+            y::T
+            z::T
+            Position1088(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
+        end
+        @test_throws ErrorException("The constructor for Position1088{Float64}(::Float64, ::Float64, ::Float64) is missing!") Position1088((1.,2.,3.))
+    end
 end
