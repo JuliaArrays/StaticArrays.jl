@@ -1,11 +1,3 @@
-"""
-    Dynamic()
-
-Used to signify that a dimension of an array is not known statically.
-"""
-struct Dynamic end
-
-const StaticDimension = Union{Int, Dynamic}
 
 """
     dimmatch(x::StaticDimension, y::StaticDimension)
@@ -19,84 +11,12 @@ function dimmatch end
 @inline dimmatch(x::Int, y::Int) = x === y
 @inline dimmatch(x::StaticDimension, y::StaticDimension) = true
 
-"""
-    Size(dims::Int...)
-
-`Size` is used extensively throughout the `StaticArrays` API to describe _compile-time_
-knowledge of the size of an array. The dimensions are stored as a type parameter and are
-statically propagated by the compiler, resulting in efficient, type-inferrable code. For
-example, to create a static matrix of zeros, use `A = zeros(SMatrix{3,3})`. The static
-size of `A` can be obtained by `Size(A)`. (rather than `size(zeros(3,3))`, which returns
-`Base.Tuple{2,Int}`).
-
-Note that if dimensions are not known statically (e.g., for standard `Array`s),
-[`Dynamic()`](@ref) should be used instead of an `Int`.
-
-    Size(a::AbstractArray)
-    Size(::Type{T<:AbstractArray})
-
-The `Size` constructor can be used to extract static dimension information from a given
-array. For example:
-
-```julia-repl
-julia> Size(zeros(SMatrix{3, 4}))
-Size(3, 4)
-
-julia> Size(zeros(3, 4))
-Size(StaticArrays.Dynamic(), StaticArrays.Dynamic())
-```
-
-This has multiple uses, including "trait"-based dispatch on the size of a statically-sized
-array. For example:
-
-```julia
-det(x::StaticMatrix) = _det(Size(x), x)
-_det(::Size{(1,1)}, x::StaticMatrix) = x[1,1]
-_det(::Size{(2,2)}, x::StaticMatrix) = x[1,1]*x[2,2] - x[1,2]*x[2,1]
-# and other definitions as necessary
-```
-
-"""
-struct Size{S}
-    function Size{S}() where {S}
-        new{S::Tuple{Vararg{StaticDimension}}}()
-    end
-end
-
-@pure Size(s::Tuple{Vararg{StaticDimension}}) = Size{s}()
-@pure Size(s::StaticDimension...) = Size{s}()
-@pure Size(s::Type{<:Tuple}) = Size{tuple(s.parameters...)}()
-
-Base.show(io::IO, ::Size{S}) where {S} = print(io, "Size", S)
-
-function missing_size_error(::Type{SA}) where SA
-    error("""
-        The size of type `$SA` is not known.
-
-        If you were trying to construct (or `convert` to) a `StaticArray` you
-        may need to add the size explicitly as a type parameter so its size is
-        inferrable to the Julia compiler (or performance would be terrible). For
-        example, you might try
-
-            m = zeros(3,3)
-            SMatrix(m)            # this error
-            SMatrix{3,3}(m)       # correct - size is inferrable
-            SArray{Tuple{3,3}}(m) # correct, note Tuple{3,3}
-        """)
-end
-
-Size(a::T) where {T<:AbstractArray} = Size(T)
-Size(::Type{SA}) where {SA <: StaticArray} = missing_size_error(SA)
-Size(::Type{SA}) where {SA <: StaticArray{S}} where {S<:Tuple} = @isdefined(S) ? Size(S) : missing_size_error(SA)
-
 Size(::Type{Adjoint{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)[2], Size(A)[1])
 Size(::Type{Transpose{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)[2], Size(A)[1])
 Size(::Type{Symmetric{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Hermitian{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Diagonal{T, A}}) where {T, A <: AbstractVector{T}} = Size(Size(A)[1], Size(A)[1])
 Size(::Type{<:LinearAlgebra.AbstractTriangular{T, A}}) where {T,A} = Size(A)
-
-@pure Size(::Type{<:AbstractArray{<:Any, N}}) where {N} = Size(ntuple(_ -> Dynamic(), N))
 
 struct Length{L}
     function Length{L}() where L
