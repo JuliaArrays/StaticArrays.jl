@@ -39,10 +39,13 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         len = check_vector_length(size(args))
         return :($SV{$len}($tuple($(escall(args)...))))
     elseif head === :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
+        if length(ex.args) != 1
             error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
         end
         ex = ex.args[1]
+        if !isa(ex, Expr) || (ex::Expr).head != :generator
+            error("Expected generator in comprehension, e.g. [f(i) for i = 1:3]")
+        end
         if length(ex.args) != 2
             error("Use a one-dimensional comprehension for @$SV")
         end
@@ -55,11 +58,14 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             end
         end
     elseif head === :typed_comprehension
-        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
+        if length(ex.args) != 2
             error("Expected generator in typed comprehension, e.g. Float64[f(i) for i = 1:3]")
         end
         T = esc(ex.args[1])
         ex = ex.args[2]
+        if !isa(ex, Expr) || (ex::Expr).head != :generator
+            error("Expected generator in typed comprehension, e.g. Float64[f(i) for i = 1:3]")
+        end
         if length(ex.args) != 2
             error("Use a one-dimensional comprehension for @$SV")
         end
