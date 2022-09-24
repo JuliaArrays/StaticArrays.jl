@@ -91,6 +91,10 @@
         test_expand_error(:(@SArray fill()))
         test_expand_error(:(@SArray [1; 2; 3; 4]...))
 
+        # (typed-)comprehension LoadError for `ex.args[1].head != :generator`
+        test_expand_error(:(@SArray [i+j for i in 1:2 for j in 1:2]))
+        test_expand_error(:(@SArray Int[i+j for i in 1:2 for j in 1:2]))
+
         @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
         @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
 
