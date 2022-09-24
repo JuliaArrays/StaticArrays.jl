@@ -28,7 +28,7 @@ function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
 end
 
 # This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
-@inline function Base.isassigned(a::StaticArray, i::Int...)
+@inline function Base.isassigned(a::StaticArray, i::Integer...)
     ii = LinearIndices(size(a))[i...]
     1 <= ii <= length(a) ? true : false
 end
