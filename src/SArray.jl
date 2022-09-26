@@ -159,10 +159,13 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         args = parse_cat_ast(ex)
         return :($SA{$Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
     elseif head === :comprehension
-        if length(ex.args) != 1 || !isa(ex.args[1], Expr) || ex.args[1].head != :generator
+        if length(ex.args) != 1
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
         end
         ex = ex.args[1]
+        if !isa(ex, Expr) || (ex::Expr).head != :generator
+            error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
+        end
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
@@ -174,11 +177,14 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             end
         end
     elseif head === :typed_comprehension
-        if length(ex.args) != 2 || !isa(ex.args[2], Expr) || ex.args[2].head != :generator
+        if length(ex.args) != 2
             error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
         end
         T = esc(ex.args[1])
         ex = ex.args[2]
+        if !isa(ex, Expr) || (ex::Expr).head != :generator
+            error("Expected generator in typed comprehension, e.g. Float64[f(i,j) for i = 1:3, j = 1:3]")
+        end
         n_rng = length(ex.args) - 1
         rng_args = (ex.args[i+1].args[1] for i = 1:n_rng)
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]

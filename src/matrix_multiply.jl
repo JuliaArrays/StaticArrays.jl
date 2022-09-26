@@ -128,7 +128,6 @@ for TWR in [Adjoint, Transpose, Symmetric, Hermitian, LowerTriangular, UpperTria
 end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
-    S = Size(sa[1], sb[2])
     # Heuristic choice for amount of codegen
     a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 4 : 1
     b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 4 : 1
