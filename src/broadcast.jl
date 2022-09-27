@@ -62,7 +62,6 @@ static_check_broadcast_shape(::Tuple{}, ::Tuple{}) = ()
     return _broadcast(f, Size(map(length, ax)), argsizes, as...)
 end
 # copyto! overloads
-@inline Base.copyto!(dest, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
 @inline Base.copyto!(dest::AbstractArray, B::Broadcasted{<:StaticArrayStyle}) = _copyto!(dest, B)
 @inline function _copyto!(dest, B::Broadcasted{StaticArrayStyle{M}}) where M
     flat = broadcast_flatten(B); as = flat.args; f = flat.f
