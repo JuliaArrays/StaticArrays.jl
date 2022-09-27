@@ -27,12 +27,6 @@ function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
     Base.showarg(io, a, true)
 end
 
-# This seems to confuse Julia a bit in certain circumstances (specifically for trailing 1's)
-@inline function Base.isassigned(a::StaticArray, i::Int...)
-    ii = LinearIndices(size(a))[i...]
-    1 <= ii <= length(a) ? true : false
-end
-
 Base.IndexStyle(::Type{T}) where {T<:StaticArray} = IndexLinear()
 
 # Default type search for similar_type
