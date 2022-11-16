@@ -240,4 +240,15 @@ using Statistics: mean
         @test @inferred(reduce(vcat, v2)) === @SVector [1,2,3,4]
         @test @inferred(reduce(hcat, v2)) === @SMatrix [1 3; 2 4]
     end
+    @testset "map over enumerate" begin
+        # issue #1106
+        v = @SVector [1, -2, 3, -4]
+        m = @SMatrix [1 -2; 3 -4]
+        v0 = SVector{0,Float64}()
+        m0 = SMatrix{0,0,Float64}()
+        @test @inferred(map(f -> f[1] * f[2], enumerate_static(v))) === @SVector [1, -4, 9, -16]
+        @test @inferred(map(f -> f[1] * f[2], enumerate_static(m))) === @SMatrix [1 -6; 6 -16]
+        @test @inferred(map(f -> f, enumerate_static(v0))) === SVector{0,Tuple{Int,Float64}}()
+        @test @inferred(map(f -> f, enumerate_static(m0))) === SMatrix{0,0,Tuple{Int,Float64}}()
+    end
 end

@@ -77,6 +77,37 @@ end
     end
 end
 
+struct StaticEnumerate{TA}
+    itr::TA
+end
+
+enumerate_static(a::StaticArray) = StaticEnumerate(a)
+
+@generated function map(f, a::StaticEnumerate{<:StaticArray})
+    S = Size(a.parameters[1])
+    if prod(S) == 0
+        # In the empty case only, use inference to try figuring out a sensible
+        # eltype, as is done in Base.collect and broadcast.
+        # See https://github.com/JuliaArrays/StaticArrays.jl/issues/528
+        return quote
+            @_inline_meta
+            T = Core.Compiler.return_type(f, Tuple{Tuple{Int,$(eltype(a.parameters[1]))}})
+            @inbounds return similar_type(a.itr, T, $S)()
+        end
+    end
+
+    exprs = Vector{Expr}(undef, prod(S))
+    for i ∈ 1:prod(S)
+        exprs[i] = :(f(($i, a.itr[$i])))
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds elements = tuple($(exprs...))
+        @inbounds return similar_type(typeof(a.itr), eltype(elements), $S)(elements)
+    end
+end
+
 @inline function map!(f, dest::StaticArray, a::StaticArray...)
     _map!(f, dest, same_size(dest, a...), a...)
 end

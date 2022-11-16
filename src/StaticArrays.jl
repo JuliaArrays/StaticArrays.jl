@@ -58,6 +58,7 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
+export enumerate_static
 
 export StaticArraysCore
 
