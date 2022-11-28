@@ -28,7 +28,7 @@ const StaticMatMulLike{s1, s2, T} = Union{
     UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
     Adjoint{T, <:StaticMatrix{s1, s2, T}},
     Transpose{T, <:StaticMatrix{s1, s2, T}},
-    SDiagonal{s1, T}}
+    Diagonal{T, <:StaticVector{s1, T}}}
 
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, asym = :wrapped_a)
@@ -81,7 +81,7 @@ end
 function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :wrapped_a)
     return expr_gen(:adjoint)
 end
-function gen_by_access(expr_gen, a::Type{<:SDiagonal}, asym = :wrapped_a)
+function gen_by_access(expr_gen, a::Type{<:Diagonal{<:Any, <:StaticVector}}, asym = :wrapped_a)
     return expr_gen(:diagonal)
 end
 """
@@ -166,7 +166,7 @@ function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticMatrix}}, b::T
         end)
     end
 end
-function gen_by_access(expr_gen, a::Type{<:SDiagonal}, b::Type)
+function gen_by_access(expr_gen, a::Type{<:Diagonal{<:Any, <:StaticVector}}, b::Type)
     return quote
         return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:diagonal, access_b)
