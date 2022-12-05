@@ -55,8 +55,17 @@ macro test_inlined(ex, should_inline=true)
     ex_orig = ex
     ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
     expr = quote
-        code_str = sprint() do io
-            code_llvm(io, $(map(esc, ex.args[2:end])...))
+        @static if hasfield(Base.CodegenParams, :safepoint_on_entry)
+            code_str = let params = Base.CodegenParams(safepoint_on_entry=false),
+                f = $(esc(ex.args[2])),
+                t = $(esc(ex.args[3]))
+                d = InteractiveUtils._dump_function(f, t, false, false, true, false, :att, true, :none, false, params)
+                sprint(print, d)
+            end
+        else
+            code_str = sprint() do io
+                code_llvm(io, $(map(esc, ex.args[2:end])...))
+            end
         end
         # Crude detection of call instructions remaining within what should be
         # fully inlined code.
