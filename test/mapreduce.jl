@@ -251,4 +251,11 @@ using Statistics: mean
         @test @inferred(map(f -> f, enumerate_static(v0))) === SVector{0,Tuple{Int,Float64}}()
         @test @inferred(map(f -> f, enumerate_static(m0))) === SMatrix{0,0,Tuple{Int,Float64}}()
     end
+    @testset "reduce over empty array" begin
+        # issue #1114
+        @test (@inferred reduce(|,zeros(SMatrix{0,3,Bool}); dims=Val(1), init=false)) ==
+            reduce(|,zeros(Bool,0,3); dims=1, init=false)
+        @test reduce(|,zeros(SMatrix{0,3,Bool}); dims=1, init=false) ==
+            reduce(|,zeros(Bool,0,3); dims=1, init=false)
+    end
 end

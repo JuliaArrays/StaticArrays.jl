@@ -197,18 +197,21 @@ end
     exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n ∈ Snew]
     for i ∈ Base.product(itr...)
-        expr = :(f(a[$(i...)]))
-        if init === _InitialValue
-            expr = :(Base.reduce_first(op, $expr))
+        if S[D] == 0
+            expr = :(Base.mapreduce_empty(f, op, eltype(a)))
         else
-            expr = :(op(init, $expr))
+            expr = :(f(a[$(i...)]))
+            if init === _InitialValue
+                expr = :(Base.reduce_first(op, $expr))
+            else
+                expr = :(op(init, $expr))
+            end
+            for k = 2:S[D]
+                ik = collect(i)
+                ik[D] = k
+                expr = :(op($expr, f(a[$(ik...)])))
+            end
         end
-        for k = 2:S[D]
-            ik = collect(i)
-            ik[D] = k
-            expr = :(op($expr, f(a[$(ik...)])))
-        end
-
         exprs[i...] = expr
     end
 
