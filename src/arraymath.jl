@@ -46,6 +46,13 @@ using Random: SamplerType
         T = Float64
     end
     v = [:(rand(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
@@ -71,6 +78,13 @@ end
         T = Float64
     end
     v = [:(randn(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
@@ -84,6 +98,13 @@ end
         T = Float64
     end
     v = [:(randexp(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
