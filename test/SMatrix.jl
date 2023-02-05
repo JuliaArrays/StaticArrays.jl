@@ -75,12 +75,18 @@
         @test isa(@SMatrix(rand(2,2)), SMatrix{2, 2, Float64})
         @test isa(@SMatrix(randn(2,2)), SMatrix{2, 2, Float64})
         @test isa(@SMatrix(randexp(2,2)), SMatrix{2, 2, Float64})
+        @test isa(@SMatrix(rand(2, 0)), SMatrix{2, 0, Float64})
+        @test isa(@SMatrix(randn(2, 0)), SMatrix{2, 0, Float64})
+        @test isa(@SMatrix(randexp(2, 0)), SMatrix{2, 0, Float64})
 
         @test ((@SMatrix zeros(Float32, 2, 2))::SMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@SMatrix ones(Float32, 2, 2))::SMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
         @test isa(@SMatrix(rand(Float32, 2, 2)), SMatrix{2, 2, Float32})
         @test isa(@SMatrix(randn(Float32, 2, 2)), SMatrix{2, 2, Float32})
         @test isa(@SMatrix(randexp(Float32, 2, 2)), SMatrix{2, 2, Float32})
+        @test isa(@SMatrix(rand(Float32, 2, 0)), SMatrix{2, 0, Float32})
+        @test isa(@SMatrix(randn(Float32, 2, 0)), SMatrix{2, 0, Float32})
+        @test isa(@SMatrix(randexp(Float32, 2, 0)), SMatrix{2, 0, Float32})
 
         @test isa(SMatrix(@SMatrix zeros(4,4)), SMatrix{4, 4, Float64})
 
