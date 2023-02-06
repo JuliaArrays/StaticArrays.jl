@@ -57,6 +57,24 @@ import StaticArrays.arithmetic_closure
         @test all(check)
         m = rand(1:1, SVector{3})
         @test rand(m) == 1
+
+        for T in (SVector, MVector, SizedVector)
+            v1 = rand(T{3})
+            @test v1 isa T{3, Float64}
+            @test all(0 .< v1 .< 1)
+
+            v2 = rand(T{0})
+            @test v2 isa T{0, Float64}
+            @test all(0 .< v2 .< 1)
+
+            v3 = rand(T{3, Float32})
+            @test v3 isa T{3, Float32}
+            @test all(0 .< v3 .< 1)
+
+            v4 = rand(T{0, Float32})
+            @test v4 isa T{0, Float32}
+            @test all(0 .< v4 .< 1)
+        end
     end
 
     @testset "rand!()" begin
@@ -68,6 +86,108 @@ import StaticArrays.arithmetic_closure
         rand!(m, 1:2)
         check = ((m .>= 1) .& (m .<= 2))
         @test all(check)
+
+        for T in (MVector, SizedVector)
+            v1 = rand(T{3})
+            rand!(v1)
+            @test v1 isa T{3, Float64}
+            @test all(0 .< v1 .< 1)
+
+            v2 = rand(T{0})
+            rand!(v2)
+            @test v2 isa T{0, Float64}
+            @test all(0 .< v2 .< 1)
+
+            v3 = rand(T{3, Float32})
+            rand!(v3)
+            @test v3 isa T{3, Float32}
+            @test all(0 .< v3 .< 1)
+
+            v4 = rand(T{0, Float32})
+            rand!(v4)
+            @test v4 isa T{0, Float32}
+            @test all(0 .< v4 .< 1)
+        end
+    end
+
+    @testset "randn()" begin
+        for T in (SVector, MVector, SizedVector)
+            v1 = randn(T{3})
+            @test v1 isa T{3, Float64}
+
+            v2 = randn(T{0})
+            @test v2 isa T{0, Float64}
+
+            v3 = randn(T{3, Float32})
+            @test v3 isa T{3, Float32}
+
+            v4 = randn(T{0, Float32})
+            @test v4 isa T{0, Float32}
+        end
+    end
+
+    @testset "randn!()" begin
+        for T in (MVector, SizedVector)
+            v1 = randn(T{3})
+            randn!(v1)
+            @test v1 isa T{3, Float64}
+
+            v2 = randn(T{0})
+            randn!(v2)
+            @test v2 isa T{0, Float64}
+
+            v3 = randn(T{3, Float32})
+            randn!(v3)
+            @test v3 isa T{3, Float32}
+
+            v4 = randn(T{0, Float32})
+            randn!(v4)
+            @test v4 isa T{0, Float32}
+        end
+    end
+
+    @testset "randexp()" begin
+        for T in (SVector, MVector, SizedVector)
+            v1 = randexp(T{3})
+            @test v1 isa T{3, Float64}
+            @test all(0 .< v1)
+
+            v2 = randexp(T{0})
+            @test v2 isa T{0, Float64}
+            @test all(0 .< v2)
+
+            v3 = randexp(T{3, Float32})
+            @test v3 isa T{3, Float32}
+            @test all(0 .< v3)
+
+            v4 = randexp(T{0, Float32})
+            @test v4 isa T{0, Float32}
+            @test all(0 .< v4)
+        end
+    end
+
+    @testset "randexp!()" begin
+        for T in (MVector, SizedVector)
+            v1 = randexp(T{3})
+            randexp!(v1)
+            @test v1 isa T{3, Float64}
+            @test all(0 .< v1)
+
+            v2 = randexp(T{0})
+            randexp!(v2)
+            @test v2 isa T{0, Float64}
+            @test all(0 .< v2)
+
+            v3 = randexp(T{3, Float32})
+            randexp!(v3)
+            @test v3 isa T{3, Float32}
+            @test all(0 .< v3)
+
+            v4 = randexp(T{0, Float32})
+            randexp!(v4)
+            @test v4 isa T{0, Float32}
+            @test all(0 .< v4)
+        end
     end
 
     @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
