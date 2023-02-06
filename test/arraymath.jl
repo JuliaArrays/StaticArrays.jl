@@ -7,6 +7,10 @@ import StaticArrays.arithmetic_closure
         @test @inferred(zeros(SVector{3,Int})) === @SVector [0, 0, 0]
         @test @inferred(ones(SVector{3,Float64})) === @SVector [1.0, 1.0, 1.0]
         @test @inferred(ones(SVector{3,Int})) === @SVector [1, 1, 1]
+        @test @inferred(zeros(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(zeros(SVector{0,Int})) === @SVector Int[]
+        @test @inferred(ones(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(ones(SVector{0,Int})) === @SVector Int[]
 
         @test @inferred(zeros(SVector{3})) === @SVector [0.0, 0.0, 0.0]
         @test @inferred(zeros(SMatrix{2,2})) === @SMatrix [0.0 0.0; 0.0 0.0]
@@ -35,15 +39,22 @@ import StaticArrays.arithmetic_closure
     @testset "zero()" begin
         @test @inferred(zero(SVector{3, Float64})) === @SVector [0.0, 0.0, 0.0]
         @test @inferred(zero(SVector{3, Int})) === @SVector [0, 0, 0]
+        @test @inferred(zero(SVector{0, Float64})) === @SVector Float64[]
+        @test @inferred(zero(SVector{0, Int})) === @SVector Int[]
     end
 
     @testset "fill()" begin
         @test all(@inferred(fill(3., SMatrix{4, 16, Float64})) .== 3.)
         @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
+        @test all(@inferred(fill(3., SMatrix{0, 5, Float64})) .== 3.)
+        @test @allocated(fill(0., SMatrix{1, 5, Float64})) == 0 # #81
     end
 
     @testset "fill!()" begin
         m = MMatrix{4,16,Float64}(undef)
+        fill!(m, 3)
+        @test all(m .== 3.)
+        m = MMatrix{0,5,Float64}(undef)
         fill!(m, 3)
         @test all(m .== 3.)
     end
