@@ -106,6 +106,9 @@
         @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(@MArray(rand(2,2,0)), MArray{Tuple{2,2,0}, Float64})
+        @test isa(@MArray(randn(2,2,0)), MArray{Tuple{2,2,0}, Float64})
+        @test isa(@MArray(randexp(2,2,0)), MArray{Tuple{2,2,0}, Float64})
 
         @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
@@ -115,6 +118,9 @@
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
+        @test isa(@MArray(rand(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
+        @test isa(@MArray(randn(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
+        @test isa(@MArray(randexp(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]
