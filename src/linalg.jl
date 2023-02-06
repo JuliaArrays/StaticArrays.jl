@@ -219,17 +219,42 @@ end
 # Norms
 _inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
 _inner_eltype(x::Number) = typeof(x)
-@inline _init_zero(v::StaticArray) = float(norm(zero(_inner_eltype(v))))
+@inline _init_zero(v::AbstractArray) = float(norm(zero(_inner_eltype(v))))
 
 @inline function LinearAlgebra.norm_sqr(v::StaticArray)
     return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
 end
 
+@inline maxabs_nested(a::Number) = abs(a)
+function maxabs_nested(a::AbstractArray)
+    prod(size(a)) == 0 && (return _init_zero(a))
+
+    m = maxabs_nested(a[1])
+    for j = 2:prod(size(a))
+        m = @fastmath max(m, maxabs_nested(a[j]))
+    end
+
+    return m
+end
+
+@generated function _norm_scaled(::Size{S}, a::StaticArray) where {S}
+    expr = :(LinearAlgebra.norm_sqr(a[1]/scale))
+    for j = 2:prod(S)
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/scale))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        scale = maxabs_nested(a)
+
+        scale==0 && return _init_zero(a)
+        return @inbounds scale * sqrt($expr)
+    end
+end
+
 @inline norm(a::StaticArray) = _norm(Size(a), a)
 @generated function _norm(::Size{S}, a::StaticArray) where {S}
-    if prod(S) == 0
-        return :(_init_zero(a))
-    end
+    prod(S) == 0 && return :(_init_zero(a))
 
     expr = :(LinearAlgebra.norm_sqr(a[1]))
     for j = 2:prod(S)
@@ -238,7 +263,10 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return sqrt($expr)
+        l = @inbounds sqrt($expr)
+
+        0<l<Inf && return l
+        return _norm_scaled(Size(a), a)
     end
 end
 
@@ -247,11 +275,31 @@ function _norm_p0(x)
     return float(norm(iszero(x) ? zero(T) : one(T)))
 end
 
+# Do not need to deal with p == 0, 2, Inf; see norm(a, p).
+@generated function _norm_scaled(::Size{S}, a::StaticArray, p::Real) where {S}
+    expr = :(norm(a[1]/scale)^p)
+    for j = 2:prod(S)
+        expr = :($expr + norm(a[$j]/scale)^p)
+    end
+
+    expr_p1 = :(norm(a[1]/scale))
+    for j = 2:prod(S)
+        expr_p1 = :($expr_p1 + norm(a[$j]/scale))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        scale = maxabs_nested(a)
+
+        scale==0 && return _init_zero(a)
+        p == 1 && return @inbounds scale * $expr_p1
+        return @inbounds scale * ($expr)^(inv(p))
+    end
+end
+
 @inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
 @generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
-    if prod(S) == 0
-        return :(_init_zero(a))
-    end
+    prod(S) == 0 && return :(_init_zero(a))
 
     expr = :(norm(a[1])^p)
     for j = 2:prod(S)
@@ -265,17 +313,13 @@ end
 
     return quote
         $(Expr(:meta, :inline))
-        if p == Inf
-            return mapreduce(norm, max, a)
-        elseif p == 1
-            @inbounds return $expr_p1
-        elseif p == 2
-            return norm(a)
-        elseif p == 0
-            return mapreduce(_norm_p0, +, a)
-        else
-            @inbounds return ($expr)^(inv(p))
-        end
+        p == 0 && return mapreduce(_norm_p0, +, a)  # no need for scaling
+        p == 2 && return norm(a)  # norm(a) takes care of scaling
+        p == Inf && return mapreduce(norm, max, a)  # no need for scaling
+
+        l = p==1 ? @inbounds($expr_p1) : @inbounds(($expr)^(inv(p)))
+        0<l<Inf && return l
+        return _norm_scaled(Size(a), a, p)  # p != 0, 2, Inf
     end
 end
 
@@ -468,4 +512,3 @@ end
 # Some shimming for special linear algebra matrix types
 @inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Hermitian{eltype(A),typeof(A)}(A, uplo))
-
