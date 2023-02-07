@@ -44,10 +44,16 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "fill()" begin
-        @test all(@inferred(fill(3., SMatrix{4, 16, Float64})) .== 3.)
-        @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
-        @test all(@inferred(fill(3., SMatrix{0, 5, Float64})) .== 3.)
-        @test @allocated(fill(0., SMatrix{1, 5, Float64})) == 0 # #81
+        @test @allocated(fill(0., T{1, 16, Float64})) == 0 # #81
+        @test @allocated(fill(0., T{0, 5, Float64})) == 0
+
+        for T in (SMatrix, MMatrix, SizedMatrix)
+            m = @inferred(fill(3., T{4, 16, Float64}))
+            @test m isa T{4, 16, Float64}
+            @test all(m .== 3.)
+            m = @inferred(fill(3., T{0, 5, Float64}))
+            @test m isa T{0, 5, Float64}
+        end
     end
 
     @testset "fill!()" begin
