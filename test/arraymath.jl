@@ -36,6 +36,29 @@ import StaticArrays.arithmetic_closure
         @test bigones[1] !== bigones[2]
     end
 
+    @testset "ones()" begin
+        for T in (SVector, MVector, SizedVector)
+            m = @inferred ones(T{3, Float64})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa T{3, Float64}
+            m = @inferred ones(T{3, Int})
+            @test m == [1, 1, 1]
+            @test m isa T{3, Int}
+            m = @inferred ones(T{3})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa T{3}
+            m = @inferred ones(T{0, Float64})
+            @test m == Float64[]
+            @test m isa T{0, Float64}
+            m = @inferred ones(T{0, Int})
+            @test m == Int[]
+            @test m isa T{0, Int}
+            m = @inferred ones(T{0})
+            @test m == Float64[]
+            @test m isa T{0}
+        end
+    end
+
     @testset "zero()" begin
         for T in (SVector, MVector, SizedVector)
             m = @inferred zero(T{3, Float64})
