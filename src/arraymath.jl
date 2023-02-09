@@ -40,7 +40,11 @@ end
 
 @inline fill(val, ::SA) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
 @inline fill(val, ::Type{SA}) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
-@generated function _fill(val::T, ::Size{s}, ::Type{SA}) where {T, s, SA <: StaticArray}
+@generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
+    T = eltype(SA)
+    if T == Any
+        T = typeof(val)
+    end
     v = [:val for i = 1:prod(s)]
     if SA <: SArray
         SA = SArray{Tuple{s...}, T, length(s), prod(s)}
