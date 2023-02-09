@@ -69,6 +69,11 @@ import StaticArrays.arithmetic_closure
             @test all(m .== 3.)
             m = @inferred(fill(3., T{0, 5, Float64}))
             @test m isa T{0, 5, Float64}
+            m = @inferred(fill(3, T{4, 16, Float64}))
+            @test m isa T{4, 16, Float64}
+            @test all(m .== 3.)
+            m = @inferred(fill(3, T{0, 5, Float64}))
+            @test m isa T{0, 5, Float64}
         end
     end
 
