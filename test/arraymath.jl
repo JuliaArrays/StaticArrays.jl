@@ -60,8 +60,8 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "fill()" begin
-        @test @allocated(fill(0., T{1, 16, Float64})) == 0 # #81
-        @test @allocated(fill(0., T{0, 5, Float64})) == 0
+        @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
+        @test @allocated(fill(0., SMatrix{0, 5, Float64})) == 0
 
         for T in (SMatrix, MMatrix, SizedMatrix)
             m = @inferred(fill(3., T{4, 16, Float64}))
