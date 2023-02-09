@@ -37,10 +37,26 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "zero()" begin
-        @test @inferred(zero(SVector{3, Float64})) === @SVector [0.0, 0.0, 0.0]
-        @test @inferred(zero(SVector{3, Int})) === @SVector [0, 0, 0]
-        @test @inferred(zero(SVector{0, Float64})) === @SVector Float64[]
-        @test @inferred(zero(SVector{0, Int})) === @SVector Int[]
+        for T in (SVector, MVector, SizedVector)
+            m = @inferred zero(T{3, Float64})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa T{3, Float64}
+            m = @inferred zero(T{3, Int})
+            @test m == [0, 0, 0]
+            @test m isa T{3, Int}
+            m = @inferred zero(T{3})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa T{3}
+            m = @inferred zero(T{0, Float64})
+            @test m == Float64[]
+            @test m isa T{0, Float64}
+            m = @inferred zero(T{0, Int})
+            @test m == Int[]
+            @test m isa T{0, Int}
+            m = @inferred zero(T{0})
+            @test m == Float64[]
+            @test m isa T{0}
+        end
     end
 
     @testset "fill()" begin
