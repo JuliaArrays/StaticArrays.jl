@@ -7,6 +7,10 @@ import StaticArrays.arithmetic_closure
         @test @inferred(zeros(SVector{3,Int})) === @SVector [0, 0, 0]
         @test @inferred(ones(SVector{3,Float64})) === @SVector [1.0, 1.0, 1.0]
         @test @inferred(ones(SVector{3,Int})) === @SVector [1, 1, 1]
+        @test @inferred(zeros(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(zeros(SVector{0,Int})) === @SVector Int[]
+        @test @inferred(ones(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(ones(SVector{0,Int})) === @SVector Int[]
 
         @test @inferred(zeros(SVector{3})) === @SVector [0.0, 0.0, 0.0]
         @test @inferred(zeros(SMatrix{2,2})) === @SMatrix [0.0 0.0; 0.0 0.0]
@@ -32,18 +36,75 @@ import StaticArrays.arithmetic_closure
         @test bigones[1] !== bigones[2]
     end
 
+    @testset "ones()" begin
+        for T in (SVector, MVector, SizedVector)
+            m = @inferred ones(T{3, Float64})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa T{3, Float64}
+            m = @inferred ones(T{3, Int})
+            @test m == [1, 1, 1]
+            @test m isa T{3, Int}
+            m = @inferred ones(T{3})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa T{3}
+            m = @inferred ones(T{0, Float64})
+            @test m == Float64[]
+            @test m isa T{0, Float64}
+            m = @inferred ones(T{0, Int})
+            @test m == Int[]
+            @test m isa T{0, Int}
+            m = @inferred ones(T{0})
+            @test m == Float64[]
+            @test m isa T{0}
+        end
+    end
+
     @testset "zero()" begin
-        @test @inferred(zero(SVector{3, Float64})) === @SVector [0.0, 0.0, 0.0]
-        @test @inferred(zero(SVector{3, Int})) === @SVector [0, 0, 0]
+        for T in (SVector, MVector, SizedVector)
+            m = @inferred zero(T{3, Float64})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa T{3, Float64}
+            m = @inferred zero(T{3, Int})
+            @test m == [0, 0, 0]
+            @test m isa T{3, Int}
+            m = @inferred zero(T{3})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa T{3}
+            m = @inferred zero(T{0, Float64})
+            @test m == Float64[]
+            @test m isa T{0, Float64}
+            m = @inferred zero(T{0, Int})
+            @test m == Int[]
+            @test m isa T{0, Int}
+            m = @inferred zero(T{0})
+            @test m == Float64[]
+            @test m isa T{0}
+        end
     end
 
     @testset "fill()" begin
-        @test all(@inferred(fill(3., SMatrix{4, 16, Float64})) .== 3.)
         @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
+        @test @allocated(fill(0., SMatrix{0, 5, Float64})) == 0
+
+        for T in (SMatrix, MMatrix, SizedMatrix)
+            m = @inferred(fill(3., T{4, 16, Float64}))
+            @test m isa T{4, 16, Float64}
+            @test all(m .== 3.)
+            m = @inferred(fill(3., T{0, 5, Float64}))
+            @test m isa T{0, 5, Float64}
+            m = @inferred(fill(3, T{4, 16, Float64}))
+            @test m isa T{4, 16, Float64}
+            @test all(m .== 3.)
+            m = @inferred(fill(3, T{0, 5, Float64}))
+            @test m isa T{0, 5, Float64}
+        end
     end
 
     @testset "fill!()" begin
         m = MMatrix{4,16,Float64}(undef)
+        fill!(m, 3)
+        @test all(m .== 3.)
+        m = MMatrix{0,5,Float64}(undef)
         fill!(m, 3)
         @test all(m .== 3.)
     end
