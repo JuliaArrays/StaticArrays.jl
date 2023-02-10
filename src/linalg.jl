@@ -265,7 +265,7 @@ end
         $(Expr(:meta, :inline))
         l = @inbounds sqrt($expr)
 
-        0<l<Inf && return l
+        zero(l) < l && isfinite(l) && return l
         return _norm_scaled(Size(a), a)
     end
 end
