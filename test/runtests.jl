@@ -80,4 +80,5 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("flatten.jl")
     addtests("io.jl")
     addtests("svd.jl")
+    addtests("unitful.jl")
 end
