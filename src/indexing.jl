@@ -71,7 +71,7 @@ end
 ## Indexing utilities  ##
 #########################
 
-@pure unpack_size(::Type{Size{S}}) where {S} = map(Size, S)
+unpack_size(::Type{Size{S}}) where {S} = map(Size, S)
 
 @inline index_size(::Size, ::Int) = Size()
 @inline index_size(::Size, a::StaticArray) = Size(a)

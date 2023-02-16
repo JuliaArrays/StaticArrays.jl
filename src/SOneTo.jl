@@ -38,7 +38,7 @@ end
 Base.first(::SOneTo) = 1
 Base.last(::SOneTo{n}) where {n} = n::Int
 
-@pure function Base.iterate(::SOneTo{n}) where {n}
+function Base.iterate(::SOneTo{n}) where {n}
     if n::Int < 1
         return nothing
     else
@@ -68,7 +68,7 @@ function Base.show(io::IO, ::SOneTo{n}) where {n}
     print(io, "SOneTo(", n::Int, ")")
 end
 
-Base.@pure function Base.checkindex(::Type{Bool}, ::SOneTo{n1}, ::SOneTo{n2}) where {n1, n2}
+function Base.checkindex(::Type{Bool}, ::SOneTo{n1}, ::SOneTo{n2}) where {n1, n2}
     return n1::Int >= n2::Int
 end
 

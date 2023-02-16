@@ -37,11 +37,9 @@ const SA_F64 = SA{Float64}
 @inline Base.typed_hcat(sa::Type{SA}, xs::Number...)            = similar_type(sa, Size(1,length(xs)))(xs)
 @inline Base.typed_hcat(sa::Type{SA{T}}, xs::Number...) where T = similar_type(sa, Size(1,length(xs)))(xs)
 
-Base.@pure function _SA_hvcat_transposed_size(rows)
+function _SA_hvcat_transposed_size(rows)
     M = rows[1]
     if any(r->r != M, rows)
-        # @pure may not throw... probably. See
-        # https://discourse.julialang.org/t/can-pure-functions-throw-an-error/18459
         return nothing
     end
     Size(M, length(rows))
@@ -65,7 +63,7 @@ if VERSION >= v"1.7"
     args = (:(x[$i]) for i in a)
     return :(tuple($(args...)))
 end
-    
+
 @inline function _SA_typed_hvncat(sa, dimsshape, row_first, xs)
     msize = Size(dimsshape)
     xs′ = row_first ? reorder(xs, Val(msize[1]), Val(msize[2])) : xs

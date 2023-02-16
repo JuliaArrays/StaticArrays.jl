@@ -60,7 +60,7 @@ same vector. We can now do this with the `Scalar` type:
 The size of a statically sized array is a static parameter associated with the
 type of the array. The `Size` trait is provided as an abstract representation of
 the dimensions of a static array. An array `sa::SA` of size `(dims...)` is
-associated with `Size{(dims...)}()`. The following are equivalent (`@pure`)
+associated with `Size{(dims...)}()`. The following are equivalent
 constructors:
 ```julia
 Size{(dims...,)}()
