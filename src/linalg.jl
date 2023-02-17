@@ -226,7 +226,7 @@ _inner_eltype(x::Number) = typeof(x)
 end
 
 @inline maxabs_nested(a::Number) = abs(a)
-function maxabs_nested(a::AbstractArray)
+@inline function maxabs_nested(a::AbstractArray)
     prod(size(a)) == 0 && (return _init_zero(a))
 
     m = maxabs_nested(a[1])

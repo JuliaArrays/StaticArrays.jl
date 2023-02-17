@@ -10,6 +10,10 @@ Base.getindex(m::RotMat2, i::Int) = getindex(m.elements, i)
 # Rotation matrices must be unitary so `similar_type` has to return an SMatrix.
 StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,4}
 
+Base.@kwdef mutable struct KPS4{S, T, P}
+    v_apparent::T =       zeros(S, 3)
+end
+
 @testset "Linear algebra" begin
 
     @testset "SArray as a (mathematical) vector space" begin
@@ -313,6 +317,25 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         @test norm(SVector{0,Float64}()) isa Float64
         @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) isa float(Int)
         @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) == norm([Int[], Int[]])
+
+        # no allocation for MArray -- issue #1126
+
+        @inline function calc_particle_forces!(s, pos1, pos2)
+            segment = pos1 - pos2
+            norm1 = norm(segment)
+            unit_vector = segment / norm1
+        
+            v_app_perp = s.v_apparent - s.v_apparent ⋅ unit_vector * unit_vector
+            half_drag_force = norm(v_app_perp)
+            nothing
+        end
+        kps4 = KPS4{Float64, MVector{3, Float64}, 6+4+1}()
+        
+        pos1 = MVector{3, Float64}(1.0, 2.0, 3.0)
+        pos2 = MVector{3, Float64}(2.0, 3.0, 4.0)
+        calc_particle_forces!(kps4, pos1, pos2)
+        calc_particle_forces!(kps4, pos1, pos2)
+        @test (@allocated calc_particle_forces!(kps4, pos1, pos2)) == 0
     end
 
     @testset "trace" begin
