@@ -236,9 +236,7 @@ end
         @test @inferred(add_bc!(MMatrix(SA[10 20; 30 40]), (1,2))) ::MMatrix{2,2,Int} == SA[11 21; 32 42]
 
         # Tuples of SA
-        @test SA[1,2,3] .* (SA[1,0],) === SVector{3,SVector{2,Int}}(((1,0), (2,0), (3,0)))
-        # Unfortunately this case of nested broadcasting is not inferred
-        @test_broken @inferred(SA[1,2,3] .* (SA[1,0],))
+        @test (@inferred SA[1,2,3] .* (SA[1,0],)) === SVector{3,SVector{2,Int}}(((1,0), (2,0), (3,0)))
     end
 
     @testset "SDiagonal" begin
