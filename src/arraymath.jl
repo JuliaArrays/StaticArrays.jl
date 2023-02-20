@@ -1,4 +1,4 @@
-@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = zeros(SA{Float64})
+@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = zeros(Base.typeintersect(SA, AbstractArray{Float64}))
 @inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _zeros(Size(SA), SA)
 @generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
@@ -16,7 +16,7 @@
     end
 end
 
-@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = ones(SA{Float64})
+@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = ones(Base.typeintersect(SA, AbstractArray{Float64}))
 @inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _ones(Size(SA), SA)
 @generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
