@@ -1,8 +1,3 @@
-
-# Some more advanced constructor-like functions
-@inline zeros(::Type{SVector{N}}) where {N} = zeros(SVector{N,Float64})
-@inline ones(::Type{SVector{N}}) where {N} = ones(SVector{N,Float64})
-
 #####################
 ## SVector methods ##
 #####################
