@@ -35,7 +35,7 @@ end
 end
 
 @inline fill(val, ::SA) where {SA <: StaticArray{<:Tuple}} = _fill(val, Size(SA), SA)
-@inline fill(val::U, ::Type{SA}) where {SA <: StaticArray} where U = fill(val, SA{U})
+@inline fill(val::U, ::Type{SA}) where {SA <: StaticArray} where U = fill(val, Base.typeintersect(SA, AbstractArray{U}))
 @inline fill(val, ::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _fill(val, Size(SA), SA)
 @generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
