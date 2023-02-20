@@ -104,17 +104,42 @@ import StaticArrays.arithmetic_closure
         @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
         @test @allocated(fill(0., SMatrix{0, 5, Float64})) == 0
 
-        for T in (SMatrix, MMatrix, SizedMatrix)
-            m = @inferred(fill(3., T{4, 16, Float64}))
-            @test m isa T{4, 16, Float64}
-            @test all(m .== 3.)
-            m = @inferred(fill(3., T{0, 5, Float64}))
-            @test m isa T{0, 5, Float64}
-            m = @inferred(fill(3, T{4, 16, Float64}))
-            @test m isa T{4, 16, Float64}
-            @test all(m .== 3.)
-            m = @inferred(fill(3, T{0, 5, Float64}))
-            @test m isa T{0, 5, Float64}
+        for SA in (SMatrix, MMatrix, SizedMatrix)
+            for T in (Float64, Int, Any)
+                # Float64 -> T
+                m = @inferred(fill(3.0, SA{4, 16, T}))
+                @test m isa SA{4, 16, T}
+                @test all(m .== 3)
+                # Float64 -> T (zero-element)
+                m = @inferred(fill(3.0, SA{0, 5, T}))
+                @test m isa SA{0, 5, T}
+                @test all(m .== 3)
+                # Int -> T
+                m = @inferred(fill(3, SA{4, 16, T}))
+                @test m isa SA{4, 16, T}
+                @test all(m .== 3)
+                # Int -> T (zero-element)
+                m = @inferred(fill(3, SA{0, 5, T}))
+                @test m isa SA{0, 5, T}
+                @test all(m .== 3)
+            end
+
+            # Float64 -> Unspecified
+            m = @inferred(fill(3.0, SA{4, 16}))
+            @test m isa SA{4, 16, Float64}
+            @test all(m .== 3)
+            # Float64 -> Unspecified (zero-element)
+            m = @inferred(fill(3.0, SA{0, 5}))
+            @test m isa SA{0, 5, Float64}
+            @test all(m .== 3)
+            # Int -> Unspecified
+            m = @inferred(fill(3, SA{4, 16}))
+            @test m isa SA{4, 16, Int}
+            @test all(m .== 3)
+            # Int -> Unspecified (zero-element)
+            m = @inferred(fill(3, SA{0, 5}))
+            @test m isa SA{0, 5, Int}
+            @test all(m .== 3)
         end
     end
 
