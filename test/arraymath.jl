@@ -37,66 +37,66 @@ import StaticArrays.arithmetic_closure
     end
 
     @testset "ones()" begin
-        for T in (SVector, MVector, SizedVector)
+        for SA in (SVector, MVector, SizedVector)
             # Float64
-            m = @inferred ones(T{3, Float64})
+            m = @inferred ones(SA{3, Float64})
             @test m == [1.0, 1.0, 1.0]
-            @test m isa T{3, Float64}
+            @test m isa SA{3, Float64}
             # Int
-            m = @inferred ones(T{3, Int})
+            m = @inferred ones(SA{3, Int})
             @test m == [1, 1, 1]
-            @test m isa T{3, Int}
+            @test m isa SA{3, Int}
             # Unspecified
-            m = @inferred ones(T{3})
+            m = @inferred ones(SA{3})
             @test m == [1.0, 1.0, 1.0]
-            @test m isa T{3}
+            @test m isa SA{3}
             # Float64
-            m = @inferred ones(T{0, Float64})
+            m = @inferred ones(SA{0, Float64})
             @test m == Float64[]
-            @test m isa T{0, Float64}
+            @test m isa SA{0, Float64}
             # Int
-            m = @inferred ones(T{0, Int})
+            m = @inferred ones(SA{0, Int})
             @test m == Int[]
-            @test m isa T{0, Int}
+            @test m isa SA{0, Int}
             # Unspecified
-            m = @inferred ones(T{0})
+            m = @inferred ones(SA{0})
             @test m == Float64[]
-            @test m isa T{0}
+            @test m isa SA{0}
             # Any
-            @test_throws MethodError ones(T{3, Any})
-            @test ones(T{0, Any}) isa T{0, Any}
+            @test_throws MethodError ones(SA{3, Any})
+            @test ones(SA{0, Any}) isa SA{0, Any}
         end
     end
 
     @testset "zero()" begin
-        for T in (SVector, MVector, SizedVector)
+        for SA in (SVector, MVector, SizedVector)
             # Float64
-            m = @inferred zero(T{3, Float64})
+            m = @inferred zero(SA{3, Float64})
             @test m == [0.0, 0.0, 0.0]
-            @test m isa T{3, Float64}
+            @test m isa SA{3, Float64}
             # Int
-            m = @inferred zero(T{3, Int})
+            m = @inferred zero(SA{3, Int})
             @test m == [0, 0, 0]
-            @test m isa T{3, Int}
+            @test m isa SA{3, Int}
             # Unspecified
-            m = @inferred zero(T{3})
+            m = @inferred zero(SA{3})
             @test m == [0.0, 0.0, 0.0]
-            @test m isa T{3}
+            @test m isa SA{3}
             # Float64 (zero-element)
-            m = @inferred zero(T{0, Float64})
+            m = @inferred zero(SA{0, Float64})
             @test m == Float64[]
-            @test m isa T{0, Float64}
+            @test m isa SA{0, Float64}
             # Int (zero-element)
-            m = @inferred zero(T{0, Int})
+            m = @inferred zero(SA{0, Int})
             @test m == Int[]
-            @test m isa T{0, Int}
+            @test m isa SA{0, Int}
             # Unspecified (zero-element)
-            m = @inferred zero(T{0})
+            m = @inferred zero(SA{0})
             @test m == Float64[]
-            @test m isa T{0}
+            @test m isa SA{0}
             # Any
-            @test_throws MethodError zeros(T{3, Any})
-            @test zeros(T{0, Any}) isa T{0, Any}
+            @test_throws MethodError zeros(SA{3, Any})
+            @test zeros(SA{0, Any}) isa SA{0, Any}
         end
     end
 
@@ -162,21 +162,21 @@ import StaticArrays.arithmetic_closure
         m = rand(1:1, SVector{3})
         @test rand(m) == 1
 
-        for T in (SVector, MVector, SizedVector)
-            v1 = rand(T{3})
-            @test v1 isa T{3, Float64}
+        for SA in (SVector, MVector, SizedVector)
+            v1 = rand(SA{3})
+            @test v1 isa SA{3, Float64}
             @test all(0 .< v1 .< 1)
 
-            v2 = rand(T{0})
-            @test v2 isa T{0, Float64}
+            v2 = rand(SA{0})
+            @test v2 isa SA{0, Float64}
             @test all(0 .< v2 .< 1)
 
-            v3 = rand(T{3, Float32})
-            @test v3 isa T{3, Float32}
+            v3 = rand(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
             @test all(0 .< v3 .< 1)
 
-            v4 = rand(T{0, Float32})
-            @test v4 isa T{0, Float32}
+            v4 = rand(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
             @test all(0 .< v4 .< 1)
         end
     end
@@ -191,105 +191,105 @@ import StaticArrays.arithmetic_closure
         check = ((m .>= 1) .& (m .<= 2))
         @test all(check)
 
-        for T in (MVector, SizedVector)
-            v1 = rand(T{3})
+        for SA in (MVector, SizedVector)
+            v1 = rand(SA{3})
             rand!(v1)
-            @test v1 isa T{3, Float64}
+            @test v1 isa SA{3, Float64}
             @test all(0 .< v1 .< 1)
 
-            v2 = rand(T{0})
+            v2 = rand(SA{0})
             rand!(v2)
-            @test v2 isa T{0, Float64}
+            @test v2 isa SA{0, Float64}
             @test all(0 .< v2 .< 1)
 
-            v3 = rand(T{3, Float32})
+            v3 = rand(SA{3, Float32})
             rand!(v3)
-            @test v3 isa T{3, Float32}
+            @test v3 isa SA{3, Float32}
             @test all(0 .< v3 .< 1)
 
-            v4 = rand(T{0, Float32})
+            v4 = rand(SA{0, Float32})
             rand!(v4)
-            @test v4 isa T{0, Float32}
+            @test v4 isa SA{0, Float32}
             @test all(0 .< v4 .< 1)
         end
     end
 
     @testset "randn()" begin
-        for T in (SVector, MVector, SizedVector)
-            v1 = randn(T{3})
-            @test v1 isa T{3, Float64}
+        for SA in (SVector, MVector, SizedVector)
+            v1 = randn(SA{3})
+            @test v1 isa SA{3, Float64}
 
-            v2 = randn(T{0})
-            @test v2 isa T{0, Float64}
+            v2 = randn(SA{0})
+            @test v2 isa SA{0, Float64}
 
-            v3 = randn(T{3, Float32})
-            @test v3 isa T{3, Float32}
+            v3 = randn(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
 
-            v4 = randn(T{0, Float32})
-            @test v4 isa T{0, Float32}
+            v4 = randn(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
         end
     end
 
     @testset "randn!()" begin
-        for T in (MVector, SizedVector)
-            v1 = randn(T{3})
+        for SA in (MVector, SizedVector)
+            v1 = randn(SA{3})
             randn!(v1)
-            @test v1 isa T{3, Float64}
+            @test v1 isa SA{3, Float64}
 
-            v2 = randn(T{0})
+            v2 = randn(SA{0})
             randn!(v2)
-            @test v2 isa T{0, Float64}
+            @test v2 isa SA{0, Float64}
 
-            v3 = randn(T{3, Float32})
+            v3 = randn(SA{3, Float32})
             randn!(v3)
-            @test v3 isa T{3, Float32}
+            @test v3 isa SA{3, Float32}
 
-            v4 = randn(T{0, Float32})
+            v4 = randn(SA{0, Float32})
             randn!(v4)
-            @test v4 isa T{0, Float32}
+            @test v4 isa SA{0, Float32}
         end
     end
 
     @testset "randexp()" begin
-        for T in (SVector, MVector, SizedVector)
-            v1 = randexp(T{3})
-            @test v1 isa T{3, Float64}
+        for SA in (SVector, MVector, SizedVector)
+            v1 = randexp(SA{3})
+            @test v1 isa SA{3, Float64}
             @test all(0 .< v1)
 
-            v2 = randexp(T{0})
-            @test v2 isa T{0, Float64}
+            v2 = randexp(SA{0})
+            @test v2 isa SA{0, Float64}
             @test all(0 .< v2)
 
-            v3 = randexp(T{3, Float32})
-            @test v3 isa T{3, Float32}
+            v3 = randexp(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
             @test all(0 .< v3)
 
-            v4 = randexp(T{0, Float32})
-            @test v4 isa T{0, Float32}
+            v4 = randexp(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
             @test all(0 .< v4)
         end
     end
 
     @testset "randexp!()" begin
-        for T in (MVector, SizedVector)
-            v1 = randexp(T{3})
+        for SA in (MVector, SizedVector)
+            v1 = randexp(SA{3})
             randexp!(v1)
-            @test v1 isa T{3, Float64}
+            @test v1 isa SA{3, Float64}
             @test all(0 .< v1)
 
-            v2 = randexp(T{0})
+            v2 = randexp(SA{0})
             randexp!(v2)
-            @test v2 isa T{0, Float64}
+            @test v2 isa SA{0, Float64}
             @test all(0 .< v2)
 
-            v3 = randexp(T{3, Float32})
+            v3 = randexp(SA{3, Float32})
             randexp!(v3)
-            @test v3 isa T{3, Float32}
+            @test v3 isa SA{3, Float32}
             @test all(0 .< v3)
 
-            v4 = randexp(T{0, Float32})
+            v4 = randexp(SA{0, Float32})
             randexp!(v4)
-            @test v4 isa T{0, Float32}
+            @test v4 isa SA{0, Float32}
             @test all(0 .< v4)
         end
     end
