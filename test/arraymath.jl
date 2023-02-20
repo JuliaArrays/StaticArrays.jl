@@ -38,47 +38,65 @@ import StaticArrays.arithmetic_closure
 
     @testset "ones()" begin
         for T in (SVector, MVector, SizedVector)
+            # Float64
             m = @inferred ones(T{3, Float64})
             @test m == [1.0, 1.0, 1.0]
             @test m isa T{3, Float64}
+            # Int
             m = @inferred ones(T{3, Int})
             @test m == [1, 1, 1]
             @test m isa T{3, Int}
+            # Unspecified
             m = @inferred ones(T{3})
             @test m == [1.0, 1.0, 1.0]
             @test m isa T{3}
+            # Float64
             m = @inferred ones(T{0, Float64})
             @test m == Float64[]
             @test m isa T{0, Float64}
+            # Int
             m = @inferred ones(T{0, Int})
             @test m == Int[]
             @test m isa T{0, Int}
+            # Unspecified
             m = @inferred ones(T{0})
             @test m == Float64[]
             @test m isa T{0}
+            # Any
+            @test_throws MethodError ones(T{3, Any})
+            @test ones(T{0, Any}) isa T{0, Any}
         end
     end
 
     @testset "zero()" begin
         for T in (SVector, MVector, SizedVector)
+            # Float64
             m = @inferred zero(T{3, Float64})
             @test m == [0.0, 0.0, 0.0]
             @test m isa T{3, Float64}
+            # Int
             m = @inferred zero(T{3, Int})
             @test m == [0, 0, 0]
             @test m isa T{3, Int}
+            # Unspecified
             m = @inferred zero(T{3})
             @test m == [0.0, 0.0, 0.0]
             @test m isa T{3}
+            # Float64 (zero-element)
             m = @inferred zero(T{0, Float64})
             @test m == Float64[]
             @test m isa T{0, Float64}
+            # Int (zero-element)
             m = @inferred zero(T{0, Int})
             @test m == Int[]
             @test m isa T{0, Int}
+            # Unspecified (zero-element)
             m = @inferred zero(T{0})
             @test m == Float64[]
             @test m isa T{0}
+            # Any
+            @test_throws MethodError zeros(T{3, Any})
+            @test zeros(T{0, Any}) isa T{0, Any}
         end
     end
 
