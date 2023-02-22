@@ -1,9 +1,7 @@
-@inline zeros(::Type{SA}) where {SA <: StaticArray} = _zeros(Size(SA), SA)
+@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = zeros(Base.typeintersect(SA, AbstractArray{Float64}))
+@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _zeros(Size(SA), SA)
 @generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
     v = [:(zero($T)) for i = 1:prod(s)]
     if SA <: SArray
         SA = SArray{Tuple{s...}, T, length(s), prod(s)}
@@ -18,12 +16,10 @@
     end
 end
 
-@inline ones(::Type{SA}) where {SA <: StaticArray} = _ones(Size(SA), SA)
+@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = ones(Base.typeintersect(SA, AbstractArray{Float64}))
+@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _ones(Size(SA), SA)
 @generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
     v = [:(one($T)) for i = 1:prod(s)]
     if SA <: SArray
         SA = SArray{Tuple{s...}, T, length(s), prod(s)}
@@ -38,13 +34,11 @@ end
     end
 end
 
-@inline fill(val, ::SA) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
-@inline fill(val, ::Type{SA}) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
-@generated function _fill(val::U, ::Size{s}, ::Type{SA}) where {U, s, SA <: StaticArray}
+@inline fill(val, ::SA) where {SA <: StaticArray{<:Tuple}} = _fill(val, Size(SA), SA)
+@inline fill(val::U, ::Type{SA}) where {SA <: StaticArray} where U = fill(val, Base.typeintersect(SA, AbstractArray{U}))
+@inline fill(val, ::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _fill(val, Size(SA), SA)
+@generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = U
-    end
     v = [:val for i = 1:prod(s)]
     if SA <: SArray
         SA = SArray{Tuple{s...}, T, length(s), prod(s)}
