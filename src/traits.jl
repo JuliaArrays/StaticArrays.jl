@@ -16,7 +16,10 @@ Size(::Type{Transpose{T, A}}) where {T, A <: AbstractVecOrMat{T}} = Size(Size(A)
 Size(::Type{Symmetric{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Hermitian{T, A}}) where {T, A <: AbstractMatrix{T}} = Size(A)
 Size(::Type{Diagonal{T, A}}) where {T, A <: AbstractVector{T}} = Size(Size(A)[1], Size(A)[1])
-Size(::Type{<:LinearAlgebra.AbstractTriangular{T, A}}) where {T,A} = Size(A)
+Size(::Type{UpperTriangular{T, A}}) where {T,A} = Size(A)
+Size(::Type{UnitUpperTriangular{T, A}}) where {T,A} = Size(A)
+Size(::Type{LowerTriangular{T, A}}) where {T,A} = Size(A)
+Size(::Type{UnitLowerTriangular{T, A}}) where {T,A} = Size(A)
 
 struct Length{L}
     function Length{L}() where L
