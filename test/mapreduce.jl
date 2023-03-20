@@ -21,7 +21,7 @@ using Statistics: mean
         @test @inferred(map(+, normal_v1, mv2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
         @test @inferred(map(+, mv1, normal_v2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
 
-        map!(+, mv, v1, v2)
+        @test map!(+, mv, v1, v2) === mv
         @test mv == @MVector [6, 7, 8, 9]
         mv2 = MVector{4, Int}(undef)
         map!(x->x^2, mv2, v1)

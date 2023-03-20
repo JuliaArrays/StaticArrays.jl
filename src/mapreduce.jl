@@ -130,6 +130,7 @@ end
     return quote
         @_inline_meta
         @inbounds $(Expr(:block, exprs...))
+        return dest
     end
 end
 
