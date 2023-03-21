@@ -86,7 +86,7 @@ const SizeEltypeAdaptable = Union{SArray, MArray, SHermitianCompact, SizedArray}
 function construct_type(::Type{SA}, x) where {SA<:SizeEltypeAdaptable}
     SA′ = adapt_eltype(adapt_size(SA, x), x)
     check_parameters(SA′)
-    (x isa Tuple && SA === SA′) || return SA′
+    (!need_rewrap(SA′, x) && x isa Tuple && SA === SA′) || return SA′
     error("Constructor for $SA is missing. Please file a bug.")
 end
 
