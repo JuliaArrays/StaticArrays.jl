@@ -1,3 +1,6 @@
+const StaticULT = Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}
+const StaticUULT = Union{StaticULT,UnitUpperTriangular{<:Any,<:StaticMatrix},UnitLowerTriangular{<:Any,<:StaticMatrix}}
+
 @inline transpose(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =
     LinearAlgebra.UpperTriangular(transpose(A.data))
 @inline adjoint(A::LinearAlgebra.LowerTriangular{<:Any,<:StaticMatrix}) =
@@ -6,22 +9,23 @@
     LinearAlgebra.LowerTriangular(transpose(A.data))
 @inline adjoint(A::LinearAlgebra.UpperTriangular{<:Any,<:StaticMatrix}) =
     LinearAlgebra.LowerTriangular(adjoint(A.data))
-@inline Base.:*(A::Adjoint{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+@inline Base.:*(A::Adjoint{<:Any,<:StaticVecOrMat}, B::StaticUULT) =
     adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::Transpose{<:Any,<:StaticVecOrMat}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
+@inline Base.:*(A::Transpose{<:Any,<:StaticVecOrMat}, B::StaticUULT) =
     transpose(transpose(B) * transpose(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Adjoint{<:Any,<:StaticVecOrMat}) =
+@inline Base.:*(A::StaticUULT, B::Adjoint{<:Any,<:StaticVecOrMat}) =
     adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVecOrMat}) =
+@inline Base.:*(A::StaticUULT, B::Transpose{<:Any,<:StaticVecOrMat}) =
     transpose(transpose(B) * transpose(A))
 
-const StaticULT = Union{UpperTriangular{<:Any,<:StaticMatrix},LowerTriangular{<:Any,<:StaticMatrix}}
-
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
-@inline Base.:*(A::StaticVecOrMat, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) = _A_mul_B(Size(A), Size(B), A, B)
+@inline Base.:*(A::StaticUULT, B::StaticVecOrMat) = _A_mul_B(Size(A), Size(B), A, B)
+@inline Base.:*(A::StaticVecOrMat, B::StaticUULT) = _A_mul_B(Size(A), Size(B), A, B)
 @inline Base.:*(A::StaticULT, B::StaticULT) = _A_mul_B(Size(A), Size(B), A, B)
 @inline Base.:\(A::StaticULT, B::StaticVecOrMat) = _A_ldiv_B(Size(A), Size(B), A, B)
 
+function _first_zero_on_diagonal(A::StaticUULT)
+    _first_zero_on_diagonal(A.data)
+end
 
 @generated function _A_mul_B(::Size{sa}, ::Size{sb}, A::UpperTriangular{TA,<:StaticMatrix}, B::StaticVecOrMat{TB}) where {sa,sb,TA,TB}
     m = sb[1]
