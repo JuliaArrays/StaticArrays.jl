@@ -52,11 +52,11 @@ end
     return SizedArray{S,T,N,N,Array{T,N}}(x)
 end
 
-# Overide some problematic default behaviour
+# Override some problematic default behaviour
 @inline convert(::Type{SA}, sa::SizedArray) where {SA<:SizedArray} = SA(sa.data)
 @inline convert(::Type{SA}, sa::SA) where {SA<:SizedArray} = sa
 
-# Back to Array (unfortunately need both convert and construct to overide other methods)
+# Back to Array (unfortunately need both convert and construct to override other methods)
 @inline function Base.Array(sa::SizedArray{S}) where {S}
     return Array(reshape(sa.data, size_to_tuple(S)))
 end

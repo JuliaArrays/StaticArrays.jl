@@ -87,7 +87,7 @@ end
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, b::Type{<:AbstractArray})
 
-Simiar to gen_by_access with only one type argument. The difference is that tests for both
+Similar to gen_by_access with only one type argument. The difference is that tests for both
 arrays of type `a` and `b` are generated and `expr_gen` receives two access arguments,
 first for matrix `a` and the second for matrix `b`.
 """
@@ -213,7 +213,7 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
 }
 
 # 5-argument matrix multiplication
-#    To avoid allocations, strip away Transpose type and store tranpose info in Size
+#    To avoid allocations, strip away Transpose type and store transpose info in Size
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLikeForFiveArgMulDest, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
     α::Number, β::Number) = _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B,
     AlphaBeta(α,β))

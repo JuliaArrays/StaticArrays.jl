@@ -162,7 +162,7 @@ aliases, e.g. `sa = SizedMatrix{2,2}(a)`.
 
 Then, methods on `sa` will use the specialized code provided by the *StaticArrays*
 package, which in many cases will be much, much faster. For example, calling
-`eigen(sa)` will be signficantly faster than `eigen(a)` since it will perform a
+`eigen(sa)` will be significantly faster than `eigen(a)` since it will perform a
 specialized 2×2 matrix diagonalization rather than a general algorithm provided
 by Julia and *LAPACK*.
 
