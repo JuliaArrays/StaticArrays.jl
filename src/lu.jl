@@ -95,7 +95,7 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
             # call through to Base to avoid excessive time spent on type inference for large matrices
             f = lu(Matrix(A), $(_pivot); check = check)
             # Trick to get the output eltype - can't rely on the result of f.L as
-            # it's not type inferrable.
+            # it's not type inferable.
             T2 = arithmetic_closure(T)
             L = similar_type(A, T2, Size($M, $(min(M,N))))(f.L)
             U = similar_type(A, T2, Size($(min(M,N)), $N))(f.U)
@@ -197,7 +197,7 @@ end
 # Create SVector(2,3,...,M)
 # Note that
 #     tailindices(::Type{Val{M}}) where {M} = SVector(Base.tail(ntuple(identity, Val{M})))
-# works, too, but is only inferrable for M ≤ 14 (at least up to Julia 0.7.0-DEV.4021)
+# works, too, but is only inferable for M ≤ 14 (at least up to Julia 0.7.0-DEV.4021)
 @generated function tailindices(::Type{Val{M}}) where {M}
     :(SVector{$(M-1),Int}($(tuple(2:M...))))
 end

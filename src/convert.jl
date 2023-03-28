@@ -52,7 +52,7 @@ The default returned `SA′` is `SA` itself for user defined `StaticArray`s. Thi
     Otherwise construction might fall into infinite recursion.
 
 ---
-The adaption rules for offical `StaticArray`s could be summarized as:
+The adaption rules for official `StaticArray`s could be summarized as:
 
 # `SA <: FieldArray`: `eltype` adaptable
 

@@ -3,7 +3,7 @@
 
 Notes: Got a loop version working. There were some fixes with boundschecks and
        with loading a value from an MMatrix. (It turns out that mutable
-       containers will copy their entire tuple accross and index that, so we
+       containers will copy their entire tuple across and index that, so we
        now revert to a pointer-based approach for loads as well as stores).
 
        The second set or results has re-enabled the bounds checking on MMatrix.

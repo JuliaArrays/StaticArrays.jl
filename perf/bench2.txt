@@ -6,7 +6,7 @@ Observations: - FixedSizeArrays matrix multiplications is slightly slower than S
               - Compilation time is significant for large matrix multiplication
               - SIMD leads to a factor of two improvement (128 bit registers for 64 bit floats) for both SArray and Mat
               - MArray is quite slow at matrix multiplication, for 10x10 upwards
-              - Large MArray's are slower than Array for some elementwise operations (Can we get it to process chuncks or something?)
+              - Large MArray's are slower than Array for some elementwise operations (Can we get it to process chunks or something?)
               - Inlining may need to be turned off for large array operations
               - Can we use BLAS for more operations, where that makes sense?
 
