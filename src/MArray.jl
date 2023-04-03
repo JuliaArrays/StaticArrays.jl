@@ -27,7 +27,7 @@ end
     getfield(v,:data)[i]
 end
 
-@propagate_inbounds function setindex!(v::MArray, val, i::Int)
+@propagate_inbounds function setindex!(v::MArray, val, i::Int) 
     @boundscheck checkbounds(v,i)
     T = eltype(v)
 
@@ -37,7 +37,7 @@ end
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
         # error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
-        setfield!(v, :data, Base.setindex(getfield(v, :data), val, i))
+        setfield!(v, :data, Base.setindex(getfield(v, :data), convert(eltype(v), val), i))
     end
     return v
 end
