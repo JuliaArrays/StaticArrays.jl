@@ -209,8 +209,8 @@
         @test_throws BoundsError setindex!(mm, 4, 82)
 
         # setindex with non-elbits type
-        m = MArray{Tuple{2,2,2}, String}(("b" for _ ∈ 1:2^3))
-        @test setindex!(m, "a", 1, 1, 1) == MArray{Tuple{2,2,2}, String}(("a", ("b" for _ ∈ 1:2^3-1)...,))
+        m = MArray{Tuple{2,2,2}, String}(ntuple(_ -> "b", 2^3))
+        @test setindex!(m, "a", 1, 1, 1) == MArray{Tuple{2,2,2}, String}(ntuple(i -> i == 1 ? "a" : "b", 2^3))
         @test m[1,1,1] == "a"
         @test m[1,1,2] == "b"
     end

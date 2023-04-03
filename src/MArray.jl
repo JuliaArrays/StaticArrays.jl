@@ -27,7 +27,7 @@ end
     getfield(v,:data)[i]
 end
 
-@propagate_inbounds function setindex!(v::MArray, val, i::Int) 
+@propagate_inbounds function setindex!(v::MArray, val, i::Int)
     @boundscheck checkbounds(v,i)
     T = eltype(v)
 
