@@ -36,9 +36,9 @@ end
     else
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
-        error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
+        # error("setindex!() with non-isbitstype eltype is not supported by StaticArrays. Consider using SizedArray.")
+        setfield!(v, :data, Base.setindex(getfield(v, :data), val, i))
     end
-
     return v
 end
 
