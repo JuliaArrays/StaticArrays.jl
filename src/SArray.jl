@@ -24,7 +24,7 @@ shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
         iter = :(iterate(gen,st))
     end
     push!(stmts, :($iter === nothing || generator_too_long_error($inds)))
-    push!(stmts, :(SA($(args...))))
+    push!(stmts, :(SA(($(args...),))))
     Expr(:block, stmts...)
 end
 """
@@ -92,7 +92,7 @@ function cat_any!(out, dims_before, dims_after, args::Vector{Any})
     @views for arg in args
         len = _cat_size(arg, catdim)
         dest = out[dims_before..., i+1:i+len, dims_after...]
-        if arg isa AbstractArray 
+        if arg isa AbstractArray
             copyto!(dest, arg)
         else
             dest[] = arg
@@ -171,7 +171,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
         exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let 
+            let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
                 $SA{$Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
             end
@@ -190,7 +190,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         rngs = Any[Core.eval(mod, ex.args[i+1].args[2]) for i = 1:n_rng]
         exprs = (:(f($(j...))) for j in Iterators.product(rngs...))
         return quote
-            let 
+            let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
                 $SA{$Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
             end
@@ -236,7 +236,7 @@ It supports:
 
 2. comprehensions
 !!! note
-    The range of a comprehension is evaluated at global scope by the macro, and must be 
+    The range of a comprehension is evaluated at global scope by the macro, and must be
     made of combinations of literal values, functions, or global variables.
 
 3. initialization functions
