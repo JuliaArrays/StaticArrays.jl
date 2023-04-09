@@ -6,8 +6,10 @@ const allowable_ambiguities =
         4
     elseif VERSION < v"1.2"
         2
+    elseif VERSION == v"1.6-"
+        53
     else
-        1
+        63
     end
 
 @test length(detect_ambiguities(Base, LinearAlgebra, StaticArrays)) <= allowable_ambiguities

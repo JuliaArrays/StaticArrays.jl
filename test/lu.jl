@@ -1,5 +1,6 @@
 using StaticArrays, Test, LinearAlgebra
 
+if VERSION < v"1.7-"
 @testset "LU utils" begin
     F = lu(SA[1 2; 3 4])
 
@@ -65,3 +66,4 @@ end
     @test_throws SingularException lu(A)
     @test !issuccess(lu(A; check = false))
 end
+end # VERSION

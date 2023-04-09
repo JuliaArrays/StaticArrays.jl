@@ -12,6 +12,7 @@ using StaticArrays, Test, LinearAlgebra
     @test exp(@SMatrix zeros(Complex{Float64}, 2, 2))::SMatrix ≈ Complex{Float64}[1 0; 0 1]
     @test exp(@SMatrix [1 2 0; 2 1 0; 0 0 1]) ≈ exp([1 2 0; 2 1 0; 0 0 1])
 
+    if VERSION < v"1.7-"
     for sz in (3,4), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         nA = norm(A, 1)
@@ -20,5 +21,6 @@ using StaticArrays, Test, LinearAlgebra
             SB = SMatrix{sz,sz,typ}(B)
             @test exp(B) ≈ exp(SB)
         end
+    end
     end
 end

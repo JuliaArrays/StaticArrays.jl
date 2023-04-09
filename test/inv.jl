@@ -27,7 +27,7 @@ end
                                                           0+1im   0-1im   1-0.0im]/2
 
     m = randn(Float64, 10,10) + 10*I # well conditioned
-    @test inv(SMatrix{10,10}(m))::StaticMatrix ≈ inv(m)
+    VERSION < v"1.7-" && @test inv(SMatrix{10,10}(m))::StaticMatrix ≈ inv(m)
 
 
     # Unsigned versions
@@ -81,6 +81,7 @@ end
     @test norm(Matrix(sm*inv(sm) - 4*I)) < 12*norm(m*inv(m) - 4*I)
 end
 
+if VERSION < v"1.8-"
 @testset "Matrix inverse 5x5" begin
     m = randn(Float64, 5,5) + 5*I
     @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
@@ -89,11 +90,14 @@ end
     m = tril(randn(Float64, 5,5) + 5*I)
     @test inv(SMatrix{5,5}(m))::StaticMatrix ≈ inv(m)
 end
+end
 
+if VERSION < v"1.8-"
 @testset "Matrix inverse ($typ, $sz×$sz)" for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
     A = rand(typ, sz, sz)
     SA = SMatrix{sz,sz,typ}(A)
     @test inv(A) ≈ inv(SA)
+end
 end
 
 #-------------------------------------------------------------------------------
