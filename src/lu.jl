@@ -58,10 +58,6 @@ function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
     end
 end
 
-function _first_zero_on_diagonal(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix})
-    _first_zero_on_diagonal(A.data)
-end
-
 issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
 
 @generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}

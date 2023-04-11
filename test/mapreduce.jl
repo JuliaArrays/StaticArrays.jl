@@ -90,10 +90,17 @@ using Statistics: mean
 
         # When the mapping and/or reducing functions are unsupported,
         # the error is thrown by `Base.mapreduce_empty`:
-        @test_throws(
-            ArgumentError("reducing over an empty collection is not allowed"),
-            mapreduce(nothing, nothing, SVector{0,Int}())
-        )
+        if VERSION < v"1.7-"
+            @test_throws(
+                ArgumentError("reducing over an empty collection is not allowed"),
+                mapreduce(nothing, nothing, SVector{0,Int}())
+            )
+        else
+            @test_throws(
+                MethodError,
+                mapreduce(nothing, nothing, SVector{0,Int}())
+            )
+        end
     end
 
     @testset "implemented by [map]reduce and [map]reducedim" begin

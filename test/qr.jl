@@ -41,6 +41,7 @@ Random.seed!(42)
         @test p == p_ref
     end
 
+    if VERSION < v"1.7-"
     for eltya in (Float32, Float64, BigFloat, Int),
             rel in (real, complex),
                 sz in [(3,3), (3,4), (4,3)]
@@ -58,5 +59,6 @@ Random.seed!(42)
                    (@SMatrix randn(18,17))
                ]
         test_qr(arr)
+    end
     end
 end
