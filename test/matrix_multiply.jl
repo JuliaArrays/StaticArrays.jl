@@ -436,5 +436,7 @@ mul_wrappers = [
         outvec2f = Vector{Float64}(undef, 2)
         mul!(outvec2f, mf, vf2)
         @test outvec2f ≈ [10.0, 22.0]
+
+        @test mul!(@MArray([0.0]), Diagonal([1]), @MArray([2.0])) == @MArray([2.0])
     end
 end
