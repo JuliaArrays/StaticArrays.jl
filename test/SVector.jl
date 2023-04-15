@@ -24,6 +24,7 @@
         @test SVector{0,Int}().data === ()
         @test SVector{3,Int}(i for i in 1:3).data === (1,2,3)
         @test SVector{3,Float64}(i for i in 1:3).data === (1.0,2.0,3.0)
+        @test SVector{1}(SVector(SVector(1.0), SVector(2.0))[j] for j in 1:1) == SVector((SVector(1.0),))
         @test_throws Exception SVector{3}(i for i in 1:2)
         @test_throws Exception SVector{3}(i for i in 1:4)
         @test_throws Exception SVector{3,Int}(i for i in 1:2)
