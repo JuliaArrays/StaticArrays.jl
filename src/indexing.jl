@@ -59,7 +59,7 @@ end
         else
             ind_expr = :($ind_expr + $stride * (inds[$i] - 1))
         end
-        stride *= S[i]
+        stride *= Size(S)[i]
     end
     return quote
         @_propagate_inbounds_meta
