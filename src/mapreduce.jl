@@ -316,8 +316,8 @@ _mean_denom(a, ::Type{Val{D}}) where {D} = size(a, D)
 @inline maximum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, max, dims, _InitialValue(), Size(a), a)
 
 # Diff is slightly different
-@inline diff(a::StaticArray; dims) = _diff(Size(a), a, dims)
-@inline diff(a::StaticVector) = diff(a;dims=Val(1))
+@inline diff(a::StaticArray; dims=Val(1)) = _diff(Size(a), a, dims)
+@inline diff(a::StaticVector) = diff(a; dims=Val(1))
 
 @inline function _diff(sz::Size{S}, a::StaticArray, D::Int) where {S}
     _diff(sz,a,Val(D))
