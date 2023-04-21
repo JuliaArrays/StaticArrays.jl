@@ -65,9 +65,6 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 @pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
 @pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
 
-# unroll_tuple also works with `Length`
-@propagate_inbounds unroll_tuple(f, ::Length{L}) where {L} = unroll_tuple(f, Val{L})
-
 """
     sizematch(::Size, ::Size)
     sizematch(::Tuple, ::Tuple)
