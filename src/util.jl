@@ -4,6 +4,12 @@ else
     const var"@_inline_meta" = Base.var"@inline"
 end
 
+# Julia 1.9 removed the `@pure` annotation in favor off Concrete-Eval
+# This behaves unfavorable with `julia --check-bounds=no`
+Base.@pure function typeintersect(@nospecialize(a),@nospecialize(b))
+    Base.typeintersect(a,b)
+end
+
 # For convenience
 TupleN{T,N} = NTuple{N,T}
 
