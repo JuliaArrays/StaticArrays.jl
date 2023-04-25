@@ -166,7 +166,7 @@ end
     SA′ = construct_type(SA, sa)
     need_rewrap(SA′, sa) ? SA′((sa,)) : SA′(Tuple(sa))
 end
-@propagate_inbounds (::Type{SA})(a::AbstractArray) where {SA <: StaticArray} = convert(SA, a)
+@propagate_inbounds (T::Type{<:StaticArray})(a::AbstractArray) = convert(T, a)
 
 # this covers most conversions and "statically-sized reshapes"
 @inline function convert(::Type{SA}, sa::StaticArray{S}) where {SA<:StaticArray,S<:Tuple}
