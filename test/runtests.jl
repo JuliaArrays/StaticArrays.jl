@@ -66,6 +66,13 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("inv.jl")
     addtests("pinv.jl")
     addtests("solve.jl")
+
+    # special logic required since we need to start a new
+    # Julia process for these tests
+    if isempty(enabled_tests) || "check_bounds_no" in enabled_tests
+        Random.seed!(42)
+        run(`$(Base.julia_cmd()) --check-bounds=no $(abspath("check_bounds_no.jl"))`)
+    end
 end
 
 if TEST_GROUP ∈ ["", "all", "group-B"]
