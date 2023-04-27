@@ -93,6 +93,11 @@ using StaticArrays, Test, LinearAlgebra
         @test (@inferred SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
     end
 
+    @testset "2×2, difficult case" begin
+        m1 = SA[1.6590891025248637 -2.7087777909606814e-7; -2.7087777909606814e-7 1.659089317183428]
+        @test norm(m1 - Array(eigen(m1))) < 1e-15
+    end
+
     @test_throws DimensionMismatch eigvals(SA[1 2 3; 4 5 6], SA[1 2 3; 4 5 5])
     @test_throws DimensionMismatch eigvals(SA[1 2; 4 5], SA[1 2 3; 4 5 5; 3 4 5])
 
