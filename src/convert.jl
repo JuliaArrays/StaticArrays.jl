@@ -112,7 +112,7 @@ function adapt_size(::Type{SA}, x) where {SA<:StaticArray}
             _no_precise_size(SA, x)
         end
     end
-    SA′ = Base.typeintersect(SA, StaticArrayNoEltype{SZ,tuple_length(SZ)})
+    SA′ = typeintersect(SA, StaticArrayNoEltype{SZ,tuple_length(SZ)})
     SA′ === Union{} && _no_precise_size(SA, x)
     return SA′
 end
@@ -139,7 +139,7 @@ function adapt_eltype(::Type{SA}, x) where {SA<:StaticArray}
     else
         eltype(x)
     end
-    return Base.typeintersect(SA, AbstractArray{T})
+    return typeintersect(SA, AbstractArray{T})
 end
 
 need_rewrap(::Type{<:StaticArray}, x) = false
