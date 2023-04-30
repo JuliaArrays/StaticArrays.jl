@@ -159,7 +159,6 @@ end
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
     TA = eltype(A)
-    
     @inbounds if A.uplo == 'U'
         if !iszero(a[3]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
