@@ -4,6 +4,12 @@ else
     const var"@_inline_meta" = Base.var"@inline"
 end
 
+# Julia 1.9 removed the `@pure` annotation in favor of Concrete-Eval
+# This behaves unfavorable with `julia --check-bounds=no`
+Base.@pure function typeintersect(@nospecialize(a),@nospecialize(b))
+    Base.typeintersect(a,b)
+end
+
 # For convenience
 TupleN{T,N} = NTuple{N,T}
 
@@ -13,7 +19,7 @@ TupleN{T,N} = NTuple{N,T}
 
 # Base gives up on tuples for promote_eltype... (TODO can we improve Base?)
 _TupleOf{T} = Tuple{T,Vararg{T}}
-promote_tuple_eltype(::Union{_TupleOf{T}, Type{<:_TupleOf{T}}}) where {T} = T 
+promote_tuple_eltype(::Union{_TupleOf{T}, Type{<:_TupleOf{T}}}) where {T} = T
 @generated function promote_tuple_eltype(::Union{T,Type{T}}) where T <: Tuple
     t = Union{}
     for i = 1:length(T.parameters)
