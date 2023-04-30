@@ -159,14 +159,10 @@ end
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
     TA = eltype(A)
-
     @inbounds if A.uplo == 'U'
         if !iszero(a[3]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
-
-            tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            tmp = norm(SVector((a[1] - a[4])/2, a[3]'))
             vals = SVector(t_half - tmp, t_half + tmp)
 
             v11 = vals[1] - a[4]
@@ -187,10 +183,7 @@ end
     else # A.uplo == 'L'
         if !iszero(a[2]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
-
-            tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
+            tmp = norm(SVector((a[1] - a[4])/2, a[2]))
             vals = SVector(t_half - tmp, t_half + tmp)
 
             v11 = vals[1] - a[4]
