@@ -231,7 +231,7 @@ end
 
     m = maxabs_nested(a[1])
     for j = 2:prod(size(a))
-        m = @fastmath max(m, maxabs_nested(a[j]))
+        m = max(m, maxabs_nested(a[j]))
     end
 
     return m
@@ -246,6 +246,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         scale = maxabs_nested(a)
+        !isfinite(scale) && return scale
 
         iszero(scale) && return _init_zero(a)
         return @inbounds scale * sqrt($expr)
