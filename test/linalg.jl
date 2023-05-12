@@ -318,6 +318,23 @@ end
         @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) isa float(Int)
         @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) == norm([Int[], Int[]])
 
+        # norm of SVector with NaN and/or Inf elements -- issue #1135
+        @test isnan(norm(SA[0.0, NaN]))
+        @test isnan(norm(SA[NaN, 0.0]))
+        @test norm(SA[0.0, Inf]) == Inf
+        @test norm(SA[Inf, 0.0]) == Inf
+        @test norm(SA[0.0, -Inf]) == Inf
+        @test norm(SA[-Inf, 0.0]) == Inf
+        @test norm(SA[Inf, Inf]) == Inf
+        @test norm(SA[-Inf, -Inf]) == Inf
+        @test norm(SA[Inf, -Inf]) == Inf
+        @test norm(SA[-Inf, Inf]) == Inf
+        @test isnan(norm(SA[Inf, NaN]))
+        @test isnan(norm(SA[NaN, Inf]))
+        @test isnan(norm(SA[-Inf, NaN]))
+        @test isnan(norm(SA[NaN, -Inf]))
+        @test isapprox(SA[0.0, NaN], SA[0.0, NaN], nans=true)
+
         # no allocation for MArray -- issue #1126
 
         @inline function calc_particle_forces!(s, pos1, pos2)
