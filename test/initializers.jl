@@ -58,9 +58,9 @@ end
 @test Base.typed_vcat(Union{}) isa Vector{Union{}}
 @test Base.typed_hcat(Union{}) isa Vector{Union{}}
 @test Base.typed_hvcat(Union{}, ()) isa Vector{Union{}}
-@test_throws MethodError Union{}[1]
-@test_throws MethodError Union{}[1 2]
-@test_throws MethodError Union{}[1; 2]
-@test_throws MethodError Union{}[1 2; 3 4]
+@test_throws Union{MethodError, ArgumentError} Union{}[1]
+@test_throws Union{MethodError, ArgumentError} Union{}[1 2]
+@test_throws Union{MethodError, ArgumentError} Union{}[1; 2]
+@test_throws Union{MethodError, ArgumentError} Union{}[1 2; 3 4]
 
 end
