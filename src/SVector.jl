@@ -76,7 +76,7 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         f = ex.args[1]
         if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 2
-                return :($f($SV{$(esc(ex.args[2]))}))
+                return :($f($SV{$(esc(ex.args[2])), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 3
                 return :($f($SV{$(escall(ex.args[3:-1:2])...)}))
             else
