@@ -133,7 +133,9 @@ include("flatten.jl")
 include("io.jl")
 include("pinv.jl")
 
-include("precompile.jl")
-_precompile_()
+@static if VERSION < v"1.9"
+    include("precompile.jl")
+    _precompile_()
+end
 
 end # module
