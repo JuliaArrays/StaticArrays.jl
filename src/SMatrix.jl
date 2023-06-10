@@ -71,7 +71,7 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         f = ex.args[1]
         if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
             if length(ex.args) == 3
-                return :($f($SM{$(escall(ex.args[2:3])...)}))
+                return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 4
                 return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
             else
