@@ -1,21 +1,5 @@
 const StaticULT{TA} = Union{UpperTriangular{TA,<:StaticMatrix},LowerTriangular{TA,<:StaticMatrix},UnitUpperTriangular{TA,<:StaticMatrix},UnitLowerTriangular{TA,<:StaticMatrix}}
 
-@inline transpose(A::LowerTriangular{<:Any,<:StaticMatrix}) =
-    UpperTriangular(transpose(A.data))
-@inline adjoint(A::LowerTriangular{<:Any,<:StaticMatrix}) =
-    UpperTriangular(adjoint(A.data))
-@inline transpose(A::UnitLowerTriangular{<:Any,<:StaticMatrix}) =
-    UnitUpperTriangular(transpose(A.data))
-@inline adjoint(A::UnitLowerTriangular{<:Any,<:StaticMatrix}) =
-    UnitUpperTriangular(adjoint(A.data))
-@inline transpose(A::UpperTriangular{<:Any,<:StaticMatrix}) =
-    LowerTriangular(transpose(A.data))
-@inline adjoint(A::UpperTriangular{<:Any,<:StaticMatrix}) =
-    LowerTriangular(adjoint(A.data))
-@inline transpose(A::UnitUpperTriangular{<:Any,<:StaticMatrix}) =
-    UnitLowerTriangular(transpose(A.data))
-@inline adjoint(A::UnitUpperTriangular{<:Any,<:StaticMatrix}) =
-    UnitLowerTriangular(adjoint(A.data))
 @inline Base.:*(A::Adjoint{<:Any,<:StaticVector}, B::StaticULT{<:Any}) =
     adjoint(adjoint(B) * adjoint(A))
 @inline Base.:*(A::Transpose{<:Any,<:StaticVector}, B::StaticULT{<:Any}) =
