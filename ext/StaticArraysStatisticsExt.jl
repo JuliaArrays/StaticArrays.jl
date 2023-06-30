@@ -3,6 +3,7 @@ module StaticArraysStatisticsExt
 import Statistics: mean
 
 using StaticArrays
+using StaticArrays: _InitialValue, _reduce, _mapreduce
 
 _mean_denom(a, ::Colon) = length(a)
 _mean_denom(a, dims::Int) = size(a, dims)
