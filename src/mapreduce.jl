@@ -301,14 +301,6 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 
 @inline Base.in(x, a::StaticArray) = _mapreduce(==(x), |, :, false, Size(a), a)
 
-_mean_denom(a, dims::Colon) = length(a)
-_mean_denom(a, dims::Int) = size(a, dims)
-_mean_denom(a, ::Val{D}) where {D} = size(a, D)
-_mean_denom(a, ::Type{Val{D}}) where {D} = size(a, D)
-
-@inline mean(a::StaticArray; dims=:) = _reduce(+, a, dims) / _mean_denom(a, dims)
-@inline mean(f::Function, a::StaticArray; dims=:) = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
-
 @inline minimum(a::StaticArray; dims=:) = _reduce(min, a, dims) # base has mapreduce(identity, scalarmin, a)
 @inline minimum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, min, dims, _InitialValue(), Size(a), a)
 
