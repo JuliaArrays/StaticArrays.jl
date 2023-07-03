@@ -8,8 +8,6 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
              copy, read, read!, write, reverse
 
-import Statistics: mean
-
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
@@ -132,6 +130,10 @@ include("deque.jl")
 include("flatten.jl")
 include("io.jl")
 include("pinv.jl")
+
+@static if !isdefined(Base, :get_extension) # VERSION < v"1.9-"
+    include("../ext/StaticArraysStatisticsExt.jl")
+end
 
 include("precompile.jl")
 _precompile_()

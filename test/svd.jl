@@ -78,7 +78,11 @@ using StaticArrays, Test, LinearAlgebra
         # This only seems to work on v"1.5" due to unknown compiler improvements; seems
         # to have stopped working again on v"1.6" and later?
         svd_full_false(A) = svd(A, full=false)
-        @test_broken @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
+        if VERSION < v"1.10-"
+            @test svd_full_false(m_sing2).S ≈ svd(Matrix(m_sing2)).S
+        else
+            @test @inferred(svd_full_false(m_sing2)).S ≈ svd(Matrix(m_sing2)).S
+        end
 
         @testinf svd(mc_sing) \ v ≈ svd(Matrix(mc_sing)) \ Vector(v)
         @testinf svd(mc_sing) \ vc ≈ svd(Matrix(mc_sing)) \ Vector(vc)
