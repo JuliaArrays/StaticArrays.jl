@@ -79,10 +79,10 @@ _cat_size(x::AbstractArray, i) = size(x, i)
 _cat_sizes(x, dims) = ntuple(i -> _cat_size(x, i), dims)
 
 function cat_any(::Val{maxdim}, ::Val{catdim}, args::Vector{Any}) where {maxdim,catdim}
-    szs = Dims{maxdim}[_cat_sizes(a, maxdim) for a in args]
+    szs = Dims{maxdim}[_cat_sizes(a, Val(maxdim)) for a in args]
     out = Array{Any}(undef, check_cat_size(szs, catdim))
-    dims_before = ntuple(_ -> (:), catdim-1)
-    dims_after = ntuple(_ -> (:), maxdim-catdim)
+    dims_before = ntuple(_ -> (:), Val(catdim-1))
+    dims_after = ntuple(_ -> (:), Val(maxdim-catdim))
     cat_any!(out, dims_before, dims_after, args)
 end
 
@@ -104,7 +104,7 @@ end
 
 @noinline cat_mismatch(j,sz,nsz) = throw(DimensionMismatch("mismatch in dimension $j (expected $sz got $nsz)"))
 function check_cat_size(szs::Vector{Dims{maxdim}}, catdim) where {maxdim}
-    isempty(szs) && return ntuple(_ -> 0, maxdim)
+    isempty(szs) && return ntuple(_ -> 0, Val(maxdim))
     sz = szs[1]
     catsz = sz[catdim]
     for i in 2:length(szs)
