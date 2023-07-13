@@ -80,6 +80,36 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(Diagonal{Int}, Size(2,2))), MArray{Tuple{2, 2}, Int, 2, 4})
         @test isa(@inferred(similar(SizedArray, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
+
+        @testset "disambiguate similar" begin
+            struct CustomArray{T} <: AbstractVector{T}
+                sz :: Int
+            end
+
+            Base.size(C::CustomArray) = (C.sz,)
+            Base.getindex(C::CustomArray{T}, i::Int) where {T} = T(i)
+            Base.similar(C::CustomArray, ::Type{T}, ax::Tuple{Vararg{Int}}) where {T} =
+                Array{T}(undef, ax)
+            function Base.similar(C::CustomArray, ::Type{T}, ax::Tuple{Vararg{Union{Int, SOneTo, Base.OneTo{Int}}}}) where {T}
+                sz = last.(ax)
+                Array{T}(undef, sz)
+            end
+
+            c = CustomArray{Int}(4)
+            for (ax, sz) in (((SOneTo(2), Base.OneTo(3)), (2,3)),
+                                ((2, SOneTo(2), Base.OneTo(3)), (2,2,3)))
+                for A in (similar(c, Float64, ax), similar(c, Float64, ax...))
+                    @test A isa Matrix{Float64}
+                    @test size(A) == sz
+                end
+            end
+
+            @test similar(c, ()) isa Array{Int,0}
+            @test similar(c, Float64, ()) isa Array{Float64,0}
+
+            # ensure that the more specific Base method works
+            @test similar(1:2, ()) isa AbstractArray{Int,0}
+        end
     end
 
     @testset "similar and Base.Slice/IdentityUnitRange (issues #548, #556)" begin
