@@ -99,7 +99,7 @@ using StaticArrays, Test, LinearAlgebra
             for (ax, sz) in (((SOneTo(2), Base.OneTo(3)), (2,3)),
                                 ((2, SOneTo(2), Base.OneTo(3)), (2,2,3)))
                 for A in (similar(c, Float64, ax), similar(c, Float64, ax...))
-                    @test A isa Matrix{Float64}
+                    @test A isa Array{Float64, length(sz)}
                     @test size(A) == sz
                 end
             end
