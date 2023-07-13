@@ -10,15 +10,15 @@ Length(x::Args) = Length(length(x.args))
 const BadArgs = Args{<:Tuple{Tuple{<:Tuple}}}
 
 # Some help functions.
-@pure has_ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = @isdefined N
-@pure has_ndims(::Type{<:StaticArray}) = false
+has_ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = true
+has_ndims(::Type{<:StaticArray}) = false
 if VERSION < v"1.7"
-    Base.ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = N
+    Base.ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = true
 end
-@pure has_eltype(::Type{<:StaticArray{<:Tuple,T}}) where {T} = @isdefined T
-@pure has_eltype(::Type{<:StaticArray}) = false
-@pure has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = @isdefined S
-@pure has_size(::Type{<:StaticArray}) = false
+has_eltype(::Type{<:StaticArray{<:Tuple,T}}) where {T} = true
+has_eltype(::Type{<:StaticArray}) = false
+has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = true
+has_size(::Type{<:StaticArray}) = false
 # workaround for https://github.com/JuliaArrays/StaticArrays.jl/issues/1047
 has_size(::Type{SVector}) = false
 has_size(::Type{MVector}) = false
@@ -27,11 +27,11 @@ has_size(::Type{MMatrix}) = false
 has_size(::Type{SMatrix{N}}) where {N} = false
 has_size(::Type{MMatrix{N}}) where {N} = false
 
-@pure has_size1(::Type{<:StaticMatrix{M}}) where {M} = @isdefined M
-@pure has_size1(::Type{<:StaticMatrix}) = false
+has_size1(::Type{<:StaticMatrix{M}}) where {M} = true
+has_size1(::Type{<:StaticMatrix}) = false
 _size1(::Type{<:StaticMatrix{M}}) where {M} = M
 @generated function _sqrt(::Length{L}) where {L}
-    N = round(Int, sqrt(L))
+    N = isqrt(L)
     N^2 == L && return :($N)
     throw(DimensionMismatch("Input's length must be perfect square"))
 end
@@ -40,15 +40,15 @@ end
     SA′ = construct_type(::Type{SA}, x) where {SA<:StaticArray}
 
 Pick a proper constructor `SA′` based on `x` if `SA(x)`/`SA(x...)` has no specific definition.
-The default returned `SA′` is `SA` itself for user defined `StaticArray`s. This differs from 
+The default returned `SA′` is `SA` itself for user defined `StaticArray`s. This differs from
 `similar_type()` in that `SA′` should always be a subtype of `SA`.
 
 !!! note
-    To distinguish `SA(x...)` and `SA(x::Tuple)`, the former calls 
+    To distinguish `SA(x...)` and `SA(x::Tuple)`, the former calls
     `construct_type(SA, StaticArrays.Args(x))` instead of `construct_type(SA, x)`.
 
 !!! note
-    Please make sure `SA'(x)` has a specific definition if the default behavior is overloaded. 
+    Please make sure `SA'(x)` has a specific definition if the default behavior is overloaded.
     Otherwise construction might fall into infinite recursion.
 
 ---
@@ -66,7 +66,7 @@ The adaption rules for official `StaticArray`s could be summarized as:
 
  If `SA` is not fully static-sized, then we always try to fill `SA` with `x`'s elements,
  and the constructor's `Size` is derived based on:
- 1. If `SA <: StaticVector`, then we use `length(x)` as the output `Length` 
+ 1. If `SA <: StaticVector`, then we use `length(x)` as the output `Length`
  2. If `SA <: StaticMatrix{M}`, then we use `(M, N)` (`N = length(x) ÷ M`) as the output `Size`
  3. If `SA <: StaticMatrix{M,M} where M`, then we use `(N, N)` (`N = sqrt(length(x)`) as the output `Size`.
 - SA(x...)
