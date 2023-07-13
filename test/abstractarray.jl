@@ -107,6 +107,8 @@ using StaticArrays, Test, LinearAlgebra
             @test similar(c, ()) isa Array{Int,0}
             @test similar(c, Float64, ()) isa Array{Float64,0}
 
+            @test size(similar(zeros(), (1,1,1,SOneTo(1)))) == (1,1,1,1)
+
             # ensure that the more specific Base method works
             @test similar(1:2, ()) isa AbstractArray{Int,0}
         end
