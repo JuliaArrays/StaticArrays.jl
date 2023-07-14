@@ -90,11 +90,16 @@ function construct_type(::Type{SA}, x) where {SA<:SizeEltypeAdaptable}
     error("Constructor for $SA is missing. Please file a bug.")
 end
 
+adapt_size_impl1(::Type{SA}, ::Any, y::Int) where {SA<:StaticArray} = y
+adapt_size_impl1(::Type{SA}, x, ::Any) where {SA<:StaticArray} = _no_precise_size(SA, x)
+
+adapt_size_impl0(::Type{SA}, x, ::Length{y}) where {SA<:StaticArray, y} = adapt_size_impl1(SA, x, y)
+
 function adapt_size(::Type{SA}, x) where {SA<:StaticArray}
     if has_size(SA) && length_match_size(SA, x)
         SZ = Tuple{size(SA)...}
     else
-        len = x isa Tuple ? length(x) : Int(Length(x))
+        len = x isa Tuple ? length(x) : adapt_size_impl0(SA, x, Length(x))
         len isa Int || _no_precise_size(SA, x)
         if SA <: StaticVector
             SZ = Tuple{len}

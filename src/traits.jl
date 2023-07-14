@@ -60,7 +60,7 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 @pure size_tuple(::Size{S}) where {S} = Tuple{S...}
 
 # Some @pure convenience functions for `Length`
-@pure (::Type{Int})(::Length{L}) where {L} = L
+@pure (::Type{Int})(::Length{L}) where {L} = Int(L)
 
 @pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
 @pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
