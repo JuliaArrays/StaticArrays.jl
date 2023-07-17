@@ -62,6 +62,11 @@ end
 #--------------------------------------------------
 # Matrix algebra
 
+@inline _adjointtype(f, ::Type{T}) where {T} = Base.promote_op(f, T)
+for S in (:SMatrix, :MMatrix)
+    @eval @inline _adjointtype(f, ::Type{$S{M,N,T,L}}) where {M,N,T,L} = $S{N,M,_adjointtype(f, T),L}
+end
+
 # Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
@@ -74,7 +79,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, Base.promote_op(transpose, T), Size($(n2,n1)))(elements)
+        @inbounds return similar_type($m, _adjointtype(transpose, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -88,7 +93,7 @@ end
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, Base.promote_op(adjoint, T), Size($(n2,n1)))(elements)
+        @inbounds return similar_type($m, _adjointtype(adjoint, T), Size($(n2,n1)))(elements)
     end
 end
 
