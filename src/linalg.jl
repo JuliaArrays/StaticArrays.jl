@@ -62,6 +62,10 @@ end
 #--------------------------------------------------
 # Matrix algebra
 
+# _adjointtype returns the eltype of the container when computing the adjoint/transpose
+# of a static array. Using this method instead of calling `Base.promote_op` directly
+# helps with type-inference, particularly for nested static arrays,
+# where the adjoint is applied recursively.
 @inline _adjointtype(f, ::Type{T}) where {T} = Base.promote_op(f, T)
 for S in (:SMatrix, :MMatrix)
     @eval @inline _adjointtype(f, ::Type{$S{M,N,T,L}}) where {M,N,T,L} = $S{N,M,_adjointtype(f, T),L}
