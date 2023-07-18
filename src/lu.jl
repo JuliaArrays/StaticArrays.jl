@@ -38,7 +38,7 @@ else
     (:(Val{true}), :(Val{false}))
 end
 for pv in pivot_options
-    # ... define each `pivot::Val{true/false}` method individually to avoid ambiguties
+    # ... define each `pivot::Val{true/false}` method individually to avoid ambiguities
     @eval function lu(A::StaticLUMatrix, pivot::$pv; check = true)
         L, U, p = _lu(A, pivot, check)
         LU(L, U, p)

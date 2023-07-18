@@ -61,7 +61,7 @@ end
             m1 = @SMatrix T[2 4; 6 8]
             m2 = @SMatrix T[4 3; 2 1]
 
-            # Use that these small integers can be represetnted exactly
+            # Use that these small integers can be represented exactly
             # as floating point numbers. In general, the comparison of
             # floats should use `≈` instead of `===`.
             @test @inferred(muladd(c, v1, v2)) === @SVector T[8, 11, 14, 17]
@@ -79,7 +79,7 @@ end
             m1 = @SMatrix T[2 4; 6 8]
             m2 = @SMatrix T[4 3; 2 1]
 
-            # Use that these small integers can be represetnted exactly
+            # Use that these small integers can be represented exactly
             # as floating point numbers. In general, the comparison of
             # floats should use `≈` instead of `===`.
             # These should be turned into `vfmadd...` calls
