@@ -10,16 +10,16 @@
                 inv(x)
                 transpose(x)
                 _adjoint(Size(S, S), x)
-                # @assert precompile(Tuple{Core.kwftype(typeof(minimum)),NamedTuple{(:dims,), Tuple{Int}},typeof(minimum),SMatrix{S, S, T, L}})
-                # @assert precompile(Tuple{Core.kwftype(typeof(maximum)),NamedTuple{(:dims,), Tuple{Int}},typeof(maximum),SMatrix{S, S, T, L}})
+                minimum(x; dims=1)
+                minimum(x; dims=2)
+                maximum(x; dims=1)
+                maximum(x; dims=2)
                 getindex(x, SOneTo(S-1), SOneTo(S-1))
+                y .* x .* y'
+                zeros(y)
+                zeros(x)
             end
         end
-
-        # Some expensive generators
-        # @assert precompile(Tuple{typeof(which(__broadcast,(Any,Size,Tuple{Vararg{Size}},Vararg{Any},)).generator.gen),Any,Any,Any,Any,Any,Any})
-        # @assert precompile(Tuple{typeof(which(_zeros,(Size,Type{<:StaticArray},)).generator.gen),Any,Any,Any,Type,Any})
-        # @assert precompile(Tuple{typeof(which(_mapfoldl,(Any,Any,Colon,Any,Size,Vararg{StaticArray},)).generator.gen),Any,Any,Any,Any,Any,Any,Any,Any})
 
         # broadcast_getindex
         for m = 0:5, n = m:5
