@@ -16,8 +16,8 @@
                 maximum(x; dims=2)
                 getindex(x, SOneTo(S-1), SOneTo(S-1))
                 y .* x .* y'
-                zeros(y)
-                zeros(x)
+                zero(y)
+                zero(x)
             end
         end
 
