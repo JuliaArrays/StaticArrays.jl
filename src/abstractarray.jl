@@ -139,12 +139,8 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
 # by simply converting them to either a tuple of Ints or a Size, re-dispatching to either one
 # of the above methods (in the case of Size) or a base fallback (in the case of Ints).
 const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
-const HeterogeneousShape = Union{Integer, Base.OneTo, SOneTo}
-const HeterogeneousShapeTuple = Union{
-    Tuple{SOneTo, Vararg{HeterogeneousShape}},
-    Tuple{HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}},
-    Tuple{HeterogeneousBaseShape, HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}}
-}
+const HeterogeneousShape = Union{HeterogeneousBaseShape, SOneTo}
+const HeterogeneousShapeTuple = Tuple{Vararg{HeterogeneousShape}}
 
 similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
 similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
