@@ -162,15 +162,18 @@ end
     @inbounds if A.uplo == 'U'
         if !iszero(a[3]) # A is not diagonal
             t_half = real(a[1] + a[4]) / 2
-            tmp = norm(SVector((a[1] - a[4])/2, a[3]'))
+            diag_avg_diff = (a[1] - a[4])/2
+            tmp = norm(SVector(diag_avg_diff, a[3]'))
             vals = SVector(t_half - tmp, t_half + tmp)
 
-            v11 = vals[1] - a[4]
+            #v11 = vals[1] - a[4]
+            v11 = -tmp + diag_avg_diff
             n1 = sqrt(v11' * v11 + a[3]' * a[3])
             v11 = v11 / n1
             v12 = a[3]' / n1
 
-            v21 = vals[2] - a[4]
+            #v21 = vals[2] - a[4]
+            v21 = tmp + diag_avg_diff
             n2 = sqrt(v21' * v21 + a[3]' * a[3])
             v21 = v21 / n2
             v22 = a[3]' / n2
