@@ -161,11 +161,6 @@ end
     TA = eltype(A)
     @inbounds a21 = A.uplo == 'U' ? a[3]' : a[2]
     @inbounds if !iszero(a21) # A is not diagonal
-        # TODO: Note!!!
-        # Not sure about use of real here, 
-        # but at least norm kills the complex part 
-        # of the eigenvalues. 
-        # Probably this should not be the case
         t_half = real(a[1] + a[4]) / 2
         diag_avg_diff = (a[1] - a[4])/2
         tmp = norm(SVector(diag_avg_diff, a21))
