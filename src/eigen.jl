@@ -159,51 +159,29 @@ end
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
     TA = eltype(A)
-    @inbounds if A.uplo == 'U'
-        if !iszero(a[3]) # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            diag_avg_diff = (a[1] - a[4])/2
-            tmp = norm(SVector(diag_avg_diff, a[3]'))
-            vals = SVector(t_half - tmp, t_half + tmp)
+    @inbounds a21 = A.uplo == 'U' ? a[3]' : a[2]
+    @inbounds if !iszero(a21) # A is not diagonal
+        t_half = real(a[1] + a[4]) / 2
+        diag_avg_diff = (a[1] - a[4])/2
+        tmp = norm(SVector(diag_avg_diff, a21))
+        vals = SVector(t_half - tmp, t_half + tmp)
 
-            #v11 = vals[1] - a[4]
-            v11 = -tmp + diag_avg_diff
-            n1 = sqrt(v11' * v11 + a[3]' * a[3])
-            v11 = v11 / n1
-            v12 = a[3]' / n1
+        #v11 = vals[1] - a[4]
+        v11 = -tmp + diag_avg_diff
+        n1 = sqrt(v11' * v11 + a21 * a[3])
+        v11 = v11 / n1
+        v12 = a21 / n1
 
-            #v21 = vals[2] - a[4]
-            v21 = tmp + diag_avg_diff
-            n2 = sqrt(v21' * v21 + a[3]' * a[3])
-            v21 = v21 / n2
-            v22 = a[3]' / n2
+        #v21 = vals[2] - a[4]
+        v21 = tmp + diag_avg_diff
+        n2 = sqrt(v21' * v21 + a21 * a[3])
+        v21 = v21 / n2
+        v22 = a21 / n2
 
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
+        vecs = @SMatrix [ v11  v21 ;
+                            v12  v22 ]
 
-            return Eigen(vals, vecs)
-        end
-    else # A.uplo == 'L'
-        if !iszero(a[2]) # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            tmp = norm(SVector((a[1] - a[4])/2, a[2]))
-            vals = SVector(t_half - tmp, t_half + tmp)
-
-            v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[2]' * a[2])
-            v11 = v11 / n1
-            v12 = a[2] / n1
-
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[2]' * a[2])
-            v21 = v21 / n2
-            v22 = a[2] / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
-
-            return Eigen(vals,vecs)
-        end
+        return Eigen(vals, vecs)
     end
 
     # A must be diagonal if we reached this point; treatment of uplo 'L' and 'U' is then identical
