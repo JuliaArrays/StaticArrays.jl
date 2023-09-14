@@ -59,6 +59,7 @@ using StaticArrays, Test, LinearAlgebra
         sv = @SVector [1,2,3]
         sm = @SMatrix [1 2; 3 4]
         sa = SArray{Tuple{1,1,1},Int,3,1}((1,))
+        sn = @SVector [1, missing]
 
         @test isa(@inferred(similar(sv)), MVector{3,Int})
         @test isa(@inferred(similar(sv, Float64)), MVector{3,Float64})
@@ -69,6 +70,8 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(sm, Float64)), MMatrix{2,2,Float64,4})
         @test isa(@inferred(similar(sv, Size(3,3))), MMatrix{3,3,Int,9})
         @test isa(@inferred(similar(sv, Float64, Size(3,3))), MMatrix{3,3,Float64,9})
+        @test isa(@inferred(similar(sn)), SizedVector{2, Union{Missing, Int}})
+        @test isa(@inferred(similar(sn, Float64, Size(3, 3))), MMatrix{3, 3, Float64, 9})
 
         @test isa(@inferred(similar(sa)), MArray{Tuple{1,1,1},Int,3,1})
         @test isa(@inferred(similar(SArray{Tuple{1,1,1},Int,3,1})), MArray{Tuple{1,1,1},Int,3,1})
