@@ -206,7 +206,7 @@
         @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:3)
         @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:1)
 
-        @test @inferred(intersect(SOneTo(2), SOneTo(4))) == SOneTo(2)
-        @test @inferred(union(SOneTo(2), SOneTo(4))) == SOneTo(4)
+        @test @inferred(intersect(SOneTo(2), SOneTo(4))) === SOneTo(2)
+        @test @inferred(union(SOneTo(2), SOneTo(4))) === SOneTo(4)
     end
 end
