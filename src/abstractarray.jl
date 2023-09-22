@@ -130,7 +130,7 @@ similar(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar(A,T,s)
 
 # defaults to built-in mutable types for bits types
 similar(::Type{A}, ::Type{T}, s::Size{S}) where {A<:AbstractArray,T,S} =
-    isbitstype(eltype(T)) ?
+    isbitstype(T) ?
     mutable_similar_type(T, s, length_val(s))(undef) :
     sizedarray_similar_type(T, s, length_val(s))(undef)
 
