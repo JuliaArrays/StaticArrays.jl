@@ -350,3 +350,9 @@ end
     issue609(s, c::Integer) = (s .- s.^2) ./ c
     @test @inferred(issue609(SA[1.], 2)) == issue609([1.], 2)
 end
+
+@testset "broadcasting out-of-bounds getindex" begin
+    @test_throws BoundsError getindex.(SA[1, 2], 0)
+    a = @MArray [1, 2]
+    @test_throws BoundsError a .= getindex.(SA[1, 2], 0)
+end
