@@ -137,7 +137,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return elements = tuple($(exprs...))
+        return tuple($(exprs...))
     end
 end
 
@@ -149,15 +149,19 @@ end
     sizes = [sz.parameters[1] for sz in s.parameters]
 
     indices = CartesianIndices(newsize)
-    exprs = similar(indices, Expr)
+    exprs_eval = similar(indices, Expr)
+    exprs_setindex = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
         exprs_vals = (broadcast_getindex(sz, i, current_ind) for (i, sz) in enumerate(sizes))
-        exprs[j] = :(dest[$j] = f($(exprs_vals...)))
+        symb_val_j = Symbol(:val_, j)
+        exprs_eval[j] = :($symb_val_j = f($(exprs_vals...)))
+        exprs_setindex[j] = :(dest[$j] = $symb_val_j)
     end
 
     return quote
         @_inline_meta
-        @inbounds $(Expr(:block, exprs...))
+        $(Expr(:block, exprs_eval...))
+        @inbounds $(Expr(:block, exprs_setindex...))
         return dest
     end
 end
