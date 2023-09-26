@@ -1,19 +1,30 @@
 name = "StaticArrays"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.0.2"
+version = "1.6.4"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
+[weakdeps]
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[extensions]
+StaticArraysStatisticsExt = "Statistics"
+
 [compat]
-julia = "1"
+julia = "1.6"
+StaticArraysCore = "~1.4.0"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [targets]
-test = ["InteractiveUtils", "Test", "BenchmarkTools"]
+test = ["InteractiveUtils", "Test", "BenchmarkTools", "OffsetArrays", "Statistics", "Unitful"]

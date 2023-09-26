@@ -10,6 +10,10 @@ Base.getindex(m::RotMat2, i::Int) = getindex(m.elements, i)
 # Rotation matrices must be unitary so `similar_type` has to return an SMatrix.
 StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,4}
 
+Base.@kwdef mutable struct KPS4{S, T, P}
+    v_apparent::T =       zeros(S, 3)
+end
+
 @testset "Linear algebra" begin
 
     @testset "SArray as a (mathematical) vector space" begin
@@ -19,7 +23,10 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
 
         @test @inferred(v1 * c) === @SVector [4,8,12,16]
         @test @inferred(v1 / c) === @SVector [1.0,2.0,3.0,4.0]
-        @test @inferred(c \ v1)::SVector ≈ @SVector [1.0,2.0,3.0,4.0]
+        @test @inferred(c \ v1)::SVector === @SVector [1.0,2.0,3.0,4.0]
+
+        @test @inferred(+v1) === @SVector [+2,+4,+6,+8]
+        @test @inferred(-v1) === @SVector [-2,-4,-6,-8]
 
         @test @inferred(v1 + v2) === @SVector [6, 7, 8, 9]
         @test @inferred(v1 - v2) === @SVector [-2, 1, 4, 7]
@@ -36,6 +43,57 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         #@test @inferred(v3 + v2) === @SVector [6, 7, 8, 9]
         #@test @inferred(v1 - v4) === @SVector [-2, 1, 4, 7]
         #@test @inferred(v3 - v2) === @SVector [-2, 1, 4, 7]
+
+        # #899 matrix-of-matrix
+        A = SMatrix{1,1}([1])
+        B = SMatrix{1,1}([A])
+        @test @inferred(1.0 * B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(1.0 \ B) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B * 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+        @test @inferred(B / 1.0) === SMatrix{1, 1, SMatrix{1, 1, Float64, 1}, 1}(B)
+    end
+
+    @testset "Ternary operators" begin
+        for T in (Int, Float32, Float64)
+            c = convert(T, 2)
+            v1 = @SVector T[2, 4, 6, 8]
+            v2 = @SVector T[4, 3, 2, 1]
+            m1 = @SMatrix T[2 4; 6 8]
+            m2 = @SMatrix T[4 3; 2 1]
+
+            # Use that these small integers can be represented exactly
+            # as floating point numbers. In general, the comparison of
+            # floats should use `≈` instead of `===`.
+            @test @inferred(muladd(c, v1, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(v1, c, v2)) === @SVector T[8, 11, 14, 17]
+            @test @inferred(muladd(c, m1, m2)) === @SMatrix T[8 11; 14 17]
+            @test @inferred(muladd(m1, c, m2)) === @SMatrix T[8 11; 14 17]
+        end
+    end
+
+    @testset "@fastmath operators" begin
+        for T in (Int, Float32, Float64)
+            s0 = convert(T, 2)
+            v1 = @SVector T[2, 4, 6, 8]
+            v2 = @SVector T[4, 3, 2, 1]
+            m1 = @SMatrix T[2 4; 6 8]
+            m2 = @SMatrix T[4 3; 2 1]
+
+            # Use that these small integers can be represented exactly
+            # as floating point numbers. In general, the comparison of
+            # floats should use `≈` instead of `===`.
+            # These should be turned into `vfmadd...` calls
+            @test @fastmath(@inferred(s0 * v1 + v2)) === @SVector T[8, 11, 14, 17]
+            @test @fastmath(@inferred(v1 * s0 + v2)) === @SVector T[8, 11, 14, 17]
+            @test @fastmath(@inferred(s0 * m1 + m2)) === @SMatrix T[8 11; 14 17]
+            @test @fastmath(@inferred(m1 * s0 + m2)) === @SMatrix T[8 11; 14 17]
+
+            # These should be turned into `vfmsub...` calls
+            @test @fastmath(@inferred(s0 * v1 - v2)) === @SVector T[0, 5, 10, 15]
+            @test @fastmath(@inferred(v1 * s0 - v2)) === @SVector T[0, 5, 10, 15]
+            @test @fastmath(@inferred(s0 * m1 - m2)) === @SMatrix T[0 5; 10 15]
+            @test @fastmath(@inferred(m1 * s0 - m2)) === @SMatrix T[0 5; 10 15]
+        end
     end
 
     @testset "Interaction with `UniformScaling`" begin
@@ -86,6 +144,7 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
     end
 
     @testset "diagm()" begin
+        @test diagm() isa BitArray # issue #961: type piracy of zero-arg diagm
         @test @inferred(diagm(SA[1,2])) === SA[1 0; 0 2]
         @test @inferred(diagm(Val(0) => SVector(1,2))) === @SMatrix [1 0; 0 2]
         @test @inferred(diagm(Val(2) => SVector(1,2,3)))::SMatrix == diagm(2 => [1,2,3])
@@ -170,9 +229,30 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         # Recursive adjoint/transpose correctly handles eltype (#708)
         @test (@inferred(adjoint(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(adjoint([1,2]), 2,2))
         @test (@inferred(transpose(SMatrix{2,2}(fill([1,2], 2,2)))))::SMatrix == SMatrix{2,2}(fill(transpose([1,2]), 2,2))
+
+        # 0×0 matrix
+        for T in (SMatrix{0,0,Float64}, MMatrix{0,0,Float64}, SizedMatrix{0,0,Float64})
+            m = T()
+            @test adjoint(m)::T == transpose(m)::T == m
+        end
+        @test adjoint(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Adjoint{Int,Vector{Int}}}
+        @test transpose(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Transpose{Int,Vector{Int}}}
+
+        @testset "inference for nested matrices" begin
+            A = reshape([reshape([complex(i,2i)*j for i in 1:2], 1, 2) for j in 1:6], 3, 2)
+            for TA in (SMatrix, MMatrix), TB in (SMatrix, MMatrix)
+                S = TA{3,2}(TB{1,2}.(A)) # static matrix of static matrices
+                @test @inferred(transpose(S)) == transpose(A)
+                @test @inferred(adjoint(S)) == adjoint(A)
+            end
+        end
     end
 
     @testset "normalization" begin
+        @test norm(SVector(0.0,1e-180)) == 1e-180  # avoid underflow
+        @test norm(SVector(0.0,1e155)) == 1e155  # avoid overflow
+        @test all([norm(SVector(0.0,1e-180), p) == 1e-180 for p = [2,3,Inf]])  # avoid underflow
+        @test all([norm(SVector(0.0,1e155), p) == 1e155 for p = [2,3,Inf]])  # avoid overflow
         @test norm(SVector(1.0,2.0,2.0)) ≈ 3.0
         @test norm(SVector(1.0,2.0,2.0),2) ≈ 3.0
         @test norm(SVector(1.0,2.0,2.0),Inf) ≈ 2.0
@@ -189,6 +269,99 @@ StaticArrays.similar_type(::Union{RotMat2,Type{RotMat2}}) = SMatrix{2,2,Float64,
         @test normalize(SVector(1,2,3), 1) ≈ normalize([1,2,3], 1)
         @test normalize!(MVector(1.,2.,3.)) ≈ normalize([1.,2.,3.])
         @test normalize!(MVector(1.,2.,3.), 1) ≈ normalize([1.,2.,3.], 1)
+
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9]) ≈ normalize([1 2 3; 4 5 6; 7 8 9])
+        @test normalize(SA[1 2 3; 4 5 6; 7 8 9], 1) ≈ normalize([1 2 3; 4 5 6; 7 8 9], 1)
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.])) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.])
+        @test normalize!((@MMatrix [1. 2. 3.; 4. 5. 6.; 7. 8. 9.]), 1) ≈ normalize!([1. 2. 3.; 4. 5. 6.; 7. 8. 9.], 1)
+
+        D3 = Array{Float64, 3}(undef, 2, 2, 3)
+        D3[:] .= 1.0:12.0
+        SA_D3 = convert(SArray{Tuple{2,2,3}, Float64, 3, 12}, D3)
+        @test normalize(SA_D3) ≈ normalize(D3)
+
+        # nested vectors
+        a  = SA[SA[1, 2], SA[3, 4]]
+        av = convert(Vector{Vector{Int}}, a)
+        aa = SA[a,a]
+        @test norm(a) ≈ norm(av)
+        @test norm(aa) ≈ norm([a,a])
+        @test norm(aa) ≈ norm([av,av])
+        @test norm(SVector{0,Int}()) === norm(Vector{Float64}()) === 0.0
+
+        # do not overflow for Int
+        c = SA[typemax(Int)÷2, typemax(Int)÷3]
+        @test norm(c) ≈ norm(Vector(c))
+        @test norm(SA[c,c]) ≈ norm([Vector(c), Vector(c)])
+
+        # 0-norm of vectors w/ zero-vectors
+        @test norm(SA[0,0], 0) == norm([0,0], 0)
+        @test norm(SA[[0,0],[1,1]], 0) == norm([[0,0],[1,1]], 0) == 1.0
+        @test norm(SA[[0,1],[1,1]], 0) == norm([[0,1],[1,1]], 0) == 2.0
+
+        # complex numbers
+        @test norm(SA[1+im, 2+3im]) ≈ norm([1+im, 2+3im])
+        @test norm(SA[22.0+0.1im, 2.0-23.0im]) ≈ norm([22.0+0.1im, 2.0-23.0im])
+        a_c, av_c = a+1im*a, av+1im*av
+        @test norm(a_c) ≈ norm(av_c)
+
+        # p-norms for nested vectors
+        for (x,xv) in ((a,av), (a_c, av_c))
+            @test norm(x, 2) ≈ norm(xv,2)
+            @test norm(x, Inf) ≈ norm(xv, Inf)
+            @test norm(x, 1) ≈ norm(xv, 1)
+            @test norm(x, 0) ≈ norm(xv, 0)
+            @test norm(SA[Int[], [1,2]], 0) ≈ norm([Int[], [1,2]], 0)
+        end
+
+        # type-stability
+        @test (@inferred norm(a[1])) == (@inferred norm(a[1], 2))
+        @test (@inferred norm(a)) == (@inferred norm(a, 2))
+        @test (@inferred norm(aa)) == (@inferred norm(aa, 2))
+        @test (@inferred norm(float.(aa))) == (@inferred norm(float.(aa), 2))
+        @test (@inferred norm(SVector{0,Int}())) == (@inferred norm(SVector{0,Int}(), 2))
+
+        # norm of empty SVector
+        @test norm(SVector{0,Int}()) isa float(Int)
+        @test norm(SVector{0,Float64}()) isa Float64
+        @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) isa float(Int)
+        @test norm(SA[SVector{0,Int}(),SVector{0,Int}()]) == norm([Int[], Int[]])
+
+        # norm of SVector with NaN and/or Inf elements -- issue #1135
+        @test isnan(norm(SA[0.0, NaN]))
+        @test isnan(norm(SA[NaN, 0.0]))
+        @test norm(SA[0.0, Inf]) == Inf
+        @test norm(SA[Inf, 0.0]) == Inf
+        @test norm(SA[0.0, -Inf]) == Inf
+        @test norm(SA[-Inf, 0.0]) == Inf
+        @test norm(SA[Inf, Inf]) == Inf
+        @test norm(SA[-Inf, -Inf]) == Inf
+        @test norm(SA[Inf, -Inf]) == Inf
+        @test norm(SA[-Inf, Inf]) == Inf
+        @test isnan(norm(SA[Inf, NaN]))
+        @test isnan(norm(SA[NaN, Inf]))
+        @test isnan(norm(SA[-Inf, NaN]))
+        @test isnan(norm(SA[NaN, -Inf]))
+        @test isapprox(SA[0.0, NaN], SA[0.0, NaN], nans=true)
+
+        # no allocation for MArray -- issue #1126
+
+        @inline function calc_particle_forces!(s, pos1, pos2)
+            segment = pos1 - pos2
+            norm1 = norm(segment)
+            unit_vector = segment / norm1
+        
+            v_app_perp = s.v_apparent - s.v_apparent ⋅ unit_vector * unit_vector
+            half_drag_force = norm(v_app_perp)
+            nothing
+        end
+        kps4 = KPS4{Float64, MVector{3, Float64}, 6+4+1}()
+        
+        pos1 = MVector{3, Float64}(1.0, 2.0, 3.0)
+        pos2 = MVector{3, Float64}(2.0, 3.0, 4.0)
+        calc_particle_forces!(kps4, pos1, pos2)
+        calc_particle_forces!(kps4, pos1, pos2)
+        @test (@allocated calc_particle_forces!(kps4, pos1, pos2)) == 0
     end
 
     @testset "trace" begin

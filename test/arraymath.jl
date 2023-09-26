@@ -7,6 +7,10 @@ import StaticArrays.arithmetic_closure
         @test @inferred(zeros(SVector{3,Int})) === @SVector [0, 0, 0]
         @test @inferred(ones(SVector{3,Float64})) === @SVector [1.0, 1.0, 1.0]
         @test @inferred(ones(SVector{3,Int})) === @SVector [1, 1, 1]
+        @test @inferred(zeros(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(zeros(SVector{0,Int})) === @SVector Int[]
+        @test @inferred(ones(SVector{0,Float64})) === @SVector Float64[]
+        @test @inferred(ones(SVector{0,Int})) === @SVector Int[]
 
         @test @inferred(zeros(SVector{3})) === @SVector [0.0, 0.0, 0.0]
         @test @inferred(zeros(SMatrix{2,2})) === @SMatrix [0.0 0.0; 0.0 0.0]
@@ -32,18 +36,118 @@ import StaticArrays.arithmetic_closure
         @test bigones[1] !== bigones[2]
     end
 
+    @testset "ones()" begin
+        for SA in (SVector, MVector, SizedVector)
+            # Float64
+            m = @inferred ones(SA{3, Float64})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa SA{3, Float64}
+            # Int
+            m = @inferred ones(SA{3, Int})
+            @test m == [1, 1, 1]
+            @test m isa SA{3, Int}
+            # Unspecified
+            m = @inferred ones(SA{3})
+            @test m == [1.0, 1.0, 1.0]
+            @test m isa SA{3}
+            # Float64
+            m = @inferred ones(SA{0, Float64})
+            @test m == Float64[]
+            @test m isa SA{0, Float64}
+            # Int
+            m = @inferred ones(SA{0, Int})
+            @test m == Int[]
+            @test m isa SA{0, Int}
+            # Unspecified
+            m = @inferred ones(SA{0})
+            @test m == Float64[]
+            @test m isa SA{0}
+            # Any
+            @test_throws MethodError ones(SA{3, Any})
+            @test ones(SA{0, Any}) isa SA{0, Any}
+        end
+    end
+
     @testset "zero()" begin
-        @test @inferred(zero(SVector{3, Float64})) === @SVector [0.0, 0.0, 0.0]
-        @test @inferred(zero(SVector{3, Int})) === @SVector [0, 0, 0]
+        for SA in (SVector, MVector, SizedVector)
+            # Float64
+            m = @inferred zero(SA{3, Float64})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa SA{3, Float64}
+            # Int
+            m = @inferred zero(SA{3, Int})
+            @test m == [0, 0, 0]
+            @test m isa SA{3, Int}
+            # Unspecified
+            m = @inferred zero(SA{3})
+            @test m == [0.0, 0.0, 0.0]
+            @test m isa SA{3}
+            # Float64 (zero-element)
+            m = @inferred zero(SA{0, Float64})
+            @test m == Float64[]
+            @test m isa SA{0, Float64}
+            # Int (zero-element)
+            m = @inferred zero(SA{0, Int})
+            @test m == Int[]
+            @test m isa SA{0, Int}
+            # Unspecified (zero-element)
+            m = @inferred zero(SA{0})
+            @test m == Float64[]
+            @test m isa SA{0}
+            # Any
+            @test_throws MethodError zeros(SA{3, Any})
+            @test zeros(SA{0, Any}) isa SA{0, Any}
+        end
     end
 
     @testset "fill()" begin
-        @test all(@inferred(fill(3., SMatrix{4, 16, Float64})) .== 3.)
         @test @allocated(fill(0., SMatrix{1, 16, Float64})) == 0 # #81
+        @test @allocated(fill(0., SMatrix{0, 5, Float64})) == 0
+
+        for SA in (SMatrix, MMatrix, SizedMatrix)
+            for T in (Float64, Int, Any)
+                # Float64 -> T
+                m = @inferred(fill(3.0, SA{4, 16, T}))
+                @test m isa SA{4, 16, T}
+                @test all(m .== 3)
+                # Float64 -> T (zero-element)
+                m = @inferred(fill(3.0, SA{0, 5, T}))
+                @test m isa SA{0, 5, T}
+                @test all(m .== 3)
+                # Int -> T
+                m = @inferred(fill(3, SA{4, 16, T}))
+                @test m isa SA{4, 16, T}
+                @test all(m .== 3)
+                # Int -> T (zero-element)
+                m = @inferred(fill(3, SA{0, 5, T}))
+                @test m isa SA{0, 5, T}
+                @test all(m .== 3)
+            end
+
+            # Float64 -> Unspecified
+            m = @inferred(fill(3.0, SA{4, 16}))
+            @test m isa SA{4, 16, Float64}
+            @test all(m .== 3)
+            # Float64 -> Unspecified (zero-element)
+            m = @inferred(fill(3.0, SA{0, 5}))
+            @test m isa SA{0, 5, Float64}
+            @test all(m .== 3)
+            # Int -> Unspecified
+            m = @inferred(fill(3, SA{4, 16}))
+            @test m isa SA{4, 16, Int}
+            @test all(m .== 3)
+            # Int -> Unspecified (zero-element)
+            m = @inferred(fill(3, SA{0, 5}))
+            @test m isa SA{0, 5, Int}
+            @test all(m .== 3)
+        end
     end
 
     @testset "fill!()" begin
         m = MMatrix{4,16,Float64}(undef)
+        fill!(m, 3)
+        @test all(m .== 3.)
+        m = MMatrix{0,5,Float64}(undef)
         fill!(m, 3)
         @test all(m .== 3.)
     end
@@ -57,6 +161,24 @@ import StaticArrays.arithmetic_closure
         @test all(check)
         m = rand(1:1, SVector{3})
         @test rand(m) == 1
+
+        for SA in (SVector, MVector, SizedVector)
+            v1 = rand(SA{3})
+            @test v1 isa SA{3, Float64}
+            @test all(0 .< v1 .< 1)
+
+            v2 = rand(SA{0})
+            @test v2 isa SA{0, Float64}
+            @test all(0 .< v2 .< 1)
+
+            v3 = rand(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
+            @test all(0 .< v3 .< 1)
+
+            v4 = rand(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
+            @test all(0 .< v4 .< 1)
+        end
     end
 
     @testset "rand!()" begin
@@ -68,6 +190,108 @@ import StaticArrays.arithmetic_closure
         rand!(m, 1:2)
         check = ((m .>= 1) .& (m .<= 2))
         @test all(check)
+
+        for SA in (MVector, SizedVector)
+            v1 = rand(SA{3})
+            rand!(v1)
+            @test v1 isa SA{3, Float64}
+            @test all(0 .< v1 .< 1)
+
+            v2 = rand(SA{0})
+            rand!(v2)
+            @test v2 isa SA{0, Float64}
+            @test all(0 .< v2 .< 1)
+
+            v3 = rand(SA{3, Float32})
+            rand!(v3)
+            @test v3 isa SA{3, Float32}
+            @test all(0 .< v3 .< 1)
+
+            v4 = rand(SA{0, Float32})
+            rand!(v4)
+            @test v4 isa SA{0, Float32}
+            @test all(0 .< v4 .< 1)
+        end
+    end
+
+    @testset "randn()" begin
+        for SA in (SVector, MVector, SizedVector)
+            v1 = randn(SA{3})
+            @test v1 isa SA{3, Float64}
+
+            v2 = randn(SA{0})
+            @test v2 isa SA{0, Float64}
+
+            v3 = randn(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
+
+            v4 = randn(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
+        end
+    end
+
+    @testset "randn!()" begin
+        for SA in (MVector, SizedVector)
+            v1 = randn(SA{3})
+            randn!(v1)
+            @test v1 isa SA{3, Float64}
+
+            v2 = randn(SA{0})
+            randn!(v2)
+            @test v2 isa SA{0, Float64}
+
+            v3 = randn(SA{3, Float32})
+            randn!(v3)
+            @test v3 isa SA{3, Float32}
+
+            v4 = randn(SA{0, Float32})
+            randn!(v4)
+            @test v4 isa SA{0, Float32}
+        end
+    end
+
+    @testset "randexp()" begin
+        for SA in (SVector, MVector, SizedVector)
+            v1 = randexp(SA{3})
+            @test v1 isa SA{3, Float64}
+            @test all(0 .< v1)
+
+            v2 = randexp(SA{0})
+            @test v2 isa SA{0, Float64}
+            @test all(0 .< v2)
+
+            v3 = randexp(SA{3, Float32})
+            @test v3 isa SA{3, Float32}
+            @test all(0 .< v3)
+
+            v4 = randexp(SA{0, Float32})
+            @test v4 isa SA{0, Float32}
+            @test all(0 .< v4)
+        end
+    end
+
+    @testset "randexp!()" begin
+        for SA in (MVector, SizedVector)
+            v1 = randexp(SA{3})
+            randexp!(v1)
+            @test v1 isa SA{3, Float64}
+            @test all(0 .< v1)
+
+            v2 = randexp(SA{0})
+            randexp!(v2)
+            @test v2 isa SA{0, Float64}
+            @test all(0 .< v2)
+
+            v3 = randexp(SA{3, Float32})
+            randexp!(v3)
+            @test v3 isa SA{3, Float32}
+            @test all(0 .< v3)
+
+            v4 = randexp(SA{0, Float32})
+            randexp!(v4)
+            @test v4 isa SA{0, Float32}
+            @test all(0 .< v4)
+        end
     end
 
     @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
@@ -86,9 +310,27 @@ import StaticArrays.arithmetic_closure
         @test (t-t) isa T
         @test (t*t) isa T
         @test (t/t) isa T
+    end
 
-        if isbitstype(T0)
-            @test @allocated(arithmetic_closure(T0)) == 0
-        end
+    @testset "arithmetic_closure allocation" begin
+        # a little icky, but `@allocated` seems to be too fragile to use in a loop with
+        # types assigned in variables (see #924); so we write out a test explicitly for
+        # every `isbitstype` type of interest
+        @test (@allocated arithmetic_closure(UInt128))        == 0
+        @test (@allocated arithmetic_closure(UInt16))         == 0
+        @test (@allocated arithmetic_closure(UInt32))         == 0
+        @test (@allocated arithmetic_closure(UInt64))         == 0
+        @test (@allocated arithmetic_closure(UInt8))          == 0
+        @test (@allocated arithmetic_closure(Int128))         == 0
+        @test (@allocated arithmetic_closure(Int16))          == 0
+        @test (@allocated arithmetic_closure(Int32))          == 0
+        @test (@allocated arithmetic_closure(Int64))          == 0
+        @test (@allocated arithmetic_closure(Int8))           == 0
+        @test (@allocated arithmetic_closure(Float16))        == 0
+        @test (@allocated arithmetic_closure(Float32))        == 0
+        @test (@allocated arithmetic_closure(Float64))        == 0
+        @test (@allocated arithmetic_closure(Bool))           == 0
+        @test (@allocated arithmetic_closure(Complex{Int64})) == 0
+        @test (@allocated arithmetic_closure(ComplexF64))     == 0
     end
 end

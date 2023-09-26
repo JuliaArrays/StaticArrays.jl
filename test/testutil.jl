@@ -55,8 +55,17 @@ macro test_inlined(ex, should_inline=true)
     ex_orig = ex
     ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
     expr = quote
-        code_str = sprint() do io
-            code_llvm(io, $(map(esc, ex.args[2:end])...))
+        @static if hasfield(Base.CodegenParams, :safepoint_on_entry)
+            code_str = let params = Base.CodegenParams(safepoint_on_entry=false),
+                f = $(esc(ex.args[2])),
+                t = $(esc(ex.args[3]))
+                d = InteractiveUtils._dump_function(f, t, false, false, true, false, :att, true, :none, false, params)
+                sprint(print, d)
+            end
+        else
+            code_str = sprint() do io
+                code_llvm(io, $(map(esc, ex.args[2:end])...))
+            end
         end
         # Crude detection of call instructions remaining within what should be
         # fully inlined code.
@@ -79,17 +88,20 @@ should_be_inlined(x) = x*x
 should_not_be_inlined(x) = _should_not_be_inlined(x)
 
 """
-    @inferred_maybe_allow allow ex
+    @test_was_once_broken good_version ex
 
-Expands to `@inferred allow ex` on Julia 1.2 and newer and
-`ex` on Julia 1.0 and 1.1.
+Expands to `@test ex` if `VERSION ≥ good_version` and to `@test_broken ex` if 
+`VERSION ≥ good_version`. Useful for tests that are broken on earlier versions of Julia
+that are fixed on later versions.
 """
-macro inferred_maybe_allow(allow, ex)
-    if VERSION < v"1.2"
-        return esc(:($ex))
-    else
-        return esc(:(@inferred $allow $ex))
-    end
+macro test_was_once_broken(good_version, ex)
+    esc(quote
+        if VERSION < $good_version
+            @test_broken $ex
+        else
+            @test $ex
+        end
+    end)
 end
 
 @testset "test utils" begin

@@ -73,7 +73,38 @@ end
         @_inline_meta
         S = same_size(a...)
         @inbounds elements = tuple($(exprs...))
-        @inbounds return similar_type(typeof(_first(a...)), eltype(elements), S)(elements)
+        @inbounds return similar_type(typeof(a[$first_staticarray]), eltype(elements), S)(elements)
+    end
+end
+
+struct StaticEnumerate{TA}
+    itr::TA
+end
+
+enumerate_static(a::StaticArray) = StaticEnumerate(a)
+
+@generated function map(f, a::StaticEnumerate{<:StaticArray})
+    S = Size(a.parameters[1])
+    if prod(S) == 0
+        # In the empty case only, use inference to try figuring out a sensible
+        # eltype, as is done in Base.collect and broadcast.
+        # See https://github.com/JuliaArrays/StaticArrays.jl/issues/528
+        return quote
+            @_inline_meta
+            T = Core.Compiler.return_type(f, Tuple{Tuple{Int,$(eltype(a.parameters[1]))}})
+            @inbounds return similar_type(a.itr, T, $S)()
+        end
+    end
+
+    exprs = Vector{Expr}(undef, prod(S))
+    for i ∈ 1:prod(S)
+        exprs[i] = :(f(($i, a.itr[$i])))
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds elements = tuple($(exprs...))
+        @inbounds return similar_type(typeof(a.itr), eltype(elements), $S)(elements)
     end
 end
 
@@ -99,6 +130,7 @@ end
     return quote
         @_inline_meta
         @inbounds $(Expr(:block, exprs...))
+        return dest
     end
 end
 
@@ -166,18 +198,21 @@ end
     exprs = Array{Expr}(undef, Snew)
     itr = [1:n for n ∈ Snew]
     for i ∈ Base.product(itr...)
-        expr = :(f(a[$(i...)]))
-        if init === _InitialValue
-            expr = :(Base.reduce_first(op, $expr))
+        if S[D] == 0
+            expr = :(Base.mapreduce_empty(f, op, eltype(a)))
         else
-            expr = :(op(init, $expr))
+            expr = :(f(a[$(i...)]))
+            if init === _InitialValue
+                expr = :(Base.reduce_first(op, $expr))
+            else
+                expr = :(op(init, $expr))
+            end
+            for k = 2:S[D]
+                ik = collect(i)
+                ik[D] = k
+                expr = :(op($expr, f(a[$(ik...)])))
+            end
         end
-        for k = 2:S[D]
-            ik = collect(i)
-            ik[D] = k
-            expr = :(op($expr, f(a[$(ik...)])))
-        end
-
         exprs[i...] = expr
     end
 
@@ -192,7 +227,7 @@ end
 ## reduce ##
 ############
 
-@inline reduce(op, a::StaticArray; dims = :, init = _InitialValue()) =
+@inline reduce(op::R, a::StaticArray; dims = :, init = _InitialValue()) where {R} =
     _reduce(op, a, dims, init)
 
 # disambiguation
@@ -206,7 +241,7 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:AbstractVecOrMat}) =
 reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
     _reduce(hcat, A, :, _InitialValue())
 
-@inline _reduce(op, a::StaticArray, dims, init = _InitialValue()) =
+@inline _reduce(op::R, a::StaticArray, dims, init = _InitialValue()) where {R} =
     _mapreduce(identity, op, dims, init, Size(a), a)
 
 ################
@@ -266,18 +301,10 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 
 @inline Base.in(x, a::StaticArray) = _mapreduce(==(x), |, :, false, Size(a), a)
 
-_mean_denom(a, dims::Colon) = length(a)
-_mean_denom(a, dims::Int) = size(a, dims)
-_mean_denom(a, ::Val{D}) where {D} = size(a, D)
-_mean_denom(a, ::Type{Val{D}}) where {D} = size(a, D)
-
-@inline mean(a::StaticArray; dims=:) = _reduce(+, a, dims) / _mean_denom(a, dims)
-@inline mean(f::Function, a::StaticArray; dims=:) = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
-
-@inline minimum(a::StaticArray; dims=:) = _reduce(min, a, dims) # base has mapreduce(idenity, scalarmin, a)
+@inline minimum(a::StaticArray; dims=:) = _reduce(min, a, dims) # base has mapreduce(identity, scalarmin, a)
 @inline minimum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, min, dims, _InitialValue(), Size(a), a)
 
-@inline maximum(a::StaticArray; dims=:) = _reduce(max, a, dims) # base has mapreduce(idenity, scalarmax, a)
+@inline maximum(a::StaticArray; dims=:) = _reduce(max, a, dims) # base has mapreduce(identity, scalarmax, a)
 @inline maximum(f::Function, a::StaticArray; dims=:) = _mapreduce(f, max, dims, _InitialValue(), Size(a), a)
 
 # Diff is slightly different

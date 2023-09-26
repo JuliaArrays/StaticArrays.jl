@@ -50,7 +50,11 @@ end
 end
 
 @inline function _eigvals(::Size{(3,3)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
-    S = arithmetic_closure(T)
+    S = if typeof(A) <: Hermitian{Complex{T}}
+        complex(arithmetic_closure(T))
+    else
+        arithmetic_closure(T)
+    end
     Sreal = real(S)
 
     @inbounds a11 = convert(Sreal, A.data[1])
@@ -155,55 +159,26 @@ end
 @inline function _eig(::Size{(2,2)}, A::LinearAlgebra.RealHermSymComplexHerm{T}, permute, scale) where {T <: Real}
     a = A.data
     TA = eltype(A)
+    @inbounds a21 = A.uplo == 'U' ? a[3]' : a[2]
+    @inbounds if !iszero(a21) # A is not diagonal
+        t_half = real(a[1] + a[4]) / 2
+        diag_avg_diff = (a[1] - a[4])/2
+        tmp = norm(SVector(diag_avg_diff, a21))
+        vals = SVector(t_half - tmp, t_half + tmp)
+        v11 = -tmp + diag_avg_diff
+        n1 = sqrt(v11' * v11 + a21 * a21')
+        v11 = v11 / n1
+        v12 = a21 / n1
 
-    @inbounds if A.uplo == 'U'
-        if !iszero(a[3]) # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[3]' * a[3]) # Should be real
+        v21 = tmp + diag_avg_diff
+        n2 = sqrt(v21' * v21 + a21 * a21')
+        v21 = v21 / n2
+        v22 = a21 / n2
 
-            tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
-            vals = SVector(t_half - tmp, t_half + tmp)
+        vecs = @SMatrix [ v11  v21 ;
+                            v12  v22 ]
 
-            v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[3]' * a[3])
-            v11 = v11 / n1
-            v12 = a[3]' / n1
-
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[3]' * a[3])
-            v21 = v21 / n2
-            v22 = a[3]' / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
-
-            return Eigen(vals, vecs)
-        end
-    else # A.uplo == 'L'
-        if !iszero(a[2]) # A is not diagonal
-            t_half = real(a[1] + a[4]) / 2
-            d = real(a[1] * a[4] - a[2]' * a[2]) # Should be real
-
-            tmp2 = t_half * t_half - d
-            tmp = tmp2 < 0 ? zero(tmp2) : sqrt(tmp2) # Numerically stable for identity matrices, etc.
-            vals = SVector(t_half - tmp, t_half + tmp)
-
-            v11 = vals[1] - a[4]
-            n1 = sqrt(v11' * v11 + a[2]' * a[2])
-            v11 = v11 / n1
-            v12 = a[2] / n1
-
-            v21 = vals[2] - a[4]
-            n2 = sqrt(v21' * v21 + a[2]' * a[2])
-            v21 = v21 / n2
-            v22 = a[2] / n2
-
-            vecs = @SMatrix [ v11  v21 ;
-                              v12  v22 ]
-
-            return Eigen(vals,vecs)
-        end
+        return Eigen(vals, vecs)
     end
 
     # A must be diagonal if we reached this point; treatment of uplo 'L' and 'U' is then identical

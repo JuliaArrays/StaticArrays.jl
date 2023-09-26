@@ -74,3 +74,10 @@ end
 
 Base.promote_rule(a::Type{Base.OneTo{T}}, ::Type{SOneTo{n}}) where {T,n} =
     Base.OneTo{promote_type(T, Int)}
+
+function Base.reduced_indices(inds::Tuple{SOneTo,Vararg{SOneTo}}, d::Int)
+    Base.reduced_indices(map(Base.OneTo, inds), d)
+end
+
+Base.intersect(r::SOneTo{n1}, s::SOneTo{n2}) where {n1,n2} = SOneTo(min(n1, n2))
+Base.union(r::SOneTo{n1}, s::SOneTo{n2}) where {n1,n2} = SOneTo(max(n1, n2))

@@ -1,6 +1,6 @@
 module StaticArrays
 
-import Base: @_inline_meta, @_propagate_inbounds_meta, @_pure_meta, @propagate_inbounds, @pure
+import Base: @_propagate_inbounds_meta, @propagate_inbounds, @pure
 
 import Base: getindex, setindex!, size, similar, vec, show, length, convert, promote_op,
              promote_rule, map, map!, reduce, mapreduce, foldl, mapfoldl, broadcast,
@@ -8,25 +8,43 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
              copy, read, read!, write, reverse
 
-import Statistics: mean
-
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
 using Core.Compiler: return_type
-import Base: sqrt, exp, log
+import Base: sqrt, exp, log, float, real
 using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
-                      kron, diag, norm, dot, diagm, lu, svd, svdvals,
+                      kron, diag, norm, dot, diagm, lu, svd, svdvals, pinv,
                       factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
 using LinearAlgebra: checksquare
 
-export SOneTo
+# StaticArraysCore imports
+# there is intentionally no "using StaticArraysCore" to not take all symbols exported
+# from StaticArraysCore to make transitioning definitions to StaticArraysCore easier.
+using StaticArraysCore: StaticArraysCore, StaticArray, StaticScalar, StaticVector,
+                        StaticMatrix, StaticVecOrMat, tuple_length, tuple_prod,
+                        tuple_minimum, size_to_tuple, require_one_based_indexing
+using StaticArraysCore: FieldArray, FieldMatrix, FieldVector
+using StaticArraysCore: StaticArrayStyle
+using StaticArraysCore: Dynamic, StaticDimension
+import StaticArraysCore: SArray, SVector, SMatrix
+import StaticArraysCore: MArray, MVector, MMatrix
+import StaticArraysCore: SizedArray, SizedVector, SizedMatrix
+import StaticArraysCore: check_array_parameters, convert_ntuple
+import StaticArraysCore: similar_type, Size
+
+# end of StaticArraysCore imports
+# StaticArraysCore exports
 export StaticScalar, StaticArray, StaticVector, StaticMatrix
 export Scalar, SArray, SVector, SMatrix
 export MArray, MVector, MMatrix
-export FieldVector, FieldMatrix, FieldArray
 export SizedArray, SizedVector, SizedMatrix
+# end of StaticArraysCore exports
+
+export SOneTo
+export Scalar
+export FieldVector, FieldMatrix, FieldArray
 export SDiagonal
 export SHermitianCompact
 
@@ -38,43 +56,11 @@ export @MVector, @MMatrix, @MArray
 
 export similar_type
 export push, pop, pushfirst, popfirst, insert, deleteat, setindex
+export enumerate_static
+
+export StaticArraysCore
 
 include("SOneTo.jl")
-
-"""
-    abstract type StaticArray{S, T, N} <: AbstractArray{T, N} end
-    StaticScalar{T}     = StaticArray{Tuple{}, T, 0}
-    StaticVector{N,T}   = StaticArray{Tuple{N}, T, 1}
-    StaticMatrix{N,M,T} = StaticArray{Tuple{N,M}, T, 2}
-
-`StaticArray`s are Julia arrays with fixed, known size.
-
-## Dev docs
-
-They must define the following methods:
- - Constructors that accept a flat tuple of data.
- - `getindex()` with an integer (linear indexing) (preferably `@inline` with `@boundscheck`).
- - `Tuple()`, returning the data in a flat Tuple.
-
-It may be useful to implement:
-
-- `similar_type(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`, returning a
-  type (or type constructor) that accepts a flat tuple of data.
-
-For mutable containers you may also need to define the following:
-
- - `setindex!` for a single element (linear indexing).
- - `similar(::Type{MyStaticArray}, ::Type{NewElType}, ::Size{NewSize})`.
- - In some cases, a zero-parameter constructor, `MyStaticArray{...}()` for unintialized data
-   is assumed to exist.
-
-(see also `SVector`, `SMatrix`, `SArray`, `MVector`, `MMatrix`, `MArray`, `SizedArray`, `FieldVector`, `FieldMatrix` and `FieldArray`)
-"""
-abstract type StaticArray{S <: Tuple, T, N} <: AbstractArray{T, N} end
-const StaticScalar{T} = StaticArray{Tuple{}, T, 0}
-const StaticVector{N, T} = StaticArray{Tuple{N}, T, 1}
-const StaticMatrix{N, M, T} = StaticArray{Tuple{N, M}, T, 2}
-const StaticVecOrMat{T} = Union{StaticVector{<:Any, T}, StaticMatrix{<:Any, <:Any, T}}
 
 # Being a member of StaticMatrixLike, StaticVecOrMatLike, or StaticArrayLike implies that Size(A)
 # returns a static Size instance (none of the dimensions are Dynamic). The converse may not be true.
@@ -143,10 +129,13 @@ include("qr.jl")
 include("deque.jl")
 include("flatten.jl")
 include("io.jl")
+include("pinv.jl")
 
-if Base.VERSION >= v"1.4.2"
-    include("precompile.jl")
-    _precompile_()
+@static if !isdefined(Base, :get_extension) # VERSION < v"1.9-"
+    include("../ext/StaticArraysStatisticsExt.jl")
 end
+
+include("precompile.jl")
+_precompile_()
 
 end # module

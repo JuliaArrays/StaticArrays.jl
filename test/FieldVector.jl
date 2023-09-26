@@ -43,6 +43,17 @@
 
         # Issue 342
         @test_throws DimensionMismatch("No precise constructor for Point3D found. Length of input was 4.") Point3D(1,2,3,4)
+
+        eval(quote
+            struct Point2DT{T} <: FieldVector{2, T}
+                x::T
+                y::T
+            end
+        end)
+
+        # eltype promotion
+        @test Point2DT(1., 2) === Point2DT(1.0, 2.0) && Tuple(Point2DT(1.0, 2.0)) === (1.0, 2.0)
+        @test Point2DT{Int}(1., 2) === Point2DT(1, 2) && Tuple(Point2DT(1, 2)) === (1, 2)
     end
 
     @testset "Mutable Point2D" begin
@@ -77,6 +88,12 @@
         @test @inferred(similar_type(Point2D{Float64}, Float32)) == Point2D{Float32}
         @test @inferred(similar_type(Point2D{Float64}, Size(4))) == SVector{4,Float64}
         @test @inferred(similar_type(Point2D{Float64}, Float32, Size(4))) == SVector{4,Float32}
+
+        # eltype promotion
+        @test Point2D(1f0, 2) isa Point2D{Float32}
+        @test Point2D{Int}(1f0, 2) isa Point2D{Int}
+        p = Point2D(0, 0.0)
+        @test p[1] === p[2] === 0.0
     end
 
     @testset "FieldVector with Tuple fields" begin
@@ -86,6 +103,9 @@
         eval(quote
             struct TupleField <: FieldVector{1, NTuple{2, Int}}
                 x::NTuple{2, Int}
+                function TupleField(x::NTuple{2,Int})
+                    new(x)
+                end
             end
         end)
 
@@ -109,5 +129,15 @@
         @test @inferred(similar_type(FVT{Float64}, Size(2))) == FVT{Float64}
         @test @inferred(similar_type(FVT{Float64}, Size(3))) == SVector{3,Float64}
         @test @inferred(similar_type(FVT{Float64}, Float32, Size(3))) == SVector{3,Float32}
+    end
+
+    @testset "FieldVector with constructor missing" begin
+        struct Position1088{T} <: FieldVector{3, T}
+            x::T
+            y::T
+            z::T
+            Position1088(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
+        end
+        @test_throws ErrorException("The constructor for Position1088{Float64}(::Float64, ::Float64, ::Float64) is missing!") Position1088((1.,2.,3.))
     end
 end

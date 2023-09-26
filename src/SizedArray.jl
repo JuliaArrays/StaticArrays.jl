@@ -1,65 +1,39 @@
-require_one_based_indexing(A...) = !Base.has_offset_axes(A...) ||
-    throw(ArgumentError("offset arrays are not supported but got an array with index other than 1"))
 
-"""
-    SizedArray{Tuple{dims...}}(array)
-
-Wraps an `AbstractArray` with a static size, so to take advantage of the (faster)
-methods defined by the static array package. The size is checked once upon
-construction to determine if the number of elements (`length`) match, but the
-array may be reshaped.
-
-The aliases `SizedVector{N}` and `SizedMatrix{N,M}` are provided as more
-convenient names for one and two dimensional `SizedArray`s. For example, to
-wrap a 2x3 array `a` in a `SizedArray`, use `SizedMatrix{2,3}(a)`.
-"""
-struct SizedArray{S<:Tuple,T,N,M,TData<:AbstractArray{T,M}} <: StaticArray{S,T,N}
-    data::TData
-
-    function SizedArray{S,T,N,M,TData}(a::TData) where {S,T,N,M,TData<:AbstractArray{T,M}}
-        require_one_based_indexing(a)
-        if size(a) != size_to_tuple(S) && size(a) != (tuple_prod(S),)
-            throw(DimensionMismatch("Dimensions $(size(a)) don't match static size $S"))
-        end
-        return new{S,T,N,M,TData}(a)
+@inline function SizedArray{S,T,N,M}(a::AbstractArray) where {S<:Tuple,T,N,M}
+    if eltype(a) == T && (M == 1 || M == ndims(a))
+        a′ = M == 1 ? vec(a) : a
+        return SizedArray{S,T,N,M,typeof(a′)}(a′)
     end
-
-    function SizedArray{S,T,N,1,TData}(::UndefInitializer) where {S,T,N,TData<:AbstractArray{T,1}}
-        return new{S,T,N,1,TData}(TData(undef, tuple_prod(S)))
-    end
-    function SizedArray{S,T,N,N,TData}(::UndefInitializer) where {S,T,N,TData<:AbstractArray{T,N}}
-        return new{S,T,N,N,TData}(TData(undef, size_to_tuple(S)...))
-    end
+    return convert(SizedArray{S,T,N,M}, a)
 end
 
-# Julia v1.0 has some weird bug that prevents this from working
-@static if VERSION >= v"1.1"
-    @inline SizedArray(a::StaticArray{S,T,N}) where {S<:Tuple,T,N} = SizedArray{S,T,N}(a)
+@inline function SizedArray{S,T,N}(a::AbstractArray) where {S<:Tuple,T,N}
+    M = ndims(a) == N ? N : 1
+    return SizedArray{S,T,N,M}(a)
 end
-@inline function SizedArray{S,T,N}(
-    a::TData,
-) where {S,T,N,M,TData<:AbstractArray{T,M}}
-    return SizedArray{S,T,N,M,TData}(a)
-end
-@inline function SizedArray{S,T}(a::TData) where {S,T,M,TData<:AbstractArray{T,M}}
-    return SizedArray{S,T,tuple_length(S),M,TData}(a)
-end
-@inline function SizedArray{S}(a::TData) where {S,T,M,TData<:AbstractArray{T,M}}
-    return SizedArray{S,T,tuple_length(S),M,TData}(a)
-end
-function SizedArray{S,T,N,N}(::UndefInitializer) where {S,T,N}
+
+@inline (::Type{SZA})(a::AbstractArray) where {SZA<:SizedArray} = construct_type(SZA, a)(a)
+
+# disambiguation
+@inline SizedArray{S,T,N,M}(a::StaticArray) where {S<:Tuple,T,N,M} = construct_type(SizedArray{S,T,N,M}, a)(a.data)
+@inline SizedArray{S,T,N}(a::StaticArray) where {S<:Tuple,T,N} = construct_type(SizedArray{S,T,N}, a)(a.data)
+@inline (::Type{SZA})(a::StaticArray) where {SZA<:SizedArray} = construct_type(SZA, a)(a.data)
+# TODO: Should we respect `TData`?
+SizedArray{S,T,N,M,TData}(a::TData) where {S<:Tuple,T,N,M,TData<:StaticArray{<:Tuple,T,M}} = SizedArray{S,T,N,M}(a.data)
+
+function SizedArray{S,T,N,N}(::UndefInitializer) where {S<:Tuple,T,N}
     return SizedArray{S,T,N,N,Array{T,N}}(undef)
 end
-function SizedArray{S,T,N,1}(::UndefInitializer) where {S,T,N}
+function SizedArray{S,T,N,1}(::UndefInitializer) where {S<:Tuple,T,N}
     return SizedArray{S,T,N,1,Vector{T}}(undef)
 end
-@inline function SizedArray{S,T,N}(::UndefInitializer) where {S,T,N}
+@inline function SizedArray{S,T,N}(::UndefInitializer) where {S<:Tuple,T,N}
     return SizedArray{S,T,N,N}(undef)
 end
-@inline function SizedArray{S,T}(::UndefInitializer) where {S,T}
+@inline function SizedArray{S,T}(::UndefInitializer) where {S<:Tuple,T}
     return SizedArray{S,T,tuple_length(S)}(undef)
 end
-@generated function (::Type{SizedArray{S,T,N,M,TData}})(x::NTuple{L,Any}) where {S,T,N,M,TData<:AbstractArray{T,M},L}
+@generated function (::Type{SizedArray{S,T,N,M,TData}})(x::NTuple{L,Any}) where {S<:Tuple,T,N,M,TData<:AbstractArray{T,M},L}
     if L != tuple_prod(S)
         error("Dimension mismatch")
     end
@@ -71,24 +45,18 @@ end
         return a
     end
 end
-@inline function SizedArray{S,T,N,M}(x::Tuple) where {S,T,N,M}
+@inline function SizedArray{S,T,N,M}(x::Tuple) where {S<:Tuple,T,N,M}
     return SizedArray{S,T,N,M,Array{T,M}}(x)
 end
-@inline function SizedArray{S,T,N}(x::Tuple) where {S,T,N}
+@inline function SizedArray{S,T,N}(x::Tuple) where {S<:Tuple,T,N}
     return SizedArray{S,T,N,N,Array{T,N}}(x)
 end
-@inline function SizedArray{S,T}(x::Tuple) where {S,T}
-    return SizedArray{S,T,tuple_length(S)}(x)
-end
-@inline function SizedArray{S}(x::NTuple{L,T}) where {S,T,L}
-    return SizedArray{S,T}(x)
-end
 
-# Overide some problematic default behaviour
+# Override some problematic default behaviour
 @inline convert(::Type{SA}, sa::SizedArray) where {SA<:SizedArray} = SA(sa.data)
 @inline convert(::Type{SA}, sa::SA) where {SA<:SizedArray} = sa
 
-# Back to Array (unfortunately need both convert and construct to overide other methods)
+# Back to Array (unfortunately need both convert and construct to override other methods)
 @inline function Base.Array(sa::SizedArray{S}) where {S}
     return Array(reshape(sa.data, size_to_tuple(S)))
 end
@@ -122,54 +90,12 @@ end
 end
 
 @propagate_inbounds getindex(a::SizedArray, i::Int) = getindex(a.data, i)
-@propagate_inbounds setindex!(a::SizedArray, v, i::Int) = setindex!(a.data, v, i)
+@propagate_inbounds setindex!(a::SizedArray, v, i::Int) = (setindex!(a.data, v, i); a)
 
 Base.parent(sa::SizedArray) = sa.data
 
 Base.unsafe_convert(::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.unsafe_convert(Ptr{T}, sa.data)
 Base.elsize(::Type{SizedArray{S,T,M,N,A}}) where {S,T,M,N,A} = Base.elsize(A)
-
-const SizedVector{S,T} = SizedArray{Tuple{S},T,1,1}
-
-SizedVector(a::StaticVector{N,T}) where {N,T} = SizedVector{N,T}(a)
-@inline function SizedVector{S}(a::TData) where {S,T,TData<:AbstractVector{T}}
-    return SizedArray{Tuple{S},T,1,1,TData}(a)
-end
-@inline function SizedVector(x::NTuple{S,T}) where {S,T}
-    return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
-end
-@inline function SizedVector{S}(x::NTuple{S,T}) where {S,T}
-    return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
-end
-@inline function SizedVector{S,T}(x::NTuple{S}) where {S,T}
-    return SizedArray{Tuple{S},T,1,1,Vector{T}}(x)
-end
-# disambiguation
-@inline function SizedVector{S}(a::StaticVector{S,T}) where {S,T}
-    return SizedVector{S,T}(a.data)
-end
-
-const SizedMatrix{S1,S2,T} = SizedArray{Tuple{S1,S2},T,2}
-
-# Julia v1.0 has some weird bug that prevents this from working
-@static if VERSION >= v"1.1"
-    SizedMatrix(a::StaticMatrix{N,M,T}) where {N,M,T} = SizedMatrix{N,M,T}(a)
-end
-@inline function SizedMatrix{S1,S2}(
-    a::TData,
-) where {S1,S2,T,M,TData<:AbstractArray{T,M}}
-    return SizedArray{Tuple{S1,S2},T,2,M,TData}(a)
-end
-@inline function SizedMatrix{S1,S2}(x::NTuple{L,T}) where {S1,S2,T,L}
-    return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
-end
-@inline function SizedMatrix{S1,S2,T}(x::NTuple{L}) where {S1,S2,T,L}
-    return SizedArray{Tuple{S1,S2},T,2,2,Matrix{T}}(x)
-end
-# disambiguation
-@inline function SizedMatrix{S1,S2}(a::StaticMatrix{S1,S2,T}) where {S1,S2,T}
-    return SizedMatrix{S1,S2,T}(a.data)
-end
 
 Base.dataids(sa::SizedArray) = Base.dataids(sa.data)
 
@@ -230,8 +156,13 @@ function Base.view(
     a::SizedArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
-    new_size = new_out_size(S, indices...)
-    return SizedArray{new_size}(view(a.data, indices...))
+    view_of_wrapped = view(a.data, indices...)
+    if _indices_have_bools(indices)
+        return view_of_wrapped
+    else
+        new_size = new_out_size(S, indices...)
+        return SizedArray{new_size}(view_of_wrapped)
+    end
 end
 
 function Base.vec(a::SizedArray{S}) where {S}

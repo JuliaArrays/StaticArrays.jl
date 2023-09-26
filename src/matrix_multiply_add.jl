@@ -28,7 +28,7 @@ const StaticMatMulLike{s1, s2, T} = Union{
     UnitUpperTriangular{T, <:StaticMatrix{s1, s2, T}},
     Adjoint{T, <:StaticMatrix{s1, s2, T}},
     Transpose{T, <:StaticMatrix{s1, s2, T}},
-    SDiagonal{s1, T}}
+    Diagonal{T, <:StaticVector{s1, T}}}
 
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, asym = :wrapped_a)
@@ -81,13 +81,13 @@ end
 function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticVecOrMat}}, asym = :wrapped_a)
     return expr_gen(:adjoint)
 end
-function gen_by_access(expr_gen, a::Type{<:SDiagonal}, asym = :wrapped_a)
+function gen_by_access(expr_gen, a::Type{<:Diagonal{<:Any, <:StaticVector}}, asym = :wrapped_a)
     return expr_gen(:diagonal)
 end
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, b::Type{<:AbstractArray})
 
-Simiar to gen_by_access with only one type argument. The difference is that tests for both
+Similar to gen_by_access with only one type argument. The difference is that tests for both
 arrays of type `a` and `b` are generated and `expr_gen` receives two access arguments,
 first for matrix `a` and the second for matrix `b`.
 """
@@ -166,7 +166,7 @@ function gen_by_access(expr_gen, a::Type{<:Adjoint{<:Any, <:StaticMatrix}}, b::T
         end)
     end
 end
-function gen_by_access(expr_gen, a::Type{<:SDiagonal}, b::Type)
+function gen_by_access(expr_gen, a::Type{<:Diagonal{<:Any, <:StaticVector}}, b::Type)
     return quote
         return $(gen_by_access(b, :wrapped_b) do access_b
             expr_gen(:diagonal, access_b)
@@ -193,8 +193,8 @@ istranspose(::TSize{<:Any,T}) where T = (T === :transpose)
 size(::TSize{S}) where S = S
 Size(::TSize{S}) where S = Size{S}()
 access_type(::TSize{<:Any,T}) where T = T
-Base.transpose(::TSize{S,:transpose}) where {S,T} = TSize{reverse(S),:any}()
-Base.transpose(::TSize{S,:any}) where {S,T} = TSize{reverse(S),:transpose}()
+Base.transpose(::TSize{S,:transpose}) where {S} = TSize{reverse(S),:any}()
+Base.transpose(::TSize{S,:any}) where {S} = TSize{reverse(S),:transpose}()
 
 # Get the parent of transposed arrays, or the array itself if it has no parent
 # Different from Base.parent because we only want to get rid of Transpose and Adjoint
@@ -213,7 +213,7 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
 }
 
 # 5-argument matrix multiplication
-#    To avoid allocations, strip away Transpose type and store tranpose info in Size
+#    To avoid allocations, strip away Transpose type and store transpose info in Size
 @inline LinearAlgebra.mul!(dest::StaticVecOrMatLikeForFiveArgMulDest, A::StaticVecOrMatLike, B::StaticVecOrMatLike,
     α::Number, β::Number) = _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B,
     AlphaBeta(α,β))
@@ -390,11 +390,11 @@ end
 
 function combine_products(expr_list)
     filtered = filter(expr_list) do expr
-        if expr.head != :call || expr.args[1] != :*
+        if expr.head != :call || expr.args[1] !== :*
             error("expected call to *")
         end
         for arg in expr.args[2:end]
-            if isa(arg, Expr) && arg.head == :call && arg.args[1] == :zero
+            if isa(arg, Expr) && arg.head == :call && arg.args[1] === :zero
                 return false
             end
         end
@@ -404,7 +404,7 @@ function combine_products(expr_list)
         return :(zero(T))
     else
         return reduce(filtered) do ex1, ex2
-            if ex2.head != :call || ex2.args[1] != :*
+            if ex2.head != :call || ex2.args[1] !== :*
                 error("expected call to *")
             end
 

@@ -29,22 +29,32 @@ function Base.show(io::IO, mime::MIME{Symbol("text/plain")}, F::LU)
     show(io, mime, F.U)
 end
 
-# LU decomposition
-function lu(A::StaticMatrix, pivot::Union{Val{false},Val{true}}=Val(true); check = true)
-    L, U, p = _lu(A, pivot, check)
-    LU(L, U, p)
-end
+const StaticLUMatrix{N,M,T} = Union{StaticMatrix{N,M,T}, Symmetric{T,<:StaticMatrix{N,M,T}}, Hermitian{T,<:StaticMatrix{N,M,T}}}
 
-# For the square version, return explicit lower and upper triangular matrices.
-# We would do this for the rectangular case too, but Base doesn't support that.
-function lu(A::StaticMatrix{N,N}, pivot::Union{Val{false},Val{true}}=Val(true);
-            check = true) where {N}
-    L, U, p = _lu(A, pivot, check)
-    LU(LowerTriangular(L), UpperTriangular(U), p)
+# LU decomposition
+pivot_options = if isdefined(LinearAlgebra, :PivotingStrategy) # introduced in Julia v1.7
+    (:(Val{true}), :(Val{false}), :NoPivot, :RowMaximum)
+else
+    (:(Val{true}), :(Val{false}))
 end
+for pv in pivot_options
+    # ... define each `pivot::Val{true/false}` method individually to avoid ambiguities
+    @eval function lu(A::StaticLUMatrix, pivot::$pv; check = true)
+        L, U, p = _lu(A, pivot, check)
+        LU(L, U, p)
+    end
+
+    # For the square version, return explicit lower and upper triangular matrices.
+    # We would do this for the rectangular case too, but Base doesn't support that.
+    @eval function lu(A::StaticLUMatrix{N,N}, pivot::$pv; check = true) where {N}
+        L, U, p = _lu(A, pivot, check)
+        LU(LowerTriangular(L), UpperTriangular(U), p)
+    end
+end
+lu(A::StaticLUMatrix; check = true) = lu(A, Val(true); check=check)
 
 # location of the first zero on the diagonal, 0 when not found
-function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
+function _first_zero_on_diagonal(A::StaticLUMatrix{M,N,T}) where {M,N,T}
     if @generated
         quote
             $(map(i -> :(A[$i, $i] == zero(T) && return $i), 1:min(M, N))...)
@@ -58,16 +68,17 @@ function _first_zero_on_diagonal(A::StaticMatrix{M,N,T}) where {M,N,T}
     end
 end
 
-function _first_zero_on_diagonal(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix})
-    _first_zero_on_diagonal(A.data)
-end
-
 issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
 
-@generated function _lu(A::StaticMatrix{M,N,T}, pivot, check) where {M,N,T}
+@generated function _lu(A::StaticLUMatrix{M,N,T}, pivot, check) where {M,N,T}
     if M*N ≤ 14*14
+        _pivot = if isdefined(LinearAlgebra, :PivotingStrategy) # v1.7 feature
+            pivot === RowMaximum ? Val(true) : pivot === NoPivot ? Val(false) : pivot()
+        else
+            pivot()
+        end
         quote
-            L, U, P = __lu(A, pivot)
+            L, U, P = __lu(A, $(_pivot))
             if check
                 i = _first_zero_on_diagonal(U)
                 i == 0 || throw(SingularException(i))
@@ -75,11 +86,16 @@ issuccess(F::LU) = _first_zero_on_diagonal(F.U) == 0
             L, U, P
         end
     else
+        _pivot = if isdefined(LinearAlgebra, :PivotingStrategy) # v1.7 feature
+            pivot === Val{true} ? RowMaximum() : pivot === Val{false} ? NoPivot() : pivot()
+        else
+            pivot()
+        end
         quote
             # call through to Base to avoid excessive time spent on type inference for large matrices
-            f = lu(Matrix(A), pivot; check = check)
+            f = lu(Matrix(A), $(_pivot); check = check)
             # Trick to get the output eltype - can't rely on the result of f.L as
-            # it's not type inferrable.
+            # it's not type inferable.
             T2 = arithmetic_closure(T)
             L = similar_type(A, T2, Size($M, $(min(M,N))))(f.L)
             U = similar_type(A, T2, Size($(min(M,N)), $N))(f.U)
@@ -106,6 +122,9 @@ __lu(A::StaticMatrix{M,0,T}, ::Val{Pivot}) where {T,M,Pivot} =
 
 __lu(A::StaticMatrix{1,1,T}, ::Val{Pivot}) where {T,Pivot} =
     (SMatrix{1,1}(one(T)), A, SVector(1))
+
+__lu(A::LinearAlgebra.HermOrSym{T,<:StaticMatrix{1,1,T}}, ::Val{Pivot}) where {T,Pivot} =
+    (SMatrix{1,1}(one(T)), A.data, SVector(1))
 
 __lu(A::StaticMatrix{1,N,T}, ::Val{Pivot}) where {N,T,Pivot} =
     (SMatrix{1,1,T}(one(T)), A, SVector{1,Int}(1))
@@ -140,7 +159,7 @@ function __lu(A::StaticMatrix{M,1}, ::Val{Pivot}) where {M,Pivot}
     return (SMatrix{M,1}(L), U, p)
 end
 
-function __lu(A::StaticMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
+function __lu(A::StaticLUMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
     @inbounds begin
         kp = 1
         if Pivot
@@ -178,7 +197,7 @@ end
 # Create SVector(2,3,...,M)
 # Note that
 #     tailindices(::Type{Val{M}}) where {M} = SVector(Base.tail(ntuple(identity, Val{M})))
-# works, too, but is only inferrable for M ≤ 14 (at least up to Julia 0.7.0-DEV.4021)
+# works, too, but is only inferable for M ≤ 14 (at least up to Julia 0.7.0-DEV.4021)
 @generated function tailindices(::Type{Val{M}}) where {M}
     :(SVector{$(M-1),Int}($(tuple(2:M...))))
 end

@@ -4,6 +4,7 @@ import Base: +, -, *, /, \
 # Vector space algebra
 
 # Unary ops
+@inline +(a::StaticArray) = map(+, a)
 @inline -(a::StaticArray) = map(-, a)
 
 # Binary ops
@@ -17,11 +18,11 @@ import Base: +, -, *, /, \
 @inline -(a::StaticArray, b::AbstractArray) = map(-, a, b)
 
 # Scalar-array
-@inline *(a::Number, b::StaticArray) = broadcast(*, a, b)
-@inline *(a::StaticArray, b::Number) = broadcast(*, a, b)
+@inline *(a::Number, b::StaticArray) = map(c->a*c, b)
+@inline *(a::StaticArray, b::Number) = map(c->c*b, a)
 
-@inline /(a::StaticArray, b::Number) = broadcast(/, a, b)
-@inline \(a::Number, b::StaticArray) = broadcast(\, a, b)
+@inline /(a::StaticArray, b::Number) = map(c->c/b, a)
+@inline \(a::Number, b::StaticArray) = map(c->a\c, b)
 
 
 # With UniformScaling
@@ -44,26 +45,45 @@ end
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b
 @inline /(a::StaticMatrix, b::UniformScaling) = a / b.λ
 
+
+# Ternary ops
+@inline Base.muladd(scalar::Number, a::StaticArray, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::StaticArray, scalar::Number, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
+
+
+# @fastmath operators
+@inline Base.FastMath.mul_fast(a::Number, b::StaticArray) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::StaticArray, b::Number) = map(c -> Base.FastMath.mul_fast(c, b), a)
+
+@inline Base.FastMath.add_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.add_fast, a, b)
+@inline Base.FastMath.sub_fast(a::StaticArray, b::StaticArray) = map(Base.FastMath.sub_fast, a, b)
+
+
 #--------------------------------------------------
 # Matrix algebra
 
-# Transpose, conjugate, etc
-@inline conj(a::StaticArray) = map(conj, a)
+# _adjointtype returns the eltype of the container when computing the adjoint/transpose
+# of a static array. Using this method instead of calling `Base.promote_op` directly
+# helps with type-inference, particularly for nested static arrays,
+# where the adjoint is applied recursively.
+@inline _adjointtype(f, ::Type{T}) where {T} = Base.promote_op(f, T)
+for S in (:SMatrix, :MMatrix)
+    @eval @inline _adjointtype(f, ::Type{$S{M,N,T,L}}) where {M,N,T,L} = $S{N,M,_adjointtype(f, T),L}
+end
+
+# Transpose, etc
 @inline transpose(m::StaticMatrix) = _transpose(Size(m), m)
 # note: transpose of StaticVector is a Transpose, handled by Base
 @inline transpose(a::Transpose{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 @inline transpose(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = conj(a.parent)
 @inline transpose(a::Adjoint{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _transpose(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _transpose(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(transpose(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, _adjointtype(transpose, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -72,15 +92,12 @@ end
 @inline adjoint(a::Transpose{<:Real,<:Union{StaticVector,StaticMatrix}}) = a.parent
 @inline adjoint(a::Adjoint{<:Any,<:Union{StaticVector,StaticMatrix}}) = a.parent
 
-@generated function _adjoint(::Size{S}, m::StaticMatrix) where {S}
-    Snew = (S[2], S[1])
-
-    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 = 1:S[2], j1 = 1:S[1]]
-
+@generated function _adjoint(::Size{S}, m::StaticMatrix{n1, n2, T}) where {n1, n2, S, T}
+    exprs = [:(adjoint(m[$(LinearIndices(S)[j1, j2])])) for j2 in 1:n2, j1 in 1:n1]
     return quote
         $(Expr(:meta, :inline))
         elements = tuple($(exprs...))
-        @inbounds return similar_type($m, eltype(elements), Size($Snew))(elements)
+        @inbounds return similar_type($m, _adjointtype(adjoint, T), Size($(n2,n1)))(elements)
     end
 end
 
@@ -133,7 +150,8 @@ end
     end
 end
 
-@generated function diagm(kvs::Pair{<:Val,<:StaticVector}...)
+@generated function diagm(kv1::Pair{<:Val,<:StaticVector}, other_kvs::Pair{<:Val,<:StaticVector}...)
+    kvs = (kv1, other_kvs...)
     diag_ind_and_length = [(kv.parameters[1].parameters[1], length(kv.parameters[2])) for kv in kvs]
     N = maximum(abs(di) + dl for (di,dl) in diag_ind_and_length)
     vs = [Symbol("v$i") for i=1:length(kvs)]
@@ -147,6 +165,7 @@ end
     end
     return quote
         $(Expr(:meta, :inline))
+        kvs = (kv1, other_kvs...)
         $(vs_exprs...)
         @inbounds elements = tuple($(element_exprs...))
         T = promote_tuple_eltype(elements)
@@ -207,64 +226,118 @@ end
 
 #--------------------------------------------------
 # Norms
-@inline LinearAlgebra.norm_sqr(v::StaticVector) = mapreduce(abs2, +, v; init=zero(real(eltype(v))))
+_inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
+_inner_eltype(x::Number) = typeof(x)
+@inline _init_zero(v::AbstractArray) = float(norm(zero(_inner_eltype(v))))
+
+@inline function LinearAlgebra.norm_sqr(v::StaticArray)
+    return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
+end
+
+@inline maxabs_nested(a::Number) = abs(a)
+@inline function maxabs_nested(a::AbstractArray)
+    prod(size(a)) == 0 && (return _init_zero(a))
+
+    m = maxabs_nested(a[1])
+    for j = 2:prod(size(a))
+        m = max(m, maxabs_nested(a[j]))
+    end
+
+    return m
+end
+
+@generated function _norm_scaled(::Size{S}, a::StaticArray) where {S}
+    expr = :(LinearAlgebra.norm_sqr(a[1]/scale))
+    for j = 2:prod(S)
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]/scale))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        scale = maxabs_nested(a)
+        !isfinite(scale) && return scale
+
+        iszero(scale) && return _init_zero(a)
+        return @inbounds scale * sqrt($expr)
+    end
+end
 
 @inline norm(a::StaticArray) = _norm(Size(a), a)
 @generated function _norm(::Size{S}, a::StaticArray) where {S}
-    if prod(S) == 0
-        return :(zero(real(eltype(a))))
-    end
+    prod(S) == 0 && return :(_init_zero(a))
 
-    expr = :(abs2(a[1]))
+    expr = :(LinearAlgebra.norm_sqr(a[1]))
     for j = 2:prod(S)
-        expr = :($expr + abs2(a[$j]))
+        expr = :($expr + LinearAlgebra.norm_sqr(a[$j]))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        @inbounds return sqrt($expr)
+        l = @inbounds sqrt($expr)
+
+        zero(l) < l && isfinite(l) && return l
+        return _norm_scaled(Size(a), a)
     end
 end
 
-_norm_p0(x) = x == 0 ? zero(x) : one(x)
+function _norm_p0(x)
+    T = _inner_eltype(x)
+    return float(norm(iszero(x) ? zero(T) : one(T)))
+end
+
+# Do not need to deal with p == 0, 2, Inf; see norm(a, p).
+@generated function _norm_scaled(::Size{S}, a::StaticArray, p::Real) where {S}
+    expr = :(norm(a[1]/scale)^p)
+    for j = 2:prod(S)
+        expr = :($expr + norm(a[$j]/scale)^p)
+    end
+
+    expr_p1 = :(norm(a[1]/scale))
+    for j = 2:prod(S)
+        expr_p1 = :($expr_p1 + norm(a[$j]/scale))
+    end
+
+    return quote
+        $(Expr(:meta, :inline))
+        scale = maxabs_nested(a)
+
+        scale==0 && return _init_zero(a)
+        p == 1 && return @inbounds scale * $expr_p1
+        return @inbounds scale * ($expr)^(inv(p))
+    end
+end
 
 @inline norm(a::StaticArray, p::Real) = _norm(Size(a), a, p)
 @generated function _norm(::Size{S}, a::StaticArray, p::Real) where {S}
-    if prod(S) == 0
-        return :(zero(real(eltype(a))))
+    prod(S) == 0 && return :(_init_zero(a))
+
+    expr = :(norm(a[1])^p)
+    for j = 2:prod(S)
+        expr = :($expr + norm(a[$j])^p)
     end
 
-    expr = :(abs(a[1])^p)
+    expr_p1 = :(norm(a[1]))
     for j = 2:prod(S)
-        expr = :($expr + abs(a[$j])^p)
-    end
-
-    expr_p1 = :(abs(a[1]))
-    for j = 2:prod(S)
-        expr_p1 = :($expr_p1 + abs(a[$j]))
+        expr_p1 = :($expr_p1 + norm(a[$j]))
     end
 
     return quote
         $(Expr(:meta, :inline))
-        if p == Inf
-            return mapreduce(abs, max, a)
-        elseif p == 1
-            @inbounds return $expr_p1
-        elseif p == 2
-            return norm(a)
-        elseif p == 0
-            return mapreduce(_norm_p0, +, a)
-        else
-            @inbounds return ($expr)^(inv(p))
-        end
+        p == 0 && return mapreduce(_norm_p0, +, a)  # no need for scaling
+        p == 2 && return norm(a)  # norm(a) takes care of scaling
+        p == Inf && return mapreduce(norm, max, a)  # no need for scaling
+
+        l = p==1 ? @inbounds($expr_p1) : @inbounds(($expr)^(inv(p)))
+        0<l<Inf && return l
+        return _norm_scaled(Size(a), a, p)  # p != 0, 2, Inf
     end
 end
 
-@inline normalize(a::StaticVector) = inv(norm(a))*a
-@inline normalize(a::StaticVector, p::Real) = inv(norm(a, p))*a
+@inline normalize(a::StaticArray) = inv(norm(a))*a
+@inline normalize(a::StaticArray, p::Real) = inv(norm(a, p))*a
 
-@inline normalize!(a::StaticVector) = (a .*= inv(norm(a)); return a)
-@inline normalize!(a::StaticVector, p::Real) = (a .*= inv(norm(a, p)); return a)
+@inline normalize!(a::StaticArray) = (a .*= inv(norm(a)); return a)
+@inline normalize!(a::StaticArray, p::Real) = (a .*= inv(norm(a, p)); return a)
 
 @inline tr(a::StaticMatrix) = _tr(Size(a), a)
 @generated function _tr(::Size{S}, a::StaticMatrix) where {S}
@@ -449,4 +522,3 @@ end
 # Some shimming for special linear algebra matrix types
 @inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Hermitian{eltype(A),typeof(A)}(A, uplo))
-

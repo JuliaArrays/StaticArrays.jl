@@ -19,11 +19,7 @@
     @testset "Type parameter errors" begin
         # (not sure what type of exception these should be?)
         @test_throws Exception SVector{1.0,Int}((1,))
-        @static if VERSION < v"1.6-"
-            @test_throws DimensionMismatch("No precise constructor for SArray{Tuple{2},$Int,1,2} found. Length of input was 1.") SVector{2,Int}((1,))
-        else
-            @test_throws DimensionMismatch("No precise constructor for SVector{2, $Int} found. Length of input was 1.") SVector{2,Int}((1,))
-        end
+        @test_throws DimensionMismatch("No precise constructor for $(SVector{2, Int}) found. Length of input was 1.") SVector{2,Int}((1,))
         @test_throws Exception SVector{1,3}((1,))
 
         @test_throws Exception SMatrix{1.0,1,Int,1}((1,))
@@ -209,5 +205,8 @@
         @test convert(StaticArrays.SOneTo{2}, 1:2) === StaticArrays.SOneTo{2}()
         @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:3)
         @test_throws DimensionMismatch StaticArrays.SOneTo{2}(1:1)
+
+        @test @inferred(intersect(SOneTo(2), SOneTo(4))) === SOneTo(2)
+        @test @inferred(union(SOneTo(2), SOneTo(4))) === SOneTo(4)
     end
 end

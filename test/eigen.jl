@@ -83,14 +83,38 @@ using StaticArrays, Test, LinearAlgebra
             @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
         end
 
+        # issue #956
+        v1, v2 = let A = SMatrix{2,2}((1.0, 1e-100, 1e-100, 1.0))
+            vecs = eigvecs(eigen(Hermitian(A)))
+            vecs[:,1], vecs[:,2]
+        end
+        @test norm(v1) ≈ 1
+        @test norm(v2) ≈ 1
+        @test acos(v1 ⋅ v2)*2 ≈ π
+
+        # Test that correct value is taken for upper or lower sym 
+        for T in (Float64, Complex{Float64})
+            af = SMatrix{2,2}(rand(T, 4))
+            a = af + af' # Make hermitian
+            au = Hermitian(SMatrix{2,2}((a[1,1], zero(T), a[1,2], a[2,2])), 'U')
+            al = Hermitian(SMatrix{2,2}((a[1,1], a[2,1], zero(T), a[2,2])), 'L')
+            @test eigvals(eigen(a)) ≈ eigvals(eigen(au)) ≈ eigvals(eigen(al))
+            @test eigvals(eigen(a)) ≈ eigvals(eigen(au)) ≈ eigvals(eigen(al))
+        end
+
         m1_a = randn(2,2)
         m1_a = m1_a*m1_a'
         m1 = SMatrix{2,2}(m1_a)
         m2_a = randn(2,2)
         m2_a = m2_a*m2_a'
         m2 = SMatrix{2,2}(m2_a)
-        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
-        @test (@inferred_maybe_allow SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
+        @test (@inferred SVector{2,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+        @test (@inferred SVector{2,ComplexF64} eigvals(Symmetric(m1), Symmetric(m2))) ≈ eigvals(Symmetric(m1_a), Symmetric(m2_a))
+    end
+
+    @testset "2×2, difficult case" begin
+        m1 = SA[1.6590891025248637 -2.7087777909606814e-7; -2.7087777909606814e-7 1.659089317183428]
+        @test norm(m1 - Array(eigen(m1))) < 1e-15
     end
 
     @test_throws DimensionMismatch eigvals(SA[1 2 3; 4 5 6], SA[1 2 3; 4 5 5])
@@ -131,7 +155,16 @@ using StaticArrays, Test, LinearAlgebra
         m2_a = randn(3,3)
         m2_a = m2_a*m2_a'
         m2 = SMatrix{3,3}(m2_a)
-        @test (@inferred_maybe_allow SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+        @test (@inferred SVector{3,ComplexF64} eigvals(m1, m2)) ≈ eigvals(m1_a, m2_a)
+    end
+
+    @testset "3×3 complex" begin
+        m = SMatrix{3,3}(ComplexF64[
+            0.0 + 0.0im -0.0 - 1.3823165541274323im -0.0 - 0.29894503384118465im;
+            0.0 + 1.3823165541274323im 0.0 + 0.0im -0.0 - 1.9507754416262268im;
+            0.0 + 0.29894503384118465im 0.0 + 1.9507754416262268im 0.0 + 0.0im])
+        vals = eigvals(m)
+        @test isapprox(vals, eigvals(Matrix(m)))
     end
 
     @testset "3x3 degenerate cases" begin
@@ -256,7 +289,7 @@ using StaticArrays, Test, LinearAlgebra
 
             # Test that general eigen() gives a small union of concrete types
             SEigen{T} = Eigen{T, T, SArray{Tuple{n,n},T,2,n*n}, SArray{Tuple{n},T,1,n}}
-            @inferred_maybe_allow Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
+            @inferred Union{SEigen{ComplexF64},SEigen{Float64}} eigen(m)
 
             mc = @SMatrix randn(ComplexF64, n, n)
             @inferred eigen(Hermitian(mc + mc'))

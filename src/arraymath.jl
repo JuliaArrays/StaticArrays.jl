@@ -1,33 +1,52 @@
-@inline zeros(::Type{SA}) where {SA <: StaticArray} = _zeros(Size(SA), SA)
+@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = zeros(typeintersect(SA, AbstractArray{Float64}))
+@inline zeros(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _zeros(Size(SA), SA)
 @generated function _zeros(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
     v = [:(zero($T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
     end
 end
 
-@inline ones(::Type{SA}) where {SA <: StaticArray} = _ones(Size(SA), SA)
+@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple}} = ones(typeintersect(SA, AbstractArray{Float64}))
+@inline ones(::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _ones(Size(SA), SA)
 @generated function _ones(::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     T = eltype(SA)
-    if T == Any
-        T = Float64
-    end
     v = [:(one($T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
     end
 end
 
-@inline fill(val, ::SA) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
-@inline fill(val, ::Type{SA}) where {SA <: StaticArray} = _fill(val, Size(SA), SA)
+@inline fill(val, ::SA) where {SA <: StaticArray{<:Tuple}} = _fill(val, Size(SA), SA)
+@inline fill(val::U, ::Type{SA}) where {SA <: StaticArray} where U = fill(val, Base.typeintersect(SA, AbstractArray{U}))
+@inline fill(val, ::Type{SA}) where {SA <: StaticArray{<:Tuple, T}} where T = _fill(val, Size(SA), SA)
 @generated function _fill(val, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
+    T = eltype(SA)
     v = [:val for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
@@ -46,6 +65,13 @@ using Random: SamplerType
         T = Float64
     end
     v = [:(rand(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
@@ -71,6 +97,13 @@ end
         T = Float64
     end
     v = [:(randn(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))
@@ -84,6 +117,13 @@ end
         T = Float64
     end
     v = [:(randexp(rng, $T)) for i = 1:prod(s)]
+    if SA <: SArray
+        SA = SArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: MArray
+        SA = MArray{Tuple{s...}, T, length(s), prod(s)}
+    elseif SA <: SizedArray
+        SA = SizedArray{Tuple{s...}, T, length(s)}
+    end
     return quote
         @_inline_meta
         $SA(tuple($(v...)))

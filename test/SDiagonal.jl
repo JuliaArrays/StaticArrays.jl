@@ -37,7 +37,7 @@ using StaticArrays, Test, LinearAlgebra
         @test sqrt(m) == sqrt(m2)
         @test cholesky(m).U == cholesky(m2).U
 
-        # Aparently recursive chol never really worked
+        # Apparently recursive chol never really worked
         #@test_broken chol(reshape([1.0*m, 0.0*m, 0.0*m, 1.0*m], 2, 2)) ==
         #    reshape([chol(1.0*m), 0.0*m, 0.0*m, chol(1.0*m)], 2, 2)
 
@@ -111,5 +111,8 @@ using StaticArrays, Test, LinearAlgebra
         @test m*SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == m
         @test SMatrix{4,4}(Matrix{Float64}(I, 4, 4))/m == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
         @test m\SMatrix{4,4}(Matrix{Float64}(I, 4, 4)) == diagm(0 => [11; 12; 13; 14].\[1; 1; 1; 1])
+
+        @test m + zero(m) == m
+        @test m + zero(typeof(m)) == m
     end
 end

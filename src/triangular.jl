@@ -1,29 +1,13 @@
-@inline transpose(A::LowerTriangular{<:Any,<:StaticMatrix}) =
-    UpperTriangular(transpose(A.data))
-@inline adjoint(A::LowerTriangular{<:Any,<:StaticMatrix}) =
-    UpperTriangular(adjoint(A.data))
-@inline transpose(A::UnitLowerTriangular{<:Any,<:StaticMatrix}) =
-    UnitUpperTriangular(transpose(A.data))
-@inline adjoint(A::UnitLowerTriangular{<:Any,<:StaticMatrix}) =
-    UnitUpperTriangular(adjoint(A.data))
-@inline transpose(A::UpperTriangular{<:Any,<:StaticMatrix}) =
-    LowerTriangular(transpose(A.data))
-@inline adjoint(A::UpperTriangular{<:Any,<:StaticMatrix}) =
-    LowerTriangular(adjoint(A.data))
-@inline transpose(A::UnitUpperTriangular{<:Any,<:StaticMatrix}) =
-    UnitLowerTriangular(transpose(A.data))
-@inline adjoint(A::UnitUpperTriangular{<:Any,<:StaticMatrix}) =
-    UnitLowerTriangular(adjoint(A.data))
-@inline Base.:*(A::Adjoint{<:Any,<:StaticVector}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
-    adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::Transpose{<:Any,<:StaticVector}, B::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}) =
-    transpose(transpose(B) * transpose(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Adjoint{<:Any,<:StaticVector}) =
-    adjoint(adjoint(B) * adjoint(A))
-@inline Base.:*(A::LinearAlgebra.AbstractTriangular{<:Any,<:StaticMatrix}, B::Transpose{<:Any,<:StaticVector}) =
-    transpose(transpose(B) * transpose(A))
-
 const StaticULT{TA} = Union{UpperTriangular{TA,<:StaticMatrix},LowerTriangular{TA,<:StaticMatrix},UnitUpperTriangular{TA,<:StaticMatrix},UnitLowerTriangular{TA,<:StaticMatrix}}
+
+@inline Base.:*(A::Adjoint{<:Any,<:StaticVector}, B::StaticULT{<:Any}) =
+    adjoint(adjoint(B) * adjoint(A))
+@inline Base.:*(A::Transpose{<:Any,<:StaticVector}, B::StaticULT{<:Any}) =
+    transpose(transpose(B) * transpose(A))
+@inline Base.:*(A::StaticULT{<:Any}, B::Adjoint{<:Any,<:StaticVector}) =
+    adjoint(adjoint(B) * adjoint(A))
+@inline Base.:*(A::StaticULT{<:Any}, B::Transpose{<:Any,<:StaticVector}) =
+    transpose(transpose(B) * transpose(A))
 
 @inline Base.:\(A::StaticULT, B::StaticVecOrMatLike) = _A_ldiv_B(Size(A), Size(B), A, B)
 @inline Base.:/(A::StaticVecOrMatLike, B::StaticULT) = transpose(transpose(B) \ transpose(A))
@@ -72,4 +56,8 @@ const StaticULT{TA} = Union{UpperTriangular{TA,<:StaticMatrix},LowerTriangular{T
         TAB = typeof((zero(TA)*zero(TB) + zero(TA)*zero(TB))/one(TA))
         @inbounds return similar_type(B, TAB)(tuple($(X...)))
     end
+end
+
+function _first_zero_on_diagonal(A::StaticULT)
+    _first_zero_on_diagonal(A.data)
 end

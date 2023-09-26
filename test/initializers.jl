@@ -42,14 +42,29 @@ SA_test_hvcat(x,T) = SA{T}[1 x x;
 @test_inlined SA[1;2]
 @test_inlined SA_test_hvcat(3)
 
+SA_test_hvncat1(x) = SA[1 x;x 2;;;x 2;1 x]
+SA_test_hvncat2(x) = SA[1;x;;x;2;;;x;2;;1;x]
+if VERSION >= v"1.7.0"
+    @test SA[1;;;2] === SArray{Tuple{1,1,2}}(1,2)
+    @test SA[1;2;;1;2] === SMatrix{2,2}(1,2,1,2)
+    @test SA[1 2;1 2 ;;; 1 2;1 2] === SArray{Tuple{2,2,2}}(Tuple([1 2;1 2 ;;; 1 2;1 2]))
+    @test_inlined SA_test_hvncat1(3)
+    @test_inlined SA_test_hvncat2(2)
+    if VERSION < v"1.10-DEV"
+        @test_throws ArgumentError SA[1;2;;3]
+    else
+        @test_throws DimensionMismatch SA[1;2;;3]
+    end
+end
+
 # https://github.com/JuliaArrays/StaticArrays.jl/pull/685
 @test Union{}[] isa Vector{Union{}}
 @test Base.typed_vcat(Union{}) isa Vector{Union{}}
 @test Base.typed_hcat(Union{}) isa Vector{Union{}}
 @test Base.typed_hvcat(Union{}, ()) isa Vector{Union{}}
-@test_throws MethodError Union{}[1]
-@test_throws MethodError Union{}[1 2]
-@test_throws MethodError Union{}[1; 2]
-@test_throws MethodError Union{}[1 2; 3 4]
+@test_throws Union{MethodError, ArgumentError} Union{}[1]
+@test_throws Union{MethodError, ArgumentError} Union{}[1 2]
+@test_throws Union{MethodError, ArgumentError} Union{}[1; 2]
+@test_throws Union{MethodError, ArgumentError} Union{}[1 2; 3 4]
 
 end

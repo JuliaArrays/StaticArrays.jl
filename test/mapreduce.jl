@@ -5,6 +5,8 @@ using Statistics: mean
     @testset "map and map!" begin
         v1 = @SVector [2,4,6,8]
         v2 = @SVector [4,3,2,1]
+        mv1 = @MVector [2,4,6,8]
+        mv2 = @MVector [4,3,2,1]
         mv = MVector{4, Int}(undef)
 
         normal_v1 = [2,4,6,8]
@@ -12,10 +14,14 @@ using Statistics: mean
 
         @test @inferred(map(-, v1)) === @SVector [-2, -4, -6, -8]
         @test @inferred(map(+, v1, v2)) === @SVector [6, 7, 8, 9]
-        # @test @inferred(map(+, normal_v1, v2)) === @SVector [6, 7, 8, 9] # Maybe could fix this up
+        @test @inferred(map(+, normal_v1, v2)) === @SVector [6, 7, 8, 9]
         @test @inferred(map(+, v1, normal_v2)) === @SVector [6, 7, 8, 9]
 
-        map!(+, mv, v1, v2)
+        # Make sure similar_type is based on first <: StaticArray
+        @test @inferred(map(+, normal_v1, mv2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
+        @test @inferred(map(+, mv1, normal_v2))::MVector{4,Int} == @MVector [6, 7, 8, 9]
+
+        @test map!(+, mv, v1, v2) === mv
         @test mv == @MVector [6, 7, 8, 9]
         mv2 = MVector{4, Int}(undef)
         map!(x->x^2, mv2, v1)
@@ -29,6 +35,9 @@ using Statistics: mean
         @test @inferred(map(/, SVector{0,Int}(), SVector{0,Int}())) === SVector{0,Float64}()
         @test @inferred(map(+, SVector{0,Int}(), SVector{0,Float32}())) === SVector{0,Float32}()
         @test @inferred(map(length, SVector{0,String}())) === SVector{0,Int}()
+        # similar_type based on first <: StaticArray
+        @test @inferred(map(+, MVector{0,Int}(), Int[]))::MVector{0,Int} == MVector{0,Int}()
+        @test @inferred(map(+, Int[], MVector{0,Int}()))::MVector{0,Int} == MVector{0,Int}()
     end
 
     @testset "[map]reduce and [map]reducedim" begin
@@ -90,10 +99,17 @@ using Statistics: mean
 
         # When the mapping and/or reducing functions are unsupported,
         # the error is thrown by `Base.mapreduce_empty`:
-        @test_throws(
-            ArgumentError("reducing over an empty collection is not allowed"),
-            mapreduce(nothing, nothing, SVector{0,Int}())
-        )
+        if Base.VERSION >= v"1.8.0-DEV.363"
+            @test_throws(
+                "reducing over an empty collection is not allowed",
+                mapreduce(nothing, nothing, SVector{0,Int}())
+            )
+        else
+            @test_throws(
+                ArgumentError("reducing over an empty collection is not allowed"),
+                mapreduce(nothing, nothing, SVector{0,Int}())
+            )
+        end
     end
 
     @testset "implemented by [map]reduce and [map]reducedim" begin
@@ -223,5 +239,23 @@ using Statistics: mean
         v2 = SVector(SVector(1,2), SVector(3,4))
         @test @inferred(reduce(vcat, v2)) === @SVector [1,2,3,4]
         @test @inferred(reduce(hcat, v2)) === @SMatrix [1 3; 2 4]
+    end
+    @testset "map over enumerate" begin
+        # issue #1106
+        v = @SVector [1, -2, 3, -4]
+        m = @SMatrix [1 -2; 3 -4]
+        v0 = SVector{0,Float64}()
+        m0 = SMatrix{0,0,Float64}()
+        @test @inferred(map(f -> f[1] * f[2], enumerate_static(v))) === @SVector [1, -4, 9, -16]
+        @test @inferred(map(f -> f[1] * f[2], enumerate_static(m))) === @SMatrix [1 -6; 6 -16]
+        @test @inferred(map(f -> f, enumerate_static(v0))) === SVector{0,Tuple{Int,Float64}}()
+        @test @inferred(map(f -> f, enumerate_static(m0))) === SMatrix{0,0,Tuple{Int,Float64}}()
+    end
+    @testset "reduce over empty array" begin
+        # issue #1114
+        @test (@inferred reduce(|,zeros(SMatrix{0,3,Bool}); dims=Val(1), init=false)) ==
+            reduce(|,zeros(Bool,0,3); dims=1, init=false)
+        @test reduce(|,zeros(SMatrix{0,3,Bool}); dims=1, init=false) ==
+            reduce(|,zeros(Bool,0,3); dims=1, init=false)
     end
 end

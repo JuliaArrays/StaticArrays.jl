@@ -25,7 +25,7 @@ Base.iterate(S::SVD, ::Val{:done}) = nothing
 
 function svdvals(A::StaticMatrix)
     sv = svdvals(Matrix(A))
-    # We should be using `T2=eltype(sv)`, but it's not inferrable for complex
+    # We should be using `T2=eltype(sv)`, but it's not inferable for complex
     # eltypes.  See https://github.com/JuliaLang/julia/pull/22443
     T = eltype(A)
     T2 = promote_type(Float32, real(typeof(one(T)/norm(one(T)))))

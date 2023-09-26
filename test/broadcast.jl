@@ -115,7 +115,7 @@ end
         # Issue #200: broadcast with Adjoint
         @test @inferred(v1 .+ v2') === @SMatrix [2 5; 3 6]
         @test @inferred(v1 .+ transpose(v2)) === @SMatrix [2 5; 3 6]
-        # Issue 382: infinite recursion in Base.Broadcast.broadcast_indices with Adjoint
+        # Issue 382: infinite recursion in broadcasting axes with Adjoint
         @test @inferred(SVector(1,1)' .+ [1, 1]) == [2 2; 2 2]
         @test @inferred(transpose(SVector(1,1)) .+ [1, 1]) == [2 2; 2 2]
         
@@ -236,8 +236,123 @@ end
         @test @inferred(add_bc!(MMatrix(SA[10 20; 30 40]), (1,2))) ::MMatrix{2,2,Int} == SA[11 21; 32 42]
 
         # Tuples of SA
-        @test SA[1,2,3] .* (SA[1,0],) === SVector{3,SVector{2,Int}}(((1,0), (2,0), (3,0)))
-        # Unfortunately this case of nested broadcasting is not inferred
-        @test_broken @inferred(SA[1,2,3] .* (SA[1,0],))
+        @test (@inferred SA[1,2,3] .* (SA[1,0],)) === SVector{3,SVector{2,Int}}(((1,0), (2,0), (3,0)))
     end
+
+    @testset "SDiagonal" begin
+        for DS in Any[Diagonal(SVector{2}(1:2)), Diagonal(MVector{2}(1:2)), Diagonal(SizedArray{Tuple{2}}(1:2))],
+                S in Any[SVector{2}(1:2), MVector{2}(1:2), SizedArray{Tuple{2}}(1:2)]
+            @test DS .* S isa StaticArray
+            @test DS .* S == collect(DS) .* collect(S)
+            @test DS .* collect(S) == collect(DS) .* collect(S)
+            @test DS .* S' isa StaticArray
+            @test DS .* S' == collect(DS) .* collect(S)
+            @test DS .* collect(S') == collect(DS) .* collect(S)
+            @test S .* DS .* S' isa StaticArray
+            @test S .* DS .* S' == collect(S) .* collect(DS) .* collect(S)
+            DS2 = Diagonal(S)
+            @test DS .* DS2 isa StaticArray
+            @test DS .* DS2 == collect(DS) .* collect(DS2)
+            @test DS .* collect(DS2) == collect(DS) .* collect(DS2)
+
+            # inplace broadcasting for mutable diagonal types
+            DS2 = Diagonal(MVector{2}(diag(DS)))
+            DS2 .*= S
+            @test DS2 == DS .* S
+            DS2 .= DS
+            @test DS2 == DS
+            DS2 .+= DS
+            @test DS2 == DS .+ DS
+            DS2 .= DS
+            DS2 .*= DS
+            @test DS2 == DS .* DS
+        end
+    end
+
+    @testset "broadcast! with reshaping" begin
+        m = @MMatrix [1 2; 3 4]
+        m[1:2] .= 10
+        @test m == SA[10 2; 10 4]
+
+        ms = SizedMatrix{2,2}([1 2; 3 4])
+        ms[1:2] .= 10
+        @test ms == SA[10 2; 10 4]
+    end
+
+end
+
+# A help struct to test style-based broadcast dispatch with unknown array wrapper.
+# `WrapArray(A)` behaves like `A` during broadcast. But its not a `StaticArray`.
+struct WrapArray{T,N,P<:AbstractArray{T,N}} <: AbstractArray{T,N}
+    data::P
+end
+Base.@propagate_inbounds Base.getindex(A::WrapArray, i::Integer...) = A.data[i...]
+Base.@propagate_inbounds Base.setindex!(A::WrapArray, v::Any, i::Integer...) = setindex!(A.data, v, i...)
+Base.size(A::WrapArray) = size(A.data)
+Base.axes(A::WrapArray) = axes(A.data)
+Broadcast.BroadcastStyle(::Type{WrapArray{T,N,P}}) where {T,N,P} = Broadcast.BroadcastStyle(P)
+StaticArrays.isstatic(A::WrapArray) = StaticArrays.isstatic(A.data)
+StaticArrays.Size(::Type{WrapArray{T,N,P}}) where {T,N,P} = StaticArrays.Size(P)
+function StaticArrays.similar_type(::Type{WrapArray{T,N,P}}, ::Type{t}, s::Size{S}) where {T,N,P,t,S}
+    return StaticArrays.similar_type(P, t, s)
+end
+
+@testset "Broadcast with unknown wrapper" begin
+    data = (1, 2)
+    for T in (SVector{2}, MVector{2})
+        destT = T <: SArray ? SArray : MArray
+        a = T(data)
+        for b in (WrapArray(a), WrapArray(a'))
+            @test @inferred(b .+ a) isa destT
+            @test @inferred(b .+ b) isa destT
+            @test @inferred(b .+ (1, 2)) isa destT
+            @test @inferred(b .+ a') isa destT
+            @test @inferred(a' .+ b) isa destT
+            # @test @inferred(b' .+ a') isa StaticMatrix # Adjoint doesn't propagate style
+            @test b .+ b.data == b .+ b == b.data .+ b.data
+        end
+    end
+end
+
+@testset "instantiate with axes updated" begin
+    f(a; ax = nothing) = Broadcast.Broadcasted{StaticArrays.StaticArrayStyle{ndims(a)}}(+,(a,),ax)
+    a = @SArray zeros(2,2,2)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{3,SOneTo}
+    ax = (ax..., Base.OneTo(2))
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{4,Base.OneTo}
+    ax = setindex(ax, Base.OneTo(1), 4)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa NTuple{4,Base.OneTo}
+    a = @SArray zeros(2,1,2)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa Tuple{SOneTo,Base.OneTo,SOneTo}
+    @test_throws DimensionMismatch Broadcast.instantiate(f(a; ax = ax[1:2]))
+
+    a = @SArray zeros(2,2,1)
+    ax = Base.OneTo(2), Base.OneTo(2), Base.OneTo(2)
+    @test @inferred(Broadcast.instantiate(f(a; ax))).axes isa Tuple{SOneTo,SOneTo,Base.OneTo}
+    @test @inferred(Broadcast.instantiate(f(a; ax = ax[1:2]))).axes isa NTuple{2,SOneTo}
+end
+
+@testset "`broadcast`'s stability" begin
+    issue1078(t) = t ./ (1 .- t .^ 2)
+    a = @SVector rand(3)
+    @test @inferred(issue1078(a)) == issue1078(Vector(a))
+    issue560(ũ, u₀, u₁, ρ) = ũ ./ (1e-6 .+ max.(abs.(u₀), abs.(u₁)) .* ρ)
+    issue797(a, b, c, d) = @. a + 5 * b + 3 * c - d
+    manual(a, b, c, d) = @. 0.1a^2 + 0.2b^3 * 0.4c^1 + 0.5d
+    manual2(a, b, c, d) = @. Float32(a) * Float32(b) + Float32(c) * Float32(d)
+    args = rand(3), rand(3), rand(3), rand(3)
+    @test @inferred(issue560(map(SVector{3}, args)...)) == issue560(args...)
+    @test @inferred(issue797(map(SVector{3}, args)...)) == issue797(args...)
+    @test @inferred(manual(map(SVector{3}, args)...)) == manual(args...)
+    @test @inferred(manual2(map(SVector{3}, args)...)) == manual2(args...)
+    issue609(s, c::Integer) = (s .- s.^2) ./ c
+    @test @inferred(issue609(SA[1.], 2)) == issue609([1.], 2)
+end
+
+@testset "broadcasting out-of-bounds getindex" begin
+    @test_throws BoundsError getindex.(SA[1, 2], 0)
+    a = @MArray [1, 2]
+    @test_throws BoundsError a .= getindex.(SA[1, 2], 0)
 end

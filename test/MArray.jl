@@ -19,6 +19,8 @@
     end
 
     @testset "Outer constructors and macro" begin
+        @test_throws Exception MArray(1,2,3,4) # unknown constructor
+
         @test MArray{Tuple{1},Int,1}((1,)).data === (1,)
         @test MArray{Tuple{1},Int}((1,)).data === (1,)
         @test MArray{Tuple{1}}((1,)).data === (1,)
@@ -63,8 +65,8 @@
         @test ((@MArray Float64[1,2,3])::MArray{Tuple{3}}).data === (1.0, 2.0, 3.0)
         @test ((@MArray [1 2])::MArray{Tuple{1,2}}).data === (1, 2)
         @test ((@MArray Float64[1 2])::MArray{Tuple{1,2}}).data === (1.0, 2.0)
-        @test ((@MArray [1 ; 2])::MArray{Tuple{2,1}}).data === (1, 2)
-        @test ((@MArray Float64[1 ; 2])::MArray{Tuple{2,1}}).data === (1.0, 2.0)
+        @test ((@MArray [1 ; 2])::MArray{Tuple{2}}).data === (1, 2)
+        @test ((@MArray Float64[1 ; 2])::MArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@MArray [1 2 ; 3 4])::MArray{Tuple{2,2}}).data === (1, 3, 2, 4)
         @test ((@MArray Float64[1 2 ; 3 4])::MArray{Tuple{2,2}}).data === (1.0, 3.0, 2.0, 4.0)
 
@@ -76,7 +78,7 @@
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::MArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1, 64)
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::MArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1, 128)
         @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 256)
-        test_expand_error(:(@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@MArray [1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1, 512)
         @test ((@MArray Float64[i for i = 1:2])::MArray{Tuple{2}}).data === (1.0, 2.0)
         @test ((@MArray Float64[i*j for i = 1:2, j = 2:3])::MArray{Tuple{2,2}}).data === (2.0, 4.0, 3.0, 6.0)
         @test ((@MArray Float64[i*j*k for i = 1:2, j = 2:3, k =3:4])::MArray{Tuple{2,2,2}}).data === (6.0, 12.0, 9.0, 18.0, 8.0, 16.0, 12.0, 24.0)
@@ -85,7 +87,7 @@
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2])::MArray{Tuple{2,2,2,2,2,2}}).data === ntuple(i->1.0, 64)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2])::MArray{Tuple{2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 128)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
-        test_expand_error(:(@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2]))
+        @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
         test_expand_error(:(@MArray [1 2; 3]))
         test_expand_error(:(@MArray Float64[1 2; 3]))
@@ -93,9 +95,10 @@
         test_expand_error(:(@MArray ones))
         test_expand_error(:(@MArray sin(1:5)))
         test_expand_error(:(@MArray fill()))
-        test_expand_error(:(@MArray ones()))
-        test_expand_error(:(@MArray fill(1)))
         test_expand_error(:(@MArray [1; 2; 3; 4]...))
+
+        @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
+        @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
 
         @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
@@ -103,6 +106,9 @@
         @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(@MArray(rand(2,2,0)), MArray{Tuple{2,2,0}, Float64})
+        @test isa(@MArray(randn(2,2,0)), MArray{Tuple{2,2,0}, Float64})
+        @test isa(@MArray(randexp(2,2,0)), MArray{Tuple{2,2,0}, Float64})
 
         @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
         @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
@@ -112,9 +118,41 @@
         @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
         @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
+        @test isa(@MArray(rand(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
+        @test isa(@MArray(randn(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
+        @test isa(@MArray(randexp(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]
+
+        # Nested cat
+        @test ((@MArray [[1;2] [3;4]])::MMatrix{2,2}).data === (1,2,3,4)
+        @test ((@MArray Float64[[1;2] [3;4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
+        @test ((@MArray [[1 3];[2 4]])::MMatrix{2,2}).data === (1,2,3,4)
+        @test ((@MArray Float64[[1 3];[2 4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
+        test_expand_error(:(@MArray [[1;2] [3]]))
+        test_expand_error(:(@MArray [[1 2]; [3]]))
+
+        if VERSION >= v"1.7.0"
+            function test_ex(ex)
+                a = eval(:(@MArray $ex))
+                b = eval(ex)
+                @test a isa MArray
+                @test eltype(a) === eltype(b)
+                @test a == b
+            end
+            test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+            test_ex(:([1 2 ;;; 3 4]))
+            test_ex(:(Float32[1 2 ;;; 3 4]))
+            test_ex(:([ 1 2
+                        3 4
+                        ;;;
+                        5 6
+                        7 8 ]))
+            test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
+            test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
+        end
     end
 
     @testset "Methods" begin
@@ -188,4 +226,40 @@
         v[] = 2
         @test v[] == 2
     end
+
+    @testset "boolean indexing" begin
+        v = @MArray [1,2,3]
+        b = view(v, SA[true, false, true])
+        @test b == [1,3]
+    end
+    
+    @testset "non-power-of-2 element size" begin
+        primitive type Test24 24 end
+        Test24(n) = Base.trunc_int(Test24, n)
+        a = Test24.(1:4)
+        m = MVector{4}(a)
+        @test m == m[:] == m[1:4] == a
+        @test getindex.(Ref(m), 1:4) == a
+        @test GC.@preserve m unsafe_load.(pointer(m), 1:4) == a
+        @test GC.@preserve m unsafe_load.(pointer.(Ref(m), 1:4)) == a
+        b = Test24.(5:8)
+        setindex!.(Ref(m), b, 1:4)
+        @test m == b
+    end
+end
+
+@testset "some special case" begin
+    @test_throws Exception MVector{1}(1, 2)
+    @test (@inferred(MVector{1}((1, 2)))::MVector{1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(MVector{2}((1, 2)))::MVector{2,Int}).data === (1,2)
+    @test (@inferred(MVector(1, 2))::MVector{2,Int}).data === (1,2)
+    @test (@inferred(MVector((1, 2)))::MVector{2,Int}).data === (1,2)
+
+    @test_throws Exception MMatrix{1,1}(1, 2)
+    @test (@inferred(MMatrix{1,1}((1, 2)))::MMatrix{1,1,NTuple{2,Int}}).data === ((1,2),)
+    @test (@inferred(MMatrix{1,2}((1, 2)))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{1}((1, 2)))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{1}(1, 2))::MMatrix{1,2,Int}).data === (1,2)
+    @test (@inferred(MMatrix{2}((1, 2)))::MMatrix{2,1,Int}).data === (1,2)
+    @test (@inferred(MMatrix{2}(1, 2))::MMatrix{2,1,Int}).data === (1,2)
 end

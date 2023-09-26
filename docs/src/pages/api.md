@@ -120,6 +120,10 @@ Use of `similar` will fall back to a mutable container, such as a `MVector`
 static size (or else a dynamically sized `Array` will be generated when
 specifying the size as plain integers).
 
+### Collecting directly into static arrays
+
+You can collect [iterators](https://docs.julialang.org/en/v1/manual/interfaces/#man-interface-iteration) into static arrays directly with [`StaticArrays.sacollect`](@ref). The size needs to be specified, but the element type is optional.
+
 ### Mutable arrays: `MVector`, `MMatrix` and `MArray`
 
 These statically sized arrays are identical to the above, but are defined as
@@ -158,7 +162,7 @@ aliases, e.g. `sa = SizedMatrix{2,2}(a)`.
 
 Then, methods on `sa` will use the specialized code provided by the *StaticArrays*
 package, which in many cases will be much, much faster. For example, calling
-`eigen(sa)` will be signficantly faster than `eigen(a)` since it will perform a
+`eigen(sa)` will be significantly faster than `eigen(a)` since it will perform a
 specialized 2×2 matrix diagonalization rather than a general algorithm provided
 by Julia and *LAPACK*.
 
@@ -184,6 +188,10 @@ With this type, users can easily access fields to `p = Point3D(x,y,z)` using
 even permute the coordinates with `p[SVector(3,2,1)]`). Furthermore, `Point3D`
 is a complete `AbstractVector` implementation where you can add, subtract or
 scale vectors, multiply them by matrices, etc.
+
+*Note*: the three components of an ordinary `v::SVector{3}` can also be
+accessed as `v.x`, `v.y`, and `v.z`, so there is no need for a `FieldVector`
+to use this convention.
 
 It is also worth noting that `FieldVector`s may be mutable or immutable, and
 that `setindex!` is defined for use on mutable types. For immutable containers,
@@ -297,7 +305,7 @@ end
 so long as the `Type` of the rebound variable (`x`, above) does not change.
 
 On the other hand, the above code for mutable containers like `Array`, `MArray`
-or `SizedArray` is *not* very efficient. Mutable containers in Julia 0.5 must
+or `SizedArray` is *not* very efficient. Mutable containers must
 be *allocated* and later *garbage collected*, and for small, fixed-size arrays
 this can be a leading contribution to the cost. In the above code, a new array
 will be instantiated and allocated on each iteration of the loop. In order to
@@ -307,17 +315,12 @@ apply mutating functions to it:
 function average_position(positions::Vector{SVector{3,Float64}})
     x = zeros(MVector{3,Float64})
     for pos ∈ positions
-        # Take advantage of Julia 0.5 broadcast fusion
-        x .= (+).(x, pos) # same as broadcast!(+, x, x, positions[i])
+        x .+= pos
     end
-    x .= (/).(x, length(positions))
+    x ./= length(positions)
     return x
 end
 ```
-Keep in mind that Julia 0.5 does not fuse calls to `.+`, etc (or `.+=` etc),
-however the `.=` and `(+).()` syntaxes are fused into a single, efficient call
-to `broadcast!`. The simpler syntax `x .+= pos` is expected to be non-allocating
-(and therefore faster) in Julia 0.6.
 
 The functions `setindex`, `push`, `pop`, `pushfirst`, `popfirst`, `insert` and `deleteat`
 are provided for performing certain specific operations on static arrays, in
@@ -348,5 +351,5 @@ faster!
 Pages   = ["api.md"]
 ```
 ```@autodocs
-Modules = [StaticArrays]
+Modules = [StaticArrays, StaticArraysCore]
 ```
