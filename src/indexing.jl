@@ -210,7 +210,7 @@ end
 # We insert this at a point in the dispatch hierarchy where we can intercept any
 # `typeof(A)` (specifically, including dynamic arrays) without triggering ambiguities.
 
-struct StaticIndexing{I}
+struct StaticIndexing{I} <: AbstractArray{Int}
     ind::I
 end
 unwrap(i::StaticIndexing) = i.ind
