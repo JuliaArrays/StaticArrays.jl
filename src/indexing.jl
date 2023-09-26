@@ -220,15 +220,15 @@ function Base.to_indices(A, I::Tuple{Vararg{Union{Integer, CartesianIndex, Stati
     return map(StaticIndexing, inds)
 end
 
-# Overloading getindex, length, iterate, lastindex and to_index is necessary to support
+# Overloading getindex, size, iterate, lastindex and to_index is necessary to support
 # external operations that want to use to_indices on a StaticArray (see issue #878)
 
 function getindex(ind::StaticIndexing, i::Int)
     return ind.ind[i]
 end
 
-function Base.length(ind::StaticIndexing)
-    return length(ind.ind)
+function Base.size(ind::StaticIndexing)
+    return size(ind.ind)
 end
 
 function Base.iterate(ind::StaticIndexing)
