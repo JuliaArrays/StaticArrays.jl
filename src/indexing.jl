@@ -210,7 +210,7 @@ end
 # We insert this at a point in the dispatch hierarchy where we can intercept any
 # `typeof(A)` (specifically, including dynamic arrays) without triggering ambiguities.
 
-struct StaticIndexing{I} <: AbstractVector{Int}
+struct StaticIndexing{I}
     ind::I
 end
 unwrap(i::StaticIndexing) = i.ind
@@ -229,6 +229,10 @@ end
 
 function Base.size(ind::StaticIndexing)
     return size(ind.ind)
+end
+
+function Base.length(ind::StaticIndexing)
+    return length(ind.ind)
 end
 
 function Base.iterate(ind::StaticIndexing)

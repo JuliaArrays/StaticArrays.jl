@@ -251,5 +251,6 @@ using StaticArrays, Test
         @test length(ind) === 3
         @test firstindex(ind[3]) === 1
         @test lastindex(ind[3]) === 2
+        @test size(ind[3]) === (2,)
     end
 end
