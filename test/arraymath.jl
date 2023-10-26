@@ -1,6 +1,13 @@
 using StaticArrays, Test
 import StaticArrays.arithmetic_closure
 
+struct TestDie
+    nsides::Int
+end
+Random.rand(rng::AbstractRNG, ::Random.SamplerType{TestDie}) = TestDie(rand(rng, 4:20))
+Random.rand(rng::AbstractRNG, d::Random.SamplerTrivial{TestDie}) = rand(rng, 1:d[].nsides)
+Base.eltype(::Type{TestDie}) = Int
+
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]
@@ -179,6 +186,11 @@ import StaticArrays.arithmetic_closure
             @test v4 isa SA{0, Float32}
             @test all(0 .< v4 .< 1)
         end
+        @test (@SVector rand(TestDie(6), 3)) isa SVector{3,Int}
+        @test (@MVector rand(TestDie(6), 3)) isa MVector{3,Int}
+
+        @test (@SMatrix rand(TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
+        @test (@MMatrix rand(TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
     end
 
     @testset "rand!()" begin

@@ -73,6 +73,12 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             if length(ex.args) == 3
                 return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 4
+                if f === :rand
+                    # supports calls like rand(Type, n, m) and rand(sampler, n, m))
+                    return :(_rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(esc(ex.args[3])), $(esc(ex.args[4]))), $SM{$(esc(ex.args[3])),$(esc(ex.args[4]))}))
+                else
+                    return :($f($SV{$(escall(ex.args[3,4,2])...)}))
+                end
                 return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
             else
                 error("@$SM expected a 2-dimensional array expression")
