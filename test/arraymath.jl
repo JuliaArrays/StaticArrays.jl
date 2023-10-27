@@ -4,7 +4,6 @@ import StaticArrays.arithmetic_closure
 struct TestDie
     nsides::Int
 end
-Random.rand(rng::AbstractRNG, ::Random.SamplerType{TestDie}) = TestDie(rand(rng, 4:20))
 Random.rand(rng::AbstractRNG, d::Random.SamplerTrivial{TestDie}) = rand(rng, 1:d[].nsides)
 Base.eltype(::Type{TestDie}) = Int
 
