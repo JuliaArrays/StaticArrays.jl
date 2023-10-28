@@ -205,8 +205,14 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             return quote
                 if isa($(esc(ex.args[2])), DataType)
                     $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
-                else
+                elseif isa($(esc(ex.args[2])), Integer)
                     $f($SA{$Tuple{$(escall(ex.args[2:end])...)}})
+                elseif isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    # for calls like rand(rng::AbstractRNG, sampler, dims::Integer...)
+                    StaticArrays._rand($(esc(ex.args[2])), $(esc(ex.args[3])), Size($(escall(ex.args[4:end])...)), $SA{Tuple{$(escall(ex.args[4:end])...)}, Random.gentype($(esc(ex.args[3])))})
+                else
+                    # for calls like rand(sampler, dims::Integer...)
+                    StaticArrays._rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(escall(ex.args[3:end])...)), $SA{Tuple{$(escall(ex.args[3:end])...)}, Random.gentype($(esc(ex.args[2])))})
                 end
             end
         elseif f === :fill

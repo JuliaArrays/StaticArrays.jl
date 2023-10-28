@@ -185,11 +185,22 @@ Base.eltype(::Type{TestDie}) = Int
             @test v4 isa SA{0, Float32}
             @test all(0 .< v4 .< 1)
         end
+        rng = MersenneTwister(123)
         @test (@SVector rand(TestDie(6), 3)) isa SVector{3,Int}
+        @test (@SVector rand(TestDie(6), 0)) isa SVector{0,Int}
         @test (@MVector rand(TestDie(6), 3)) isa MVector{3,Int}
 
         @test (@SMatrix rand(TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
+        @test (@SMatrix rand(TestDie(6), 0, 4)) isa SMatrix{0,4,Int}
         @test (@MMatrix rand(TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
+
+        @test (@SArray rand(TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
+        @test (@SArray rand(rng, TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
+        @test (@SArray rand(TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
+        @test (@SArray rand(rng, TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
+        # test if rng generator is actually respected
+        @test (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5)) === (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5))
+        @test (@MArray rand(TestDie(6), 3, 4, 5)) isa MArray{Tuple{3,4,5},Int}
     end
 
     @testset "rand!()" begin
