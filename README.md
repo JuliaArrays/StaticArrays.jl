@@ -2,10 +2,10 @@
 
 *Statically sized arrays for Julia*
 
-[![Build Status](https://github.com/JuliaArrays/StaticArrays.jl/workflows/CI/badge.svg)](https://github.com/JuliaArrays/StaticArrays.jl/actions?query=workflow%3ACI)
-[![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/dev)
+[![Build Status](https://github.com/JuliaArrays/StaticArrays.jl/workflows/CI/badge.svg)](https://github.com/JuliaArrays/StaticArrays.jl/actions?query=workflow%3ACI)
+[![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
 [![deps](https://juliahub.com/docs/StaticArrays/deps.svg)](https://juliahub.com/ui/Packages/StaticArrays/yY9vm?t=2)
 [![version](https://juliahub.com/docs/StaticArrays/version.svg)](https://juliahub.com/ui/Packages/StaticArrays/yY9vm)
 
