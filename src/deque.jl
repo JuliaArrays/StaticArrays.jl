@@ -6,7 +6,7 @@ Return a new `StaticVector` with `item` inserted on the end of `vec`.
 # Examples
 ```jldoctest
 julia> push(@SVector[1, 2, 3], 4)
-4-element SArray{Tuple{4},Int64,1,4} with indices SOneTo(4):
+4-element SVector{4, Int64} with indices SOneTo(4):
  1
  2
  3
@@ -31,7 +31,7 @@ Return a new `StaticVector` with `item` inserted at the beginning of `vec`.
 # Examples
 ```jldoctest
 julia> pushfirst(@SVector[1, 2, 3, 4], 5)
-5-element SArray{Tuple{5},Int64,1,5} with indices SOneTo(5):
+5-element SVector{5, Int64} with indices SOneTo(5):
  5
  1
  2
@@ -57,7 +57,7 @@ Return a new vector with `item` inserted into `vec` at the given `index`.
 # Examples
 ```jldoctest
 julia> insert(@SVector[6, 5, 4, 2, 1], 4, 3)
-6-element SArray{Tuple{6},Int64,1,6} with indices SOneTo(6):
+6-element SVector{6, Int64} with indices SOneTo(6):
  6
  5
  4
@@ -89,7 +89,7 @@ Return a new vector with the last item in `vec` removed.
 # Examples
 ```jldoctest
 julia> pop(@SVector[1,2,3])
-2-element SArray{Tuple{2},Int64,1,2} with indices SOneTo(2):
+2-element SVector{2, Int64} with indices SOneTo(2):
  1
  2
 ```
@@ -112,7 +112,7 @@ Return a new vector with the first item in `vec` removed.
 # Examples
 ```jldoctest
 julia> popfirst(@SVector[1,2,3])
-2-element SArray{Tuple{2},Int64,1,2} with indices SOneTo(2):
+2-element SVector{2, Int64} with indices SOneTo(2):
  2
  3
 ```
@@ -135,7 +135,7 @@ Return a new vector with the item at the given `index` removed.
 # Examples
 ```jldoctest
 julia> deleteat(@SVector[6, 5, 4, 3, 2, 1], 2)
-5-element SArray{Tuple{5},Int64,1,5} with indices SOneTo(5):
+5-element SVector{5, Int64} with indices SOneTo(5):
  6
  4
  3
@@ -171,13 +171,13 @@ Return a new array with the item at `index` replaced by `x`.
 # Examples
 ```jldoctest
 julia> setindex(@SVector[1,2,3], 4, 2)
-3-element SArray{Tuple{3},Int64,1,3} with indices SOneTo(3):
+3-element SVector{3, Int64} with indices SOneTo(3):
  1
  4
  3
 
 julia> setindex(@SMatrix[2 4; 6 8], 1, 2)
-2×2 SArray{Tuple{2,2},Int64,2,4} with indices SOneTo(2)×SOneTo(2):
+2×2 SMatrix{2, 2, Int64, 4} with indices SOneTo(2)×SOneTo(2):
  2  4
  1  8
 ```
