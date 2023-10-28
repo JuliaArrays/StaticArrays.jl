@@ -3,7 +3,6 @@
 *Statically sized arrays for Julia*
 
 [![Build Status](https://github.com/JuliaArrays/StaticArrays.jl/workflows/CI/badge.svg)](https://github.com/JuliaArrays/StaticArrays.jl/actions?query=workflow%3ACI)
-[![Coverage Status](https://coveralls.io/repos/github/JuliaArrays/StaticArrays.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaArrays/StaticArrays.jl?branch=master)
 [![codecov.io](https://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master/graph/badge.svg)](http://codecov.io/github/JuliaArrays/StaticArrays.jl/branch/master)
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaArrays.github.io/StaticArrays.jl/dev)
