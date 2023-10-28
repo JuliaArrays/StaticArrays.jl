@@ -1,11 +1,44 @@
-# Allow no new ambiguities (see #18), unless you fix some old ones first!
+if VERSION ≥ v"1.7-"
+    Aqua.test_all(StaticArrays, piracy=false)
+    Aqua.test_piracy(StaticArrays, treat_as_own=[
+            StaticArray
+            Size
+            SArray
+            MArray
+            SizedArray
+            FieldArray
+            StaticArrays.StaticArrayStyle
+            StaticArrays.SOneTo
+            StaticArrays.StaticArraysCore
+            StaticArrays.check_array_parameters
+            StaticArrays.convert_ntuple
+        ],
+        broken=true)
 
-const allowable_ambiguities = VERSION ≥ v"1.7" ? 0 :
-                              VERSION ≥ v"1.6" ? 1 : error("version must be ≥1.6")
+elseif VERSION ≥ v"1.6-"
+    Aqua.test_all(StaticArrays, piracy=false, ambiguities=false)
+    Aqua.test_piracy(StaticArrays, treat_as_own=[
+            StaticArray
+            Size
+            SArray
+            MArray
+            SizedArray
+            FieldArray
+            StaticArrays.StaticArrayStyle
+            StaticArrays.SOneTo
+            StaticArrays.StaticArraysCore
+            StaticArrays.check_array_parameters
+            StaticArrays.convert_ntuple
+        ],
+        broken=true)
 
-# TODO: Revisit and fix. See
-#   https://github.com/JuliaLang/julia/pull/36962
-#   https://github.com/JuliaLang/julia/issues/36951
-# Let's not allow new ambiguities. If any change makes the ambiguity count decrease, the
-# change should decrement `allowable_ambiguities` accordingly
-@test length(detect_ambiguities(#=LinearAlgebra, =#StaticArrays)) == allowable_ambiguities
+    # Allow no new ambiguities (see #18), unless you fix some old ones first!
+    # TODO: Revisit and fix. See
+    #   https://github.com/JuliaLang/julia/pull/36962
+    #   https://github.com/JuliaLang/julia/issues/36951
+    # Let's not allow new ambiguities. If any change makes the ambiguity count decrease, the
+    # change should decrement `allowable_ambiguities` accordingly
+    allowable_ambiguities = 1
+    @test length(detect_ambiguities(StaticArrays)) == allowable_ambiguities
+
+end
