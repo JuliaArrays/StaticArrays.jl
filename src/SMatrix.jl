@@ -73,9 +73,9 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             if length(ex.args) == 3
                 return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 4
-                if f === :rand && ex.args[3] isa Int && ex.args[3] > 0 && ex.args[4] isa Int && ex.args[4] > 0
-                    # supports calls like rand(Type, n, m) and rand(sampler, n, m)), but only if n, m > 0
-                    return :(_rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(esc(ex.args[3])), $(esc(ex.args[4]))), $SM{$(esc(ex.args[3])), $(esc(ex.args[4]))}))
+                if f === :rand && ex.args[3] isa Int && ex.args[3] ≥ 0 && ex.args[4] isa Int && ex.args[4] ≥ 0
+                    # supports calls like rand(Type, n, m) and rand(sampler, n, m))
+                    return :(_rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(esc(ex.args[3])), $(esc(ex.args[4]))), $SM{$(esc(ex.args[3])), $(esc(ex.args[4])), Random.gentype($(esc(ex.args[2])))}))
                 else
                     return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
                 end
