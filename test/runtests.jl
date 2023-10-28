@@ -45,7 +45,7 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
         addtests("empty_array_syntax.jl")
     end
 
-    addtests("ambiguities.jl")
+    addtests("aqua.jl")
     addtests("unbound_args.jl")
     addtests("custom_types.jl")
     addtests("convert.jl")
