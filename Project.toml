@@ -4,6 +4,7 @@ version = "1.6.5"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -15,8 +16,9 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StaticArraysStatisticsExt = "Statistics"
 
 [compat]
-julia = "1.6"
+PrecompileTools = "1"
 StaticArraysCore = "~1.4.0"
+julia = "1.6"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
