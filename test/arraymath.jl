@@ -186,21 +186,41 @@ Base.eltype(::Type{TestDie}) = Int
             @test all(0 .< v4 .< 1)
         end
         rng = MersenneTwister(123)
+        @test (@SVector rand(3)) isa SVector{3,Float64}
+        @test (@SMatrix rand(3, 4)) isa SMatrix{3,4,Float64}
+        @test (@SArray rand(3, 4, 5)) isa SArray{Tuple{3,4,5},Float64}
+
+        @test (@MVector rand(3)) isa MVector{3,Float64}
+        @test (@MMatrix rand(3, 4)) isa MMatrix{3,4,Float64}
+        @test (@MArray rand(3, 4, 5)) isa MArray{Tuple{3,4,5},Float64}
+
         @test (@SVector rand(TestDie(6), 3)) isa SVector{3,Int}
+        @test (@SVector rand(rng, TestDie(6), 3)) isa SVector{3,Int}
         @test (@SVector rand(TestDie(6), 0)) isa SVector{0,Int}
+        @test (@SVector rand(rng, TestDie(6), 0)) isa SVector{0,Int}
         @test (@MVector rand(TestDie(6), 3)) isa MVector{3,Int}
+        @test (@MVector rand(rng, TestDie(6), 3)) isa MVector{3,Int}
 
         @test (@SMatrix rand(TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
+        @test (@SMatrix rand(rng, TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
         @test (@SMatrix rand(TestDie(6), 0, 4)) isa SMatrix{0,4,Int}
+        @test (@SMatrix rand(rng, TestDie(6), 0, 4)) isa SMatrix{0,4,Int}
         @test (@MMatrix rand(TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
+        @test (@MMatrix rand(rng, TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
 
         @test (@SArray rand(TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
         @test (@SArray rand(rng, TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
         @test (@SArray rand(TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
         @test (@SArray rand(rng, TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
-        # test if rng generator is actually respected
-        @test (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5)) === (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5))
         @test (@MArray rand(TestDie(6), 3, 4, 5)) isa MArray{Tuple{3,4,5},Int}
+
+        # test if rng generator is actually respected
+        @test (@SVector rand(MersenneTwister(123), TestDie(6), 3)) ===
+              (@SVector rand(MersenneTwister(123), TestDie(6), 3))
+        @test (@SMatrix rand(MersenneTwister(123), TestDie(6), 3, 4)) ===
+              (@SMatrix rand(MersenneTwister(123), TestDie(6), 3, 4))
+        @test (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5)) ===
+              (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5))
     end
 
     @testset "rand!()" begin

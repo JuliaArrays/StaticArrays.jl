@@ -79,10 +79,27 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
                 return :($f($SV{$(esc(ex.args[2])), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 3
                 if f === :rand && ex.args[3] isa Int && ex.args[3] ≥ 0
-                    # supports calls like rand(Type, n) and rand(sampler, n))
-                    return :(_rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(esc(ex.args[3]))), $SV{$(esc(ex.args[3])), Random.gentype($(esc(ex.args[2])))}))
+                    # for calls like rand(sampler, n) or rand(type, n)
+                    return quote
+                        StaticArrays._rand(
+                            Random.GLOBAL_RNG,
+                            $(esc(ex.args[2])),
+                            Size($(esc(ex.args[3]))),
+                            $SV{$(esc(ex.args[3])), Random.gentype($(esc(ex.args[2])))},
+                        )
+                    end
                 else
                     return :($f($SV{$(escall(ex.args[3:-1:2])...)}))
+                end
+            elseif length(ex.args) == 4 && f === :rand && ex.args[4] isa Int && ex.args[4] ≥ 0
+                # for calls like rand(rng::AbstractRNG, sampler, n) or rand(rng::AbstractRNG, type, n)
+                return quote 
+                    StaticArrays._rand(
+                        $(esc(ex.args[2])),
+                        $(esc(ex.args[3])),
+                        Size($(esc(ex.args[4]))),
+                        $SV{$(esc(ex.args[4])), Random.gentype($(esc(ex.args[3])))},
+                    )
                 end
             else
                 error("@$SV expected a 1-dimensional array expression")

@@ -74,10 +74,27 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
                 return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
             elseif length(ex.args) == 4
                 if f === :rand && ex.args[3] isa Int && ex.args[3] ≥ 0 && ex.args[4] isa Int && ex.args[4] ≥ 0
-                    # supports calls like rand(Type, n, m) and rand(sampler, n, m))
-                    return :(_rand(Random.GLOBAL_RNG, $(esc(ex.args[2])), Size($(esc(ex.args[3])), $(esc(ex.args[4]))), $SM{$(esc(ex.args[3])), $(esc(ex.args[4])), Random.gentype($(esc(ex.args[2])))}))
+                    # for calls like rand(sampler, n, m) or rand(type, n, m)
+                    return quote
+                        StaticArrays._rand(
+                            Random.GLOBAL_RNG,
+                            $(esc(ex.args[2])),
+                            Size($(esc(ex.args[3])), $(esc(ex.args[4]))),
+                            $SM{$(esc(ex.args[3])), $(esc(ex.args[4])), Random.gentype($(esc(ex.args[2])))},
+                        )
+                    end
                 else
                     return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
+                end
+            elseif length(ex.args) == 5 && f === :rand && ex.args[4] isa Int && ex.args[4] ≥ 0 && ex.args[5] isa Int && ex.args[5] ≥ 0
+                # for calls like rand(rng::AbstractRNG, sampler, n, m) or rand(rng::AbstractRNG, type, n, m)
+                return quote
+                    StaticArrays._rand(
+                        $(esc(ex.args[2])),
+                        $(esc(ex.args[3])),
+                        Size($(esc(ex.args[4])), $(esc(ex.args[5]))),
+                        $SM{$(esc(ex.args[4])), $(esc(ex.args[5])), Random.gentype($(esc(ex.args[3])))},
+                    )
                 end
             else
                 error("@$SM expected a 2-dimensional array expression")
