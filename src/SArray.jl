@@ -211,7 +211,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             end
         elseif f === :rand
             if length(ex.args) == 1
-                # No support for `rand()`
+                # No support for `@SArray rand()`
                 error("@$SA got bad expression: $(ex)")
             elseif length(ex.args) ≥ 2 && ex.args[2] isa Integer
                 # for calls like `rand(dims...)`
@@ -263,14 +263,14 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
             if length(ex.args) == 1
-                # No support for `rand()`
+                # No support for `@SArray randn()` etc.
                 error("@$SA got bad expression: $(ex)")
             elseif length(ex.args) ≥ 2 && ex.args[2] isa Integer
-                # for calls like `rand(dims...)`
+                # for calls like `randn(dims...)`
                 return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
             elseif length(ex.args) ≥ 3 && ex.args[3] isa Integer
-                # for calls like `rand(rng, dims...)`
-                # for calls like `rand(type, dims...)`
+                # for calls like `randn(rng, dims...)`
+                # for calls like `randn(type, dims...)`
                 return quote
                     if isa($(esc(ex.args[2])), Random.AbstractRNG)
                         StaticArrays.$_f(
@@ -293,7 +293,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                     end
                 end
             elseif length(ex.args) ≥ 4 && ex.args[4] isa Integer
-                # for calls like `rand(rng, type, dims...)`
+                # for calls like `randn(rng, type, dims...)`
                 return quote
                     StaticArrays.$_f(
                         $(esc(ex.args[2])),
