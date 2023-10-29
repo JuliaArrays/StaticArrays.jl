@@ -261,47 +261,51 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 error("@$SA got bad expression: $(ex)")
             end
         elseif f === :randn || f === :randexp
+            _f = Symbol(:_, f)
             if length(ex.args) == 1
-                f === :zeros || f === :ones || error("@$SA got bad expression: $(ex)")
-                return :($f($SA{$Tuple{},$Float64}))
-            elseif f !== :rand || length(ex.args) == 2
-                return quote
-                    if isa($(esc(ex.args[2])), DataType)
-                        $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
-                    else
-                        $f($SA{$Tuple{$(escall(ex.args[2:end])...)}})
-                    end
-                end
-            elseif ex.args[2] isa Integer
+                # No support for `rand()`
+                error("@$SA got bad expression: $(ex)")
+            elseif length(ex.args) ≥ 2 && ex.args[2] isa Integer
+                # for calls like `rand(dims...)`
                 return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            else
+            elseif length(ex.args) ≥ 3 && ex.args[3] isa Integer
+                # for calls like `rand(rng, dims...)`
+                # for calls like `rand(type, dims...)`
                 return quote
-                    if isa($(esc(ex.args[2])), DataType)
-                        $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
-                    elseif isa($(esc(ex.args[2])), Random.AbstractRNG)
-                        # for calls like rand(rng::AbstractRNG, sampler, dims::Integer...)
-                        StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(escall(ex.args[4:end])...)),
-                            $SA{
-                                Tuple{$(escall(ex.args[4:end])...)},
-                                Random.gentype($(esc(ex.args[3]))),
-                            },
-                        )
-                    else
-                        # for calls like rand(sampler, dims::Integer...)
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
+                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                        StaticArrays.$_f(
                             $(esc(ex.args[2])),
                             Size($(escall(ex.args[3:end])...)),
                             $SA{
                                 Tuple{$(escall(ex.args[3:end])...)},
-                                Random.gentype($(esc(ex.args[2]))),
+                                Float64,
+                            },
+                        )
+                    else
+                        StaticArrays.$_f(
+                            Random.GLOBAL_RNG,
+                            Size($(escall(ex.args[3:end])...)),
+                            $SA{
+                                Tuple{$(escall(ex.args[3:end])...)},
+                                $(esc(ex.args[2])),
                             },
                         )
                     end
                 end
+            elseif length(ex.args) ≥ 4 && ex.args[4] isa Integer
+                # for calls like `rand(rng, type, dims...)`
+                return quote
+                    StaticArrays.$_f(
+                        $(esc(ex.args[2])),
+                        Size($(escall(ex.args[4:end])...)),
+                        $SA{
+                            Tuple{$(escall(ex.args[4:end])...)},
+                            $(esc(ex.args[3])),
+                        },
+                    )
+                end
+            else
+                error("@$SA got bad expression: $(ex)")
             end
         elseif f === :fill
             length(ex.args) == 1 && error("@$SA got bad expression: $(ex)")
