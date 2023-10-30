@@ -143,6 +143,11 @@ function parse_cat_ast(ex::Expr)
 end
 
 escall(args) = Iterators.map(esc, args)
+function _isnonnegvec(args)
+    length(args) == 0 && return false
+    all(isa.(args, Integer)) && return all(args .≥ 0)
+    return false
+end
 function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
     if !isa(ex, Expr)
         error("Bad input for @$SA")
@@ -213,10 +218,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             if length(ex.args) == 1
                 # No support for `@SArray rand()`
                 error("@$SA got bad expression: $(ex)")
-            elseif length(ex.args) ≥ 2 && ex.args[2] isa Integer
+            elseif _isnonnegvec(ex.args[2:end])
                 # for calls like `rand(dims...)`
                 return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            elseif length(ex.args) ≥ 3 && ex.args[3] isa Integer
+            elseif _isnonnegvec(ex.args[3:end])
                 # for calls like `rand(rng, dims...)`
                 # for calls like `rand(type, dims...)`
                 # for calls like `rand(sampler, dims...)`
@@ -243,7 +248,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                         )
                     end
                 end
-            elseif length(ex.args) ≥ 4 && ex.args[4] isa Integer
+            elseif _isnonnegvec(ex.args[4:end])
                 # for calls like `rand(rng, type, dims...)`
                 # for calls like `rand(rng, sampler, dims...)`
                 return quote
