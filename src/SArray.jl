@@ -204,15 +204,19 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         f = ex.args[1]
         if f === :zeros || f === :ones
             if length(ex.args) == 1
+                # for calls like `zeros()`
                 return :($f($SA{$Tuple{},$Float64}))
+            elseif _isnonnegvec(ex.args[2:end])
+                # for calls like `zeros(dims...)`
+                return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
+            elseif length(ex.args) == 2
+                # for calls like `zeros(type)`
+                return :($f($SA{$Tuple{},$(esc(ex.args[2]))}))
+            elseif _isnonnegvec(ex.args[3:end])
+                # for calls like `zeros(type, dims...)`
+                return :($f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))}))
             else
-                return quote
-                    if isa($(esc(ex.args[2])), DataType)
-                        $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
-                    else
-                        $f($SA{$Tuple{$(escall(ex.args[2:end])...)}})
-                    end
-                end
+                error("@$SA got bad expression: $(ex)")
             end
         elseif f === :rand
             if length(ex.args) == 1
@@ -270,10 +274,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             if length(ex.args) == 1
                 # No support for `@SArray randn()` etc.
                 error("@$SA got bad expression: $(ex)")
-            elseif length(ex.args) ≥ 2 && ex.args[2] isa Integer
+            elseif _isnonnegvec(ex.args[2:end])
                 # for calls like `randn(dims...)`
                 return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            elseif length(ex.args) ≥ 3 && ex.args[3] isa Integer
+            elseif _isnonnegvec(ex.args[3:end])
                 # for calls like `randn(rng, dims...)`
                 # for calls like `randn(type, dims...)`
                 return quote
@@ -297,7 +301,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                         )
                     end
                 end
-            elseif length(ex.args) ≥ 4 && ex.args[4] isa Integer
+            elseif _isnonnegvec(ex.args[4:end])
                 # for calls like `randn(rng, type, dims...)`
                 return quote
                     StaticArrays.$_f(
