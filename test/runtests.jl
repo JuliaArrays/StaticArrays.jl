@@ -47,7 +47,6 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     end
 
     addtests("aqua.jl")
-    addtests("unbound_args.jl")
     addtests("custom_types.jl")
     addtests("convert.jl")
     addtests("core.jl")
