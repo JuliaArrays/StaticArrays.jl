@@ -304,10 +304,9 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 # for calls like `randn(dims...)`
                 return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
             elseif _isnonnegvec(ex.args[3:end])
-                # for calls like `randn(rng, dims...)`
-                # for calls like `randn(type, dims...)`
                 return quote
                     if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                        # for calls like `randn(rng, dims...)`
                         StaticArrays.$_f(
                             $(esc(ex.args[2])),
                             Size($(escall(ex.args[3:end])...)),
@@ -317,6 +316,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                             },
                         )
                     else
+                        # for calls like `randn(type, dims...)`
                         StaticArrays.$_f(
                             Random.GLOBAL_RNG,
                             Size($(escall(ex.args[3:end])...)),
