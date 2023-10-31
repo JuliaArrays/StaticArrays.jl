@@ -64,8 +64,8 @@ function Base.getproperty(::SOneTo{n}, s::Symbol) where {n}
     end
 end
 
-function Base.show(io::IO, ::SOneTo{n}) where {n}
-    print(io, "SOneTo(", n::Int, ")")
+function Base.show(io::IO, @nospecialize(x::SOneTo))
+    print(io, "SOneTo(", length(x)::Int, ")")
 end
 
 Base.@pure function Base.checkindex(::Type{Bool}, ::SOneTo{n1}, ::SOneTo{n2}) where {n1, n2}
