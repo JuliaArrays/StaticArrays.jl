@@ -77,10 +77,10 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         if f === :zeros || f === :ones
             if _isnonnegvec(ex.args[2:end], 1)
                 # for calls like `zeros(dim)`
-                return :($f($SV{$(esc(ex.args[2])), Float64}))
+                return :($f($SV{$(esc(ex.args[2]))}))
             elseif _isnonnegvec(ex.args[3:end], 1)
                 # for calls like `zeros(type, dim)`
-                return :($f($SV{$(escall(ex.args[[3,2]])...)}))
+                return :($f($SV{$(esc(ex.args[3])), $(esc(ex.args[2]))}))
             else
                 error("@$SV got bad expression: $(ex)")
             end
@@ -175,13 +175,14 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
                 error("@$SV expected a 1-dimensional array expression")
             end
         elseif f === :fill
-            if length(ex.args) == 3
+            # for calls like `fill(value, dim)`
+            if _isnonnegvec(ex.args[3:end], 1)
                 return :($f($(esc(ex.args[2])), $SV{$(esc(ex.args[3]))}))
             else
                 error("@$SV expected a 1-dimensional array expression")
             end
         else
-            error("@$SV only supports the zeros(), ones(), rand(), randn() and randexp() functions.")
+            error("@$SV only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Use @$SV [a,b,c], @$SV Type[a,b,c] or a comprehension like @$SV [f(i) for i = i_min:i_max]")
