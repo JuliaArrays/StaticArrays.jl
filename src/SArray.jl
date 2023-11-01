@@ -343,8 +343,15 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 error("@$SA got bad expression: $(ex)")
             end
         elseif f === :fill
-            length(ex.args) == 1 && error("@$SA got bad expression: $(ex)")
-            return :($f($(esc(ex.args[2])), $SA{$Tuple{$(escall(ex.args[3:end])...)}}))
+            # for calls like `fill(value)`
+            # for calls like `fill(value, dims...)`
+            if length(ex.args) == 2
+                return :($f($(esc(ex.args[2])), $SA{$Tuple{}}))
+            elseif _isnonnegvec(ex.args[3:end])
+                return :($f($(esc(ex.args[2])), $SA{$Tuple{$(escall(ex.args[3:end])...)}}))
+            else
+                error("@$SA got bad expression: $(ex)")
+            end
         else
             error("@$SA only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
