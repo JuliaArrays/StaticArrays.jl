@@ -69,44 +69,115 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         end
     elseif head === :call
         f = ex.args[1]
-        if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
-            if length(ex.args) == 3
-                return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
-            elseif length(ex.args) == 4
-                if f === :rand && ex.args[3] isa Int && ex.args[3] ≥ 0 && ex.args[4] isa Int && ex.args[4] ≥ 0
-                    # for calls like rand(sampler, n, m) or rand(type, n, m)
-                    return quote
+        if f === :zeros || f === :ones
+            if _isnonnegvec(ex.args[2:end], 2)
+                # for calls like `zeros(dim1, dim2)`
+                return :($f($SM{$(escall(ex.args[2:end])...)}))
+            elseif _isnonnegvec(ex.args[3:end], 2)
+                # for calls like `zeros(type, dim1, dim2)`
+                return :($f($SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))}))
+            else
+                error("@$SM got bad expression: $(ex)")
+            end
+        elseif f === :rand
+            if _isnonnegvec(ex.args[2:end], 2)
+                # for calls like `rand(dim1, dim2)`
+                return :($f($SM{$(escall(ex.args[2:end])...)}))
+            elseif _isnonnegvec(ex.args[3:end], 2)
+                return quote
+                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                        # for calls like `rand(rng, dim1, dim2)`
+                        StaticArrays._rand(
+                            $(esc(ex.args[2])),
+                            Float64,
+                            Size($(escall(ex.args[3:end])...)),
+                            $SM{$(escall(ex.args[3:end])...), Float64},
+                        )
+                    elseif isa($(esc(ex.args[2])), DataType)
+                        # for calls like `rand(type, dim1, dim2)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
                             $(esc(ex.args[2])),
-                            Size($(esc(ex.args[3])), $(esc(ex.args[4]))),
-                            $SM{$(esc(ex.args[3])), $(esc(ex.args[4])), Random.gentype($(esc(ex.args[2])))},
+                            Size($(escall(ex.args[3:end])...)),
+                            $SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))},
+                        )
+                    else
+                        # for calls like `rand(sampler, dim1, dim2)`
+                        StaticArrays._rand(
+                            Random.GLOBAL_RNG,
+                            $(esc(ex.args[2])),
+                            Size($(escall(ex.args[3:end])...)),
+                            $SM{$(escall(ex.args[3:end])...), Random.gentype($(esc(ex.args[2])))},
                         )
                     end
-                else
-                    return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
                 end
-            elseif length(ex.args) == 5 && f === :rand && ex.args[4] isa Int && ex.args[4] ≥ 0 && ex.args[5] isa Int && ex.args[5] ≥ 0
-                # for calls like rand(rng::AbstractRNG, sampler, n, m) or rand(rng::AbstractRNG, type, n, m)
+            elseif _isnonnegvec(ex.args[4:end], 2)
                 return quote
-                    StaticArrays._rand(
+                    if isa($(esc(ex.args[3])), DataType)
+                        # for calls like `rand(rng, type, dim1, dim2)`
+                        StaticArrays._rand(
+                            $(esc(ex.args[2])),
+                            $(esc(ex.args[3])),
+                            Size($(escall(ex.args[4:end])...)),
+                            $SM{$(escall(ex.args[4:end])...), $(esc(ex.args[3]))},
+                        )
+                    else
+                        # for calls like `rand(rng, sampler, dim1, dim2)`
+                        StaticArrays._rand(
+                            $(esc(ex.args[2])),
+                            $(esc(ex.args[3])),
+                            Size($(escall(ex.args[4:end])...)),
+                            $SM{$(escall(ex.args[4:end])...), Random.gentype($(esc(ex.args[3])))},
+                        )
+                    end
+                end
+            else
+                error("@$SM got bad expression: $(ex)")
+            end
+        elseif f === :randn || f === :randexp
+            _f = Symbol(:_, f)
+            if _isnonnegvec(ex.args[2:end], 2)
+                # for calls like `randn(dim1, dim2)`
+                return :($f($SM{$(escall(ex.args[2:end])...)}))
+            elseif _isnonnegvec(ex.args[3:end], 2)
+                return quote
+                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                        # for calls like `randn(rng, dim1, dim2)`
+                        StaticArrays.$_f(
+                            $(esc(ex.args[2])),
+                            Size($(escall(ex.args[3:end])...)),
+                            $SM{$(escall(ex.args[3:end])...), Float64},
+                        )
+                    else
+                        # for calls like `randn(type, dim1, dim2)`
+                        StaticArrays.$_f(
+                            Random.GLOBAL_RNG,
+                            Size($(escall(ex.args[3:end])...)),
+                            $SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))},
+                        )
+                    end
+                end
+            elseif _isnonnegvec(ex.args[4:end], 2)
+                # for calls like `randn(rng, type, dim1, dim2)`
+                return quote
+                    StaticArrays.$_f(
                         $(esc(ex.args[2])),
-                        $(esc(ex.args[3])),
-                        Size($(esc(ex.args[4])), $(esc(ex.args[5]))),
-                        $SM{$(esc(ex.args[4])), $(esc(ex.args[5])), Random.gentype($(esc(ex.args[3])))},
+                        Size($(escall(ex.args[4:end])...)),
+                        $SM{$(escall(ex.args[4:end])...), $(esc(ex.args[3]))},
                     )
                 end
             else
                 error("@$SM expected a 2-dimensional array expression")
             end
-        elseif ex.args[1] === :fill
-            if length(ex.args) == 4
-                return :($f($(esc(ex.args[2])), $SM{$(escall(ex.args[3:4])...)}))
+        elseif f === :fill
+            # for calls like `fill(value, dim1, dim2)`
+            if _isnonnegvec(ex.args[3:end], 2)
+                return :($f($(esc(ex.args[2])), $SM{$(escall(ex.args[3:end])...)}))
             else
                 error("@$SM expected a 2-dimensional array expression")
             end
         else
-            error("@$SM only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
+            error("@$SM only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @$SM")
