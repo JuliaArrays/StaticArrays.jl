@@ -112,6 +112,7 @@ include("indexing.jl")
 include("broadcast.jl")
 include("mapreduce.jl")
 include("sort.jl")
+using .Sort
 include("arraymath.jl")
 include("linalg.jl")
 include("matrix_multiply_add.jl")
