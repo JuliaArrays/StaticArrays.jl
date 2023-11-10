@@ -38,12 +38,12 @@ end
 
 
 @inline _sort(a::StaticVector, alg, order) =
-    similar_type(a)(sort!(Base.copymutable(a); alg=alg, order=order))
+    similar_type(a)(sort!(copyo!(similar(a), a); alg=alg, order=order))
 
 @inline _sort(a::StaticVector, alg::BitonicSortAlg, order) =
     similar_type(a)(_sort(Tuple(a), alg, order))
 
-_sort(a::NTuple, alg, order) = sort!(Base.copymutable(a); alg=alg, order=order)
+_sort(a::NTuple, alg, order) = sort!(collect(a); alg=alg, order=order)
 
 # Implementation loosely following
 # https://www.inf.hs-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm
