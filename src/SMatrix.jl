@@ -69,65 +69,66 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         end
     elseif head === :call
         f = ex.args[1]
+        fargs = ex.args[2:end]
         if f === :zeros || f === :ones
-            if _isnonnegvec(ex.args[2:end], 2)
+            if _isnonnegvec(fargs, 2)
                 # for calls like `zeros(dim1, dim2)`
-                return :($f($SM{$(escall(ex.args[2:end])...)}))
-            elseif _isnonnegvec(ex.args[3:end], 2)
+                return :($f($SM{$(escall(fargs)...)}))
+            elseif _isnonnegvec(fargs[2:end], 2)
                 # for calls like `zeros(type, dim1, dim2)`
-                return :($f($SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))}))
+                return :($f($SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))}))
             else
                 error("@$SM got bad expression: $(ex)")
             end
         elseif f === :rand
-            if _isnonnegvec(ex.args[2:end], 2)
+            if _isnonnegvec(fargs, 2)
                 # for calls like `rand(dim1, dim2)`
-                return :($f($SM{$(escall(ex.args[2:end])...)}))
-            elseif _isnonnegvec(ex.args[3:end], 2)
+                return :($f($SM{$(escall(fargs)...)}))
+            elseif _isnonnegvec(fargs[2:end], 2)
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `rand(rng, dim1, dim2)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
+                            $(esc(fargs[1])),
                             Float64,
-                            Size($(escall(ex.args[3:end])...)),
-                            $SM{$(escall(ex.args[3:end])...), Float64},
+                            Size($(escall(fargs[2:end])...)),
+                            $SM{$(escall(fargs[2:end])...), Float64},
                         )
-                    elseif isa($(esc(ex.args[2])), DataType)
+                    elseif isa($(esc(fargs[1])), DataType)
                         # for calls like `rand(type, dim1, dim2)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
-                            $SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))},
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
+                            $SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))},
                         )
                     else
                         # for calls like `rand(sampler, dim1, dim2)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
-                            $SM{$(escall(ex.args[3:end])...), Random.gentype($(esc(ex.args[2])))},
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
+                            $SM{$(escall(fargs[2:end])...), Random.gentype($(esc(fargs[1])))},
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end], 2)
+            elseif _isnonnegvec(fargs[3:end], 2)
                 return quote
-                    if isa($(esc(ex.args[3])), DataType)
+                    if isa($(esc(fargs[2])), DataType)
                         # for calls like `rand(rng, type, dim1, dim2)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(escall(ex.args[4:end])...)),
-                            $SM{$(escall(ex.args[4:end])...), $(esc(ex.args[3]))},
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(escall(fargs[3:end])...)),
+                            $SM{$(escall(fargs[3:end])...), $(esc(fargs[2]))},
                         )
                     else
                         # for calls like `rand(rng, sampler, dim1, dim2)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(escall(ex.args[4:end])...)),
-                            $SM{$(escall(ex.args[4:end])...), Random.gentype($(esc(ex.args[3])))},
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(escall(fargs[3:end])...)),
+                            $SM{$(escall(fargs[3:end])...), Random.gentype($(esc(fargs[2])))},
                         )
                     end
                 end
@@ -136,34 +137,34 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             end
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
-            if _isnonnegvec(ex.args[2:end], 2)
+            if _isnonnegvec(fargs, 2)
                 # for calls like `randn(dim1, dim2)`
-                return :($f($SM{$(escall(ex.args[2:end])...)}))
-            elseif _isnonnegvec(ex.args[3:end], 2)
+                return :($f($SM{$(escall(fargs)...)}))
+            elseif _isnonnegvec(fargs[2:end], 2)
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `randn(rng, dim1, dim2)`
                         StaticArrays.$_f(
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
-                            $SM{$(escall(ex.args[3:end])...), Float64},
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
+                            $SM{$(escall(fargs[2:end])...), Float64},
                         )
                     else
                         # for calls like `randn(type, dim1, dim2)`
                         StaticArrays.$_f(
                             Random.GLOBAL_RNG,
-                            Size($(escall(ex.args[3:end])...)),
-                            $SM{$(escall(ex.args[3:end])...), $(esc(ex.args[2]))},
+                            Size($(escall(fargs[2:end])...)),
+                            $SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))},
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end], 2)
+            elseif _isnonnegvec(fargs[3:end], 2)
                 # for calls like `randn(rng, type, dim1, dim2)`
                 return quote
                     StaticArrays.$_f(
-                        $(esc(ex.args[2])),
-                        Size($(escall(ex.args[4:end])...)),
-                        $SM{$(escall(ex.args[4:end])...), $(esc(ex.args[3]))},
+                        $(esc(fargs[1])),
+                        Size($(escall(fargs[3:end])...)),
+                        $SM{$(escall(fargs[3:end])...), $(esc(fargs[2]))},
                     )
                 end
             else
@@ -171,8 +172,8 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             end
         elseif f === :fill
             # for calls like `fill(value, dim1, dim2)`
-            if _isnonnegvec(ex.args[3:end], 2)
-                return :($f($(esc(ex.args[2])), $SM{$(escall(ex.args[3:end])...)}))
+            if _isnonnegvec(fargs[2:end], 2)
+                return :($f($(esc(fargs[1])), $SM{$(escall(fargs[2:end])...)}))
             else
                 error("@$SM expected a 2-dimensional array expression")
             end

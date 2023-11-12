@@ -74,65 +74,66 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         end
     elseif head === :call
         f = ex.args[1]
+        fargs = ex.args[2:end]
         if f === :zeros || f === :ones
-            if _isnonnegvec(ex.args[2:end], 1)
+            if _isnonnegvec(fargs, 1)
                 # for calls like `zeros(dim)`
-                return :($f($SV{$(esc(ex.args[2]))}))
-            elseif _isnonnegvec(ex.args[3:end], 1)
+                return :($f($SV{$(esc(fargs[1]))}))
+            elseif _isnonnegvec(fargs[2:end], 1)
                 # for calls like `zeros(type, dim)`
-                return :($f($SV{$(esc(ex.args[3])), $(esc(ex.args[2]))}))
+                return :($f($SV{$(esc(fargs[2])), $(esc(fargs[1]))}))
             else
                 error("@$SV got bad expression: $(ex)")
             end
         elseif f === :rand
-            if _isnonnegvec(ex.args[2:end], 1)
+            if _isnonnegvec(fargs, 1)
                 # for calls like `rand(dim)`
-                return :($f($SV{$(esc(ex.args[2]))}))
-            elseif _isnonnegvec(ex.args[3:end], 1)
+                return :($f($SV{$(esc(fargs[1]))}))
+            elseif _isnonnegvec(fargs[2:end], 1)
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `rand(rng, dim)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
+                            $(esc(fargs[1])),
                             Float64,
-                            Size($(esc(ex.args[3]))),
-                            $SV{$(esc(ex.args[3])), Float64},
+                            Size($(esc(fargs[2]))),
+                            $SV{$(esc(fargs[2])), Float64},
                         )
-                    elseif isa($(esc(ex.args[2])), DataType)
+                    elseif isa($(esc(fargs[1])), DataType)
                         # for calls like `rand(type, dim)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(esc(ex.args[3]))),
-                            $SV{$(esc(ex.args[3])), $(esc(ex.args[2]))},
+                            $(esc(fargs[1])),
+                            Size($(esc(fargs[2]))),
+                            $SV{$(esc(fargs[2])), $(esc(fargs[1]))},
                         )
                     else
                         # for calls like `rand(sampler, dim)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(esc(ex.args[3]))),
-                            $SV{$(esc(ex.args[3])), Random.gentype($(esc(ex.args[2])))},
+                            $(esc(fargs[1])),
+                            Size($(esc(fargs[2]))),
+                            $SV{$(esc(fargs[2])), Random.gentype($(esc(fargs[1])))},
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end], 1)
+            elseif _isnonnegvec(fargs[3:end], 1)
                 return quote
-                    if isa($(esc(ex.args[3])), DataType)
+                    if isa($(esc(fargs[2])), DataType)
                         # for calls like `rand(rng, type, dim)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(esc(ex.args[4]))),
-                            $SV{$(esc(ex.args[4])), $(esc(ex.args[3]))},
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(esc(fargs[3]))),
+                            $SV{$(esc(fargs[3])), $(esc(fargs[2]))},
                         )
                     else
                         # for calls like `rand(rng, sampler, dim)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(esc(ex.args[4]))),
-                            $SV{$(esc(ex.args[4])), Random.gentype($(esc(ex.args[3])))},
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(esc(fargs[3]))),
+                            $SV{$(esc(fargs[3])), Random.gentype($(esc(fargs[2])))},
                         )
                     end
                 end
@@ -141,34 +142,34 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             end
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
-            if _isnonnegvec(ex.args[2:end], 1)
+            if _isnonnegvec(fargs, 1)
                 # for calls like `randn(dim)`
-                return :($f($SV{$(esc(ex.args[2]))}))
-            elseif _isnonnegvec(ex.args[3:end], 1)
+                return :($f($SV{$(esc(fargs[1]))}))
+            elseif _isnonnegvec(fargs[2:end], 1)
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `randn(rng, dim)`
                         StaticArrays.$_f(
-                            $(esc(ex.args[2])),
-                            Size($(esc(ex.args[3]))),
-                            $SV{$(esc(ex.args[3])), Float64},
+                            $(esc(fargs[1])),
+                            Size($(esc(fargs[2]))),
+                            $SV{$(esc(fargs[2])), Float64},
                         )
                     else
                         # for calls like `randn(type, dim)`
                         StaticArrays.$_f(
                             Random.GLOBAL_RNG,
-                            Size($(esc(ex.args[3]))),
-                            $SV{$(esc(ex.args[3])), $(esc(ex.args[2]))},
+                            Size($(esc(fargs[2]))),
+                            $SV{$(esc(fargs[2])), $(esc(fargs[1]))},
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end], 1)
+            elseif _isnonnegvec(fargs[3:end], 1)
                 # for calls like `randn(rng, type, dim)`
                 return quote
                     StaticArrays.$_f(
-                        $(esc(ex.args[2])),
-                        Size($(esc(ex.args[4]))),
-                        $SV{$(esc(ex.args[4])), $(esc(ex.args[3]))},
+                        $(esc(fargs[1])),
+                        Size($(esc(fargs[3]))),
+                        $SV{$(esc(fargs[3])), $(esc(fargs[2]))},
                     )
                 end
             else
@@ -176,8 +177,8 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             end
         elseif f === :fill
             # for calls like `fill(value, dim)`
-            if _isnonnegvec(ex.args[3:end], 1)
-                return :($f($(esc(ex.args[2])), $SV{$(esc(ex.args[3]))}))
+            if _isnonnegvec(fargs[2:end], 1)
+                return :($f($(esc(fargs[1])), $SV{$(esc(fargs[2]))}))
             else
                 error("@$SV expected a 1-dimensional array expression")
             end

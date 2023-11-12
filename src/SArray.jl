@@ -206,88 +206,89 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         end
     elseif head === :call
         f = ex.args[1]
+        fargs = ex.args[2:end]
         if f === :zeros || f === :ones
-            if length(ex.args) == 1
+            if length(fargs) == 0
                 # for calls like `zeros()`
                 return :($f($SA{$Tuple{},$Float64}))
-            elseif _isnonnegvec(ex.args[2:end])
+            elseif _isnonnegvec(fargs)
                 # for calls like `zeros(dims...)`
-                return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            elseif length(ex.args) == 2
+                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+            elseif length(fargs) == 1
                 # for calls like `zeros(type)`
-                return :($f($SA{$Tuple{},$(esc(ex.args[2]))}))
-            elseif _isnonnegvec(ex.args[3:end])
+                return :($f($SA{$Tuple{},$(esc(fargs[1]))}))
+            elseif _isnonnegvec(fargs[2:end])
                 # for calls like `zeros(type, dims...)`
-                return :($f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))}))
+                return :($f($SA{$Tuple{$(escall(fargs[2:end])...)},$(esc(fargs[1]))}))
             else
                 error("@$SA got bad expression: $(ex)")
             end
         elseif f === :rand
-            if length(ex.args) == 1
+            if length(fargs) == 0
                 # No support for `@SArray rand()`
                 error("@$SA got bad expression: $(ex)")
-            elseif _isnonnegvec(ex.args[2:end])
+            elseif _isnonnegvec(fargs)
                 # for calls like `rand(dims...)`
-                return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            elseif _isnonnegvec(ex.args[3:end])
+                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+            elseif _isnonnegvec(fargs[2:end])
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `rand(rng, dims...)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
+                            $(esc(fargs[1])),
                             Float64,
-                            Size($(escall(ex.args[3:end])...)),
+                            Size($(escall(fargs[2:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[3:end])...)},
+                                Tuple{$(escall(fargs[2:end])...)},
                                 Float64,
                             },
                         )
-                    elseif isa($(esc(ex.args[2])), DataType)
+                    elseif isa($(esc(fargs[1])), DataType)
                         # for calls like `rand(type, dims...)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[3:end])...)},
-                                $(esc(ex.args[2])),
+                                Tuple{$(escall(fargs[2:end])...)},
+                                $(esc(fargs[1])),
                             },
                         )
                     else
                         # for calls like `rand(sampler, dims...)`
                         StaticArrays._rand(
                             Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[3:end])...)},
-                                Random.gentype($(esc(ex.args[2]))),
+                                Tuple{$(escall(fargs[2:end])...)},
+                                Random.gentype($(esc(fargs[1]))),
                             },
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end])
+            elseif _isnonnegvec(fargs[3:end])
                 return quote
-                    if isa($(esc(ex.args[3])), DataType)
+                    if isa($(esc(fargs[2])), DataType)
                         # for calls like `rand(rng, type, dims...)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(escall(ex.args[4:end])...)),
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(escall(fargs[3:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[4:end])...)},
-                                $(esc(ex.args[3])),
+                                Tuple{$(escall(fargs[3:end])...)},
+                                $(esc(fargs[2])),
                             },
                         )
                     else
                         # for calls like `rand(rng, sampler, dims...)`
                         StaticArrays._rand(
-                            $(esc(ex.args[2])),
-                            $(esc(ex.args[3])),
-                            Size($(escall(ex.args[4:end])...)),
+                            $(esc(fargs[1])),
+                            $(esc(fargs[2])),
+                            Size($(escall(fargs[3:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[4:end])...)},
-                                Random.gentype($(esc(ex.args[3]))),
+                                Tuple{$(escall(fargs[3:end])...)},
+                                Random.gentype($(esc(fargs[2]))),
                             },
                         )
                     end
@@ -297,21 +298,21 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             end
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
-            if length(ex.args) == 1
+            if length(fargs) == 0
                 # No support for `@SArray randn()` etc.
                 error("@$SA got bad expression: $(ex)")
-            elseif _isnonnegvec(ex.args[2:end])
+            elseif _isnonnegvec(fargs)
                 # for calls like `randn(dims...)`
-                return :($f($SA{$Tuple{$(escall(ex.args[2:end])...)}}))
-            elseif _isnonnegvec(ex.args[3:end])
+                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+            elseif _isnonnegvec(fargs[2:end])
                 return quote
-                    if isa($(esc(ex.args[2])), Random.AbstractRNG)
+                    if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `randn(rng, dims...)`
                         StaticArrays.$_f(
-                            $(esc(ex.args[2])),
-                            Size($(escall(ex.args[3:end])...)),
+                            $(esc(fargs[1])),
+                            Size($(escall(fargs[2:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[3:end])...)},
+                                Tuple{$(escall(fargs[2:end])...)},
                                 Float64,
                             },
                         )
@@ -319,23 +320,23 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                         # for calls like `randn(type, dims...)`
                         StaticArrays.$_f(
                             Random.GLOBAL_RNG,
-                            Size($(escall(ex.args[3:end])...)),
+                            Size($(escall(fargs[2:end])...)),
                             $SA{
-                                Tuple{$(escall(ex.args[3:end])...)},
-                                $(esc(ex.args[2])),
+                                Tuple{$(escall(fargs[2:end])...)},
+                                $(esc(fargs[1])),
                             },
                         )
                     end
                 end
-            elseif _isnonnegvec(ex.args[4:end])
+            elseif _isnonnegvec(fargs[3:end])
                 # for calls like `randn(rng, type, dims...)`
                 return quote
                     StaticArrays.$_f(
-                        $(esc(ex.args[2])),
-                        Size($(escall(ex.args[4:end])...)),
+                        $(esc(fargs[1])),
+                        Size($(escall(fargs[3:end])...)),
                         $SA{
-                            Tuple{$(escall(ex.args[4:end])...)},
-                            $(esc(ex.args[3])),
+                            Tuple{$(escall(fargs[3:end])...)},
+                            $(esc(fargs[2])),
                         },
                     )
                 end
@@ -345,10 +346,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         elseif f === :fill
             # for calls like `fill(value)`
             # for calls like `fill(value, dims...)`
-            if length(ex.args) == 2
-                return :($f($(esc(ex.args[2])), $SA{$Tuple{}}))
-            elseif _isnonnegvec(ex.args[3:end])
-                return :($f($(esc(ex.args[2])), $SA{$Tuple{$(escall(ex.args[3:end])...)}}))
+            if length(fargs) == 1
+                return :($f($(esc(fargs[1])), $SA{$Tuple{}}))
+            elseif _isnonnegvec(fargs[2:end])
+                return :($f($(esc(fargs[1])), $SA{$Tuple{$(escall(fargs[2:end])...)}}))
             else
                 error("@$SA got bad expression: $(ex)")
             end
