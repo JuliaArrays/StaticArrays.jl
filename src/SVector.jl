@@ -76,20 +76,20 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         f = ex.args[1]
         fargs = ex.args[2:end]
         if f === :zeros || f === :ones
-            if _isnonnegvec(fargs, 1)
+            if length(fargs) == 1
                 # for calls like `zeros(dim)`
                 return :($f($SV{$(esc(fargs[1]))}))
-            elseif _isnonnegvec(fargs[2:end], 1)
+            elseif length(fargs) == 2
                 # for calls like `zeros(type, dim)`
                 return :($f($SV{$(esc(fargs[2])), $(esc(fargs[1]))}))
             else
                 error("@$SV got bad expression: $(ex)")
             end
         elseif f === :rand
-            if _isnonnegvec(fargs, 1)
+            if length(fargs) == 1
                 # for calls like `rand(dim)`
                 return :($f($SV{$(esc(fargs[1]))}))
-            elseif _isnonnegvec(fargs[2:end], 1)
+            elseif length(fargs) == 2
                 return quote
                     if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `rand(rng, dim)`
@@ -117,7 +117,7 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
                         )
                     end
                 end
-            elseif _isnonnegvec(fargs[3:end], 1)
+            elseif length(fargs) == 3
                 return quote
                     if isa($(esc(fargs[2])), DataType)
                         # for calls like `rand(rng, type, dim)`
@@ -142,10 +142,10 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             end
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
-            if _isnonnegvec(fargs, 1)
+            if length(fargs) == 1
                 # for calls like `randn(dim)`
                 return :($f($SV{$(esc(fargs[1]))}))
-            elseif _isnonnegvec(fargs[2:end], 1)
+            elseif length(fargs) == 2
                 return quote
                     if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `randn(rng, dim)`
@@ -163,7 +163,7 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
                         )
                     end
                 end
-            elseif _isnonnegvec(fargs[3:end], 1)
+            elseif length(fargs) == 3
                 # for calls like `randn(rng, type, dim)`
                 return quote
                     StaticArrays.$_f(
@@ -177,7 +177,7 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             end
         elseif f === :fill
             # for calls like `fill(value, dim)`
-            if _isnonnegvec(fargs[2:end], 1)
+            if length(fargs) == 2
                 return :($f($(esc(fargs[1])), $SV{$(esc(fargs[2]))}))
             else
                 error("@$SV expected a 1-dimensional array expression")
