@@ -71,20 +71,20 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         f = ex.args[1]
         fargs = ex.args[2:end]
         if f === :zeros || f === :ones
-            if _isnonnegvec(fargs, 2)
+            if length(fargs) == 2
                 # for calls like `zeros(dim1, dim2)`
                 return :($f($SM{$(escall(fargs)...)}))
-            elseif _isnonnegvec(fargs[2:end], 2)
+            elseif length(fargs[2:end]) == 2
                 # for calls like `zeros(type, dim1, dim2)`
                 return :($f($SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))}))
             else
                 error("@$SM got bad expression: $(ex)")
             end
         elseif f === :rand
-            if _isnonnegvec(fargs, 2)
+            if length(fargs) == 2
                 # for calls like `rand(dim1, dim2)`
                 return :($f($SM{$(escall(fargs)...)}))
-            elseif _isnonnegvec(fargs[2:end], 2)
+            elseif length(fargs[2:end]) == 2
                 return quote
                     if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `rand(rng, dim1, dim2)`
@@ -112,7 +112,7 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
                         )
                     end
                 end
-            elseif _isnonnegvec(fargs[3:end], 2)
+            elseif length(fargs[3:end]) == 2
                 return quote
                     if isa($(esc(fargs[2])), DataType)
                         # for calls like `rand(rng, type, dim1, dim2)`
@@ -137,10 +137,10 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             end
         elseif f === :randn || f === :randexp
             _f = Symbol(:_, f)
-            if _isnonnegvec(fargs, 2)
+            if length(fargs) == 2
                 # for calls like `randn(dim1, dim2)`
                 return :($f($SM{$(escall(fargs)...)}))
-            elseif _isnonnegvec(fargs[2:end], 2)
+            elseif length(fargs[2:end]) == 2
                 return quote
                     if isa($(esc(fargs[1])), Random.AbstractRNG)
                         # for calls like `randn(rng, dim1, dim2)`
@@ -158,7 +158,7 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
                         )
                     end
                 end
-            elseif _isnonnegvec(fargs[3:end], 2)
+            elseif length(fargs[3:end]) == 2
                 # for calls like `randn(rng, type, dim1, dim2)`
                 return quote
                     StaticArrays.$_f(
@@ -172,7 +172,7 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             end
         elseif f === :fill
             # for calls like `fill(value, dim1, dim2)`
-            if _isnonnegvec(fargs[2:end], 2)
+            if length(fargs[2:end]) == 2
                 return :($f($(esc(fargs[1])), $SM{$(escall(fargs[2:end])...)}))
             else
                 error("@$SM expected a 2-dimensional array expression")
