@@ -38,7 +38,7 @@ end
 
 
 @inline _sort(a::StaticVector, alg, order) =
-    similar_type(a)(sort!(copyo!(similar(a), a); alg=alg, order=order))
+    similar_type(a)(sort!(copyto!(similar(a), a); alg=alg, order=order))
 
 @inline _sort(a::StaticVector, alg::BitonicSortAlg, order) =
     similar_type(a)(_sort(Tuple(a), alg, order))
