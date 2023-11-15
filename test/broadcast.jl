@@ -48,37 +48,44 @@ end
     @testset "2x2 StaticMatrix with StaticVector" begin
         m = @SMatrix [1 2; 3 4]
         v = SVector(1, 4)
-        @test @inferred(broadcast(+, m, v)) === @SMatrix [2 3; 7 8]
-        @test @inferred(m .+ v) === @SMatrix [2 3; 7 8]
-        @test @inferred(v .+ m) === @SMatrix [2 3; 7 8]
-        @test @inferred(m .* v) === @SMatrix [1 2; 12 16]
-        @test @inferred(v .* m) === @SMatrix [1 2; 12 16]
-        @test @inferred(m ./ v) === @SMatrix [1 2; 3/4 1]
-        @test @inferred(v ./ m) === @SMatrix [1 1/2; 4/3 1]
-        @test @inferred(m .- v) === @SMatrix [0 1; -1 0]
-        @test @inferred(v .- m) === @SMatrix [0 -1; 1 0]
-        @test @inferred(m .^ v) === @SMatrix [1 2; 81 256]
-        @test @inferred(v .^ m) === @SMatrix [1 1; 64 256]
-        # Issue #546
-        @test @inferred(m ./ (v .* v')) === @SMatrix [1.0 0.5; 0.75 0.25]
-        testinf(m, v) = m ./ (v .* v')
-        @test @inferred(testinf(m, v)) === @SMatrix [1.0 0.5; 0.75 0.25]
+        vrep = @SMatrix [1 1; 4 4]
+        for m in (m, Transpose(m), Adjoint(m), Diagonal(m), Symmetric(m, :U), Symmetric(m, :L), Hermitian(m, :U), Hermitian(m, :L), UpperTriangular(m), LowerTriangular(m), UnitUpperTriangular(m), UnitLowerTriangular(m)) 
+            @test @inferred(broadcast(+, m, v)) === map(+, m, vrep)::SMatrix
+            @test @inferred(m .+ v) === map(+, m, vrep)::SMatrix
+            @test @inferred(v .+ m) === map(+, vrep, m)::SMatrix
+            @test @inferred(m .* v) === map(*, m, vrep)::SMatrix
+            @test @inferred(v .* m) === map(*, vrep, m)::SMatrix
+            @test @inferred(m ./ v) === map(/, m, vrep)::SMatrix
+            @test @inferred(v ./ m) === map(/, vrep, m)::SMatrix
+            @test @inferred(m .- v) === map(-, m, vrep)::SMatrix
+            @test @inferred(v .- m) === map(-, vrep, m)::SMatrix
+            @test @inferred(m .^ v) === map(^, m, vrep)::SMatrix
+            @test @inferred(v .^ m) === map(^, vrep, m)::SMatrix
+            # Issue #546
+            @test @inferred(m ./ (v .* v')) === map(/, m, v .* v')::SMatrix
+            testinf(m, v) = m ./ (v .* v')
+            @test @inferred(testinf(m, v)) === map(/, m, v .* v')::SMatrix
+        end
     end
 
     @testset "2x2 StaticMatrix with 1x2 StaticMatrix" begin
         # Issues #197, #242: broadcast between SArray and row-like SMatrix
         m1 = @SMatrix [1 2; 3 4]
         m2 = @SMatrix [1 4]
-        @test @inferred(broadcast(+, m1, m2)) === @SMatrix [2 6; 4 8]
-        @test @inferred(m1 .+ m2) === @SMatrix [2 6; 4 8]
-        @test @inferred(m2 .+ m1) === @SMatrix [2 6; 4 8]
-        @test @inferred(m1 .* m2) === @SMatrix [1 8; 3 16]
-        @test @inferred(m2 .* m1) === @SMatrix [1 8; 3 16]
-        @test @inferred(m1 ./ m2) === @SMatrix [1 1/2; 3 1]
-        @test @inferred(m2 ./ m1) === @SMatrix [1 2; 1/3 1]
-        @test @inferred(m1 .- m2) === @SMatrix [0 -2; 2 0]
-        @test @inferred(m2 .- m1) === @SMatrix [0 2; -2 0]
-        @test @inferred(m1 .^ m2) === @SMatrix [1 16; 3 256]
+        m2rep = @SMatrix [1 4; 1 4]
+        m1s = (m1, Transpose(m1), Adjoint(m1), Diagonal(m1), Symmetric(m1, :U), Symmetric(m1, :L), Hermitian(m1, :U), Hermitian(m1, :L), UpperTriangular(m1), LowerTriangular(m1), UnitUpperTriangular(m1), UnitLowerTriangular(m1))
+        for m1 in m1s
+            @test @inferred(broadcast(+, m1, m2)) === map(+, m1, m2rep)::SMatrix
+            @test @inferred(m1 .+ m2) === map(+, m1, m2rep)::SMatrix
+            @test @inferred(m2 .+ m1) === map(+, m2rep, m1)::SMatrix
+            @test @inferred(m1 .* m2) === map(*, m1, m2rep)::SMatrix
+            @test @inferred(m2 .* m1) === map(*, m2rep, m1)::SMatrix
+            @test @inferred(m1 ./ m2) === map(/, m1, m2rep)::SMatrix
+            @test @inferred(m2 ./ m1) === map(/, m2rep, m1)::SMatrix
+            @test @inferred(m1 .- m2) === map(-, m1, m2rep)::SMatrix
+            @test @inferred(m2 .- m1) === map(-, m2rep, m1)::SMatrix
+            @test @inferred(m1 .^ m2) === map(^, m1, m2rep)::SMatrix
+        end
     end
 
     @testset "1x2 StaticMatrix with StaticVector" begin

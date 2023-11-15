@@ -9,9 +9,7 @@ import Base.Broadcast: _bcs1  # for SOneTo axis information
 using Base.Broadcast: _bcsm
 
 BroadcastStyle(::Type{<:StaticArray{<:Tuple, <:Any, N}}) where {N} = StaticArrayStyle{N}()
-BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
-BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
-BroadcastStyle(::Type{<:Diagonal{<:Any, <:StaticArray{<:Tuple, <:Any, 1}}}) = StaticArrayStyle{2}()
+BroadcastStyle(::Type{<:StaticMatrixLike}) = StaticArrayStyle{2}()
 # Precedence rules
 BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
     DefaultArrayStyle(Val(max(M, N)))
@@ -104,10 +102,7 @@ function broadcast_getindex(oldsize::Tuple, i::Int, newindex::CartesianIndex)
     return :(a[$i][$ind])
 end
 
-isstatic(::StaticArray) = true
-isstatic(::Transpose{<:Any, <:StaticArray}) = true
-isstatic(::Adjoint{<:Any, <:StaticArray}) = true
-isstatic(::Diagonal{<:Any, <:StaticArray}) = true
+isstatic(::StaticArrayLike) = true
 isstatic(_) = false
 
 @inline first_statictype(x, y...) = isstatic(x) ? typeof(x) : first_statictype(y...)
