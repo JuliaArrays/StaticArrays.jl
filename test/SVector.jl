@@ -112,16 +112,29 @@
     end
 
     @testset "Named field access - getproperty" begin
-        v4 = SA[10,20,30,40]
-        @test v4.x == 10
-        @test v4.y == 20
-        @test v4.z == 30
-        @test v4.w == 40
-        v2 = SA[10,20]
-        @test v2.x == 10
-        @test v2.y == 20
+        v4 = @SVector [10,20,30,40]
+        @test v4.x == v4.r == 10
+        @test v4.y == v4.g == 20
+        @test v4.z == v4.b == 30
+        @test v4.w == v4.a == 40
+        @test v4.xy === v4.rg === @SVector [v4.x, v4.y]
+        @test v4.wzx === v4.abr === @SVector [v4.w, v4.z, v4.x]
+        @test v4.xyzw == v4.rgba == v4
+        @test_throws ErrorException v4.xyx
+        @test_throws ErrorException v4.xgb
+
+        v2 = @SVector [10,20]
+        @test v2.x == v2.r == 10
+        @test v2.y == v2.g == 20
         @test_throws ErrorException v2.z
         @test_throws ErrorException v2.w
+        @test_throws ErrorException v2.b
+        @test_throws ErrorException v2.a
+        @test v2.xy == v2.rg == v2
+        @test v2.yx === v2.gr === @SVector [v2.y, v2.x]
+        @test_throws ErrorException v2.ba
+        @test_throws ErrorException v2.rgb
+        @test_throws ErrorException v2.rgba
     end
 
     @testset "issue 1042" begin

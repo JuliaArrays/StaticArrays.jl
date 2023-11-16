@@ -105,30 +105,50 @@
     @testset "Named field access - getproperty/setproperty!" begin
         # getproperty
         v4 = @MVector [10,20,30,40]
-        @test v4.x == 10
-        @test v4.y == 20
-        @test v4.z == 30
-        @test v4.w == 40
+        @test v4.x == v4.r == 10
+        @test v4.y == v4.g == 20
+        @test v4.z == v4.b == 30
+        @test v4.w == v4.a == 40
+        @test v4.xy == v4.rg == @MVector [v4.x, v4.y]
+        @test v4.wzx == v4.abr == @MVector [v4.w, v4.z, v4.x]
+        @test v4.xyzw == v4.rgba == v4
+        @test_throws ErrorException v4.xyx
+        @test_throws ErrorException v4.xgb
 
         v2 = @MVector [10,20]
-        @test v2.x == 10
-        @test v2.y == 20
+        @test v2.x == v2.r == 10
+        @test v2.y == v2.g == 20
         @test_throws ErrorException v2.z
         @test_throws ErrorException v2.w
+        @test_throws ErrorException v2.b
+        @test_throws ErrorException v2.a
+        @test v2.xy == v2.rg == v2
+        @test v2.yx == v2.gr == @MVector [v2.y, v2.x]
+        @test_throws ErrorException v2.ba
+        @test_throws ErrorException v2.rgb
+        @test_throws ErrorException v2.rgba
 
         # setproperty!
-        @test (v4.x = 100) == 100
-        @test (v4.y = 200) == 200
-        @test (v4.z = 300) == 300
-        @test (v4.w = 400) == 400
+        @test (v4.x = 100) == (v4.r = 100) == 100
+        @test (v4.y = 200) == (v4.g = 200) == 200
+        @test (v4.z = 300) == (v4.b = 300) == 300
+        @test (v4.w = 400) == (v4.a = 400) == 400
         @test v4[1] == 100
         @test v4[2] == 200
         @test v4[3] == 300
         @test v4[4] == 400
+        @test (v4.xy = (1000, 2000)) == (v4.rg = (1000, 2000)) == (1000, 2000)
+        @test v4[1] == 1000
+        @test v4[2] == 2000
+        @test (v4.xywz = (10, 20, 40, 30)) == (v4.rgab = (10, 20, 40, 30)) == (10, 20, 40, 30)
+        @test v4 == @MVector [10, 20, 30, 40]
+        @test_throws ErrorException (v2.xyx = (100, 200, 100))
 
-        @test (v2.x = 100) == 100
-        @test (v2.y = 200) == 200
+        @test (v2.x = 100) == (v2.r = 100) == 100
+        @test (v2.y = 200) == (v2.g = 200) == 200
         @test_throws ErrorException (v2.z = 200)
         @test_throws ErrorException (v2.w = 200)
+        @test_throws ErrorException (v2.xz = (100, 300))
+        @test_throws ErrorException (v2.wx = (400, 100))
     end
 end
