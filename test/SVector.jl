@@ -119,8 +119,8 @@
         @test v4.w == v4.a == 40
         @test v4.xy === v4.rg === @SVector [v4.x, v4.y]
         @test v4.wzx === v4.abr === @SVector [v4.w, v4.z, v4.x]
+        @test v4.xyx === @SVector [v4.x, v4.y, v4.x]
         @test v4.xyzw == v4.rgba == v4
-        @test_throws ErrorException v4.xyx
         @test_throws ErrorException v4.xgb
 
         v2 = @SVector [10,20]
