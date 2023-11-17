@@ -8,13 +8,10 @@ length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 end
 @inline size(a::StaticArrayLike) = Tuple(Size(a))
 
-Base.axes(s::StaticArray) = _axes(Size(s))
+Base.axes(s::StaticArrayLike) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}
     map(SOneTo, sizes)
 end
-Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
-Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
-Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 

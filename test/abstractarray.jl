@@ -10,6 +10,20 @@ using StaticArrays, Test, LinearAlgebra
         @test eachindex(m) isa SOneTo
     end
 
+    @testset "axes" begin
+        v = @SVector [1, 2, 3]
+        @test @inferred(axes(v)) == (SOneTo(3),)
+        for T in (Adjoint, Transpose)
+            @test @inferred(axes(T(v))) == (SOneTo(1), SOneTo(3))
+        end
+
+        m = @SMatrix [1 2; 3 4]
+        @test @inferred(axes(m)) == (SOneTo(2), SOneTo(2))
+        for T in (Adjoint, Transpose, Diagonal, Symmetric, Hermitian, UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular)
+            @test @inferred(axes(T(m))) == (SOneTo(2), SOneTo(2))
+        end
+    end
+
     @testset "strides" begin
         m1 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
         m2 = SizedArray{Tuple{3,4,5}}(rand(Int, 3, 4, 5))
