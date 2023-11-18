@@ -148,10 +148,6 @@ function _isnonnegvec(args)
     all(isa.(args, Integer)) && return all(args .≥ 0)
     return false
 end
-function _isnonnegvec(args, n)
-    length(args) != n && return false
-    _isnonnegvec(args)
-end
 function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
     if !isa(ex, Expr)
         error("Bad input for @$SA")
