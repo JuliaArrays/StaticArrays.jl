@@ -42,24 +42,63 @@
         @test ((@SVector zeros(2))::SVector{2, Float64}).data === (0.0, 0.0)
         @test ((@SVector ones(2))::SVector{2, Float64}).data === (1.0, 1.0)
         @test ((@SVector fill(2.5, 2))::SVector{2,Float64}).data === (2.5, 2.5)
-        @test isa(@SVector(rand(2)), SVector{2, Float64})
-        @test isa(@SVector(randn(2)), SVector{2, Float64})
-        @test isa(@SVector(randexp(2)), SVector{2, Float64})
-
         @test ((@SVector zeros(Float32, 2))::SVector{2,Float32}).data === (0.0f0, 0.0f0)
         @test ((@SVector ones(Float32, 2))::SVector{2,Float32}).data === (1.0f0, 1.0f0)
-        @test isa(@SVector(rand(Float32, 2)), SVector{2, Float32})
-        @test isa(@SVector(randn(Float32, 2)), SVector{2, Float32})
-        @test isa(@SVector(randexp(Float32, 2)), SVector{2, Float32})
 
-        test_expand_error(:(@SVector fill(1.5, 2, 3)))
-        test_expand_error(:(@SVector ones(2, 3, 4)))
-        test_expand_error(:(@SVector sin(1:5)))
-        test_expand_error(:(@SVector [i*j for i in 1:2, j in 2:3]))
-        test_expand_error(:(@SVector Float32[i*j for i in 1:2, j in 2:3]))
-        test_expand_error(:(@SVector [1; 2; 3]...))
-        test_expand_error(:(@SVector a))
-        test_expand_error(:(@SVector [[1 2];[3 4]]))
+        @testset "@SVector rand*" begin
+            n = 4
+            @test (@SVector rand(n)) isa SVector{n, Float64}
+            @test (@SVector randn(n)) isa SVector{n, Float64}
+            @test (@SVector randexp(n)) isa SVector{n, Float64}
+            @test (@SVector rand(4)) isa SVector{4, Float64}
+            @test (@SVector randn(4)) isa SVector{4, Float64}
+            @test (@SVector randexp(4)) isa SVector{4, Float64}
+            @test (@SVector rand(_rng(), n)) isa SVector{n, Float64}
+            @test (@SVector rand(_rng(), n)) == rand(_rng(), n)
+            @test (@SVector randn(_rng(), n)) isa SVector{n, Float64}
+            @test (@SVector randn(_rng(), n)) == randn(_rng(), n)
+            @test (@SVector randexp(_rng(), n)) isa SVector{n, Float64}
+            @test (@SVector randexp(_rng(), n)) == randexp(_rng(), n)
+            @test (@SVector rand(_rng(), 4)) isa SVector{4, Float64}
+            @test (@SVector rand(_rng(), 4)) == rand(_rng(), 4)
+            @test (@SVector randn(_rng(), 4)) isa SVector{4, Float64}
+            @test (@SVector randn(_rng(), 4)) == randn(_rng(), 4)
+            @test (@SVector randexp(_rng(), 4)) isa SVector{4, Float64}
+            @test (@SVector randexp(_rng(), 4)) == randexp(_rng(), 4)
+
+            for T in (Float32, Float64)
+                @test (@SVector rand(T, n)) isa SVector{n, T}
+                @test (@SVector randn(T, n)) isa SVector{n, T}
+                @test (@SVector randexp(T, n)) isa SVector{n, T}
+                @test (@SVector rand(T, 4)) isa SVector{4, T}
+                @test (@SVector randn(T, 4)) isa SVector{4, T}
+                @test (@SVector randexp(T, 4)) isa SVector{4, T}
+                @test (@SVector rand(_rng(), T, n)) isa SVector{n, T}
+                # @test (@SVector rand(_rng(), T, n)) == rand(_rng(), T, n)
+                @test (@SVector randn(_rng(), T, n)) isa SVector{n, T}
+                @test (@SVector randn(_rng(), T, n)) == randn(_rng(), T, n)
+                @test (@SVector randexp(_rng(), T, n)) isa SVector{n, T}
+                @test (@SVector randexp(_rng(), T, n)) == randexp(_rng(), T, n)
+                @test (@SVector rand(_rng(), T, 4)) isa SVector{4, T}
+                # @test (@SVector rand(_rng(), T, 4)) == rand(_rng(), T, 4)
+                @test (@SVector randn(_rng(), T, 4)) isa SVector{4, T}
+                @test (@SVector randn(_rng(), T, 4)) == randn(_rng(), T, 4)
+                @test (@SVector randexp(_rng(), T, 4)) isa SVector{4, T}
+                @test (@SVector randexp(_rng(), T, 4)) == randexp(_rng(), T, 4)
+            end
+        end
+
+        @testset "expand error" begin
+            test_expand_error(:(@SVector fill(1.5, 2, 3)))
+            test_expand_error(:(@SVector ones(2, 3, 4)))
+            test_expand_error(:(@SVector rand(Float64, 2, 3, 4)))
+            test_expand_error(:(@SVector sin(1:5)))
+            test_expand_error(:(@SVector [i*j for i in 1:2, j in 2:3]))
+            test_expand_error(:(@SVector Float32[i*j for i in 1:2, j in 2:3]))
+            test_expand_error(:(@SVector [1; 2; 3]...))
+            test_expand_error(:(@SVector a))
+            test_expand_error(:(@SVector [[1 2];[3 4]]))
+        end
 
         if VERSION >= v"1.7.0"
             @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
