@@ -67,10 +67,12 @@ let dimension_names = zip((:x, :y, :z, :w), (:r, :g, :b, :a))
     for i in 1:4
         @eval function Base.getproperty(v::Union{SVector{$i},MVector{$i}},
                                                 name::Symbol)
+            name === :data && return getfield(v, :data)
             $(foldl(append!, getproperty_bodies[1:i])...)
             getfield(v, name)
         end
         @eval function Base.setproperty!(v::MVector{$i}, name::Symbol, value)
+            name === :data && return setfield!(v, :data, value)
             $(foldl(append!, setproperty_bodies[1:i])...)
             setfield!(v, name, value)
         end
