@@ -18,6 +18,7 @@
     end
 
     @testset "Outer constructors and macro" begin
+        # The following tests are much similar in `test/SMatrix.jl`
         @test_throws Exception MMatrix(1,2,3,4) # unknown constructor
 
         @test MMatrix{1,1,Int}((1,)).data === (1,)
@@ -27,9 +28,26 @@
         @test MMatrix{2,2,Int}((1,2,3,4)).data === (1,2,3,4)
         @test MMatrix{2,2}((1,2,3,4)).data === (1,2,3,4)
         @test MMatrix{2}((1,2,3,4)).data === (1,2,3,4)
+        @test_throws DimensionMismatch MMatrix{2}((1,2,3,4,5))
 
         # test for #557-like issues
         @test (@inferred MMatrix(SMatrix{0,0,Float64}()))::MMatrix{0,0,Float64} == MMatrix{0,0,Float64}()
+
+        @test (MMatrix{2,3}(i+10j for i in 1:2, j in 1:3)::MMatrix{2,3}).data ===
+            (11,12,21,22,31,32)
+        @test (MMatrix{2,3}(float(i+10j) for i in 1:2, j in 1:3)::MMatrix{2,3}).data ===
+            (11.0,12.0,21.0,22.0,31.0,32.0)
+        @test (MMatrix{0,0,Int}()::MMatrix{0,0}).data === ()
+        @test (MMatrix{0,3,Int}()::MMatrix{0,3}).data === ()
+        @test (MMatrix{2,0,Int}()::MMatrix{2,0}).data === ()
+        @test (MMatrix{2,3,Int}(i+10j for i in 1:2, j in 1:3)::MMatrix{2,3}).data ===
+            (11,12,21,22,31,32)
+        @test (MMatrix{2,3,Float64}(i+10j for i in 1:2, j in 1:3)::MMatrix{2,3}).data ===
+            (11.0,12.0,21.0,22.0,31.0,32.0)
+        @test_throws Exception MMatrix{2,3}(i+10j for i in 1:1, j in 1:3)
+        @test_throws Exception MMatrix{2,3}(i+10j for i in 1:3, j in 1:3)
+        @test_throws Exception MMatrix{2,3,Int}(i+10j for i in 1:1, j in 1:3)
+        @test_throws Exception MMatrix{2,3,Int}(i+10j for i in 1:3, j in 1:3)
 
         @test ((@MMatrix [1.0])::MMatrix{1,1}).data === (1.0,)
         @test ((@MMatrix [1 2])::MMatrix{1,2}).data === (1, 2)
@@ -56,25 +74,31 @@
         test_expand_error(:(@MMatrix a))
 
         @test ((@MMatrix [1 2.;3 4])::MMatrix{2, 2, Float64}).data === (1., 3., 2., 4.) #issue #911
-        @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)
+        @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix ones(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
         @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
         @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
         @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
+        @test isa(@MMatrix(rand(2, 0)), MMatrix{2, 0, Float64})
+        @test isa(@MMatrix(randn(2, 0)), MMatrix{2, 0, Float64})
+        @test isa(@MMatrix(randexp(2, 0)), MMatrix{2, 0, Float64})
 
         @test ((@MMatrix zeros(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
         @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
         @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
+        @test isa(@MMatrix(rand(Float32, 2, 0)), MMatrix{2, 0, Float32})
+        @test isa(@MMatrix(randn(Float32, 2, 0)), MMatrix{2, 0, Float32})
+        @test isa(@MMatrix(randexp(Float32, 2, 0)), MMatrix{2, 0, Float32})
 
+        @inferred MMatrix(rand(MMatrix{3, 3})) # issue 356
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
         @test_throws DimensionMismatch MMatrix{3}((1,2,3,4))
 
         if VERSION >= v"1.7.0"
             @test ((@MMatrix Float64[1;2;3;;;])::MMatrix{3,1}).data === (1.0, 2.0, 3.0)
-            @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
             @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
             test_expand_error(:(@MMatrix [1;2;;;1;2]))
         end

@@ -17,18 +17,20 @@
     end
 
     @testset "Outer constructors and macro" begin
+        # The following tests are much similar in `test/MMatrix.jl`
         @test_throws Exception SMatrix(1,2,3,4) # unknown constructor
 
         @test SMatrix{1,1,Int}((1,)).data === (1,)
         @test SMatrix{1,1}((1,)).data === (1,)
         @test SMatrix{1}((1,)).data === (1,)
 
-        @test (@inferred SMatrix(MMatrix{0,0,Float64}()))::SMatrix{0,0,Float64} == SMatrix{0,0,Float64}()
-
         @test SMatrix{2,2,Int}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2,2}((1,2,3,4)).data === (1,2,3,4)
         @test SMatrix{2}((1,2,3,4)).data === (1,2,3,4)
         @test_throws DimensionMismatch SMatrix{2}((1,2,3,4,5))
+
+        # test for #557-like issues
+        @test (@inferred SMatrix(MMatrix{0,0,Float64}()))::SMatrix{0,0,Float64} == SMatrix{0,0,Float64}()
 
         @test (SMatrix{2,3}(i+10j for i in 1:2, j in 1:3)::SMatrix{2,3}).data ===
             (11,12,21,22,31,32)
@@ -58,6 +60,7 @@
 
         @test ((@SMatrix [i*j for i = 1:2, j=2:3])::SMatrix{2,2}).data === (2, 4, 3, 6)
         @test ((@SMatrix Float64[i*j for i = 1:2, j=2:3])::SMatrix{2,2}).data === (2.0, 4.0, 3.0, 6.0)
+
         test_expand_error(:(@SMatrix [1 2; 3]))
         test_expand_error(:(@SMatrix Float64[1 2; 3]))
         test_expand_error(:(@SMatrix [i*j*k for i = 1:2, j=2:3, k=3:4]))
@@ -69,6 +72,7 @@
         test_expand_error(:(@SMatrix [1; 2; 3; 4]...))
         test_expand_error(:(@SMatrix a))
 
+        @test ((@SMatrix [1 2.;3 4])::SMatrix{2, 2, Float64}).data === (1., 3., 2., 4.) #issue #911
         @test ((@SMatrix fill(1.3, 2,2))::SMatrix{2, 2, Float64}).data === (1.3, 1.3, 1.3, 1.3)
         @test ((@SMatrix zeros(2,2))::SMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@SMatrix ones(2,2))::SMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
@@ -88,9 +92,9 @@
         @test isa(@SMatrix(randn(Float32, 2, 0)), SMatrix{2, 0, Float32})
         @test isa(@SMatrix(randexp(Float32, 2, 0)), SMatrix{2, 0, Float32})
 
-        @test isa(SMatrix(@SMatrix zeros(4,4)), SMatrix{4, 4, Float64})
-
         @inferred SMatrix(rand(SMatrix{3, 3})) # issue 356
+        @test SMatrix(MMatrix{1,1,Int,1}((1,))).data == (1,)
+        @test_throws DimensionMismatch SMatrix{3}((1,2,3,4))
 
         if VERSION >= v"1.7.0"
             @test ((@SMatrix Float64[1;2;3;;;])::SMatrix{3,1}).data === (1.0, 2.0, 3.0)
