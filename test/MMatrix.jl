@@ -85,13 +85,13 @@
         @testset "@MMatrix rand*" begin
             n = 4
             @testset "zero-length" begin
-                @test (@MMatrix rand(n, n)) isa MMatrix{n, n, Float64}
+                @test (@MMatrix rand(0, 0)) isa MMatrix{0, 0, Float64}
                 @test (@MMatrix rand(0, n)) isa MMatrix{0, n, Float64}
                 @test (@MMatrix rand(n, 0)) isa MMatrix{n, 0, Float64}
-                @test (@MMatrix rand(Float32, n, n)) isa MMatrix{n, n, Float32}
+                @test (@MMatrix rand(Float32, 0, 0)) isa MMatrix{0, 0, Float32}
                 @test (@MMatrix rand(Float32, 0, n)) isa MMatrix{0, n, Float32}
                 @test (@MMatrix rand(Float32, n, 0)) isa MMatrix{n, 0, Float32}
-                @test (@MMatrix rand(_rng(), Float32, n, n)) isa MMatrix{n, n, Float32}
+                @test (@MMatrix rand(_rng(), Float32, 0, 0)) isa MMatrix{0, 0, Float32}
                 @test (@MMatrix rand(_rng(), Float32, 0, n)) isa MMatrix{0, n, Float32}
                 @test (@MMatrix rand(_rng(), Float32, n, 0)) isa MMatrix{n, 0, Float32}
             end
