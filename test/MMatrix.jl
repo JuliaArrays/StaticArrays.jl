@@ -83,18 +83,58 @@
         @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
 
         @testset "@MMatrix rand*" begin
-            @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
-            @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
-            @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
-            @test isa(@MMatrix(rand(2, 0)), MMatrix{2, 0, Float64})
-            @test isa(@MMatrix(randn(2, 0)), MMatrix{2, 0, Float64})
-            @test isa(@MMatrix(randexp(2, 0)), MMatrix{2, 0, Float64})
-            @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
-            @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
-            @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
-            @test isa(@MMatrix(rand(Float32, 2, 0)), MMatrix{2, 0, Float32})
-            @test isa(@MMatrix(randn(Float32, 2, 0)), MMatrix{2, 0, Float32})
-            @test isa(@MMatrix(randexp(Float32, 2, 0)), MMatrix{2, 0, Float32})
+            n = 4
+            @testset "zero-length" begin
+                @test (@MMatrix rand(n, n)) isa MMatrix{n, n, Float64}
+                @test (@MMatrix rand(0, n)) isa MMatrix{0, n, Float64}
+                @test (@MMatrix rand(n, 0)) isa MMatrix{n, 0, Float64}
+                @test (@MMatrix rand(Float32, n, n)) isa MMatrix{n, n, Float32}
+                @test (@MMatrix rand(Float32, 0, n)) isa MMatrix{0, n, Float32}
+                @test (@MMatrix rand(Float32, n, 0)) isa MMatrix{n, 0, Float32}
+                @test (@MMatrix rand(_rng(), Float32, n, n)) isa MMatrix{n, n, Float32}
+                @test (@MMatrix rand(_rng(), Float32, 0, n)) isa MMatrix{0, n, Float32}
+                @test (@MMatrix rand(_rng(), Float32, n, 0)) isa MMatrix{n, 0, Float32}
+            end
+
+            @test (@MMatrix rand(n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix randn(n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix randexp(n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix rand(4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix randn(4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix randexp(4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix rand(_rng(), n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix rand(_rng(), n, n)) == rand(_rng(), n, n)
+            @test (@MMatrix randn(_rng(), n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix randn(_rng(), n, n)) == randn(_rng(), n, n)
+            @test (@MMatrix randexp(_rng(), n, n)) isa MMatrix{n, n, Float64}
+            @test (@MMatrix randexp(_rng(), n, n)) == randexp(_rng(), n, n)
+            @test (@MMatrix rand(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix rand(_rng(), 4, 4)) == rand(_rng(), 4, 4)
+            @test (@MMatrix randn(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix randn(_rng(), 4, 4)) == randn(_rng(), 4, 4)
+            @test (@MMatrix randexp(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+            @test (@MMatrix randexp(_rng(), 4, 4)) == randexp(_rng(), 4, 4)
+
+            for T in (Float32, Float64)
+                @test (@MMatrix rand(T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix randn(T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix randexp(T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix rand(T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix randn(T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix randexp(T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix rand(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                @test (@MMatrix randn(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
+                @test (@MMatrix randexp(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                @test (@MMatrix randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
+                @test (@MMatrix rand(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                @test (@MMatrix randn(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
+                @test (@MMatrix randexp(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                @test (@MMatrix randexp(_rng(), T, 4, 4)) == randexp(_rng(), T, 4, 4)
+            end
         end
 
         @inferred MMatrix(rand(MMatrix{3, 3})) # issue 356
