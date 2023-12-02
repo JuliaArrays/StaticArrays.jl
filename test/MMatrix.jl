@@ -62,36 +62,40 @@
         @test ((@MMatrix [i*j for i = 1:2, j=2:3])::MMatrix{2,2}).data === (2, 4, 3, 6)
         @test ((@MMatrix Float64[i*j for i = 1:2, j=2:3])::MMatrix{2,2}).data === (2.0, 4.0, 3.0, 6.0)
 
-        test_expand_error(:(@MMatrix [1 2; 3]))
-        test_expand_error(:(@MMatrix Float32[1 2; 3]))
-        test_expand_error(:(@MMatrix [i*j*k for i = 1:2, j=2:3, k=3:4]))
-        test_expand_error(:(@MMatrix Float32[i*j*k for i = 1:2, j=2:3, k=3:4]))
-        test_expand_error(:(@MMatrix fill(2.3, 4, 5, 6)))
-        test_expand_error(:(@MMatrix ones(4, 5, 6, 7)))
-        test_expand_error(:(@MMatrix ones))
-        test_expand_error(:(@MMatrix sin(1:5)))
-        test_expand_error(:(@MMatrix [1; 2; 3; 4]...))
-        test_expand_error(:(@MMatrix a))
+        @testset "expand error" begin
+            test_expand_error(:(@MMatrix [1 2; 3]))
+            test_expand_error(:(@MMatrix Float32[1 2; 3]))
+            test_expand_error(:(@MMatrix [i*j*k for i = 1:2, j=2:3, k=3:4]))
+            test_expand_error(:(@MMatrix Float32[i*j*k for i = 1:2, j=2:3, k=3:4]))
+            test_expand_error(:(@MMatrix fill(2.3, 4, 5, 6)))
+            test_expand_error(:(@MMatrix ones(4, 5, 6, 7)))
+            test_expand_error(:(@MMatrix ones))
+            test_expand_error(:(@MMatrix sin(1:5)))
+            test_expand_error(:(@MMatrix [1; 2; 3; 4]...))
+            test_expand_error(:(@MMatrix a))
+        end
 
         @test ((@MMatrix [1 2.;3 4])::MMatrix{2, 2, Float64}).data === (1., 3., 2., 4.) #issue #911
         @test ((@MMatrix fill(3.4, 2,2))::MMatrix{2, 2, Float64}).data === (3.4, 3.4, 3.4, 3.4)
         @test ((@MMatrix zeros(2,2))::MMatrix{2, 2, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@MMatrix ones(2,2))::MMatrix{2, 2, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
-        @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
-        @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
-        @test isa(@MMatrix(rand(2, 0)), MMatrix{2, 0, Float64})
-        @test isa(@MMatrix(randn(2, 0)), MMatrix{2, 0, Float64})
-        @test isa(@MMatrix(randexp(2, 0)), MMatrix{2, 0, Float64})
-
         @test ((@MMatrix zeros(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@MMatrix ones(Float32, 2, 2))::MMatrix{2,2,Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
-        @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
-        @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
-        @test isa(@MMatrix(rand(Float32, 2, 0)), MMatrix{2, 0, Float32})
-        @test isa(@MMatrix(randn(Float32, 2, 0)), MMatrix{2, 0, Float32})
-        @test isa(@MMatrix(randexp(Float32, 2, 0)), MMatrix{2, 0, Float32})
+
+        @testset "@MMatrix rand*" begin
+            @test isa(@MMatrix(rand(2,2)), MMatrix{2, 2, Float64})
+            @test isa(@MMatrix(randn(2,2)), MMatrix{2, 2, Float64})
+            @test isa(@MMatrix(randexp(2,2)), MMatrix{2, 2, Float64})
+            @test isa(@MMatrix(rand(2, 0)), MMatrix{2, 0, Float64})
+            @test isa(@MMatrix(randn(2, 0)), MMatrix{2, 0, Float64})
+            @test isa(@MMatrix(randexp(2, 0)), MMatrix{2, 0, Float64})
+            @test isa(@MMatrix(rand(Float32, 2, 2)), MMatrix{2, 2, Float32})
+            @test isa(@MMatrix(randn(Float32, 2, 2)), MMatrix{2, 2, Float32})
+            @test isa(@MMatrix(randexp(Float32, 2, 2)), MMatrix{2, 2, Float32})
+            @test isa(@MMatrix(rand(Float32, 2, 0)), MMatrix{2, 0, Float32})
+            @test isa(@MMatrix(randn(Float32, 2, 0)), MMatrix{2, 0, Float32})
+            @test isa(@MMatrix(randexp(Float32, 2, 0)), MMatrix{2, 0, Float32})
+        end
 
         @inferred MMatrix(rand(MMatrix{3, 3})) # issue 356
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
