@@ -78,13 +78,13 @@
                 @test (@MVector randn(T, 4)) isa MVector{4, T}
                 @test (@MVector randexp(T, 4)) isa MVector{4, T}
                 @test (@MVector rand(_rng(), T, n)) isa MVector{n, T}
-                @test (@MVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                VERSION≥v"1.7" && @test (@MVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
                 @test (@MVector randn(_rng(), T, n)) isa MVector{n, T}
                 @test (@MVector randn(_rng(), T, n)) == randn(_rng(), T, n)
                 @test (@MVector randexp(_rng(), T, n)) isa MVector{n, T}
                 @test (@MVector randexp(_rng(), T, n)) == randexp(_rng(), T, n)
                 @test (@MVector rand(_rng(), T, 4)) isa MVector{4, T}
-                @test (@MVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                VERSION≥v"1.7" && @test (@MVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
                 @test (@MVector randn(_rng(), T, 4)) isa MVector{4, T}
                 @test (@MVector randn(_rng(), T, 4)) == randn(_rng(), T, 4)
                 @test (@MVector randexp(_rng(), T, 4)) isa MVector{4, T}

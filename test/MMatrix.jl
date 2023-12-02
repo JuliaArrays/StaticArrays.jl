@@ -123,13 +123,13 @@
                 @test (@MMatrix randn(T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix randexp(T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix rand(_rng(), T, n, n)) isa MMatrix{n, n, T}
-                @test (@MMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                VERSION≥v"1.7" && @test (@MMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
                 @test (@MMatrix randn(_rng(), T, n, n)) isa MMatrix{n, n, T}
                 @test (@MMatrix randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
                 @test (@MMatrix randexp(_rng(), T, n, n)) isa MMatrix{n, n, T}
                 @test (@MMatrix randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
                 @test (@MMatrix rand(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
-                @test (@MMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                VERSION≥v"1.7" && @test (@MMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
                 @test (@MMatrix randn(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
                 @test (@MMatrix randexp(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
