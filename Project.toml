@@ -3,7 +3,6 @@ uuid = "90137ffa-7385-5640-81b9-e52037218182"
 version = "1.7.1"
 
 [deps]
-ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
@@ -11,9 +10,11 @@ StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [weakdeps]
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [extensions]
+StaticArraysChainRulesCoreExt = "ChainRulesCore"
 StaticArraysStatisticsExt = "Statistics"
 
 [compat]
@@ -26,6 +27,7 @@ julia = "1.6"
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 OffsetArrays = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"

@@ -21,10 +21,6 @@ using LinearAlgebra: checksquare
 
 using PrecompileTools
 
-# ChainRulesCore imports
-import ChainRulesCore: ProjectTo, Tangent, project_type, rrule
-import ChainRulesCore as CRC
-
 # StaticArraysCore imports
 # there is intentionally no "using StaticArraysCore" to not take all symbols exported
 # from StaticArraysCore to make transitioning definitions to StaticArraysCore easier.

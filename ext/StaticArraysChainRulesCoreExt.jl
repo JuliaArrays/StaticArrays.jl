@@ -1,3 +1,10 @@
+module StaticArraysChainRulesCoreExt
+
+using StaticArrays
+# ChainRulesCore imports
+import ChainRulesCore: ProjectTo, Tangent, project_type, rrule
+import ChainRulesCore as CRC
+
 # Projecting a tuple to SMatrix leads to ChainRulesCore._projection_mismatch by default, so
 # overloaded here
 function (project::ProjectTo{<:Tangent{<:Tuple}})(dx::StaticArraysCore.SArray)
@@ -20,4 +27,6 @@ function rrule(::Type{T}, x::Tuple) where {T <: SArray}
     project_x = ProjectTo(x)
     ∇Array(∂y) = (NoTangent(), project_x(∂y))
     return T(x), ∇Array
+end
+
 end
