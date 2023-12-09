@@ -2,10 +2,10 @@ module StaticArraysChainRulesCoreExt
 
 using StaticArrays
 # ChainRulesCore imports
-import ChainRulesCore: ProjectTo, Tangent, project_type, rrule
+import ChainRulesCore: NoTangent, ProjectTo, Tangent, project_type, rrule
 import ChainRulesCore as CRC
 
-# Projecting a tuple to SMatrix leads to ChainRulesCore._projection_mismatch by default, so
+# Projecting a tuple to SMatrix leads to CRC._projection_mismatch by default, so
 # overloaded here
 function (project::ProjectTo{<:Tangent{<:Tuple}})(dx::StaticArraysCore.SArray)
     dy = reshape(dx, axes(project.elements))

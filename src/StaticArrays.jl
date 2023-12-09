@@ -133,8 +133,6 @@ include("flatten.jl")
 include("io.jl")
 include("pinv.jl")
 
-include("chainrules.jl")
-
 @static if !isdefined(Base, :get_extension) # VERSION < v"1.9-"
     include("../ext/StaticArraysStatisticsExt.jl")
 end

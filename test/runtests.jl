@@ -88,4 +88,9 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("io.jl")
     addtests("svd.jl")
     addtests("unitful.jl")
+
+    # chain rules integration via pkg extensions is available only in Julia 1.9+
+    if VERSION ≥ v"1.9-"
+        addtests("chainrules.jl")
+    end
 end
