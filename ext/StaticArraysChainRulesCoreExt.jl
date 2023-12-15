@@ -29,4 +29,10 @@ function rrule(::Type{T}, x::Tuple) where {T <: SArray}
     return T(x), ∇Array
 end
 
+function rrule(::Type{T}, xs::Number...) where {T <: SVector}
+    project_x = ProjectTo(xs)
+    ∇Array(∂y) = (NoTangent(), project_x(∂y)...)
+    return T(xs...), ∇Array
+end
+
 end
