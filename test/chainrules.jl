@@ -1,4 +1,4 @@
-using StaticArrays, ChainRulesCore, ChainRulesTestUtils, Test
+using StaticArrays, ChainRulesCore, ChainRulesTestUtils, JLArrays, Test
 
 @testset "Chain Rules Integration" begin
     @testset "Projection" begin
@@ -25,5 +25,12 @@ using StaticArrays, ChainRulesCore, ChainRulesTestUtils, Test
         @inferred ProjectTo(x)
         @inferred ProjectTo(x)(y)
         @inferred ProjectTo(y)(x)
+    end
+
+    @testset "Array of Structs Projection" begin
+        x = JLArray(rand(SVector{3, Float64}, 10))
+        @inferred ProjectTo(x)
+        @inferred Union{Nothing, JLVector{SVector{3, Float64}}, DenseJLVector{SVector{3, Float64}}} ProjectTo(x)(x)
+        @test ProjectTo(x)(x) isa JLArray
     end
 end
