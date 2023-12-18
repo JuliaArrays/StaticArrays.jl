@@ -15,12 +15,12 @@ end
 
 # Project SArray to SArray
 function ProjectTo(x::SArray{S, T}) where {S, T}
-    return ProjectTo{SArray}(; element = CRC._eltype_projectto(T), axes = S)
+    return ProjectTo{SArray}(; element = CRC._eltype_projectto(T), axes = Size(x))
 end
 
-function (project::ProjectTo{SArray})(dx::AbstractArray{S, M}) where {S, M}
-    return SArray{project.axes}(dx)
-end
+@inline _sarray_from_array(::Size{T}, dx::AbstractArray) where {T} = SArray{Tuple{T...}}(dx)
+
+(project::ProjectTo{SArray})(dx::AbstractArray) = _sarray_from_array(project.axes, dx)
 
 # Adjoint for SArray constructor
 function rrule(::Type{T}, x::Tuple) where {T <: SArray}
