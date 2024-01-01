@@ -18,7 +18,7 @@ using StaticArrays, ChainRulesCore, ChainRulesTestUtils, JLArrays, Test
         @test pvec3(SA[1, 2, 3]) isa StaticArray
     end
 
-    @testset "Constructor rrules"
+    @testset "Constructor rrules" begin
         test_rrule(SMatrix{1, 4}, (1.0, 1.0, 1.0, 1.0))
         test_rrule(SMatrix{4, 1}, (1.0, 1.0, 1.0, 1.0))
         test_rrule(SMatrix{2, 2}, (1.0, 1.0, 1.0, 1.0))
