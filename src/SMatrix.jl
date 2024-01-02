@@ -15,6 +15,21 @@ function check_matrix_size(x::Tuple, T = :S)
     x1, x2
 end
 
+# @SMatrix rand(...)
+_rand_with_Val(::Type{SM}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = rand(rng, SM{n1, n2})
+_rand_with_Val(::Type{SM}, T::DataType,      ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = _rand(Random.GLOBAL_RNG, T, Size(n1, n2), SM{n1, n2, T})
+_rand_with_Val(::Type{SM}, sampler,          ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = _rand(Random.GLOBAL_RNG, sampler, Size(n1, n2), SM{n1, n2, Random.gentype(sampler)})
+_rand_with_Val(::Type{SM}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = rand(rng, SM{n1, n2, T})
+_rand_with_Val(::Type{SM}, rng::AbstractRNG, sampler,     ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = _rand(rng, sampler, Size(n1, n2), SM{n1, n2, Random.gentype(sampler)})
+# @SMatrix randn(...)
+_randn_with_Val(::Type{SM}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = randn(rng, SM{n1, n2})
+_randn_with_Val(::Type{SM}, T::DataType,      ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = _randn(Random.GLOBAL_RNG, Size(n1, n2), SM{n1, n2, T})
+_randn_with_Val(::Type{SM}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = randn(rng, SM{n1, n2, T})
+# @SMatrix randexp(...)
+_randexp_with_Val(::Type{SM}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = randexp(rng, SM{n1, n2})
+_randexp_with_Val(::Type{SM}, T::DataType,      ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = _randexp(Random.GLOBAL_RNG, Size(n1, n2), SM{n1, n2, T})
+_randexp_with_Val(::Type{SM}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {SM, n1, n2} = randexp(rng, SM{n1, n2, T})
+
 function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM}
     if !isa(ex, Expr)
         error("Bad input for @$SM")
@@ -69,44 +84,51 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
         end
     elseif head === :call
         f = ex.args[1]
-        if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
-            if length(ex.args) == 3
-                return :($f($SM{$(escall(ex.args[2:3])...), Float64})) # default to Float64 like Base
-            elseif length(ex.args) == 4
-                if f === :rand && ex.args[3] isa Int && ex.args[3] ≥ 0 && ex.args[4] isa Int && ex.args[4] ≥ 0
-                    # for calls like rand(sampler, n, m) or rand(type, n, m)
-                    return quote
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
-                            $(esc(ex.args[2])),
-                            Size($(esc(ex.args[3])), $(esc(ex.args[4]))),
-                            $SM{$(esc(ex.args[3])), $(esc(ex.args[4])), Random.gentype($(esc(ex.args[2])))},
-                        )
-                    end
-                else
-                    return :($f($SM{$(escall(ex.args[[3,4,2]])...)}))
-                end
-            elseif length(ex.args) == 5 && f === :rand && ex.args[4] isa Int && ex.args[4] ≥ 0 && ex.args[5] isa Int && ex.args[5] ≥ 0
-                # for calls like rand(rng::AbstractRNG, sampler, n, m) or rand(rng::AbstractRNG, type, n, m)
-                return quote
-                    StaticArrays._rand(
-                        $(esc(ex.args[2])),
-                        $(esc(ex.args[3])),
-                        Size($(esc(ex.args[4])), $(esc(ex.args[5]))),
-                        $SM{$(esc(ex.args[4])), $(esc(ex.args[5])), Random.gentype($(esc(ex.args[3])))},
-                    )
-                end
+        fargs = ex.args[2:end]
+        if f === :zeros || f === :ones
+            if length(fargs) == 2
+                # for calls like `zeros(dim1, dim2)`
+                return :($f($SM{$(escall(fargs)...)}))
+            elseif length(fargs[2:end]) == 2
+                # for calls like `zeros(type, dim1, dim2)`
+                return :($f($SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))}))
+            else
+                error("@$SM got bad expression: $(ex)")
+            end
+        elseif f === :fill
+            # for calls like `fill(value, dim1, dim2)`
+            if length(fargs[2:end]) == 2
+                return :($f($(esc(fargs[1])), $SM{$(escall(fargs[2:end])...)}))
             else
                 error("@$SM expected a 2-dimensional array expression")
             end
-        elseif ex.args[1] === :fill
-            if length(ex.args) == 4
-                return :($f($(esc(ex.args[2])), $SM{$(escall(ex.args[3:4])...)}))
+        elseif f === :rand || f === :randn || f === :randexp
+            _f_with_Val = Symbol(:_, f, :_with_Val)
+            if length(fargs) == 2
+                # for calls like `rand(dim1, dim2)`
+                # for calls like `randn(dim1, dim2)`
+                # for calls like `randexp(dim1, dim2)`
+                return :($f($SM{$(escall(fargs)...)}))
+            elseif length(fargs) == 3
+                # for calls like `rand(rng, dim1, dim2)`
+                # for calls like `rand(type, dim1, dim2)`
+                # for calls like `rand(sampler, dim1, dim2)`
+                # for calls like `randn(rng, dim1, dim2)`
+                # for calls like `randn(type, dim1, dim2)`
+                # for calls like `randexp(rng, dim1, dim2)`
+                # for calls like `randexp(type, dim1, dim2)`
+                return :($_f_with_Val($SM, $(esc(fargs[1])), Val($(esc(fargs[2]))), Val($(esc(fargs[3])))))
+            elseif length(fargs) == 4
+                # for calls like `rand(rng, type, dim1, dim2)`
+                # for calls like `rand(rng, sampler, dim1, dim2)`
+                # for calls like `randn(rng, type, dim1, dim2)`
+                # for calls like `randexp(rng, type, dim1, dim2)`
+                return :($_f_with_Val($SM, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3]))), Val($(esc(fargs[4])))))
             else
-                error("@$SM expected a 2-dimensional array expression")
+                error("@$SM got bad expression: $(ex)")
             end
         else
-            error("@$SM only supports the zeros(), ones(), rand(), randn(), and randexp() functions.")
+            error("@$SM only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Bad input for @$SM")
