@@ -16,6 +16,32 @@ function check_vector_length(x::Tuple, T = :S)
     length(x) >= 1 ? x[1] : 1
 end
 
+# @SVector rand(...)
+_rand_with_Val(::Type{SVector}, rng::AbstractRNG, ::Val{n}) where n = rand(rng, SVector{n})
+_rand_with_Val(::Type{MVector}, rng::AbstractRNG, ::Val{n}) where n = rand(rng, MVector{n})
+_rand_with_Val(::Type{SVector}, T::DataType,      ::Val{n}) where n = _rand(Random.GLOBAL_RNG, T, Size(n), SVector{n, T})
+_rand_with_Val(::Type{MVector}, T::DataType,      ::Val{n}) where n = _rand(Random.GLOBAL_RNG, T, Size(n), MVector{n, T})
+_rand_with_Val(::Type{SVector}, sampler,          ::Val{n}) where n = _rand(Random.GLOBAL_RNG, sampler, Size(n), SVector{n, Random.gentype(sampler)})
+_rand_with_Val(::Type{MVector}, sampler,          ::Val{n}) where n = _rand(Random.GLOBAL_RNG, sampler, Size(n), MVector{n, Random.gentype(sampler)})
+_rand_with_Val(::Type{SVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = rand(rng, SVector{n, T})
+_rand_with_Val(::Type{MVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = rand(rng, MVector{n, T})
+_rand_with_Val(::Type{SVector}, rng::AbstractRNG, sampler,     ::Val{n}) where n = _rand(rng, sampler, Size(n), SVector{n, Random.gentype(sampler)})
+_rand_with_Val(::Type{MVector}, rng::AbstractRNG, sampler,     ::Val{n}) where n = _rand(rng, sampler, Size(n), MVector{n, Random.gentype(sampler)})
+# @SVector randn(...)
+_randn_with_Val(::Type{SVector}, rng::AbstractRNG, ::Val{n}) where n = randn(rng, SVector{n})
+_randn_with_Val(::Type{MVector}, rng::AbstractRNG, ::Val{n}) where n = randn(rng, MVector{n})
+_randn_with_Val(::Type{SVector}, T::DataType,      ::Val{n}) where n = _randn(Random.GLOBAL_RNG, Size(n), SVector{n, T})
+_randn_with_Val(::Type{MVector}, T::DataType,      ::Val{n}) where n = _randn(Random.GLOBAL_RNG, Size(n), MVector{n, T})
+_randn_with_Val(::Type{SVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = randn(rng, SVector{n, T})
+_randn_with_Val(::Type{MVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = randn(rng, MVector{n, T})
+# @SVector randexp(...)
+_randexp_with_Val(::Type{SVector}, rng::AbstractRNG, ::Val{n}) where n = randexp(rng, SVector{n})
+_randexp_with_Val(::Type{MVector}, rng::AbstractRNG, ::Val{n}) where n = randexp(rng, MVector{n})
+_randexp_with_Val(::Type{SVector}, T::DataType,      ::Val{n}) where n = _randexp(Random.GLOBAL_RNG, Size(n), SVector{n, T})
+_randexp_with_Val(::Type{MVector}, T::DataType,      ::Val{n}) where n = _randexp(Random.GLOBAL_RNG, Size(n), MVector{n, T})
+_randexp_with_Val(::Type{SVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = randexp(rng, SVector{n, T})
+_randexp_with_Val(::Type{MVector}, rng::AbstractRNG, T::DataType, ::Val{n}) where n = randexp(rng, MVector{n, T})
+
 function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV}
     if !isa(ex, Expr)
         error("Bad input for @$SV")
@@ -85,95 +111,30 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             else
                 error("@$SV got bad expression: $(ex)")
             end
-        elseif f === :rand
+        elseif f === :rand || f === :randn || f === :randexp
+            _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 1
                 # for calls like `rand(dim)`
-                return :($f($SV{$(esc(fargs[1]))}))
+                # for calls like `randn(dim)`
+                # for calls like `randexp(dim)`
+                return :($f($SV{$(escall(fargs)...)}))
             elseif length(fargs) == 2
-                return quote
-                    if isa($(esc(fargs[1])), Random.AbstractRNG)
-                        # for calls like `rand(rng, dim)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            Float64,
-                            Size($(esc(fargs[2]))),
-                            $SV{$(esc(fargs[2])), Float64},
-                        )
-                    elseif isa($(esc(fargs[1])), DataType)
-                        # for calls like `rand(type, dim)`
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
-                            $(esc(fargs[1])),
-                            Size($(esc(fargs[2]))),
-                            $SV{$(esc(fargs[2])), $(esc(fargs[1]))},
-                        )
-                    else
-                        # for calls like `rand(sampler, dim)`
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
-                            $(esc(fargs[1])),
-                            Size($(esc(fargs[2]))),
-                            $SV{$(esc(fargs[2])), Random.gentype($(esc(fargs[1])))},
-                        )
-                    end
-                end
+                # for calls like `rand(rng, dim)`
+                # for calls like `rand(type, dim)`
+                # for calls like `rand(sampler, dim)`
+                # for calls like `randn(rng, dim)`
+                # for calls like `randn(type, dim)`
+                # for calls like `randexp(rng, dim)`
+                # for calls like `randexp(type, dim)`
+                return :($_f_with_Val($SV, $(esc(fargs[1])), Val($(esc(fargs[2])))))
             elseif length(fargs) == 3
-                return quote
-                    if isa($(esc(fargs[2])), DataType)
-                        # for calls like `rand(rng, type, dim)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            $(esc(fargs[2])),
-                            Size($(esc(fargs[3]))),
-                            $SV{$(esc(fargs[3])), $(esc(fargs[2]))},
-                        )
-                    else
-                        # for calls like `rand(rng, sampler, dim)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            $(esc(fargs[2])),
-                            Size($(esc(fargs[3]))),
-                            $SV{$(esc(fargs[3])), Random.gentype($(esc(fargs[2])))},
-                        )
-                    end
-                end
+                # for calls like `rand(rng, type, dim)`
+                # for calls like `rand(rng, sampler, dim)`
+                # for calls like `randn(rng, type, dim)`
+                # for calls like `randexp(rng, type, dim)`
+                return :($_f_with_Val($SV, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3])))))
             else
                 error("@$SV got bad expression: $(ex)")
-            end
-        elseif f === :randn || f === :randexp
-            _f = Symbol(:_, f)
-            if length(fargs) == 1
-                # for calls like `randn(dim)`
-                return :($f($SV{$(esc(fargs[1]))}))
-            elseif length(fargs) == 2
-                return quote
-                    if isa($(esc(fargs[1])), Random.AbstractRNG)
-                        # for calls like `randn(rng, dim)`
-                        StaticArrays.$_f(
-                            $(esc(fargs[1])),
-                            Size($(esc(fargs[2]))),
-                            $SV{$(esc(fargs[2])), Float64},
-                        )
-                    else
-                        # for calls like `randn(type, dim)`
-                        StaticArrays.$_f(
-                            Random.GLOBAL_RNG,
-                            Size($(esc(fargs[2]))),
-                            $SV{$(esc(fargs[2])), $(esc(fargs[1]))},
-                        )
-                    end
-                end
-            elseif length(fargs) == 3
-                # for calls like `randn(rng, type, dim)`
-                return quote
-                    StaticArrays.$_f(
-                        $(esc(fargs[1])),
-                        Size($(esc(fargs[3]))),
-                        $SV{$(esc(fargs[3])), $(esc(fargs[2]))},
-                    )
-                end
-            else
-                error("@$SV expected a 1-dimensional array expression")
             end
         elseif f === :fill
             # for calls like `fill(value, dim)`
