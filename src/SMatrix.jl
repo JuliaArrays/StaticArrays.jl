@@ -15,6 +15,32 @@ function check_matrix_size(x::Tuple, T = :S)
     x1, x2
 end
 
+# @SMatrix rand(...)
+_rand_with_Val(::Type{SMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = rand(rng, SMatrix{n1, n2})
+_rand_with_Val(::Type{MMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = rand(rng, MMatrix{n1, n2})
+_rand_with_Val(::Type{SMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(Random.GLOBAL_RNG, T, Size(n1, n2), SMatrix{n1, n2, T})
+_rand_with_Val(::Type{MMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(Random.GLOBAL_RNG, T, Size(n1, n2), MMatrix{n1, n2, T})
+_rand_with_Val(::Type{SMatrix}, sampler,          ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(Random.GLOBAL_RNG, sampler, Size(n1, n2), SMatrix{n1, n2, Random.gentype(sampler)})
+_rand_with_Val(::Type{MMatrix}, sampler,          ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(Random.GLOBAL_RNG, sampler, Size(n1, n2), MMatrix{n1, n2, Random.gentype(sampler)})
+_rand_with_Val(::Type{SMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = rand(rng, SMatrix{n1, n2, T})
+_rand_with_Val(::Type{MMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = rand(rng, MMatrix{n1, n2, T})
+_rand_with_Val(::Type{SMatrix}, rng::AbstractRNG, sampler,     ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(rng, sampler, Size(n1, n2), SMatrix{n1, n2, Random.gentype(sampler)})
+_rand_with_Val(::Type{MMatrix}, rng::AbstractRNG, sampler,     ::Val{n1}, ::Val{n2}) where {n1, n2} = _rand(rng, sampler, Size(n1, n2), MMatrix{n1, n2, Random.gentype(sampler)})
+# @SMatrix randn(...)
+_randn_with_Val(::Type{SMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = randn(rng, SMatrix{n1, n2})
+_randn_with_Val(::Type{MMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = randn(rng, MMatrix{n1, n2})
+_randn_with_Val(::Type{SMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _randn(Random.GLOBAL_RNG, Size(n1, n2), SMatrix{n1, n2, T})
+_randn_with_Val(::Type{MMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _randn(Random.GLOBAL_RNG, Size(n1, n2), MMatrix{n1, n2, T})
+_randn_with_Val(::Type{SMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = randn(rng, SMatrix{n1, n2, T})
+_randn_with_Val(::Type{MMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = randn(rng, MMatrix{n1, n2, T})
+# @SMatrix randexp(...)
+_randexp_with_Val(::Type{SMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = randexp(rng, SMatrix{n1, n2})
+_randexp_with_Val(::Type{MMatrix}, rng::AbstractRNG, ::Val{n1}, ::Val{n2}) where {n1, n2} = randexp(rng, MMatrix{n1, n2})
+_randexp_with_Val(::Type{SMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _randexp(Random.GLOBAL_RNG, Size(n1, n2), SMatrix{n1, n2, T})
+_randexp_with_Val(::Type{MMatrix}, T::DataType,      ::Val{n1}, ::Val{n2}) where {n1, n2} = _randexp(Random.GLOBAL_RNG, Size(n1, n2), MMatrix{n1, n2, T})
+_randexp_with_Val(::Type{SMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = randexp(rng, SMatrix{n1, n2, T})
+_randexp_with_Val(::Type{MMatrix}, rng::AbstractRNG, T::DataType, ::Val{n1}, ::Val{n2}) where {n1, n2} = randexp(rng, MMatrix{n1, n2, T})
+
 function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM}
     if !isa(ex, Expr)
         error("Bad input for @$SM")
@@ -80,95 +106,30 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             else
                 error("@$SM got bad expression: $(ex)")
             end
-        elseif f === :rand
+        elseif f === :rand || f === :randn || f === :randexp
+            _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 2
                 # for calls like `rand(dim1, dim2)`
+                # for calls like `randn(dim1, dim2)`
+                # for calls like `randexp(dim1, dim2)`
                 return :($f($SM{$(escall(fargs)...)}))
-            elseif length(fargs[2:end]) == 2
-                return quote
-                    if isa($(esc(fargs[1])), Random.AbstractRNG)
-                        # for calls like `rand(rng, dim1, dim2)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            Float64,
-                            Size($(escall(fargs[2:end])...)),
-                            $SM{$(escall(fargs[2:end])...), Float64},
-                        )
-                    elseif isa($(esc(fargs[1])), DataType)
-                        # for calls like `rand(type, dim1, dim2)`
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
-                            $(esc(fargs[1])),
-                            Size($(escall(fargs[2:end])...)),
-                            $SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))},
-                        )
-                    else
-                        # for calls like `rand(sampler, dim1, dim2)`
-                        StaticArrays._rand(
-                            Random.GLOBAL_RNG,
-                            $(esc(fargs[1])),
-                            Size($(escall(fargs[2:end])...)),
-                            $SM{$(escall(fargs[2:end])...), Random.gentype($(esc(fargs[1])))},
-                        )
-                    end
-                end
-            elseif length(fargs[3:end]) == 2
-                return quote
-                    if isa($(esc(fargs[2])), DataType)
-                        # for calls like `rand(rng, type, dim1, dim2)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            $(esc(fargs[2])),
-                            Size($(escall(fargs[3:end])...)),
-                            $SM{$(escall(fargs[3:end])...), $(esc(fargs[2]))},
-                        )
-                    else
-                        # for calls like `rand(rng, sampler, dim1, dim2)`
-                        StaticArrays._rand(
-                            $(esc(fargs[1])),
-                            $(esc(fargs[2])),
-                            Size($(escall(fargs[3:end])...)),
-                            $SM{$(escall(fargs[3:end])...), Random.gentype($(esc(fargs[2])))},
-                        )
-                    end
-                end
+            elseif length(fargs) == 3
+                # for calls like `rand(rng, dim1, dim2)`
+                # for calls like `rand(type, dim1, dim2)`
+                # for calls like `rand(sampler, dim1, dim2)`
+                # for calls like `randn(rng, dim1, dim2)`
+                # for calls like `randn(type, dim1, dim2)`
+                # for calls like `randexp(rng, dim1, dim2)`
+                # for calls like `randexp(type, dim1, dim2)`
+                return :($_f_with_Val($SM, $(esc(fargs[1])), Val($(esc(fargs[2]))), Val($(esc(fargs[3])))))
+            elseif length(fargs) == 4
+                # for calls like `rand(rng, type, dim1, dim2)`
+                # for calls like `rand(rng, sampler, dim1, dim2)`
+                # for calls like `randn(rng, type, dim1, dim2)`
+                # for calls like `randexp(rng, type, dim1, dim2)`
+                return :($_f_with_Val($SM, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3]))), Val($(esc(fargs[4])))))
             else
                 error("@$SM got bad expression: $(ex)")
-            end
-        elseif f === :randn || f === :randexp
-            _f = Symbol(:_, f)
-            if length(fargs) == 2
-                # for calls like `randn(dim1, dim2)`
-                return :($f($SM{$(escall(fargs)...)}))
-            elseif length(fargs[2:end]) == 2
-                return quote
-                    if isa($(esc(fargs[1])), Random.AbstractRNG)
-                        # for calls like `randn(rng, dim1, dim2)`
-                        StaticArrays.$_f(
-                            $(esc(fargs[1])),
-                            Size($(escall(fargs[2:end])...)),
-                            $SM{$(escall(fargs[2:end])...), Float64},
-                        )
-                    else
-                        # for calls like `randn(type, dim1, dim2)`
-                        StaticArrays.$_f(
-                            Random.GLOBAL_RNG,
-                            Size($(escall(fargs[2:end])...)),
-                            $SM{$(escall(fargs[2:end])...), $(esc(fargs[1]))},
-                        )
-                    end
-                end
-            elseif length(fargs[3:end]) == 2
-                # for calls like `randn(rng, type, dim1, dim2)`
-                return quote
-                    StaticArrays.$_f(
-                        $(esc(fargs[1])),
-                        Size($(escall(fargs[3:end])...)),
-                        $SM{$(escall(fargs[3:end])...), $(esc(fargs[2]))},
-                    )
-                end
-            else
-                error("@$SM expected a 2-dimensional array expression")
             end
         elseif f === :fill
             # for calls like `fill(value, dim1, dim2)`
