@@ -273,15 +273,8 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 return :($_f_with_Val($SA, $(esc(fargs[1])), Val($(esc(fargs[1]))), Val(tuple($(escall(fargs[2:end])...)))))
             end
         elseif f === :fill
-            if length(fargs) == 1
-                # for calls like `fill(value)`
-                return :($f($(esc(fargs[1])), $SA{Tuple{}}))
-            elseif _isnonnegvec(fargs[2:end])
-                # for calls like `fill(value, dims...)`
-                return :($f($(esc(fargs[1])), $SA{Tuple{$(escall(fargs[2:end])...)}}))
-            else
-                error("@$SA got bad expression: $(ex)")
-            end
+            # for calls like `fill(value, dims...)`
+            return :($f($(esc(fargs[1])), $SA{Tuple{$(escall(fargs[2:end])...)}}))
         elseif f === :rand || f === :randn || f === :randexp
             _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 0
