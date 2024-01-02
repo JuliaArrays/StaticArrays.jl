@@ -83,17 +83,19 @@
         @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
         @test ((@SArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::SArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
-        test_expand_error(:(@SArray [1 2; 3]))
-        test_expand_error(:(@SArray Float64[1 2; 3]))
-        test_expand_error(:(@SArray ones))
-        test_expand_error(:(@SArray fill))
-        test_expand_error(:(@SArray sin(1:5)))
-        test_expand_error(:(@SArray fill()))
-        test_expand_error(:(@SArray [1; 2; 3; 4]...))
+        @testset "expand error" begin
+            test_expand_error(:(@SArray [1 2; 3]))
+            test_expand_error(:(@SArray Float64[1 2; 3]))
+            test_expand_error(:(@SArray ones))
+            test_expand_error(:(@SArray fill))
+            test_expand_error(:(@SArray sin(1:5)))
+            test_expand_error(:(@SArray fill()))
+            test_expand_error(:(@SArray [1; 2; 3; 4]...))
 
-        # (typed-)comprehension LoadError for `ex.args[1].head != :generator`
-        test_expand_error(:(@SArray [i+j for i in 1:2 for j in 1:2]))
-        test_expand_error(:(@SArray Int[i+j for i in 1:2 for j in 1:2]))
+            # (typed-)comprehension LoadError for `ex.args[1].head != :generator`
+            test_expand_error(:(@SArray [i+j for i in 1:2 for j in 1:2]))
+            test_expand_error(:(@SArray Int[i+j for i in 1:2 for j in 1:2]))
+        end
 
         @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
         @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)

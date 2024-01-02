@@ -89,13 +89,19 @@
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
-        test_expand_error(:(@MArray [1 2; 3]))
-        test_expand_error(:(@MArray Float64[1 2; 3]))
-        test_expand_error(:(@MArray fill))
-        test_expand_error(:(@MArray ones))
-        test_expand_error(:(@MArray sin(1:5)))
-        test_expand_error(:(@MArray fill()))
-        test_expand_error(:(@MArray [1; 2; 3; 4]...))
+        @testset "expand error" begin
+            test_expand_error(:(@MArray [1 2; 3]))
+            test_expand_error(:(@MArray Float64[1 2; 3]))
+            test_expand_error(:(@MArray fill))
+            test_expand_error(:(@MArray ones))
+            test_expand_error(:(@MArray sin(1:5)))
+            test_expand_error(:(@MArray fill()))
+            test_expand_error(:(@MArray [1; 2; 3; 4]...))
+
+            # (typed-)comprehension LoadError for `ex.args[1].head != :generator`
+            test_expand_error(:(@MArray [i+j for i in 1:2 for j in 1:2]))
+            test_expand_error(:(@MArray Int[i+j for i in 1:2 for j in 1:2]))
+        end
 
         @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
         @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
