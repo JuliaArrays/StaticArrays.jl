@@ -106,6 +106,13 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
             else
                 error("@$SM got bad expression: $(ex)")
             end
+        elseif f === :fill
+            # for calls like `fill(value, dim1, dim2)`
+            if length(fargs[2:end]) == 2
+                return :($f($(esc(fargs[1])), $SM{$(escall(fargs[2:end])...)}))
+            else
+                error("@$SM expected a 2-dimensional array expression")
+            end
         elseif f === :rand || f === :randn || f === :randexp
             _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 2
@@ -130,13 +137,6 @@ function static_matrix_gen(::Type{SM}, @nospecialize(ex), mod::Module) where {SM
                 return :($_f_with_Val($SM, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3]))), Val($(esc(fargs[4])))))
             else
                 error("@$SM got bad expression: $(ex)")
-            end
-        elseif f === :fill
-            # for calls like `fill(value, dim1, dim2)`
-            if length(fargs[2:end]) == 2
-                return :($f($(esc(fargs[1])), $SM{$(escall(fargs[2:end])...)}))
-            else
-                error("@$SM expected a 2-dimensional array expression")
             end
         else
             error("@$SM only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")

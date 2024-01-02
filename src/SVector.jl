@@ -111,6 +111,13 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
             else
                 error("@$SV got bad expression: $(ex)")
             end
+        elseif f === :fill
+            # for calls like `fill(value, dim)`
+            if length(fargs) == 2
+                return :($f($(esc(fargs[1])), $SV{$(esc(fargs[2]))}))
+            else
+                error("@$SV expected a 1-dimensional array expression")
+            end
         elseif f === :rand || f === :randn || f === :randexp
             _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 1
@@ -135,13 +142,6 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
                 return :($_f_with_Val($SV, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3])))))
             else
                 error("@$SV got bad expression: $(ex)")
-            end
-        elseif f === :fill
-            # for calls like `fill(value, dim)`
-            if length(fargs) == 2
-                return :($f($(esc(fargs[1])), $SV{$(esc(fargs[2]))}))
-            else
-                error("@$SV expected a 1-dimensional array expression")
             end
         else
             error("@$SV only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
