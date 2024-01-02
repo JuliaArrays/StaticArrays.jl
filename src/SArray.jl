@@ -210,15 +210,15 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
     end
     head = ex.head
     if head === :vect    # vector
-        return :($SA{$Tuple{$(length(ex.args))}}($tuple($(escall(ex.args)...))))
+        return :($SA{Tuple{$(length(ex.args))}}($tuple($(escall(ex.args)...))))
     elseif head === :ref # typed, vector
-        return :($SA{$Tuple{$(length(ex.args)-1)},$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
+        return :($SA{Tuple{$(length(ex.args)-1)},$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
     elseif head === :typed_vcat || head === :typed_hcat || head === :typed_ncat # typed, cat
         args = parse_cat_ast(ex)
-        return :($SA{$Tuple{$(size(args)...)},$(esc(ex.args[1]))}($tuple($(escall(args)...))))
+        return :($SA{Tuple{$(size(args)...)},$(esc(ex.args[1]))}($tuple($(escall(args)...))))
     elseif head === :vcat || head === :hcat || head === :ncat # untyped, cat
         args = parse_cat_ast(ex)
-        return :($SA{$Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
+        return :($SA{Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
     elseif head === :comprehension
         if length(ex.args) != 1
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
@@ -234,7 +234,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         return quote
             let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
-                $SA{$Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
+                $SA{Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
             end
         end
     elseif head === :typed_comprehension
@@ -253,7 +253,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         return quote
             let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
-                $SA{$Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
+                $SA{Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
             end
         end
     elseif head === :call
@@ -263,10 +263,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 0
                 # for calls like `zeros()`
-                return :($f($SA{$Tuple{},$Float64}))
+                return :($f($SA{Tuple{},$Float64}))
             elseif _isnonnegvec(fargs)
                 # for calls like `zeros(dims...)`
-                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
             else
                 # for calls like `zeros(type)`
                 # for calls like `zeros(type, dims...)`
@@ -275,10 +275,10 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         elseif f === :fill
             if length(fargs) == 1
                 # for calls like `fill(value)`
-                return :($f($(esc(fargs[1])), $SA{$Tuple{}}))
+                return :($f($(esc(fargs[1])), $SA{Tuple{}}))
             elseif _isnonnegvec(fargs[2:end])
                 # for calls like `fill(value, dims...)`
-                return :($f($(esc(fargs[1])), $SA{$Tuple{$(escall(fargs[2:end])...)}}))
+                return :($f($(esc(fargs[1])), $SA{Tuple{$(escall(fargs[2:end])...)}}))
             else
                 error("@$SA got bad expression: $(ex)")
             end
@@ -289,7 +289,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 error("@$SA got bad expression: $(ex)")
             elseif _isnonnegvec(fargs)
                 # for calls like `rand(dims...)`
-                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
             elseif length(fargs) ≥ 2
                 # for calls like `rand(dim1,    dim2,    dims...)`
                 # for calls like `rand(type,    dim1,    dims...)`
@@ -308,7 +308,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 return :($_f_with_Val($SA, $(esc(fargs[1])), $(esc(fargs[2])), _int2val($(esc(fargs[1]))), _int2val($(esc(fargs[2]))), Val(tuple($(escall(fargs[3:end])...)))))
             elseif length(fargs) == 1
                 # for calls like `rand(dim)`
-                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
             else
                 error("@$SA got bad expression: $(ex)")
             end
