@@ -216,27 +216,26 @@
             @test (@MArray randexp(Float32,2,2,0)) isa MArray{Tuple{2,2,0}, Float32}
         end
 
-        @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
-        @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
-
-        @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
-        @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
-        @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@MArray zeros(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
-        @test ((@MArray ones(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@MArray zeros(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
-        @test ((@MArray ones(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
-        @test ((@MArray zeros(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
-        @test ((@MArray ones(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
-
-        @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-        @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-
-        @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
-        @test ((@MArray ones(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
+        @testset "fill, zeros, ones" begin
+            @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
+            @test ((@MArray zeros())::MArray{Tuple{},Float64}).data === (0.,)
+            @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
+            @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
+            @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@MArray zeros(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@MArray ones(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@MArray zeros(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@MArray ones(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+            @test ((@MArray zeros(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@MArray ones(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+        end
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]
+
+        # Non-square comprehensions built from SVectors - see #76
+        @test @MArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
 
         # Nested cat
         @test ((@MArray [[1;2] [3;4]])::MMatrix{2,2}).data === (1,2,3,4)
@@ -245,6 +244,8 @@
         @test ((@MArray Float64[[1 3];[2 4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
         test_expand_error(:(@MArray [[1;2] [3]]))
         test_expand_error(:(@MArray [[1 2]; [3]]))
+
+        @test (@MArray [[[1,2],1]; 2; 3]) == [[[1,2],1]; 2; 3]
 
         if VERSION >= v"1.7.0"
             function test_ex(ex)
@@ -324,6 +325,12 @@
         # setindex with non-elbits type
         m = MArray{Tuple{2,2,2}, String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1, 1)
+    end
+
+    @testset "rand! randn! randexp!" begin
+        @test isa(rand!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
     end
 
     @testset "promotion" begin

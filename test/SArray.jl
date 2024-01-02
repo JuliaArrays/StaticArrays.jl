@@ -210,21 +210,20 @@
             @test (@SArray randexp(Float32,2,2,0)) isa SArray{Tuple{2,2,0}, Float32}
         end
 
-        @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
-        @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
-
-        @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
-        @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
-        @test ((@SArray ones(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@SArray zeros(3-1,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
-        @test ((@SArray ones(3-1,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test ((@SArray zeros(Float32,2,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
-        @test ((@SArray ones(Float32,2,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
-        @test ((@SArray zeros(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
-        @test ((@SArray ones(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
-
-        @test ((@SArray zeros(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
-        @test ((@SArray ones(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
+        @testset "fill, zeros, ones" begin
+            @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
+            @test ((@SArray zeros())::SArray{Tuple{},Float64}).data === (0.,)
+            @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
+            @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
+            @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@SArray ones(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@SArray zeros(3-1,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@SArray ones(3-1,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@SArray zeros(Float32,2,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@SArray ones(Float32,2,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+            @test ((@SArray zeros(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@SArray ones(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+        end
 
         m = [1 2; 3 4]
         @test SArray{Tuple{2,2}}(m) === @SArray [1 2; 3 4]
