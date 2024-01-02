@@ -40,7 +40,7 @@ a = @SArray randn(2, 2, 2, 2, 2, 2)
 # Supports all the common operations of AbstractArray
 v7 = v1 + v2
 v8 = sin.(v3)
-v3 == m3 * v3 # recall that m3 = eye(SMatrix{3,3})
+v3 == m3 * v3 # recall that m3 = SMatrix{3,3}(1I)
 # map, reduce, broadcast, map!, broadcast!, etc...
 
 # Indexing can also be done using static arrays of integers

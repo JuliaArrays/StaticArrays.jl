@@ -1,5 +1,6 @@
 using StaticArrays, Test, Random, LinearAlgebra
 using InteractiveUtils
+using Aqua
 
 # We generate a lot of matrices using rand(), but unit tests should be
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
@@ -47,8 +48,7 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
         addtests("empty_array_syntax.jl")
     end
 
-    addtests("ambiguities.jl")
-    addtests("unbound_args.jl")
+    addtests("aqua.jl")
     addtests("custom_types.jl")
     addtests("convert.jl")
     addtests("core.jl")
@@ -90,4 +90,9 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("io.jl")
     addtests("svd.jl")
     addtests("unitful.jl")
+
+    # chain rules integration via pkg extensions is available only in Julia 1.9+
+    if VERSION ≥ v"1.9-"
+        addtests("chainrules.jl")
+    end
 end

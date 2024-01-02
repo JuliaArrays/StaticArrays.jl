@@ -16,7 +16,7 @@ where you can use native Julia array literals syntax, comprehensions, and the
 macro, and must be made of combinations of literal values, functions, or global
 variables, but is not limited to just simple ranges. Extending this to
 (hopefully statically known by type-inference) local-scope variables is hoped
-for the future. The `zeros()`, `ones()`, `fill()`, `rand()` and `randn()` functions do not have this
+for the future. The `zeros()`, `ones()`, `fill()`, `rand()`, `randn()`, and `randexp()` functions do not have this
 limitation.)
 
 ### `SMatrix`
@@ -28,7 +28,7 @@ convenience constructors are provided, so that `L`, `T` and even `M` are
 unnecessary. At minimum, you can type `SMatrix{2}(1,2,3,4)` to create a 2×2
 matrix (the total number of elements must divide evenly into `N`). A
 convenience macro `@SMatrix [1 2; 3 4]` is provided (which also accepts
-comprehensions and the `zeros()`, `ones()`, `fill()`, `rand()`, `randn()` and `eye()`
+comprehensions and the `zeros()`, `ones()`, `fill()`, `rand()`, `randn()`, and `randexp()`
 functions).
 
 ### `SArray`
