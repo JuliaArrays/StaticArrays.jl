@@ -142,6 +142,15 @@ function parse_cat_ast(ex::Expr)
     cat_any(Val(maxdim), Val(catdim), nargs)
 end
 
+_zeros_with_Val(::Type{SArray}, ::Integer, ::Val{n1}, ::Val{ns}) where {n1, ns} = zeros(SArray{Tuple{n1, ns...}})
+_zeros_with_Val(::Type{MArray}, ::Integer, ::Val{n1}, ::Val{ns}) where {n1, ns} = zeros(MArray{Tuple{n1, ns...}})
+_zeros_with_Val(::Type{SArray}, T::DataType, ::Val, ::Val{ns}) where ns = zeros(SArray{Tuple{ns...}, T})
+_zeros_with_Val(::Type{MArray}, T::DataType, ::Val, ::Val{ns}) where ns = zeros(MArray{Tuple{ns...}, T})
+_ones_with_Val(::Type{SArray}, ::Integer, ::Val{n1}, ::Val{ns}) where {n1, ns} = ones(SArray{Tuple{n1, ns...}})
+_ones_with_Val(::Type{MArray}, ::Integer, ::Val{n1}, ::Val{ns}) where {n1, ns} = ones(MArray{Tuple{n1, ns...}})
+_ones_with_Val(::Type{SArray}, T::DataType, ::Val, ::Val{ns}) where ns = ones(SArray{Tuple{ns...}, T})
+_ones_with_Val(::Type{MArray}, T::DataType, ::Val, ::Val{ns}) where ns = ones(MArray{Tuple{ns...}, T})
+
 escall(args) = Iterators.map(esc, args)
 function _isnonnegvec(args)
     length(args) == 0 && return false
@@ -204,20 +213,17 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         f = ex.args[1]
         fargs = ex.args[2:end]
         if f === :zeros || f === :ones
+            _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 0
                 # for calls like `zeros()`
                 return :($f($SA{$Tuple{},$Float64}))
             elseif _isnonnegvec(fargs)
                 # for calls like `zeros(dims...)`
                 return :($f($SA{$Tuple{$(escall(fargs)...)}}))
-            elseif length(fargs) == 1
-                # for calls like `zeros(type)`
-                return :($f($SA{$Tuple{},$(esc(fargs[1]))}))
-            elseif _isnonnegvec(fargs[2:end])
-                # for calls like `zeros(type, dims...)`
-                return :($f($SA{$Tuple{$(escall(fargs[2:end])...)},$(esc(fargs[1]))}))
             else
-                error("@$SA got bad expression: $(ex)")
+                # for calls like `zeros(type)`
+                # for calls like `zeros(type, dims...)`
+                return :($_f_with_Val($SA, $(esc(fargs[1])), Val($(esc(fargs[1]))), Val(tuple($(escall(fargs[2:end])...)))))
             end
         elseif f === :rand
             if length(fargs) == 0
