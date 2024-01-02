@@ -97,6 +97,119 @@
             test_expand_error(:(@SArray Int[i+j for i in 1:2 for j in 1:2]))
         end
 
+        @testset "@SArray rand*" begin
+            @testset "Same test as @SVector rand*" begin
+                n = 4
+                @test (@SArray rand(n)) isa SVector{n, Float64}
+                @test (@SArray randn(n)) isa SVector{n, Float64}
+                @test (@SArray randexp(n)) isa SVector{n, Float64}
+                @test (@SArray rand(4)) isa SVector{4, Float64}
+                @test (@SArray randn(4)) isa SVector{4, Float64}
+                @test (@SArray randexp(4)) isa SVector{4, Float64}
+                @test (@SArray rand(_rng(), n)) isa SVector{n, Float64}
+                @test (@SArray rand(_rng(), n)) == rand(_rng(), n)
+                @test (@SArray randn(_rng(), n)) isa SVector{n, Float64}
+                @test (@SArray randn(_rng(), n)) == randn(_rng(), n)
+                @test (@SArray randexp(_rng(), n)) isa SVector{n, Float64}
+                @test (@SArray randexp(_rng(), n)) == randexp(_rng(), n)
+                @test (@SArray rand(_rng(), 4)) isa SVector{4, Float64}
+                @test (@SArray rand(_rng(), 4)) == rand(_rng(), 4)
+                @test (@SArray randn(_rng(), 4)) isa SVector{4, Float64}
+                @test (@SArray randn(_rng(), 4)) == randn(_rng(), 4)
+                @test (@SArray randexp(_rng(), 4)) isa SVector{4, Float64}
+                @test (@SArray randexp(_rng(), 4)) == randexp(_rng(), 4)
+
+                for T in (Float32, Float64)
+                    @test (@SArray rand(T, n)) isa SVector{n, T}
+                    @test (@SArray randn(T, n)) isa SVector{n, T}
+                    @test (@SArray randexp(T, n)) isa SVector{n, T}
+                    @test (@SArray rand(T, 4)) isa SVector{4, T}
+                    @test (@SArray randn(T, 4)) isa SVector{4, T}
+                    @test (@SArray randexp(T, 4)) isa SVector{4, T}
+                    @test (@SArray rand(_rng(), T, n)) isa SVector{n, T}
+                    VERSION≥v"1.7" && @test (@SArray rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                    @test (@SArray randn(_rng(), T, n)) isa SVector{n, T}
+                    @test (@SArray randn(_rng(), T, n)) == randn(_rng(), T, n)
+                    @test (@SArray randexp(_rng(), T, n)) isa SVector{n, T}
+                    @test (@SArray randexp(_rng(), T, n)) == randexp(_rng(), T, n)
+                    @test (@SArray rand(_rng(), T, 4)) isa SVector{4, T}
+                    VERSION≥v"1.7" && @test (@SArray rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                    @test (@SArray randn(_rng(), T, 4)) isa SVector{4, T}
+                    @test (@SArray randn(_rng(), T, 4)) == randn(_rng(), T, 4)
+                    @test (@SArray randexp(_rng(), T, 4)) isa SVector{4, T}
+                    @test (@SArray randexp(_rng(), T, 4)) == randexp(_rng(), T, 4)
+                end
+            end
+
+            @testset "Same tests as @SMatrix rand*" begin
+                n = 4
+                @testset "zero-length" begin
+                    @test (@SArray rand(0, 0)) isa SMatrix{0, 0, Float64}
+                    @test (@SArray rand(0, n)) isa SMatrix{0, n, Float64}
+                    @test (@SArray rand(n, 0)) isa SMatrix{n, 0, Float64}
+                    @test (@SArray rand(Float32, 0, 0)) isa SMatrix{0, 0, Float32}
+                    @test (@SArray rand(Float32, 0, n)) isa SMatrix{0, n, Float32}
+                    @test (@SArray rand(Float32, n, 0)) isa SMatrix{n, 0, Float32}
+                    @test (@SArray rand(_rng(), Float32, 0, 0)) isa SMatrix{0, 0, Float32}
+                    @test (@SArray rand(_rng(), Float32, 0, n)) isa SMatrix{0, n, Float32}
+                    @test (@SArray rand(_rng(), Float32, n, 0)) isa SMatrix{n, 0, Float32}
+                end
+
+                @test (@SArray rand(n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray randn(n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray randexp(n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray rand(4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray randn(4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray randexp(4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray rand(_rng(), n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray rand(_rng(), n, n)) == rand(_rng(), n, n)
+                @test (@SArray randn(_rng(), n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray randn(_rng(), n, n)) == randn(_rng(), n, n)
+                @test (@SArray randexp(_rng(), n, n)) isa SMatrix{n, n, Float64}
+                @test (@SArray randexp(_rng(), n, n)) == randexp(_rng(), n, n)
+                @test (@SArray rand(_rng(), 4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray rand(_rng(), 4, 4)) == rand(_rng(), 4, 4)
+                @test (@SArray randn(_rng(), 4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray randn(_rng(), 4, 4)) == randn(_rng(), 4, 4)
+                @test (@SArray randexp(_rng(), 4, 4)) isa SMatrix{4, 4, Float64}
+                @test (@SArray randexp(_rng(), 4, 4)) == randexp(_rng(), 4, 4)
+
+                for T in (Float32, Float64)
+                    @test (@SArray rand(T, n, n)) isa SMatrix{n, n, T}
+                    @test (@SArray randn(T, n, n)) isa SMatrix{n, n, T}
+                    @test (@SArray randexp(T, n, n)) isa SMatrix{n, n, T}
+                    @test (@SArray rand(T, 4, 4)) isa SMatrix{4, 4, T}
+                    @test (@SArray randn(T, 4, 4)) isa SMatrix{4, 4, T}
+                    @test (@SArray randexp(T, 4, 4)) isa SMatrix{4, 4, T}
+                    @test (@SArray rand(_rng(), T, n, n)) isa SMatrix{n, n, T}
+                    VERSION≥v"1.7" && @test (@SArray rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                    @test (@SArray randn(_rng(), T, n, n)) isa SMatrix{n, n, T}
+                    @test (@SArray randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
+                    @test (@SArray randexp(_rng(), T, n, n)) isa SMatrix{n, n, T}
+                    @test (@SArray randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
+                    @test (@SArray rand(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
+                    VERSION≥v"1.7" && @test (@SArray rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                    @test (@SArray randn(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
+                    @test (@SArray randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
+                    @test (@SArray randexp(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
+                    @test (@SArray randexp(_rng(), T, 4, 4)) == randexp(_rng(), T, 4, 4)
+                end
+            end
+
+            @test (@SArray rand(2,2,1))    isa SArray{Tuple{2,2,1}, Float64}
+            @test (@SArray rand(2,2,0))    isa SArray{Tuple{2,2,0}, Float64}
+            @test (@SArray randn(2,2,1))   isa SArray{Tuple{2,2,1}, Float64}
+            @test (@SArray randn(2,2,0))   isa SArray{Tuple{2,2,0}, Float64}
+            @test (@SArray randexp(2,2,1)) isa SArray{Tuple{2,2,1}, Float64}
+            @test (@SArray randexp(2,2,0)) isa SArray{Tuple{2,2,0}, Float64}
+            @test (@SArray rand(Float32,2,2,1))    isa SArray{Tuple{2,2,1}, Float32}
+            @test (@SArray rand(Float32,2,2,0))    isa SArray{Tuple{2,2,0}, Float32}
+            @test (@SArray randn(Float32,2,2,1))   isa SArray{Tuple{2,2,1}, Float32}
+            @test (@SArray randn(Float32,2,2,0))   isa SArray{Tuple{2,2,0}, Float32}
+            @test (@SArray randexp(Float32,2,2,1)) isa SArray{Tuple{2,2,1}, Float32}
+            @test (@SArray randexp(Float32,2,2,0)) isa SArray{Tuple{2,2,0}, Float32}
+        end
+
         @test ((@SArray fill(1))::SArray{Tuple{},Int}).data === (1,)
         @test ((@SArray ones())::SArray{Tuple{},Float64}).data === (1.,)
 
@@ -109,19 +222,9 @@
         @test ((@SArray ones(Float32,2,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
         @test ((@SArray zeros(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
         @test ((@SArray ones(Float32,3-1,2,1))::SArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
-        @test isa(@SArray(rand(2,2,1)), SArray{Tuple{2,2,1}, Float64})
-        @test isa(@SArray(randn(2,2,1)), SArray{Tuple{2,2,1}, Float64})
-        @test isa(@SArray(randexp(2,2,1)), SArray{Tuple{2,2,1}, Float64})
-        @test isa(@SArray(rand(2,2,0)), SArray{Tuple{2,2,0}, Float64})
-        @test isa(@SArray(randn(2,2,0)), SArray{Tuple{2,2,0}, Float64})
-        @test isa(@SArray(randexp(2,2,0)), SArray{Tuple{2,2,0}, Float64})
 
         @test ((@SArray zeros(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@SArray ones(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test isa(@SArray(rand(Float32, 2, 2, 0)), SArray{Tuple{2,2,0}, Float32})
-        @test isa(@SArray(rand(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
-        @test isa(@SArray(randn(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
-        @test isa(@SArray(randexp(Float32, 2, 2, 1)), SArray{Tuple{2,2,1}, Float32})
 
         m = [1 2; 3 4]
         @test SArray{Tuple{2,2}}(m) === @SArray [1 2; 3 4]
