@@ -101,10 +101,12 @@
         @test ((@SArray fill(3.,2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
         @test ((@SArray zeros(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
         @test ((@SArray ones(2,2,1))::SArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(@SArray(rand(2,2,0)), SArray{Tuple{2,2,0}, Float64})
         @test isa(@SArray(rand(2,2,1)), SArray{Tuple{2,2,1}, Float64})
         @test isa(@SArray(randn(2,2,1)), SArray{Tuple{2,2,1}, Float64})
         @test isa(@SArray(randexp(2,2,1)), SArray{Tuple{2,2,1}, Float64})
+        @test isa(@SArray(rand(2,2,0)), SArray{Tuple{2,2,0}, Float64})
+        @test isa(@SArray(randn(2,2,0)), SArray{Tuple{2,2,0}, Float64})
+        @test isa(@SArray(randexp(2,2,0)), SArray{Tuple{2,2,0}, Float64})
 
         @test ((@SArray zeros(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
         @test ((@SArray ones(Float32, 2, 2, 1))::SArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
