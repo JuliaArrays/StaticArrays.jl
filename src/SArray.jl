@@ -149,7 +149,7 @@ For example,
 will be expanded to the following.
 * `_rand_with_Val(SArray, 2, 3, _int2val(2),   _int2val(3), Val((4,)))`
 * `_rand_with_Val(SArray, 2, 3, _int2val(rng), _int2val(3), Val((4,)))`
-The `_int2val` is required to avoid the following case.
+The function `_int2val` is required to avoid the following case.
 * `_rand_with_Val(SArray, 2, 3, Val(2),   Val(3), Val((4,)))`
 * `_rand_with_Val(SArray, 2, 3, Val(rng), Val(3), Val((4,)))`
 Mutable object such as `rng` cannot be type parameter, and `Val(rng)` throws an error.
@@ -179,6 +179,24 @@ _rand_with_Val(::Type{SArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothi
 _rand_with_Val(::Type{MArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _rand(rng, T, Size(ns...), MArray{Tuple{ns...}, T})
 _rand_with_Val(::Type{SArray}, rng::AbstractRNG, sampler,     ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _rand(rng, sampler, Size(ns...), SArray{Tuple{ns...}, Random.gentype(sampler)})
 _rand_with_Val(::Type{MArray}, rng::AbstractRNG, sampler,     ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _rand(rng, sampler, Size(ns...), MArray{Tuple{ns...}, Random.gentype(sampler)})
+# @SArray randn(...)
+_randn_with_Val(::Type{SArray}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {n1, n2, ns} = randn(SArray{Tuple{n1,n2,ns...}})
+_randn_with_Val(::Type{MArray}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {n1, n2, ns} = randn(MArray{Tuple{n1,n2,ns...}})
+_randn_with_Val(::Type{SArray}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randn(Random.GLOBAL_RNG, Size(n1, ns...), SArray{Tuple{n1, ns...}, T})
+_randn_with_Val(::Type{MArray}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randn(Random.GLOBAL_RNG, Size(n1, ns...), MArray{Tuple{n1, ns...}, T})
+_randn_with_Val(::Type{SArray}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randn(rng, Size(ns...), SArray{Tuple{ns...}, Float64})
+_randn_with_Val(::Type{MArray}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randn(rng, Size(ns...), MArray{Tuple{ns...}, Float64})
+_randn_with_Val(::Type{SArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _randn(rng, Size(ns...), SArray{Tuple{ns...}, T})
+_randn_with_Val(::Type{MArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _randn(rng, Size(ns...), MArray{Tuple{ns...}, T})
+# @SArray randexp(...)
+_randexp_with_Val(::Type{SArray}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {n1, n2, ns} = randexp(SArray{Tuple{n1,n2,ns...}})
+_randexp_with_Val(::Type{MArray}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {n1, n2, ns} = randexp(MArray{Tuple{n1,n2,ns...}})
+_randexp_with_Val(::Type{SArray}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randexp(Random.GLOBAL_RNG, Size(n1, ns...), SArray{Tuple{n1, ns...}, T})
+_randexp_with_Val(::Type{MArray}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randexp(Random.GLOBAL_RNG, Size(n1, ns...), MArray{Tuple{n1, ns...}, T})
+_randexp_with_Val(::Type{SArray}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randexp(rng, Size(ns...), SArray{Tuple{ns...}, Float64})
+_randexp_with_Val(::Type{MArray}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {n1, ns} = _randexp(rng, Size(ns...), MArray{Tuple{ns...}, Float64})
+_randexp_with_Val(::Type{SArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _randexp(rng, Size(ns...), SArray{Tuple{ns...}, T})
+_randexp_with_Val(::Type{MArray}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {ns} = _randexp(rng, Size(ns...), MArray{Tuple{ns...}, T})
 
 escall(args) = Iterators.map(esc, args)
 function _isnonnegvec(args)
@@ -264,7 +282,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
             else
                 error("@$SA got bad expression: $(ex)")
             end
-        elseif f === :rand
+        elseif f === :rand || f === :randn || f === :randexp
             _f_with_Val = Symbol(:_, f, :_with_Val)
             if length(fargs) == 0
                 # No support for `@SArray rand()`
@@ -279,57 +297,18 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
                 # for calls like `rand(rng,     dim1,    dims...)`
                 # for calls like `rand(rng,     type,    dims...)`
                 # for calls like `rand(rng,     sampler, dims...)`
+                # for calls like `randn(dim1, dim2, dims...)`
+                # for calls like `randn(type, dim1, dims...)`
+                # for calls like `randn(rng,  dim1, dims...)`
+                # for calls like `randn(rng,  type, dims...)`
+                # for calls like `randexp(dim1, dim2, dims...)`
+                # for calls like `randexp(type, dim1, dims...)`
+                # for calls like `randexp(rng,  dim1, dims...)`
+                # for calls like `randexp(rng,  type, dims...)`
                 return :($_f_with_Val($SA, $(esc(fargs[1])), $(esc(fargs[2])), _int2val($(esc(fargs[1]))), _int2val($(esc(fargs[2]))), Val(tuple($(escall(fargs[3:end])...)))))
             elseif length(fargs) == 1
                 # for calls like `rand(dim)`
                 return :($f($SA{$Tuple{$(escall(fargs)...)}}))
-            else
-                error("@$SA got bad expression: $(ex)")
-            end
-        elseif f === :randn || f === :randexp
-            _f = Symbol(:_, f)
-            if length(fargs) == 0
-                # No support for `@SArray randn()` etc.
-                error("@$SA got bad expression: $(ex)")
-            elseif _isnonnegvec(fargs)
-                # for calls like `randn(dims...)`
-                return :($f($SA{$Tuple{$(escall(fargs)...)}}))
-            elseif _isnonnegvec(fargs[2:end])
-                return quote
-                    if isa($(esc(fargs[1])), Random.AbstractRNG)
-                        # for calls like `randn(rng, dims...)`
-                        StaticArrays.$_f(
-                            $(esc(fargs[1])),
-                            Size($(escall(fargs[2:end])...)),
-                            $SA{
-                                Tuple{$(escall(fargs[2:end])...)},
-                                Float64,
-                            },
-                        )
-                    else
-                        # for calls like `randn(type, dims...)`
-                        StaticArrays.$_f(
-                            Random.GLOBAL_RNG,
-                            Size($(escall(fargs[2:end])...)),
-                            $SA{
-                                Tuple{$(escall(fargs[2:end])...)},
-                                $(esc(fargs[1])),
-                            },
-                        )
-                    end
-                end
-            elseif _isnonnegvec(fargs[3:end])
-                # for calls like `randn(rng, type, dims...)`
-                return quote
-                    StaticArrays.$_f(
-                        $(esc(fargs[1])),
-                        Size($(escall(fargs[3:end])...)),
-                        $SA{
-                            Tuple{$(escall(fargs[3:end])...)},
-                            $(esc(fargs[2])),
-                        },
-                    )
-                end
             else
                 error("@$SA got bad expression: $(ex)")
             end
