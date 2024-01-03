@@ -142,22 +142,65 @@ function parse_cat_ast(ex::Expr)
     cat_any(Val(maxdim), Val(catdim), nargs)
 end
 
+#=
+For example,
+* `@SArray rand(2, 3, 4)`
+* `@SArray rand(rng, 3, 4)`
+will be expanded to the following.
+* `_rand_with_Val(SArray, 2, 3, _int2val(2),   _int2val(3), Val((4,)))`
+* `_rand_with_Val(SArray, 2, 3, _int2val(rng), _int2val(3), Val((4,)))`
+The function `_int2val` is required to avoid the following case.
+* `_rand_with_Val(SArray, 2, 3, Val(2),   Val(3), Val((4,)))`
+* `_rand_with_Val(SArray, 2, 3, Val(rng), Val(3), Val((4,)))`
+Mutable object such as `rng` cannot be type parameter, and `Val(rng)` throws an error.
+=#
+_int2val(x::Int) = Val(x)
+_int2val(::Any) = nothing
+# @SArray zeros(...)
+_zeros_with_Val(::Type{SA}, ::Int,       ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = zeros(SA{Tuple{n1, ns...}})
+_zeros_with_Val(::Type{SA}, T::DataType, ::Val,     ::Val{ns}) where {SA, ns} = zeros(SA{Tuple{ns...}, T})
+# @SArray ones(...)
+_ones_with_Val(::Type{SA}, ::Int,       ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = ones(SA{Tuple{n1, ns...}})
+_ones_with_Val(::Type{SA}, T::DataType, ::Val,     ::Val{ns}) where {SA, ns} = ones(SA{Tuple{ns...}, T})
+# @SArray rand(...)
+_rand_with_Val(::Type{SA}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {SA, n1, n2, ns} = rand(SA{Tuple{n1,n2,ns...}})
+_rand_with_Val(::Type{SA}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _rand(Random.GLOBAL_RNG, T, Size(n1, ns...), SA{Tuple{n1, ns...}, T})
+_rand_with_Val(::Type{SA}, sampler,          ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _rand(Random.GLOBAL_RNG, sampler, Size(n1, ns...), SA{Tuple{n1, ns...}, Random.gentype(sampler)})
+_rand_with_Val(::Type{SA}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _rand(rng, Float64, Size(n1, ns...), SA{Tuple{n1, ns...}, Float64})
+_rand_with_Val(::Type{SA}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {SA, ns} = _rand(rng, T, Size(ns...), SA{Tuple{ns...}, T})
+_rand_with_Val(::Type{SA}, rng::AbstractRNG, sampler,     ::Nothing, ::Nothing, ::Val{ns}) where {SA, ns} = _rand(rng, sampler, Size(ns...), SA{Tuple{ns...}, Random.gentype(sampler)})
+# @SArray randn(...)
+_randn_with_Val(::Type{SA}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {SA, n1, n2, ns} = randn(SA{Tuple{n1,n2,ns...}})
+_randn_with_Val(::Type{SA}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _randn(Random.GLOBAL_RNG, Size(n1, ns...), SA{Tuple{n1, ns...}, T})
+_randn_with_Val(::Type{SA}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _randn(rng, Size(n1, ns...), SA{Tuple{n1, ns...}, Float64})
+_randn_with_Val(::Type{SA}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {SA, ns} = _randn(rng, Size(ns...), SA{Tuple{ns...}, T})
+# @SArray randexp(...)
+_randexp_with_Val(::Type{SA}, ::Int,            ::Int,       ::Val{n1}, ::Val{n2}, ::Val{ns}) where {SA, n1, n2, ns} = randexp(SA{Tuple{n1,n2,ns...}})
+_randexp_with_Val(::Type{SA}, T::DataType,      ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _randexp(Random.GLOBAL_RNG, Size(n1, ns...), SA{Tuple{n1, ns...}, T})
+_randexp_with_Val(::Type{SA}, rng::AbstractRNG, ::Int,       ::Nothing, ::Val{n1}, ::Val{ns}) where {SA, n1, ns} = _randexp(rng, Size(n1, ns...), SA{Tuple{n1, ns...}, Float64})
+_randexp_with_Val(::Type{SA}, rng::AbstractRNG, T::DataType, ::Nothing, ::Nothing, ::Val{ns}) where {SA, ns} = _randexp(rng, Size(ns...), SA{Tuple{ns...}, T})
+
 escall(args) = Iterators.map(esc, args)
+function _isnonnegvec(args)
+    length(args) == 0 && return false
+    all(isa.(args, Integer)) && return all(args .≥ 0)
+    return false
+end
 function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
     if !isa(ex, Expr)
         error("Bad input for @$SA")
     end
     head = ex.head
     if head === :vect    # vector
-        return :($SA{$Tuple{$(length(ex.args))}}($tuple($(escall(ex.args)...))))
+        return :($SA{Tuple{$(length(ex.args))}}($tuple($(escall(ex.args)...))))
     elseif head === :ref # typed, vector
-        return :($SA{$Tuple{$(length(ex.args)-1)},$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
+        return :($SA{Tuple{$(length(ex.args)-1)},$(esc(ex.args[1]))}($tuple($(escall(ex.args[2:end])...))))
     elseif head === :typed_vcat || head === :typed_hcat || head === :typed_ncat # typed, cat
         args = parse_cat_ast(ex)
-        return :($SA{$Tuple{$(size(args)...)},$(esc(ex.args[1]))}($tuple($(escall(args)...))))
+        return :($SA{Tuple{$(size(args)...)},$(esc(ex.args[1]))}($tuple($(escall(args)...))))
     elseif head === :vcat || head === :hcat || head === :ncat # untyped, cat
         args = parse_cat_ast(ex)
-        return :($SA{$Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
+        return :($SA{Tuple{$(size(args)...)}}($tuple($(escall(args)...))))
     elseif head === :comprehension
         if length(ex.args) != 1
             error("Expected generator in comprehension, e.g. [f(i,j) for i = 1:3, j = 1:3]")
@@ -173,7 +216,7 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         return quote
             let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
-                $SA{$Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
+                $SA{Tuple{$(size(exprs)...)}}($tuple($(exprs...)))
             end
         end
     elseif head === :typed_comprehension
@@ -192,26 +235,58 @@ function static_array_gen(::Type{SA}, @nospecialize(ex), mod::Module) where {SA}
         return quote
             let
                 f($(escall(rng_args)...)) = $(esc(ex.args[1]))
-                $SA{$Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
+                $SA{Tuple{$(size(exprs)...)},$T}($tuple($(exprs...)))
             end
         end
     elseif head === :call
         f = ex.args[1]
-        if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
-            if length(ex.args) == 1
-                f === :zeros || f === :ones || error("@$SA got bad expression: $(ex)")
-                return :($f($SA{$Tuple{},$Float64}))
-            end
-            return quote
-                if isa($(esc(ex.args[2])), DataType)
-                    $f($SA{$Tuple{$(escall(ex.args[3:end])...)},$(esc(ex.args[2]))})
-                else
-                    $f($SA{$Tuple{$(escall(ex.args[2:end])...)}})
-                end
+        fargs = ex.args[2:end]
+        if f === :zeros || f === :ones
+            _f_with_Val = Symbol(:_, f, :_with_Val)
+            if length(fargs) == 0
+                # for calls like `zeros()`
+                return :($f($SA{Tuple{},$Float64}))
+            elseif _isnonnegvec(fargs)
+                # for calls like `zeros(dims...)`
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
+            else
+                # for calls like `zeros(type)`
+                # for calls like `zeros(type, dims...)`
+                return :($_f_with_Val($SA, $(esc(fargs[1])), Val($(esc(fargs[1]))), Val(tuple($(escall(fargs[2:end])...)))))
             end
         elseif f === :fill
-            length(ex.args) == 1 && error("@$SA got bad expression: $(ex)")
-            return :($f($(esc(ex.args[2])), $SA{$Tuple{$(escall(ex.args[3:end])...)}}))
+            # for calls like `fill(value, dims...)`
+            return :($f($(esc(fargs[1])), $SA{Tuple{$(escall(fargs[2:end])...)}}))
+        elseif f === :rand || f === :randn || f === :randexp
+            _f_with_Val = Symbol(:_, f, :_with_Val)
+            if length(fargs) == 0
+                # No support for `@SArray rand()`
+                error("@$SA got bad expression: $(ex)")
+            elseif _isnonnegvec(fargs)
+                # for calls like `rand(dims...)`
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
+            elseif length(fargs) ≥ 2
+                # for calls like `rand(dim1,    dim2,    dims...)`
+                # for calls like `rand(type,    dim1,    dims...)`
+                # for calls like `rand(sampler, dim1,    dims...)`
+                # for calls like `rand(rng,     dim1,    dims...)`
+                # for calls like `rand(rng,     type,    dims...)`
+                # for calls like `rand(rng,     sampler, dims...)`
+                # for calls like `randn(dim1, dim2, dims...)`
+                # for calls like `randn(type, dim1, dims...)`
+                # for calls like `randn(rng,  dim1, dims...)`
+                # for calls like `randn(rng,  type, dims...)`
+                # for calls like `randexp(dim1, dim2, dims...)`
+                # for calls like `randexp(type, dim1, dims...)`
+                # for calls like `randexp(rng,  dim1, dims...)`
+                # for calls like `randexp(rng,  type, dims...)`
+                return :($_f_with_Val($SA, $(esc(fargs[1])), $(esc(fargs[2])), _int2val($(esc(fargs[1]))), _int2val($(esc(fargs[2]))), Val(tuple($(escall(fargs[3:end])...)))))
+            elseif length(fargs) == 1
+                # for calls like `rand(dim)`
+                return :($f($SA{Tuple{$(escall(fargs)...)}}))
+            else
+                error("@$SA got bad expression: $(ex)")
+            end
         else
             error("@$SA only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end

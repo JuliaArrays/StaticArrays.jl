@@ -6,6 +6,8 @@ using Aqua
 # deterministic. Therefore seed the RNG here (and further down, to avoid test
 # file order dependence)
 Random.seed!(42)
+# Useful function to regenerate rng
+_rng() = Random.MersenneTwister(42)
 include("testutil.jl")
 
 # Hook into Pkg.test so that tests from a single file can be run.  For example,
