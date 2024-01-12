@@ -1,4 +1,4 @@
-using StaticArrays, ChainRulesCore, ChainRulesTestUtils, JLArrays, Test
+using StaticArrays, ChainRulesCore, ChainRulesTestUtils, JLArrays, LinearAlgebra, Test
 
 @testset "ChainRules Integration" begin
     @testset "Projection" begin
