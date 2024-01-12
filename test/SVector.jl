@@ -88,7 +88,7 @@
             end
 
             # issue #1229
-            @test (@allocated @SVector rand(Float64, 4)) == 0
+            VERSION≥v"1.7" && @test (@allocated @SVector rand(Float64, 4)) == 0
         end
 
         @testset "expand error" begin
