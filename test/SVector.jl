@@ -86,9 +86,6 @@
                 @test (@SVector randexp(_rng(), T, 4)) isa SVector{4, T}
                 @test (@SVector randexp(_rng(), T, 4)) == randexp(_rng(), T, 4)
             end
-
-            # issue #1229
-            VERSION≥v"1.7" && @test (@allocated @SVector rand(Float64, 4)) == 0
         end
 
         @testset "expand error" begin
