@@ -291,3 +291,21 @@ function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tup
     V = getindex(S, I...)
     _maybewrapscalar(S, V)
 end
+
+for (cf, elf) in ((:zeros, :zero), (:ones, :one))
+    _cf = Symbol(:_, cf)
+    @eval begin
+        $_cf(::Type{T}, s::Size) where {T} = similar_type(SArray, T, s)(ntuple(_->$elf(T), prod(s)))
+        # fall back to Base if the size is not statically known
+        $_cf(T, sz) = $cf(T, sz)
+        function $cf(::Type{T}, ax::NTuple{N,HeterogeneousShape}) where {T,N}
+            $_cf(T, homogenize_shape(ax))
+        end
+    end
+end
+
+_fill(v, s::Size) = similar_type(SArray, typeof(v), s)(ntuple(_->v, prod(s)))
+_fill(v, sz) = fill(v, sz)
+function fill(v, ax::NTuple{N,HeterogeneousShape}) where {N}
+    _fill(v, homogenize_shape(ax))
+end

@@ -418,3 +418,14 @@ end
         @test b isa Vec{0}
     end
 end
+
+@testset "zeros/ones/fill" begin
+    for ax in ((SOneTo(2),), (SOneTo(2),SOneTo(3)))
+        @test fill(:abc, ax...) === fill(:abc, ax)
+        @test fill(:abc, ax) == fill(:abc, length.(ax)) == fill(:abc, Base.OneTo.(length.(ax)))
+        for fz in (zeros, ones)
+            @test fz(Float32, ax...) === fz(Float32, ax)
+            @test fz(Float32, ax) == fz(Float32, length.(ax)) == fz(Float32, Base.OneTo.(length.(ax)))
+        end
+    end
+end
