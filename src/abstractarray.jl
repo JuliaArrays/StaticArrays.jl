@@ -292,6 +292,7 @@ function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tup
     _maybewrapscalar(S, V)
 end
 
+# zeros, ones and fill may return SArrays if all the axes are statically sized
 for (cf, elf) in ((:zeros, :zero), (:ones, :one))
     _cf = Symbol(:_, cf)
     @eval begin
