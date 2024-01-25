@@ -293,20 +293,17 @@ function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tup
 end
 
 # zeros, ones and fill may return SArrays if all the axes are statically sized
-for (cf, elf) in ((:zeros, :zero), (:ones, :one))
-    _cf = Symbol(:_, cf)
+for (arrf, elf) in ((:zeros, :zero), (:ones, :one))
+    _arrf = Symbol(:_, arrf)
     @eval begin
-        $_cf(::Type{T}, s::Size) where {T} = similar_type(SArray, T, s)(ntuple(_->$elf(T), prod(s)))
-        # fall back to Base if the size is not statically known
-        $_cf(T, sz) = $cf(T, sz)
-        function $cf(::Type{T}, ax::NTuple{N,HeterogeneousShape}) where {T,N}
-            $_cf(T, homogenize_shape(ax))
+        function $arrf(::Type{T}, ax::Tuple{SOneTo,Vararg{SOneTo}}) where {T}
+            sz = homogenize_shape(ax)
+            similar_type(SArray, T, sz)(ntuple(_->$elf(T), prod(sz)))
         end
     end
 end
 
-_fill(v, s::Size) = similar_type(SArray, typeof(v), s)(ntuple(_->v, prod(s)))
-_fill(v, sz) = fill(v, sz)
-function fill(v, ax::NTuple{N,HeterogeneousShape}) where {N}
-    _fill(v, homogenize_shape(ax))
+function fill(v, ax::Tuple{SOneTo,Vararg{SOneTo}})
+    sz = homogenize_shape(ax)
+    similar_type(SArray, typeof(v), sz)(ntuple(_->v, prod(sz)))
 end
