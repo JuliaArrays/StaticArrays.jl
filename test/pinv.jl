@@ -2,7 +2,7 @@ using StaticArrays, Test, LinearAlgebra
 
 tol = 1e-13
 
-@testset "Moore–Penrose inverse (Peseudo-inverse)" begin
+@testset "Moore–Penrose inverse (pseudoinverse)" begin
     M1 = @SMatrix [1.5 1.3; 1.2 1.9]
     N1 = pinv(M1)
     @test norm(M1*N1*M1 - M1) < tol

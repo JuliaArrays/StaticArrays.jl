@@ -16,6 +16,21 @@ function check_vector_length(x::Tuple, T = :S)
     length(x) >= 1 ? x[1] : 1
 end
 
+# @SVector rand(...)
+@inline _rand_with_Val(::Type{SV}, rng::AbstractRNG, ::Val{n}) where {SV, n} = rand(rng, SV{n})
+@inline _rand_with_Val(::Type{SV}, T::DataType,      ::Val{n}) where {SV, n} = _rand(Random.GLOBAL_RNG, T, Size(n), SV{n, T})
+@inline _rand_with_Val(::Type{SV}, sampler,          ::Val{n}) where {SV, n} = _rand(Random.GLOBAL_RNG, sampler, Size(n), SV{n, Random.gentype(sampler)})
+@inline _rand_with_Val(::Type{SV}, rng::AbstractRNG, T::DataType, ::Val{n}) where {SV, n} = rand(rng, SV{n, T})
+@inline _rand_with_Val(::Type{SV}, rng::AbstractRNG, sampler,     ::Val{n}) where {SV, n} = _rand(rng, sampler, Size(n), SV{n, Random.gentype(sampler)})
+# @SVector randn(...)
+@inline _randn_with_Val(::Type{SV}, rng::AbstractRNG, ::Val{n}) where {SV, n} = randn(rng, SV{n})
+@inline _randn_with_Val(::Type{SV}, T::DataType,      ::Val{n}) where {SV, n} = _randn(Random.GLOBAL_RNG, Size(n), SV{n, T})
+@inline _randn_with_Val(::Type{SV}, rng::AbstractRNG, T::DataType, ::Val{n}) where {SV, n} = randn(rng, SV{n, T})
+# @SVector randexp(...)
+@inline _randexp_with_Val(::Type{SV}, rng::AbstractRNG, ::Val{n}) where {SV, n} = randexp(rng, SV{n})
+@inline _randexp_with_Val(::Type{SV}, T::DataType,      ::Val{n}) where {SV, n} = _randexp(Random.GLOBAL_RNG, Size(n), SV{n, T})
+@inline _randexp_with_Val(::Type{SV}, rng::AbstractRNG, T::DataType, ::Val{n}) where {SV, n} = randexp(rng, SV{n, T})
+
 function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV}
     if !isa(ex, Expr)
         error("Bad input for @$SV")
@@ -74,22 +89,51 @@ function static_vector_gen(::Type{SV}, @nospecialize(ex), mod::Module) where {SV
         end
     elseif head === :call
         f = ex.args[1]
-        if f === :zeros || f === :ones || f === :rand || f === :randn || f === :randexp
-            if length(ex.args) == 2
-                return :($f($SV{$(esc(ex.args[2])), Float64})) # default to Float64 like Base
-            elseif length(ex.args) == 3
-                return :($f($SV{$(escall(ex.args[3:-1:2])...)}))
+        fargs = ex.args[2:end]
+        if f === :zeros || f === :ones
+            if length(fargs) == 1
+                # for calls like `zeros(dim)`
+                return :($f($SV{$(esc(fargs[1]))}))
+            elseif length(fargs) == 2
+                # for calls like `zeros(type, dim)`
+                return :($f($SV{$(esc(fargs[2])), $(esc(fargs[1]))}))
+            else
+                error("@$SV got bad expression: $(ex)")
+            end
+        elseif f === :fill
+            # for calls like `fill(value, dim)`
+            if length(fargs) == 2
+                return :($f($(esc(fargs[1])), $SV{$(esc(fargs[2]))}))
             else
                 error("@$SV expected a 1-dimensional array expression")
             end
-        elseif ex.args[1] === :fill
-            if length(ex.args) == 3
-                return :($f($(esc(ex.args[2])), $SV{$(esc(ex.args[3]))}))
+        elseif f === :rand || f === :randn || f === :randexp
+            _f_with_Val = Symbol(:_, f, :_with_Val)
+            if length(fargs) == 1
+                # for calls like `rand(dim)`
+                # for calls like `randn(dim)`
+                # for calls like `randexp(dim)`
+                return :($f($SV{$(escall(fargs)...)}))
+            elseif length(fargs) == 2
+                # for calls like `rand(rng, dim)`
+                # for calls like `rand(type, dim)`
+                # for calls like `rand(sampler, dim)`
+                # for calls like `randn(rng, dim)`
+                # for calls like `randn(type, dim)`
+                # for calls like `randexp(rng, dim)`
+                # for calls like `randexp(type, dim)`
+                return :($_f_with_Val($SV, $(esc(fargs[1])), Val($(esc(fargs[2])))))
+            elseif length(fargs) == 3
+                # for calls like `rand(rng, type, dim)`
+                # for calls like `rand(rng, sampler, dim)`
+                # for calls like `randn(rng, type, dim)`
+                # for calls like `randexp(rng, type, dim)`
+                return :($_f_with_Val($SV, $(esc(fargs[1])), $(esc(fargs[2])), Val($(esc(fargs[3])))))
             else
-                error("@$SV expected a 1-dimensional array expression")
+                error("@$SV got bad expression: $(ex)")
             end
         else
-            error("@$SV only supports the zeros(), ones(), rand(), randn() and randexp() functions.")
+            error("@$SV only supports the zeros(), ones(), fill(), rand(), randn(), and randexp() functions.")
         end
     else
         error("Use @$SV [a,b,c], @$SV Type[a,b,c] or a comprehension like @$SV [f(i) for i = i_min:i_max]")

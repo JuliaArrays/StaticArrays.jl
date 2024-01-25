@@ -19,6 +19,8 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
 using LinearAlgebra: checksquare
 
+using PrecompileTools
+
 # StaticArraysCore imports
 # there is intentionally no "using StaticArraysCore" to not take all symbols exported
 # from StaticArraysCore to make transitioning definitions to StaticArraysCore easier.
@@ -136,6 +138,5 @@ include("pinv.jl")
 end
 
 include("precompile.jl")
-_precompile_()
 
 end # module

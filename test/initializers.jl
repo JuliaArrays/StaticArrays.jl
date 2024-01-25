@@ -50,7 +50,11 @@ if VERSION >= v"1.7.0"
     @test SA[1 2;1 2 ;;; 1 2;1 2] === SArray{Tuple{2,2,2}}(Tuple([1 2;1 2 ;;; 1 2;1 2]))
     @test_inlined SA_test_hvncat1(3)
     @test_inlined SA_test_hvncat2(2)
-    @test_throws ArgumentError SA[1;2;;3]
+    if VERSION < v"1.10-DEV"
+        @test_throws ArgumentError SA[1;2;;3]
+    else
+        @test_throws DimensionMismatch SA[1;2;;3]
+    end
 end
 
 # https://github.com/JuliaArrays/StaticArrays.jl/pull/685

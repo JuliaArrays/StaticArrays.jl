@@ -8,13 +8,10 @@ length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 end
 @inline size(a::StaticArrayLike) = Tuple(Size(a))
 
-Base.axes(s::StaticArray) = _axes(Size(s))
+Base.axes(s::StaticArrayLike) = _axes(Size(s))
 @pure function _axes(::Size{sizes}) where {sizes}
     map(SOneTo, sizes)
 end
-Base.axes(rv::Adjoint{<:Any,<:StaticVector})   = (SOneTo(1), axes(rv.parent)...)
-Base.axes(rv::Transpose{<:Any,<:StaticVector}) = (SOneTo(1), axes(rv.parent)...)
-Base.axes(d::Diagonal{<:Any,<:StaticVector}) = (ax = axes(d.diag, 1); (ax, ax))
 
 Base.eachindex(::IndexLinear, a::StaticArray) = SOneTo(length(a))
 
@@ -128,8 +125,11 @@ similar(::Type{A},s::Size{S}) where {A<:AbstractArray,S} = similar(A,eltype(A),s
 
 similar(::A,::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = similar(A,T,s)
 
-# defaults to built-in mutable types
-similar(::Type{A},::Type{T},s::Size{S}) where {A<:AbstractArray,T,S} = mutable_similar_type(T,s,length_val(s))(undef)
+# defaults to built-in mutable types for bits types
+similar(::Type{A}, ::Type{T}, s::Size{S}) where {A<:AbstractArray,T,S} =
+    isbitstype(T) ?
+    mutable_similar_type(T, s, length_val(s))(undef) :
+    sizedarray_similar_type(T, s, length_val(s))(undef)
 
 # both SizedArray and Array return SizedArray
 similar(::Type{SA},::Type{T},s::Size{S}) where {SA<:SizedArray,T,S} = sizedarray_similar_type(T,s,length_val(s))(undef)
@@ -139,12 +139,8 @@ similar(::Type{A},::Type{T},s::Size{S}) where {A<:Array,T,S} = sizedarray_simila
 # by simply converting them to either a tuple of Ints or a Size, re-dispatching to either one
 # of the above methods (in the case of Size) or a base fallback (in the case of Ints).
 const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
-const HeterogeneousShape = Union{Integer, Base.OneTo, SOneTo}
-const HeterogeneousShapeTuple = Union{
-    Tuple{SOneTo, Vararg{HeterogeneousShape}},
-    Tuple{HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}},
-    Tuple{HeterogeneousBaseShape, HeterogeneousBaseShape, SOneTo, Vararg{HeterogeneousShape}}
-}
+const HeterogeneousShape = Union{HeterogeneousBaseShape, SOneTo}
+const HeterogeneousShapeTuple = Tuple{Vararg{HeterogeneousShape}}
 
 similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
 similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))

@@ -80,8 +80,8 @@ end
 
 @inline rand(rng::AbstractRNG, range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(rng, range, Size(SA), SA)
 @inline rand(range::AbstractArray, ::Type{SA}) where {SA <: StaticArray} = _rand(Random.GLOBAL_RNG, range, Size(SA), SA)
-@generated function _rand(rng::AbstractRNG, range::AbstractArray, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
-    v = [:(rand(rng, range)) for i = 1:prod(s)]
+@generated function _rand(rng::AbstractRNG, X, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
+    v = [:(rand(rng, X)) for i = 1:prod(s)]
     return quote
         @_inline_meta
         $SA(tuple($(v...)))

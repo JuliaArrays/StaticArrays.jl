@@ -61,7 +61,7 @@ end
             m1 = @SMatrix T[2 4; 6 8]
             m2 = @SMatrix T[4 3; 2 1]
 
-            # Use that these small integers can be represetnted exactly
+            # Use that these small integers can be represented exactly
             # as floating point numbers. In general, the comparison of
             # floats should use `≈` instead of `===`.
             @test @inferred(muladd(c, v1, v2)) === @SVector T[8, 11, 14, 17]
@@ -79,7 +79,7 @@ end
             m1 = @SMatrix T[2 4; 6 8]
             m2 = @SMatrix T[4 3; 2 1]
 
-            # Use that these small integers can be represetnted exactly
+            # Use that these small integers can be represented exactly
             # as floating point numbers. In general, the comparison of
             # floats should use `≈` instead of `===`.
             # These should be turned into `vfmadd...` calls
@@ -237,6 +237,15 @@ end
         end
         @test adjoint(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Adjoint{Int,Vector{Int}}}
         @test transpose(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Transpose{Int,Vector{Int}}}
+
+        @testset "inference for nested matrices" begin
+            A = reshape([reshape([complex(i,2i)*j for i in 1:2], 1, 2) for j in 1:6], 3, 2)
+            for TA in (SMatrix, MMatrix), TB in (SMatrix, MMatrix)
+                S = TA{3,2}(TB{1,2}.(A)) # static matrix of static matrices
+                @test @inferred(transpose(S)) == transpose(A)
+                @test @inferred(adjoint(S)) == adjoint(A)
+            end
+        end
     end
 
     @testset "normalization" begin

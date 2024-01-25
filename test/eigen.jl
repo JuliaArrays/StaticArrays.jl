@@ -83,6 +83,25 @@ using StaticArrays, Test, LinearAlgebra
             @test eigvecs(E) * SDiagonal(eigvals(E)) * eigvecs(E)' ≈ A
         end
 
+        # issue #956
+        v1, v2 = let A = SMatrix{2,2}((1.0, 1e-100, 1e-100, 1.0))
+            vecs = eigvecs(eigen(Hermitian(A)))
+            vecs[:,1], vecs[:,2]
+        end
+        @test norm(v1) ≈ 1
+        @test norm(v2) ≈ 1
+        @test acos(v1 ⋅ v2)*2 ≈ π
+
+        # Test that correct value is taken for upper or lower sym 
+        for T in (Float64, Complex{Float64})
+            af = SMatrix{2,2}(rand(T, 4))
+            a = af + af' # Make hermitian
+            au = Hermitian(SMatrix{2,2}((a[1,1], zero(T), a[1,2], a[2,2])), 'U')
+            al = Hermitian(SMatrix{2,2}((a[1,1], a[2,1], zero(T), a[2,2])), 'L')
+            @test eigvals(eigen(a)) ≈ eigvals(eigen(au)) ≈ eigvals(eigen(al))
+            @test eigvals(eigen(a)) ≈ eigvals(eigen(au)) ≈ eigvals(eigen(al))
+        end
+
         m1_a = randn(2,2)
         m1_a = m1_a*m1_a'
         m1 = SMatrix{2,2}(m1_a)

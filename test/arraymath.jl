@@ -1,6 +1,16 @@
 using StaticArrays, Test
 import StaticArrays.arithmetic_closure
 
+struct TestDie
+    nsides::Int
+end
+Random.rand(rng::AbstractRNG, d::Random.SamplerTrivial{TestDie}) = rand(rng, 1:d[].nsides)
+Base.eltype(::Type{TestDie}) = Int
+
+const AbstractFloatSubtypes = [Float16, Float32, Float64, BigFloat]
+const UnsignedSubtypes = [UInt8, UInt16, UInt32, UInt64, UInt128]
+const SignedSubtypes = [Int8, Int16, Int32, Int64, Int128, BigInt]
+
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]
@@ -179,6 +189,42 @@ import StaticArrays.arithmetic_closure
             @test v4 isa SA{0, Float32}
             @test all(0 .< v4 .< 1)
         end
+        rng = MersenneTwister(123)
+        @test (@SVector rand(3)) isa SVector{3,Float64}
+        @test (@SMatrix rand(3, 4)) isa SMatrix{3,4,Float64}
+        @test (@SArray rand(3, 4, 5)) isa SArray{Tuple{3,4,5},Float64}
+
+        @test (@MVector rand(3)) isa MVector{3,Float64}
+        @test (@MMatrix rand(3, 4)) isa MMatrix{3,4,Float64}
+        @test (@MArray rand(3, 4, 5)) isa MArray{Tuple{3,4,5},Float64}
+
+        @test (@SVector rand(TestDie(6), 3)) isa SVector{3,Int}
+        @test (@SVector rand(rng, TestDie(6), 3)) isa SVector{3,Int}
+        @test (@SVector rand(TestDie(6), 0)) isa SVector{0,Int}
+        @test (@SVector rand(rng, TestDie(6), 0)) isa SVector{0,Int}
+        @test (@MVector rand(TestDie(6), 3)) isa MVector{3,Int}
+        @test (@MVector rand(rng, TestDie(6), 3)) isa MVector{3,Int}
+
+        @test (@SMatrix rand(TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
+        @test (@SMatrix rand(rng, TestDie(6), 3, 4)) isa SMatrix{3,4,Int}
+        @test (@SMatrix rand(TestDie(6), 0, 4)) isa SMatrix{0,4,Int}
+        @test (@SMatrix rand(rng, TestDie(6), 0, 4)) isa SMatrix{0,4,Int}
+        @test (@MMatrix rand(TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
+        @test (@MMatrix rand(rng, TestDie(6), 3, 4)) isa MMatrix{3,4,Int}
+
+        @test (@SArray rand(TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
+        @test (@SArray rand(rng, TestDie(6), 3, 4, 5)) isa SArray{Tuple{3,4,5},Int}
+        @test (@SArray rand(TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
+        @test (@SArray rand(rng, TestDie(6), 0, 4, 5)) isa SArray{Tuple{0,4,5},Int}
+        @test (@MArray rand(TestDie(6), 3, 4, 5)) isa MArray{Tuple{3,4,5},Int}
+
+        # test if rng generator is actually respected
+        @test (@SVector rand(MersenneTwister(123), TestDie(6), 3)) ===
+              (@SVector rand(MersenneTwister(123), TestDie(6), 3))
+        @test (@SMatrix rand(MersenneTwister(123), TestDie(6), 3, 4)) ===
+              (@SMatrix rand(MersenneTwister(123), TestDie(6), 3, 4))
+        @test (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5)) ===
+              (@SArray rand(MersenneTwister(123), TestDie(6), 3, 4, 5))
     end
 
     @testset "rand!()" begin
@@ -294,13 +340,12 @@ import StaticArrays.arithmetic_closure
         end
     end
 
-    @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
-                                             subtypes(Signed);
-                                             subtypes(AbstractFloat);
+    @testset "arithmetic_closure" for T0 in [UnsignedSubtypes;
+                                             SignedSubtypes;
+                                             AbstractFloatSubtypes;
                                              Bool;
                                              Complex{Int};
                                              Complex{Float64};
-                                             BigInt
                                              ]
         T = @inferred arithmetic_closure(T0)
         @test arithmetic_closure(T) == T

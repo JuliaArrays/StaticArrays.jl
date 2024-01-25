@@ -98,7 +98,7 @@ end
 end
 
 #-------------------------------------------------------------------------------
-# More comprehensive but qualitiative testing for inv() accuracy
+# More comprehensive but qualitative testing for inv() accuracy
 #=
 using PyPlot
 
