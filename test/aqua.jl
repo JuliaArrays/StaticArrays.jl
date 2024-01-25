@@ -1,6 +1,6 @@
 if VERSION ≥ v"1.7-"
-    Aqua.test_all(StaticArrays, piracy=false)
-    Aqua.test_piracy(StaticArrays, treat_as_own=[
+    Aqua.test_all(StaticArrays, piracies=false)
+    Aqua.test_piracies(StaticArrays, treat_as_own=[
             StaticArray
             Size
             SArray
@@ -16,8 +16,8 @@ if VERSION ≥ v"1.7-"
         broken=true)
 
 elseif VERSION ≥ v"1.6-"
-    Aqua.test_all(StaticArrays, piracy=false, ambiguities=false, project_toml_formatting=false)
-    Aqua.test_piracy(StaticArrays, treat_as_own=[
+    Aqua.test_all(StaticArrays, piracies=false, ambiguities=false)
+    Aqua.test_piracies(StaticArrays, treat_as_own=[
             StaticArray
             Size
             SArray
