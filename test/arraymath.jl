@@ -7,6 +7,10 @@ end
 Random.rand(rng::AbstractRNG, d::Random.SamplerTrivial{TestDie}) = rand(rng, 1:d[].nsides)
 Base.eltype(::Type{TestDie}) = Int
 
+const AbstractFloatSubtypes = [Float16, Float32, Float64, BigFloat]
+const UnsignedSubtypes = [UInt8, UInt16, UInt32, UInt64, UInt128]
+const SignedSubtypes = [Int8, Int16, Int32, Int64, Int128, BigInt]
+
 @testset "Array math" begin
     @testset "zeros() and ones()" begin
         @test @inferred(zeros(SVector{3,Float64})) === @SVector [0.0, 0.0, 0.0]
@@ -336,13 +340,12 @@ Base.eltype(::Type{TestDie}) = Int
         end
     end
 
-    @testset "arithmetic_closure" for T0 in [subtypes(Unsigned);
-                                             subtypes(Signed);
-                                             subtypes(AbstractFloat);
+    @testset "arithmetic_closure" for T0 in [UnsignedSubtypes;
+                                             SignedSubtypes;
+                                             AbstractFloatSubtypes;
                                              Bool;
                                              Complex{Int};
                                              Complex{Float64};
-                                             BigInt
                                              ]
         T = @inferred arithmetic_closure(T0)
         @test arithmetic_closure(T) == T
