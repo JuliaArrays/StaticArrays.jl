@@ -15,6 +15,7 @@ end
 
 # Project SArray to SArray
 function ProjectTo(x::SArray{S, T}) where {S, T}
+    # We have a axes field because it is expected by other ProjectTo's like the one for Transpose
     return ProjectTo{SArray}(; element = CRC._eltype_projectto(T), axes = axes(x),
         size = Size(x))
 end
