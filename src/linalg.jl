@@ -522,3 +522,37 @@ end
 # Some shimming for special linear algebra matrix types
 @inline LinearAlgebra.Symmetric(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Symmetric{eltype(A),typeof(A)}(A, uplo))
 @inline LinearAlgebra.Hermitian(A::StaticMatrix, uplo::Char='U') = (checksquare(A); Hermitian{eltype(A),typeof(A)}(A, uplo))
+
+# triu/tril
+function triu(S::StaticMatrix, k::Int=0)
+    if length(S) <= 32
+        C = CartesianIndices(S)
+        t = Tuple(S)
+        for (linind, CI) in enumerate(C)
+            i, j = Tuple(CI)
+            if j-i < k
+                t = Base.setindex(t, zero(t[linind]), linind)
+            end
+        end
+        similar_type(S)(t)
+    else
+        M = triu!(copyto!(similar(S), S), k)
+        similar_type(S)(M)
+    end
+end
+function tril(S::StaticMatrix, k::Int=0)
+    if length(S) <= 32
+        C = CartesianIndices(S)
+        t = Tuple(S)
+        for (linind, CI) in enumerate(C)
+            i, j = Tuple(CI)
+            if j-i > k
+                t = Base.setindex(t, zero(t[linind]), linind)
+            end
+        end
+        similar_type(S)(t)
+    else
+        M = tril!(copyto!(similar(S), S), k)
+        similar_type(S)(M)
+    end
+end

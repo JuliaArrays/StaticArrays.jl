@@ -16,7 +16,8 @@ using LinearAlgebra
 import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals, pinv,
                       factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
-                      normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
+                      normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \,
+                      triu, tril
 using LinearAlgebra: checksquare
 
 using PrecompileTools
