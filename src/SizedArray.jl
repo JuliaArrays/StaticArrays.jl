@@ -94,7 +94,10 @@ end
 
 Base.parent(sa::SizedArray) = sa.data
 
-Base.unsafe_convert(::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.unsafe_convert(Ptr{T}, sa.data)
+Base.cconvert(P::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.cconvert(P, sa.data)
+if VERSION < v"1.11-"
+    Base.unsafe_convert(::Type{Ptr{T}}, sa::SizedArray) where {T} = Base.unsafe_convert(Ptr{T}, sa.data)
+end
 Base.elsize(::Type{SizedArray{S,T,M,N,A}}) where {S,T,M,N,A} = Base.elsize(A)
 
 Base.dataids(sa::SizedArray) = Base.dataids(sa.data)

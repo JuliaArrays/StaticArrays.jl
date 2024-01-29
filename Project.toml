@@ -1,6 +1,6 @@
 name = "StaticArrays"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.1"
+version = "1.9.2"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -18,10 +18,20 @@ StaticArraysChainRulesCoreExt = "ChainRulesCore"
 StaticArraysStatisticsExt = "Statistics"
 
 [compat]
-Aqua = "0.7"
+Aqua = "0.8"
+BenchmarkTools = "1"
 ChainRulesCore = "1"
+ChainRulesTestUtils = "1"
+InteractiveUtils = "1"
+JLArrays = "0.1"
+LinearAlgebra = "1.6"
+OffsetArrays = "1"
 PrecompileTools = "1"
+Random = "1.6"
 StaticArraysCore = "~1.4.0"
+Statistics = "1.6"
+Test = "1.6"
+Unitful = "1"
 julia = "1.6"
 
 [extras]

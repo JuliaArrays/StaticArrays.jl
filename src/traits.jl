@@ -38,32 +38,32 @@ Length(a::AbstractArray) = Length(Size(a))
 Length(::Type{A}) where {A <: AbstractArray} = Length(Size(A))
 @pure Length(L::Int) = Length{L}()
 Length(::Size{S}) where {S} = _Length(S...)
-@pure _Length(S::Int...) = Length{prod(S)}()
+_Length(S::Int...) = Length{prod(S)}()
 @inline _Length(S...) = Length{Dynamic()}()
 
-# Some @pure convenience functions for `Size`
-@pure (::Type{Tuple})(::Size{S}) where {S} = S
+# Some convenience functions for `Size`
+(::Type{Tuple})(::Size{S}) where {S} = S
 
 @pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
 
-@pure length(::Size{S}) where {S} = length(S)
-@pure length_val(::Size{S}) where {S} = Val{length(S)}
+length(::Size{S}) where {S} = length(S)
+length_val(::Size{S}) where {S} = Val{length(S)}
 
 # Note - using === here, as Base doesn't inline == for tuples as of julia-0.6
-@pure Base.:(==)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S === s
-@pure Base.:(==)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s === S
+Base.:(==)(::Size{S}, s::Tuple{Vararg{Int}}) where {S} = S === s
+Base.:(==)(s::Tuple{Vararg{Int}}, ::Size{S}) where {S} = s === S
 
-@pure Base.prod(::Size{S}) where {S} = prod(S)
+Base.prod(::Size{S}) where {S} = prod(S)
 
 Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
-@pure size_tuple(::Size{S}) where {S} = Tuple{S...}
+size_tuple(::Size{S}) where {S} = Tuple{S...}
 
 # Some @pure convenience functions for `Length`
 @pure (::Type{Int})(::Length{L}) where {L} = Int(L)
 
-@pure Base.:(==)(::Length{L}, l::Int) where {L} = L == l
-@pure Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
+Base.:(==)(::Length{L}, l::Int) where {L} = L == l
+Base.:(==)(l::Int, ::Length{L}) where {L} = l == L
 
 """
     sizematch(::Size, ::Size)
@@ -72,7 +72,7 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 Determine whether two sizes match, in the sense that they have the same
 number of dimensions, and their dimensions match as determined by [`dimmatch`](@ref).
 """
-@pure sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = sizematch(S1, S2)
+sizematch(::Size{S1}, ::Size{S2}) where {S1, S2} = sizematch(S1, S2)
 @inline sizematch(::Tuple{}, ::Tuple{}) = true
 @inline sizematch(S1::Tuple{Vararg{StaticDimension, N}}, S2::Tuple{Vararg{StaticDimension, N}}) where {N} =
     dimmatch(S1[1], S2[1]) && sizematch(Base.tail(S1), Base.tail(S2))
@@ -115,4 +115,4 @@ end
 
 # Return the "diagonal size" of a matrix - the minimum of the two dimensions
 diagsize(A::StaticMatrix) = diagsize(Size(A))
-@pure diagsize(::Size{S}) where {S} = min(S...)
+diagsize(::Size{S}) where {S} = min(S...)

@@ -32,9 +32,8 @@ function svdvals(A::StaticMatrix)
     similar_type(A, T2, Size(diagsize(A)))(sv)
 end
 
-function svd(A::StaticMatrix; full=Val(false))
-    _svd(A, full)
-end
+# `@inline` annotation is required to propagate `full` as constant to `_svd`
+@inline svd(A::StaticMatrix; full=Val(false)) = _svd(A, full)
 
 # Allow plain Bool in addition to Val
 # Required inline as of version 1.5 to ensure Bool usage like svd(A,
