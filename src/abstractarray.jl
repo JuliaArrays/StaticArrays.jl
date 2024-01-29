@@ -291,3 +291,19 @@ function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tup
     V = getindex(S, I...)
     _maybewrapscalar(S, V)
 end
+
+# zeros, ones and fill may return SArrays if all the axes are statically sized
+for (arrf, elf) in ((:zeros, :zero), (:ones, :one))
+    _arrf = Symbol(:_, arrf)
+    @eval begin
+        function $arrf(::Type{T}, ax::Tuple{SOneTo,Vararg{SOneTo}}) where {T}
+            sz = homogenize_shape(ax)
+            similar_type(SArray, T, sz)(ntuple(_->$elf(T), prod(sz)))
+        end
+    end
+end
+
+function fill(v, ax::Tuple{SOneTo,Vararg{SOneTo}})
+    sz = homogenize_shape(ax)
+    similar_type(SArray, typeof(v), sz)(ntuple(_->v, prod(sz)))
+end
