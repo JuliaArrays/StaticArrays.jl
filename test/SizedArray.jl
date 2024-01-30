@@ -110,6 +110,7 @@
 
     # pointer
     @testset "pointer" begin
+        @test Base.cconvert(Ptr{Int}, sa) === Base.cconvert(Ptr{Int}, sa.data)
         @test pointer(sa) === pointer(sa.data)
 
         A = MMatrix{32,3,Float64}(undef);

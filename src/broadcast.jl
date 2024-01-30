@@ -9,9 +9,7 @@ import Base.Broadcast: _bcs1  # for SOneTo axis information
 using Base.Broadcast: _bcsm
 
 BroadcastStyle(::Type{<:StaticArray{<:Tuple, <:Any, N}}) where {N} = StaticArrayStyle{N}()
-BroadcastStyle(::Type{<:Transpose{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
-BroadcastStyle(::Type{<:Adjoint{<:Any, <:StaticArray}}) = StaticArrayStyle{2}()
-BroadcastStyle(::Type{<:Diagonal{<:Any, <:StaticArray{<:Tuple, <:Any, 1}}}) = StaticArrayStyle{2}()
+BroadcastStyle(::Type{<:StaticMatrixLike}) = StaticArrayStyle{2}()
 # Precedence rules
 BroadcastStyle(::StaticArrayStyle{M}, ::DefaultArrayStyle{N}) where {M,N} =
     DefaultArrayStyle(Val(max(M, N)))
@@ -104,10 +102,7 @@ function broadcast_getindex(oldsize::Tuple, i::Int, newindex::CartesianIndex)
     return :(a[$i][$ind])
 end
 
-isstatic(::StaticArray) = true
-isstatic(::Transpose{<:Any, <:StaticArray}) = true
-isstatic(::Adjoint{<:Any, <:StaticArray}) = true
-isstatic(::Diagonal{<:Any, <:StaticArray}) = true
+isstatic(::StaticArrayLike) = true
 isstatic(_) = false
 
 @inline first_statictype(x, y...) = isstatic(x) ? typeof(x) : first_statictype(y...)
@@ -137,7 +132,7 @@ end
 
     return quote
         @_inline_meta
-        @inbounds return elements = tuple($(exprs...))
+        return tuple($(exprs...))
     end
 end
 
@@ -149,15 +144,19 @@ end
     sizes = [sz.parameters[1] for sz in s.parameters]
 
     indices = CartesianIndices(newsize)
-    exprs = similar(indices, Expr)
+    exprs_eval = similar(indices, Expr)
+    exprs_setindex = similar(indices, Expr)
     for (j, current_ind) ∈ enumerate(indices)
         exprs_vals = (broadcast_getindex(sz, i, current_ind) for (i, sz) in enumerate(sizes))
-        exprs[j] = :(dest[$j] = f($(exprs_vals...)))
+        symb_val_j = Symbol(:val_, j)
+        exprs_eval[j] = :($symb_val_j = f($(exprs_vals...)))
+        exprs_setindex[j] = :(dest[$j] = $symb_val_j)
     end
 
     return quote
         @_inline_meta
-        @inbounds $(Expr(:block, exprs...))
+        $(Expr(:block, exprs_eval...))
+        @inbounds $(Expr(:block, exprs_setindex...))
         return dest
     end
 end

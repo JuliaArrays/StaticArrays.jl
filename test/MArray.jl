@@ -89,41 +89,153 @@
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 256)
         @test ((@MArray Float64[1 for i = 1:2, j = 2:3, k = 3:4, l = 1:2, m = 1:2, n = 1:2, o = 1:2, p = 1:2, q = 1:2])::MArray{Tuple{2,2,2,2,2,2,2,2,2}}).data === ntuple(i->1.0, 512)
 
-        test_expand_error(:(@MArray [1 2; 3]))
-        test_expand_error(:(@MArray Float64[1 2; 3]))
-        test_expand_error(:(@MArray fill))
-        test_expand_error(:(@MArray ones))
-        test_expand_error(:(@MArray sin(1:5)))
-        test_expand_error(:(@MArray fill()))
-        test_expand_error(:(@MArray [1; 2; 3; 4]...))
+        @testset "expand error" begin
+            test_expand_error(:(@MArray [1 2; 3]))
+            test_expand_error(:(@MArray Float64[1 2; 3]))
+            test_expand_error(:(@MArray fill))
+            test_expand_error(:(@MArray ones))
+            test_expand_error(:(@MArray sin(1:5)))
+            test_expand_error(:(@MArray fill()))
+            test_expand_error(:(@MArray [1; 2; 3; 4]...))
 
-        @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
-        @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
+            # (typed-)comprehension LoadError for `ex.args[1].head != :generator`
+            test_expand_error(:(@MArray [i+j for i in 1:2 for j in 1:2]))
+            test_expand_error(:(@MArray Int[i+j for i in 1:2 for j in 1:2]))
+        end
 
-        @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
-        @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
-        @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
-        @test isa(@MArray(rand(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-        @test isa(@MArray(randn(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-        @test isa(@MArray(randexp(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-        @test isa(@MArray(rand(2,2,0)), MArray{Tuple{2,2,0}, Float64})
-        @test isa(@MArray(randn(2,2,0)), MArray{Tuple{2,2,0}, Float64})
-        @test isa(@MArray(randexp(2,2,0)), MArray{Tuple{2,2,0}, Float64})
+        @testset "@MArray rand*" begin
+            @testset "Same test as @MVector rand*" begin
+                n = 4
+                @test (@MArray rand(n)) isa MVector{n, Float64}
+                @test (@MArray randn(n)) isa MVector{n, Float64}
+                @test (@MArray randexp(n)) isa MVector{n, Float64}
+                @test (@MArray rand(4)) isa MVector{4, Float64}
+                @test (@MArray randn(4)) isa MVector{4, Float64}
+                @test (@MArray randexp(4)) isa MVector{4, Float64}
+                @test (@MArray rand(_rng(), n)) isa MVector{n, Float64}
+                @test (@MArray rand(_rng(), n)) == rand(_rng(), n)
+                @test (@MArray randn(_rng(), n)) isa MVector{n, Float64}
+                @test (@MArray randn(_rng(), n)) == randn(_rng(), n)
+                @test (@MArray randexp(_rng(), n)) isa MVector{n, Float64}
+                @test (@MArray randexp(_rng(), n)) == randexp(_rng(), n)
+                @test (@MArray rand(_rng(), 4)) isa MVector{4, Float64}
+                @test (@MArray rand(_rng(), 4)) == rand(_rng(), 4)
+                @test (@MArray randn(_rng(), 4)) isa MVector{4, Float64}
+                @test (@MArray randn(_rng(), 4)) == randn(_rng(), 4)
+                @test (@MArray randexp(_rng(), 4)) isa MVector{4, Float64}
+                @test (@MArray randexp(_rng(), 4)) == randexp(_rng(), 4)
 
-        @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
-        @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+                for T in (Float32, Float64)
+                    @test (@MArray rand(T, n)) isa MVector{n, T}
+                    @test (@MArray randn(T, n)) isa MVector{n, T}
+                    @test (@MArray randexp(T, n)) isa MVector{n, T}
+                    @test (@MArray rand(T, 4)) isa MVector{4, T}
+                    @test (@MArray randn(T, 4)) isa MVector{4, T}
+                    @test (@MArray randexp(T, 4)) isa MVector{4, T}
+                    @test (@MArray rand(_rng(), T, n)) isa MVector{n, T}
+                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                    @test (@MArray randn(_rng(), T, n)) isa MVector{n, T}
+                    @test (@MArray randn(_rng(), T, n)) == randn(_rng(), T, n)
+                    @test (@MArray randexp(_rng(), T, n)) isa MVector{n, T}
+                    @test (@MArray randexp(_rng(), T, n)) == randexp(_rng(), T, n)
+                    @test (@MArray rand(_rng(), T, 4)) isa MVector{4, T}
+                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                    @test (@MArray randn(_rng(), T, 4)) isa MVector{4, T}
+                    @test (@MArray randn(_rng(), T, 4)) == randn(_rng(), T, 4)
+                    @test (@MArray randexp(_rng(), T, 4)) isa MVector{4, T}
+                    @test (@MArray randexp(_rng(), T, 4)) == randexp(_rng(), T, 4)
+                end
+            end
 
-        @test ((@MArray zeros(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (0.0f0, 0.0f0, 0.0f0, 0.0f0)
-        @test ((@MArray ones(Float32, 2, 2, 1))::MArray{Tuple{2,2,1},Float32}).data === (1.0f0, 1.0f0, 1.0f0, 1.0f0)
-        @test isa(@MArray(rand(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
-        @test isa(@MArray(randn(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
-        @test isa(@MArray(randexp(Float32, 2, 2, 1)), MArray{Tuple{2,2,1}, Float32})
-        @test isa(@MArray(rand(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
-        @test isa(@MArray(randn(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
-        @test isa(@MArray(randexp(Float32, 2, 2, 0)), MArray{Tuple{2,2,0}, Float32})
+            @testset "Same tests as @MMatrix rand*" begin
+                n = 4
+                @testset "zero-length" begin
+                    @test (@MArray rand(0, 0)) isa MMatrix{0, 0, Float64}
+                    @test (@MArray rand(0, n)) isa MMatrix{0, n, Float64}
+                    @test (@MArray rand(n, 0)) isa MMatrix{n, 0, Float64}
+                    @test (@MArray rand(Float32, 0, 0)) isa MMatrix{0, 0, Float32}
+                    @test (@MArray rand(Float32, 0, n)) isa MMatrix{0, n, Float32}
+                    @test (@MArray rand(Float32, n, 0)) isa MMatrix{n, 0, Float32}
+                    @test (@MArray rand(_rng(), Float32, 0, 0)) isa MMatrix{0, 0, Float32}
+                    @test (@MArray rand(_rng(), Float32, 0, n)) isa MMatrix{0, n, Float32}
+                    @test (@MArray rand(_rng(), Float32, n, 0)) isa MMatrix{n, 0, Float32}
+                end
+
+                @test (@MArray rand(n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray randn(n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray randexp(n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray rand(4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray randn(4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray randexp(4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray rand(_rng(), n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray rand(_rng(), n, n)) == rand(_rng(), n, n)
+                @test (@MArray randn(_rng(), n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray randn(_rng(), n, n)) == randn(_rng(), n, n)
+                @test (@MArray randexp(_rng(), n, n)) isa MMatrix{n, n, Float64}
+                @test (@MArray randexp(_rng(), n, n)) == randexp(_rng(), n, n)
+                @test (@MArray rand(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray rand(_rng(), 4, 4)) == rand(_rng(), 4, 4)
+                @test (@MArray randn(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray randn(_rng(), 4, 4)) == randn(_rng(), 4, 4)
+                @test (@MArray randexp(_rng(), 4, 4)) isa MMatrix{4, 4, Float64}
+                @test (@MArray randexp(_rng(), 4, 4)) == randexp(_rng(), 4, 4)
+
+                for T in (Float32, Float64)
+                    @test (@MArray rand(T, n, n)) isa MMatrix{n, n, T}
+                    @test (@MArray randn(T, n, n)) isa MMatrix{n, n, T}
+                    @test (@MArray randexp(T, n, n)) isa MMatrix{n, n, T}
+                    @test (@MArray rand(T, 4, 4)) isa MMatrix{4, 4, T}
+                    @test (@MArray randn(T, 4, 4)) isa MMatrix{4, 4, T}
+                    @test (@MArray randexp(T, 4, 4)) isa MMatrix{4, 4, T}
+                    @test (@MArray rand(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                    @test (@MArray randn(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                    @test (@MArray randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
+                    @test (@MArray randexp(_rng(), T, n, n)) isa MMatrix{n, n, T}
+                    @test (@MArray randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
+                    @test (@MArray rand(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                    @test (@MArray randn(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                    @test (@MArray randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
+                    @test (@MArray randexp(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
+                    @test (@MArray randexp(_rng(), T, 4, 4)) == randexp(_rng(), T, 4, 4)
+                end
+            end
+
+            @test (@MArray rand(2,2,1))    isa MArray{Tuple{2,2,1}, Float64}
+            @test (@MArray rand(2,2,0))    isa MArray{Tuple{2,2,0}, Float64}
+            @test (@MArray randn(2,2,1))   isa MArray{Tuple{2,2,1}, Float64}
+            @test (@MArray randn(2,2,0))   isa MArray{Tuple{2,2,0}, Float64}
+            @test (@MArray randexp(2,2,1)) isa MArray{Tuple{2,2,1}, Float64}
+            @test (@MArray randexp(2,2,0)) isa MArray{Tuple{2,2,0}, Float64}
+            @test (@MArray rand(Float32,2,2,1))    isa MArray{Tuple{2,2,1}, Float32}
+            @test (@MArray rand(Float32,2,2,0))    isa MArray{Tuple{2,2,0}, Float32}
+            @test (@MArray randn(Float32,2,2,1))   isa MArray{Tuple{2,2,1}, Float32}
+            @test (@MArray randn(Float32,2,2,0))   isa MArray{Tuple{2,2,0}, Float32}
+            @test (@MArray randexp(Float32,2,2,1)) isa MArray{Tuple{2,2,1}, Float32}
+            @test (@MArray randexp(Float32,2,2,0)) isa MArray{Tuple{2,2,0}, Float32}
+        end
+
+        @testset "fill, zeros, ones" begin
+            @test ((@MArray fill(1))::MArray{Tuple{},Int}).data === (1,)
+            @test ((@MArray zeros())::MArray{Tuple{},Float64}).data === (0.,)
+            @test ((@MArray ones())::MArray{Tuple{},Float64}).data === (1.,)
+            @test ((@MArray fill(3.,2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (3.0, 3.0, 3.0, 3.0)
+            @test ((@MArray zeros(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@MArray ones(2,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@MArray zeros(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (0.0, 0.0, 0.0, 0.0)
+            @test ((@MArray ones(3-1,2,1))::MArray{Tuple{2,2,1}, Float64}).data === (1.0, 1.0, 1.0, 1.0)
+            @test ((@MArray zeros(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@MArray ones(Float32,2,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+            @test ((@MArray zeros(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (0.f0, 0.f0, 0.f0, 0.f0)
+            @test ((@MArray ones(Float32,3-1,2,1))::MArray{Tuple{2,2,1}, Float32}).data === (1.f0, 1.f0, 1.f0, 1.f0)
+        end
 
         m = [1 2; 3 4]
         @test MArray{Tuple{2,2}}(m) == @MArray [1 2; 3 4]
+
+        # Non-square comprehensions built from SVectors - see #76
+        @test @MArray([1 for x = SVector(1,2), y = SVector(1,2,3)]) == ones(2,3)
 
         # Nested cat
         @test ((@MArray [[1;2] [3;4]])::MMatrix{2,2}).data === (1,2,3,4)
@@ -132,6 +244,8 @@
         @test ((@MArray Float64[[1 3];[2 4]])::MMatrix{2,2}).data === (1.,2.,3.,4.)
         test_expand_error(:(@MArray [[1;2] [3]]))
         test_expand_error(:(@MArray [[1 2]; [3]]))
+
+        @test (@MArray [[[1,2],1]; 2; 3]) == [[[1,2],1]; 2; 3]
 
         if VERSION >= v"1.7.0"
             function test_ex(ex)
@@ -211,6 +325,12 @@
         # setindex with non-elbits type
         m = MArray{Tuple{2,2,2}, String}(undef)
         @test_throws ErrorException setindex!(m, "a", 1, 1, 1)
+    end
+
+    @testset "rand! randn! randexp!" begin
+        @test isa(rand!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(randn!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
+        @test isa(randexp!(@MArray zeros(2,2,1)), MArray{Tuple{2,2,1}, Float64})
     end
 
     @testset "promotion" begin

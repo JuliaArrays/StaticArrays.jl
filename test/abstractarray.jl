@@ -10,6 +10,20 @@ using StaticArrays, Test, LinearAlgebra
         @test eachindex(m) isa SOneTo
     end
 
+    @testset "axes" begin
+        v = @SVector [1, 2, 3]
+        @test @inferred(axes(v)) == (SOneTo(3),)
+        for T in (Adjoint, Transpose)
+            @test @inferred(axes(T(v))) == (SOneTo(1), SOneTo(3))
+        end
+
+        m = @SMatrix [1 2; 3 4]
+        @test @inferred(axes(m)) == (SOneTo(2), SOneTo(2))
+        for T in (Adjoint, Transpose, Diagonal, Symmetric, Hermitian, UpperTriangular, LowerTriangular, UnitUpperTriangular, UnitLowerTriangular)
+            @test @inferred(axes(T(m))) == (SOneTo(2), SOneTo(2))
+        end
+    end
+
     @testset "strides" begin
         m1 = MArray{Tuple{3, 4, 5}}(rand(Int, 3, 4, 5))
         m2 = SizedArray{Tuple{3,4,5}}(rand(Int, 3, 4, 5))
@@ -59,6 +73,7 @@ using StaticArrays, Test, LinearAlgebra
         sv = @SVector [1,2,3]
         sm = @SMatrix [1 2; 3 4]
         sa = SArray{Tuple{1,1,1},Int,3,1}((1,))
+        sn = @SVector [1, missing]
 
         @test isa(@inferred(similar(sv)), MVector{3,Int})
         @test isa(@inferred(similar(sv, Float64)), MVector{3,Float64})
@@ -69,6 +84,8 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(sm, Float64)), MMatrix{2,2,Float64,4})
         @test isa(@inferred(similar(sv, Size(3,3))), MMatrix{3,3,Int,9})
         @test isa(@inferred(similar(sv, Float64, Size(3,3))), MMatrix{3,3,Float64,9})
+        @test isa(@inferred(similar(sn)), SizedVector{2, Union{Missing, Int}})
+        @test isa(@inferred(similar(sn, Float64, Size(3, 3))), MMatrix{3, 3, Float64, 9})
 
         @test isa(@inferred(similar(sa)), MArray{Tuple{1,1,1},Int,3,1})
         @test isa(@inferred(similar(SArray{Tuple{1,1,1},Int,3,1})), MArray{Tuple{1,1,1},Int,3,1})
@@ -80,6 +97,38 @@ using StaticArrays, Test, LinearAlgebra
         @test isa(@inferred(similar(Diagonal{Int}, Size(2,2))), MArray{Tuple{2, 2}, Int, 2, 4})
         @test isa(@inferred(similar(SizedArray, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
         @test isa(@inferred(similar(Matrix{Int}, Int, Size(2,2))), SizedArray{Tuple{2, 2}, Int, 2, 2})
+
+        @testset "disambiguate similar" begin
+            struct CustomArray{T} <: AbstractVector{T}
+                sz :: Int
+            end
+
+            Base.size(C::CustomArray) = (C.sz,)
+            Base.getindex(C::CustomArray{T}, i::Int) where {T} = T(i)
+            Base.similar(C::CustomArray, ::Type{T}, ax::Tuple{Vararg{Int}}) where {T} =
+                Array{T}(undef, ax)
+            function Base.similar(C::CustomArray, ::Type{T}, ax::Tuple{Vararg{Union{Int, SOneTo, Base.OneTo{Int}}}}) where {T}
+                sz = last.(ax)
+                Array{T}(undef, sz)
+            end
+
+            c = CustomArray{Int}(4)
+            for (ax, sz) in (((SOneTo(2), Base.OneTo(3)), (2,3)),
+                                ((2, SOneTo(2), Base.OneTo(3)), (2,2,3)))
+                for A in (similar(c, Float64, ax), similar(c, Float64, ax...))
+                    @test A isa Array{Float64, length(sz)}
+                    @test size(A) == sz
+                end
+            end
+
+            @test similar(c, ()) isa Array{Int,0}
+            @test similar(c, Float64, ()) isa Array{Float64,0}
+
+            @test size(similar(zeros(), (1,1,1,SOneTo(1)))) == (1,1,1,1)
+
+            # ensure that the more specific Base method works
+            @test similar(1:2, ()) isa AbstractArray{Int,0}
+        end
     end
 
     @testset "similar and Base.Slice/IdentityUnitRange (issues #548, #556)" begin
@@ -367,5 +416,16 @@ end
         a, b... = Vec(1)
         @test b == []
         @test b isa Vec{0}
+    end
+end
+
+@testset "zeros/ones/fill" begin
+    for ax in ((SOneTo(2),), (SOneTo(2),SOneTo(3)))
+        @test @inferred(fill(:abc, ax...)) === @inferred(fill(:abc, ax))
+        @test fill(:abc, ax) == fill(:abc, length.(ax)) == fill(:abc, Base.OneTo.(length.(ax)))
+        for fz in (zeros, ones)
+            @test @inferred(fz(Float32, ax...)) === @inferred(fz(Float32, ax))
+            @test fz(Float32, ax) == fz(Float32, length.(ax)) == fz(Float32, Base.OneTo.(length.(ax)))
+        end
     end
 end

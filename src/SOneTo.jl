@@ -64,8 +64,8 @@ function Base.getproperty(::SOneTo{n}, s::Symbol) where {n}
     end
 end
 
-function Base.show(io::IO, ::SOneTo{n}) where {n}
-    print(io, "SOneTo(", n::Int, ")")
+function Base.show(io::IO, @nospecialize(x::SOneTo))
+    print(io, "SOneTo(", length(x)::Int, ")")
 end
 
 Base.@pure function Base.checkindex(::Type{Bool}, ::SOneTo{n1}, ::SOneTo{n2}) where {n1, n2}
@@ -78,3 +78,6 @@ Base.promote_rule(a::Type{Base.OneTo{T}}, ::Type{SOneTo{n}}) where {T,n} =
 function Base.reduced_indices(inds::Tuple{SOneTo,Vararg{SOneTo}}, d::Int)
     Base.reduced_indices(map(Base.OneTo, inds), d)
 end
+
+Base.intersect(r::SOneTo{n1}, s::SOneTo{n2}) where {n1,n2} = SOneTo(min(n1, n2))
+Base.union(r::SOneTo{n1}, s::SOneTo{n2}) where {n1,n2} = SOneTo(max(n1, n2))

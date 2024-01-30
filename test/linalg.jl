@@ -237,6 +237,15 @@ end
         end
         @test adjoint(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Adjoint{Int,Vector{Int}}}
         @test transpose(SMatrix{0,0,Vector{Int}}()) isa SMatrix{0,0,Transpose{Int,Vector{Int}}}
+
+        @testset "inference for nested matrices" begin
+            A = reshape([reshape([complex(i,2i)*j for i in 1:2], 1, 2) for j in 1:6], 3, 2)
+            for TA in (SMatrix, MMatrix), TB in (SMatrix, MMatrix)
+                S = TA{3,2}(TB{1,2}.(A)) # static matrix of static matrices
+                @test @inferred(transpose(S)) == transpose(A)
+                @test @inferred(adjoint(S)) == adjoint(A)
+            end
+        end
     end
 
     @testset "normalization" begin
