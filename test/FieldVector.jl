@@ -148,6 +148,6 @@
             c::T
         end
 
-        @test NamedTuple(FieldVectorNT(1,2,3)) isa @NamedTuple{a::Int64, b::Int64, c::Int64}
+        @test NamedTuple(FieldVectorNT(1,2,3)) isa @NamedTuple{a::Int, b::Int, c::Int}
     end
 end
