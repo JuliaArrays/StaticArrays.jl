@@ -119,5 +119,6 @@
         end
 
         @test NamedTuple(FieldMatrixNT(1,2,3,4)) isa @NamedTuple{a::Int, b::Int, c::Int, d::Int}
+        @test convert(NamedTuple, FieldMatrixNT(1,2,3,4)) isa @NamedTuple{a::Int, b::Int, c::Int, d::Int}
     end
 end
