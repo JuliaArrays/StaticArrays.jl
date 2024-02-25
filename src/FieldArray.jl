@@ -33,5 +33,4 @@ _fieldarray_similar_type(A, T, NewSize, OldSize) =
     default_similar_type(T, NewSize, length_val(NewSize))
 
 # Convenience constructors for NamedTuple types 
-Base.convert(::Type{NamedTuple}, array::FieldArray) = Base.NamedTuple(array)
 Base.NamedTuple(array::FieldArray) = Base.NamedTuple{propertynames(array)}(array)

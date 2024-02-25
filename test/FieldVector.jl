@@ -149,6 +149,5 @@
         end
 
         @test NamedTuple(FieldVectorNT(1,2,3)) isa @NamedTuple{a::Int, b::Int, c::Int}
-        @test convert(NamedTuple, FieldVectorNT(1,2,3,4)) isa @NamedTuple{a::Int, b::Int, c::Int, d::Int}
     end
 end
