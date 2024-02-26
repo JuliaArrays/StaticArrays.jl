@@ -31,3 +31,6 @@ similar_type(::Type{A}, ::Type{T}, S::Size) where {N, T, A<:FieldArray{N, T}} =
 _fieldarray_similar_type(A, T, NewSize::S, OldSize::S) where {S} = A
 _fieldarray_similar_type(A, T, NewSize, OldSize) =
     default_similar_type(T, NewSize, length_val(NewSize))
+
+# Convenience constructors for NamedTuple types 
+Base.NamedTuple(array::FieldArray) = Base.NamedTuple{propertynames(array)}(array)

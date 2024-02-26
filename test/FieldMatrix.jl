@@ -109,4 +109,15 @@
         @test length(x[1]) == 2
         @test x.x == (1, 2)
     end
+
+    @testset "FieldMatrix to NamedTuple" begin
+        struct FieldMatrixNT{T} <: FieldMatrix{2,2,T}
+            a::T
+            b::T
+            c::T
+            d::T
+        end
+
+        @test NamedTuple(FieldMatrixNT(1,2,3,4)) isa @NamedTuple{a::Int, b::Int, c::Int, d::Int}
+    end
 end

@@ -140,4 +140,14 @@
         end
         @test_throws ErrorException("The constructor for Position1088{Float64}(::Float64, ::Float64, ::Float64) is missing!") Position1088((1.,2.,3.))
     end
+
+    @testset "FieldVector to NamedTuple" begin
+        struct FieldVectorNT{T} <: FieldVector{3,T}
+            a::T
+            b::T
+            c::T
+        end
+
+        @test NamedTuple(FieldVectorNT(1,2,3)) isa @NamedTuple{a::Int, b::Int, c::Int}
+    end
 end
