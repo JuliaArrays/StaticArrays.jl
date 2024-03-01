@@ -471,4 +471,14 @@ end
         m23 = SA[1 2 3; 4 5 6]
         @test_inlined checksquare(m23) false
     end
+
+    @testset "triu/tril" begin
+        for S in (SMatrix{7,5}(1:35), MMatrix{4,6}(1:24), SizedArray{Tuple{2,2}}([1 2; 3 4]))
+            M = Matrix(S)
+            for k in -10:10
+                @test triu(S, k) == triu(M, k)
+                @test tril(S, k) == tril(M, k)
+            end
+        end
+    end
 end
