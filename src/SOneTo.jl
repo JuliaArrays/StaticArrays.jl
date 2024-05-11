@@ -38,7 +38,7 @@ end
 Base.first(::SOneTo) = 1
 Base.last(::SOneTo{n}) where {n} = n::Int
 
-@pure function Base.iterate(::SOneTo{n}) where {n}
+function Base.iterate(::SOneTo{n}) where {n}
     if n::Int < 1
         return nothing
     else

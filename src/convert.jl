@@ -11,14 +11,14 @@ const BadArgs = Args{<:Tuple{Tuple{<:Tuple}}}
 
 # Some help functions.
 @pure has_ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = @isdefined N
-@pure has_ndims(::Type{<:StaticArray}) = false
+has_ndims(::Type{<:StaticArray}) = false
 if VERSION < v"1.7"
     Base.ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = N
 end
 @pure has_eltype(::Type{<:StaticArray{<:Tuple,T}}) where {T} = @isdefined T
-@pure has_eltype(::Type{<:StaticArray}) = false
+has_eltype(::Type{<:StaticArray}) = false
 @pure has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = @isdefined S
-@pure has_size(::Type{<:StaticArray}) = false
+has_size(::Type{<:StaticArray}) = false
 # workaround for https://github.com/JuliaArrays/StaticArrays.jl/issues/1047
 has_size(::Type{SVector}) = false
 has_size(::Type{MVector}) = false
@@ -28,10 +28,10 @@ has_size(::Type{SMatrix{N}}) where {N} = false
 has_size(::Type{MMatrix{N}}) where {N} = false
 
 @pure has_size1(::Type{<:StaticMatrix{M}}) where {M} = @isdefined M
-@pure has_size1(::Type{<:StaticMatrix}) = false
+has_size1(::Type{<:StaticMatrix}) = false
 _size1(::Type{<:StaticMatrix{M}}) where {M} = M
 @generated function _sqrt(::Length{L}) where {L}
-    N = round(Int, sqrt(L))
+    N = isqrt(L)
     N^2 == L && return :($N)
     throw(DimensionMismatch("Input's length must be perfect square"))
 end
