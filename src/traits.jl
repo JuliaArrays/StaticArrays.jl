@@ -36,7 +36,7 @@ Base.show(io::IO, ::Length{L}) where {L} = print(io, "Length(", L, ")")
 
 Length(a::AbstractArray) = Length(Size(a))
 Length(::Type{A}) where {A <: AbstractArray} = Length(Size(A))
-@pure Length(L::Int) = Length{L}()
+Length(L::Int) = Length{L}()
 Length(::Size{S}) where {S} = _Length(S...)
 _Length(S::Int...) = Length{prod(S)}()
 @inline _Length(S...) = Length{Dynamic()}()
@@ -44,7 +44,7 @@ _Length(S::Int...) = Length{prod(S)}()
 # Some convenience functions for `Size`
 (::Type{Tuple})(::Size{S}) where {S} = S
 
-@pure getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
+getindex(::Size{S}, i::Int) where {S} = i <= length(S) ? S[i] : 1
 
 length(::Size{S}) where {S} = length(S)
 length_val(::Size{S}) where {S} = Val{length(S)}
@@ -59,8 +59,8 @@ Base.LinearIndices(::Size{S}) where {S} = LinearIndices(S)
 
 size_tuple(::Size{S}) where {S} = Tuple{S...}
 
-# Some @pure convenience functions for `Length`
-@pure (::Type{Int})(::Length{L}) where {L} = Int(L)
+# Some convenience functions for `Length`
+(::Type{Int})(::Length{L}) where {L} = Int(L)
 
 Base.:(==)(::Length{L}, l::Int) where {L} = L == l
 Base.:(==)(l::Int, ::Length{L}) where {L} = l == L

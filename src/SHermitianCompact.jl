@@ -44,8 +44,10 @@ end
     end
 end
 
-Base.@pure triangularnumber(N::Int) = div(N * (N + 1), 2)
-Base.@pure triangularroot(L::Int) = div(isqrt(8 * L + 1) - 1, 2) # from quadratic formula
+triangularnumber(N::Int) = div(N * (N + 1), 2)
+@generated function triangularroot(::Val{L}) where {L}
+    return div(isqrt(8 * L + 1) - 1, 2) # from quadratic formula
+end
 
 lowertriangletype(::Type{SHermitianCompact{N, T, L}}) where {N, T, L} = SVector{L, T}
 lowertriangletype(::Type{SHermitianCompact{N, T}}) where {N, T} = SVector{triangularnumber(N), T}
@@ -55,7 +57,7 @@ lowertriangletype(::Type{SHermitianCompact{N}}) where {N} = SVector{triangularnu
 @inline SHermitianCompact{N}(lowertriangle::SVector{L, T}) where {N, T, L} = SHermitianCompact{N, T, L}(lowertriangle)
 
 @inline function SHermitianCompact(lowertriangle::SVector{L, T}) where {T, L}
-    N = triangularroot(L)
+    N = triangularroot(Val(L))
     SHermitianCompact{N, T, L}(lowertriangle)
 end
 

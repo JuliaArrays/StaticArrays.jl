@@ -1,7 +1,7 @@
 length(a::StaticArrayLike) = prod(Size(a))::Int
 length(a::Type{SA}) where {SA <: StaticArrayLike} = prod(Size(SA))::Int
 
-@pure size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
+size(::Type{SA}) where {SA <: StaticArrayLike} = Tuple(Size(SA))
 @inline function size(t::Type{<:StaticArrayLike}, d::Int)
     S = size(t)
     d > length(S) ? 1 : S[d]
@@ -9,7 +9,7 @@ end
 @inline size(a::StaticArrayLike) = Tuple(Size(a))
 
 Base.axes(s::StaticArrayLike) = _axes(Size(s))
-@pure function _axes(::Size{sizes}) where {sizes}
+@generated function _axes(::Size{sizes}) where {sizes}
     map(SOneTo, sizes)
 end
 
@@ -83,9 +83,9 @@ sizedarray_similar_type(::Type{T},s::Size{S},::Type{Val{D}}) where {T,S,D} = Siz
 # Utility for computing the eltype of an array instance, type, or type
 # constructor.  For type constructors without a definite eltype, the default
 # value is returned.
-Base.@pure _eltype_or(a::AbstractArray, default) = eltype(a)
-Base.@pure _eltype_or(::Type{<:AbstractArray{T}}, default) where {T} = T
-Base.@pure _eltype_or(::Type{<:AbstractArray}, default) = default # eltype not available
+_eltype_or(a::AbstractArray, default) = eltype(a)
+_eltype_or(::Type{<:AbstractArray{T}}, default) where {T} = T
+_eltype_or(::Type{<:AbstractArray}, default) = default # eltype not available
 
 """
     _construct_similar(a, ::Size, elements::NTuple)
