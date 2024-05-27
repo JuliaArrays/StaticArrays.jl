@@ -70,7 +70,8 @@ end
 LinearAlgebra.hermitian_type(::Type{SA}) where {T, S, SA<:SArray{S,T}} = Hermitian{T,SA}
 
 function inv(A::Cholesky{T,<:StaticMatrix{N,N,T}}) where {N,T}
-    return A.U \ (A.U' \ SDiagonal{N}(I))
+    B = A.U \ (A.U' \ SDiagonal{N}(I))
+    return (B .+ B') ./ T(2)
 end
 
 function Base.:\(A::Cholesky{T,<:StaticMatrix{N,N,T}}, B::StaticVecOrMatLike) where {N,T}
