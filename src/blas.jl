@@ -18,6 +18,8 @@
 for (gesdd, elty) in ((:dgesdd_, :Float64), (:sgesdd_, :Float32)),
     (mtype, vtype) in ((SMatrix, SVector), (MMatrix, MVector))
 
+    blas_func = @eval BLAS.@blasfunc($gesdd)
+
     @eval begin
         function svdvals(A::$mtype{M, N, $elty}) where {M, N}
             K = min(M, N)
@@ -34,42 +36,23 @@ for (gesdd, elty) in ((:dgesdd_, :Float64), (:sgesdd_, :Float32)),
             iwork = MVector{8min(M, N), BLAS.BlasInt}(undef)
             info  = Ref(1)
 
-            ccall(
-                (BLAS.@blasfunc($gesdd), libblastrampoline),
-                Cvoid,
-                (
-                    Ref{UInt8},
-                    Ref{BLAS.BlasInt},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ptr{C_NULL},
-                    Ref{BLAS.BlasInt},
-                    Ptr{C_NULL},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{BLAS.BlasInt},
-                    Ptr{BLAS.BlasInt},
-                    Clong
-                ),
-                'N',
-                M,
-                N,
-                Am,
-                M,
-                Sm,
-                C_NULL,
-                M,
-                C_NULL,
-                K,
-                work,
-                lwork,
-                iwork,
-                info,
-                1
-            )
+            @ccall libblastrampoline.$blas_func(
+                'N'::Ref{UInt8},
+                M::Ref{BLAS.BlasInt},
+                N::Ref{BLAS.BlasInt},
+                Am::Ptr{$elty},
+                M::Ref{BLAS.BlasInt},
+                Sm::Ptr{$elty},
+                C_NULL::Ptr{C_NULL},
+                M::Ref{BLAS.BlasInt},
+                C_NULL::Ptr{C_NULL},
+                K::Ref{BLAS.BlasInt},
+                work::Ptr{$elty},
+                lwork::Ref{BLAS.BlasInt},
+                iwork::Ptr{BLAS.BlasInt},
+                info::Ptr{BLAS.BlasInt},
+                1::Clong
+            )::Cvoid
 
             # Check if the return result of the function.
             LAPACK.chklapackerror(info.x)
@@ -105,6 +88,8 @@ for (gesvd, elty) in ((:dgesvd_, :Float64), (:sgesvd_, :Float32)),
     full in (false, true),
     (mtype, vtype) in ((SMatrix, SVector), (MMatrix, MVector))
 
+    blas_func = @eval BLAS.@blasfunc($gesvd)
+
     @eval begin
         function _svd(A::$mtype{M, N, $elty}, full::Val{$full}) where {M, N}
             K = min(M, N)
@@ -118,44 +103,24 @@ for (gesvd, elty) in ((:dgesvd_, :Float64), (:sgesvd_, :Float32)),
             work  = MVector{lwork, $elty}(undef)
             info  = Ref(1)
 
-            ccall(
-                (BLAS.@blasfunc($gesvd), libblastrampoline),
-                Cvoid,
-                (
-                    Ref{UInt8},
-                    Ref{UInt8},
-                    Ref{BLAS.BlasInt},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{$elty},
-                    Ref{BLAS.BlasInt},
-                    Ptr{BLAS.BlasInt},
-                    Clong,
-                    Clong
-                ),
-                $(full ? 'A' : 'S'),
-                $(full ? 'A' : 'S'),
-                M,
-                N,
-                Am,
-                M,
-                Sm,
-                Um,
-                M,
-                Vtm,
-                $(full ? :N : :K),
-                work,
-                lwork,
-                info,
-                1,
-                1
-            )
+            @ccall libblastrampoline.$blas_func(
+                $(full ? 'A' : 'S')::Ref{UInt8},
+                $(full ? 'A' : 'S')::Ref{UInt8},
+                M::Ref{BLAS.BlasInt},
+                N::Ref{BLAS.BlasInt},
+                Am::Ptr{$elty},
+                M::Ref{BLAS.BlasInt},
+                Sm::Ptr{$elty},
+                Um::Ptr{$elty},
+                M::Ref{BLAS.BlasInt},
+                Vtm::Ptr{$elty},
+                $(full ? :N : :K)::Ref{BLAS.BlasInt},
+                work::Ptr{$elty},
+                lwork::Ref{BLAS.BlasInt},
+                info::Ptr{BLAS.BlasInt},
+                1::Clong,
+                1::Clong
+            )::Cvoid
 
             # Check if the return result of the function.
             LAPACK.chklapackerror(info.x)
