@@ -17,7 +17,7 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals, pinv,
                       factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
-using LinearAlgebra: checksquare
+using LinearAlgebra: BLAS, checksquare, LAPACK, libblastrampoline
 
 using PrecompileTools
 
