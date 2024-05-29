@@ -109,6 +109,7 @@ include("convert.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")
+include("blas.jl")
 include("broadcast.jl")
 include("mapreduce.jl")
 include("sort.jl")
