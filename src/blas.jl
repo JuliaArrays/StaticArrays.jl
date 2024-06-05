@@ -1,6 +1,8 @@
 # This file contains funtions that uses a direct interface to BLAS library. We use this
 # approach to reduce allocations.
 
+import LinearAlgebra: BLAS, LAPACK, libblastrampoline
+
 # == Singular Value Decomposition ==========================================================
 
 # Implement direct call to BLAS functions that computes the SVD values for `SMatrix` and

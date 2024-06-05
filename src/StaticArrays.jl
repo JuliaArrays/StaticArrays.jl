@@ -17,7 +17,7 @@ import LinearAlgebra: transpose, adjoint, dot, eigvals, eigen, lyap, tr,
                       kron, diag, norm, dot, diagm, lu, svd, svdvals, pinv,
                       factorize, ishermitian, issymmetric, isposdef, issuccess, normalize,
                       normalize!, Eigen, det, logdet, logabsdet, cross, diff, qr, \
-using LinearAlgebra: BLAS, checksquare, LAPACK, libblastrampoline
+using LinearAlgebra: checksquare
 
 using PrecompileTools
 
@@ -109,7 +109,6 @@ include("convert.jl")
 
 include("abstractarray.jl")
 include("indexing.jl")
-include("blas.jl")
 include("broadcast.jl")
 include("mapreduce.jl")
 include("sort.jl")
@@ -133,6 +132,10 @@ include("deque.jl")
 include("flatten.jl")
 include("io.jl")
 include("pinv.jl")
+
+@static if VERSION >= v"1.7"
+    include("blas.jl")
+end
 
 @static if !isdefined(Base, :get_extension) # VERSION < v"1.9-"
     include("../ext/StaticArraysStatisticsExt.jl")
