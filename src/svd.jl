@@ -73,3 +73,4 @@ function diagmult(sd, sB, d, B)
     ind = SOneTo(sd[1])
     return isa(B, AbstractVector) ? Diagonal(d)*B[ind] : Diagonal(d)*B[ind,:]
 end
+

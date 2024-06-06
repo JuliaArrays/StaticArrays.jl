@@ -2,8 +2,10 @@ using StaticArrays, Test, LinearAlgebra
 
 @testset "SVD factorization" begin
     m3 = @SMatrix Float64[3 9 4; 6 6 2; 3 7 9]
+    m3_f32 = @SMatrix Float32[3 9 4; 6 6 2; 3 7 9]
     m3c = ComplexF64.(m3)
     m23 = @SMatrix Float64[3 9 4; 6 6 2]
+    m23_f32 = @SMatrix Float32[3 9 4; 6 6 2]
     m_sing = @SMatrix [2.0 3.0 5.0; 4.0 6.0 10.0; 1.0 1.0 1.0]
     m_sing2 = @SMatrix [1 1; 1 0; 0 1]
     v = @SVector [1, 2, 3]
@@ -18,6 +20,7 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svdvals((@SMatrix [2 -2; 1 1]) / sqrt(2)) ≊ [2, 1]
 
         @testinf svdvals(m3) ≊ svdvals(Matrix(m3))
+        @testinf svdvals(m3_f32) ≊ svdvals(Matrix(m3_f32))
         @testinf svdvals(m3c) isa SVector{3,Float64}
 
         @testinf svd(m3).U::StaticMatrix ≊ svd(Matrix(m3)).U
@@ -25,9 +28,14 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m3).V::StaticMatrix ≊ svd(Matrix(m3)).V
         @testinf svd(m3).Vt::StaticMatrix ≊ svd(Matrix(m3)).Vt
 
-        @testinf svd(@SMatrix [2 0; 0 0]).U === one(SMatrix{2,2})
-        @testinf svd(@SMatrix [2 0; 0 0]).S === SVector(2.0, 0.0)
-        @testinf svd(@SMatrix [2 0; 0 0]).Vt === one(SMatrix{2,2})
+        @test svd(m3_f32).U::StaticMatrix ≈ svd(Matrix(m3_f32)).U atol = 5e-7
+        @test svd(m3_f32).S::StaticVector ≈ svd(Matrix(m3_f32)).S atol = 5e-7
+        @test svd(m3_f32).V::StaticMatrix ≈ svd(Matrix(m3_f32)).V atol = 5e-7
+        @test svd(m3_f32).Vt::StaticMatrix ≈ svd(Matrix(m3_f32)).Vt atol = 5e-7
+
+        @testinf svd(@SMatrix [2 0; 0 0]).U ≊ one(SMatrix{2,2})
+        @testinf svd(@SMatrix [2 0; 0 0]).S ≊ SVector(2.0, 0.0)
+        @testinf svd(@SMatrix [2 0; 0 0]).Vt ≊ one(SMatrix{2,2})
 
         @testinf svd((@SMatrix [2 -2; 1 1]) / sqrt(2)).U ≊ [-1 0; 0 1]
         @testinf svd((@SMatrix [2 -2; 1 1]) / sqrt(2)).S ≊ [2, 1]
@@ -40,6 +48,16 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m23').U  ≊ svd(Matrix(m23')).U
         @testinf svd(m23').S  ≊ svd(Matrix(m23')).S
         @testinf svd(m23').Vt ≊ svd(Matrix(m23')).Vt
+
+        @test svd(m23_f32).U::StaticMatrix ≈ svd(Matrix(m23_f32)).U atol = 5e-7
+        @test svd(m23_f32).S::StaticVector ≈ svd(Matrix(m23_f32)).S atol = 5e-7
+        @test svd(m23_f32).V::StaticMatrix ≈ svd(Matrix(m23_f32)).V atol = 5e-7
+        @test svd(m23_f32).Vt::StaticMatrix ≈ svd(Matrix(m23_f32)).Vt atol = 5e-7
+
+        @test svd(m23_f32').U::StaticMatrix ≈ svd(Matrix(m23_f32')).U atol = 5e-7
+        @test svd(m23_f32').S::StaticVector ≈ svd(Matrix(m23_f32')).S atol = 5e-7
+        @test svd(m23_f32').V::StaticMatrix ≈ svd(Matrix(m23_f32')).V atol = 5e-7
+        @test svd(m23_f32').Vt::StaticMatrix ≈ svd(Matrix(m23_f32')).Vt atol = 5e-7
 
         @testinf svd(m23, full=true).U::StaticMatrix  ≊ svd(Matrix(m23), full=true).U
         @testinf svd(m23, full=true).S::StaticVector  ≊ svd(Matrix(m23), full=true).S
