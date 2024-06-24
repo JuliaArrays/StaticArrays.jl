@@ -151,21 +151,25 @@ LinearAlgebra.issymmetric(a::SHermitianCompact) = true
     end
 end
 
-@inline Base.:*(a::Number, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
-@inline Base.:*(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle * b)
-@inline Base.:*(a::Complex, b::SHermitianCompact) = a * SMatrix(b)
-@inline Base.:*(a::SHermitianCompact, b::Complex) = SMatrix(a) * b
+@inline Base.:*(a::Real, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
+@inline Base.:*(a::SHermitianCompact, b::Real) = SHermitianCompact(a.lowertriangle * b)
+@inline Base.:*(a::Number, b::SHermitianCompact) = a * SMatrix(b)
+@inline Base.:*(a::SHermitianCompact, b::Number) = SMatrix(a) * b
 
-@inline Base.:/(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle / b)
-@inline Base.:\(a::Number, b::SHermitianCompact) = SHermitianCompact(a \ b.lowertriangle)
-@inline Base.:/(a::SHermitianCompact, b::Complex) = SMatrix(a) / b
-@inline Base.:\(a::Complex, b::SHermitianCompact) = a \ SMatrix(b)
+@inline Base.:/(a::SHermitianCompact, b::Real) = SHermitianCompact(a.lowertriangle / b)
+@inline Base.:\(a::Real, b::SHermitianCompact) = SHermitianCompact(a \ b.lowertriangle)
+@inline Base.:/(a::SHermitianCompact, b::Number) = SMatrix(a) / b
+@inline Base.:\(a::Number, b::SHermitianCompact) = a \ SMatrix(b)
 
-@inline Base.muladd(scalar::Complex, a::SHermitianCompact, b::StaticArray) = muladd(scalar, SMatrix(a), b)
-@inline Base.muladd(a::SHermitianCompact, scalar::Complex, b::StaticArray) = muladd(SMatrix(a), scalar, b)
+@inline Base.muladd(scalar::Number, a::SHermitianCompact, b::StaticArray) = muladd(scalar, SMatrix(a), b)
+@inline Base.muladd(a::SHermitianCompact, scalar::Number, b::StaticArray) = muladd(SMatrix(a), scalar, b)
+@inline Base.muladd(scalar::Real, a::SHermitianCompact, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::SHermitianCompact, scalar::Real, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
 
-@inline Base.FastMath.mul_fast(a::Complex, b::SHermitianCompact) = Base.FastMath.mul_fast(a, SMatrix(b))
-@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Complex) = Base.FastMath.mul_fast(SMatrix(a), b)
+@inline Base.FastMath.mul_fast(a::Number, b::SHermitianCompact) = Base.FastMath.mul_fast(a, SMatrix(b))
+@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Number) = Base.FastMath.mul_fast(SMatrix(a), b)
+@inline Base.FastMath.mul_fast(a::Real, b::SHermitianCompact) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Real) = map(c -> Base.FastMath.mul_fast(c, b), a)
 
 @generated function _plus_uniform(::Size{S}, a::SHermitianCompact{N, T, L}, λ) where {S, N, T, L}
     @assert S[1] == N
