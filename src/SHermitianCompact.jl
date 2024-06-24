@@ -153,9 +153,19 @@ end
 
 @inline Base.:*(a::Number, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
 @inline Base.:*(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle * b)
+@inline Base.:*(a::Complex, b::SHermitianCompact) = a * SMatrix(b)
+@inline Base.:*(a::SHermitianCompact, b::Complex) = SMatrix(a) * b
 
 @inline Base.:/(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle / b)
 @inline Base.:\(a::Number, b::SHermitianCompact) = SHermitianCompact(a \ b.lowertriangle)
+@inline Base.:/(a::SHermitianCompact, b::Complex) = SMatrix(a) / b
+@inline Base.:\(a::Complex, b::SHermitianCompact) = a \ SMatrix(b)
+
+@inline Base.muladd(scalar::Complex, a::SHermitianCompact, b::StaticArray) = muladd(scalar, SMatrix(a), b)
+@inline Base.muladd(a::SHermitianCompact, scalar::Complex, b::StaticArray) = muladd(SMatrix(a), scalar, b)
+
+@inline Base.FastMath.mul_fast(a::Complex, b::SHermitianCompact) = Base.FastMath.mul_fast(a, SMatrix(b))
+@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Complex) = Base.FastMath.mul_fast(SMatrix(a), b)
 
 @generated function _plus_uniform(::Size{S}, a::SHermitianCompact{N, T, L}, λ) where {S, N, T, L}
     @assert S[1] == N
