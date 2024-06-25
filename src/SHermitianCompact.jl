@@ -129,8 +129,10 @@ end
     end
 end
 
-LinearAlgebra.ishermitian(a::SHermitianCompact) = true
-LinearAlgebra.issymmetric(a::SHermitianCompact) = true
+LinearAlgebra.ishermitian(a::SHermitianCompact{<:Any,<:Real}) = true
+LinearAlgebra.ishermitian(a::SHermitianCompact) = a == a'
+LinearAlgebra.issymmetric(a::SHermitianCompact{<:Any,<:Real}) = true
+LinearAlgebra.issymmetric(a::SHermitianCompact) = a == transpose(a)
 
 # TODO: factorize?
 
