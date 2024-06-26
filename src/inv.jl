@@ -76,10 +76,11 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
-            LUp.U \ (LUp.L \ typeof(A)(I)[LUp.p,:])
+            inv(lu(A))
         end
     else
         :(@_inline_meta; similar_type(A)(inv(Matrix(A))))
     end
 end
+
+inv(LUp::LU) = LUp.U \ (LUp.L \ typeof(LUp.L.data)(I)[LUp.p,:])
