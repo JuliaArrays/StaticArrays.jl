@@ -185,20 +185,27 @@ fill3(x) = fill(3, x)
 
     @testset "Scalar-array" begin
         x = SHermitianCompact(SVector{6, Int}(1 : 6))
-        y = -5
-        for op in (:*, :/, :\)
-            if op != :\
-                @eval begin
-                    @test $op($x, $y) == $op(SMatrix($x), $y)
-                    @test_noalloc $op($x, $y)
+        for y = (-5, 1.1+4.3im)
+            for op in (:*, :/, :\, :(Base.FastMath.mul_fast))
+                if op != :\
+                    @eval begin
+                        @test $op($x, $y) == $op(SMatrix($x), $y)
+                        @test_noalloc $op($x, $y)
+                    end
+                end
+
+                if op != :/
+                    @eval begin
+                        @test $op($y, $x) == $op($y, SMatrix($x))
+                        @test_noalloc $op($y, $x)
+                    end
                 end
             end
-
-            if op != :/
-                @eval begin
-                    @test $op($y, $x) == $op($y, SMatrix($x))
-                    @test_noalloc $op($y, $x)
-                end
+            @eval begin
+                @test muladd($y, $x, $x) == muladd($y, SMatrix($x), $x)
+                @test_noalloc muladd($y, $x, $x)
+                @test muladd($x, $y, $x) == muladd(SMatrix($x), $y, $x)
+                @test_noalloc muladd($x, $y, $x)
             end
         end
     end
