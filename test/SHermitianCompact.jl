@@ -139,13 +139,21 @@ fill3(x) = fill(3, x)
         @test issymmetric(a)
 
         b = rand(SHermitianCompact{5, ComplexF64})
-        @test ishermitian(b)
-        @test issymmetric(b)
+        @test !ishermitian(b)
+        @test !issymmetric(b)
 
         c = b + conj(b)
         @test ishermitian(c)
         @test issymmetric(c)
         @test_noalloc ishermitian(c)
+
+        d = b + b'
+        @test ishermitian(d)
+        @test !issymmetric(d)
+
+        e = rand(SHermitianCompact{5, Float64}) + im*I
+        @test !ishermitian(e)
+        @test issymmetric(e)
     end
 
     @testset "==" begin
