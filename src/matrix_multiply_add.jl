@@ -175,7 +175,10 @@ function gen_by_access(expr_gen, a::Type{<:Diagonal{<:Any, <:StaticVector}}, b::
 end
 
 
-""" Size that stores whether a Matrix is a Transpose
+"""
+    TSize{S,T}
+
+Size that stores whether a Matrix is a Transpose.
 Useful when selecting multiplication methods, and avoiding allocations when dealing with
 the `Transpose` type by passing around the original matrix.
 Should pair with `parent`.
@@ -245,11 +248,19 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
     return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
 end
 
-"Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling."
+"""
+    multiplied_dimension(A, B)
+
+Calculate the product of the dimensions being multiplied. Useful as a heuristic for unrolling.
+"""
 @inline multiplied_dimension(A::Type{<:StaticVecOrMatLike}, B::Type{<:StaticVecOrMatLike}) =
     prod(size(A)) * size(B,2)
 
-"Validate the dimensions of a matrix multiplication, including matrix-vector products"
+"""
+    check_dims(sc, sa, sb)
+
+Validate the dimensions of a matrix multiplication, including matrix-vector products
+"""
 function check_dims(::Size{sc}, ::Size{sa}, ::Size{sb}) where {sa,sb,sc}
     if sb[1] != sa[2] || sc[1] != sa[1]
         return false
@@ -356,10 +367,12 @@ function uplo_access(sa, asym, k, j, uplo)
     end
 end
 
-""" Combine left and right sides of an assignment expression, short-cutting
-        lhs = α * rhs + β * lhs,
-    element-wise.
-If α = 1, the multiplication by α is removed. If β = 0, the second rhs term is removed.
+"""
+    _muladd_expr(lhs, rhs, coeffs)
+
+Combine left and right sides of an assignment expression, short-cutting
+`lhs = α * rhs + β * lhs`, element-wise.
+If `α = 1`, the multiplication by `α` is removed. If `β = 0`, the second `rhs` term is removed.
 """
 function _muladd_expr(lhs::Array{Expr}, rhs::Array{Expr}, ::Type{<:AlphaBeta})
     @assert length(lhs) == length(rhs)
@@ -378,7 +391,11 @@ end
     [:($(lhs[k]) = $(rhs[k])) for k = 1:length(lhs)]
 end
 
-"Obtain an expression for the linear index of var[k,j], taking transposes into account"
+"""
+    _lind(var, A, k, j)
+
+Obtain an expression for the linear index of `var[k,j]`, taking transposes into account.
+"""
 function _lind(var::Symbol, A::Type{TSize{sa,tA}}, k::Int, j::Int) where {sa,tA}
     ula = uplo_access(sa, var, k, j, tA)
     if ula.head == :call && ula.args[1] == :transpose
