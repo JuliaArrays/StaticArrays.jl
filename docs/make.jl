@@ -13,8 +13,8 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
-        "API" => "pages/api.md",
-        "Quick Start" => "pages/quickstart.md",
+        "API" => "api.md",
+        "Quick Start" => "quickstart.md",
         ],
     sitename = "StaticArrays.jl",
 )
