@@ -247,12 +247,14 @@ could be represented as a `Vector{SVector{3,Float64}}`.
 Another common way of storing the same data is as a 3×`N` `Matrix{Float64}`.
 Rather conveniently, such types have *exactly* the same binary layout in memory,
 and therefore we can use `reinterpret` to convert between the two formats
-```julia
+```@example copy
+using StaticArrays # hide
 function svectors(x::Matrix{T}, ::Val{N}) where {T,N}
     size(x,1) == N || error("sizes mismatch")
     isbitstype(T) || error("use for bitstypes only")
     reinterpret(SVector{N,T}, vec(x))
 end
+nothing # hide
 ```
 Such a conversion does not copy the data, rather it refers to the *same* memory.
 Arguably, a `Vector` of `SVector`s is often preferable to a `Matrix` because it
@@ -263,31 +265,19 @@ However, the resulting object is a Base.ReinterpretArray, not an Array, which
 carries some runtime penalty on every single access. If you can afford the
 memory for a copy and can live with the non-shared mutation semantics, then it
 is better to pull a copy by e.g.
-```julia
+```@example copy
 function svectorscopy(x::Matrix{T}, ::Val{N}) where {T,N}
     size(x,1) == N || error("sizes mismatch")
     isbitstype(T) || error("use for bitstypes only")
     copy(reinterpret(SVector{N,T}, vec(x)))
 end
+nothing # hide
 ```
 For example:
-```
-julia> M=reshape(collect(1:6), (2,3))
-2×3 Array{Int64,2}:
- 1  3  5
- 2  4  6
-
-julia> svectors(M, Val{2}())
-3-element reinterpret(SArray{Tuple{2},Int64,1,2}, ::Array{Int64,1}):
- [1, 2]
- [3, 4]
- [5, 6]
-
-julia> svectorscopy(M, Val{2}())
-3-element Array{SArray{Tuple{2},Int64,1,2},1}:
- [1, 2]
- [3, 4]
- [5, 6]
+```@repl copy
+M = reshape(collect(1:6), (2,3))
+svectors(M, Val{2}())
+svectorscopy(M, Val{2}())
 ```
 
 ### Working with mutable and immutable arrays
