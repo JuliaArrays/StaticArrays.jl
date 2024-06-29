@@ -3,7 +3,9 @@ using StaticArrays
 using StaticArraysCore
 
 # Setup for doctests in docstrings
-DocMeta.setdocmeta!(StaticArrays, :DocTestSetup, :(using LinearAlgebra, StaticArrays))
+doctest_setup = :(using LinearAlgebra, StaticArrays)
+DocMeta.setdocmeta!(StaticArrays,     :DocTestSetup, doctest_setup)
+DocMeta.setdocmeta!(StaticArraysCore, :DocTestSetup, doctest_setup)
 
 makedocs(;
     modules = [StaticArrays, StaticArraysCore],
