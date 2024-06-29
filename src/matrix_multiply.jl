@@ -19,7 +19,7 @@ import LinearAlgebra: BlasFloat, matprod, mul!
     mul_result_structure(a::Type, b::Type)
 
 Get a structure wrapper that should be applied to the result of multiplication of matrices
-of given types (a*b). 
+of given types (`a*b`).
 """
 function mul_result_structure(a, b)
     return identity

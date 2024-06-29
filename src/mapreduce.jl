@@ -6,8 +6,10 @@ A singleton type for representing "universal" initial value (identity element).
 The idea is that, given `op` for `mapfoldl`, virtually, we define an "extended"
 version of it by
 
-    op′(::_InitialValue, x) = x
-    op′(acc, x) = op(acc, x)
+```julia
+op′(::_InitialValue, x) = x
+op′(acc, x) = op(acc, x)
+```
 
 This is just a conceptually useful model to have in mind and we don't actually
 define `op′` here  (yet?).  But see `Base.BottomRF` for how it might work in

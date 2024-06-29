@@ -87,7 +87,7 @@ end
 """
     gen_by_access(expr_gen, a::Type{<:AbstractArray}, b::Type{<:AbstractArray})
 
-Similar to gen_by_access with only one type argument. The difference is that tests for both
+Similar to `gen_by_access` with only one type argument. The difference is that tests for both
 arrays of type `a` and `b` are generated and `expr_gen` receives two access arguments,
 first for matrix `a` and the second for matrix `b`.
 """

@@ -89,7 +89,7 @@ the check is performed at runtime.
 @inline sizematch(::Size{S}, A::AbstractArray) where {S} = sizematch(S, size(A))
 
 """
-Return either the statically known Size() or runtime size()
+Return either the statically known `Size()` or runtime `size()`
 """
 @inline _size(a) = size(a)
 @inline _size(a::StaticArray) = Size(a)
@@ -100,7 +100,7 @@ Return either the statically known Size() or runtime size()
 @inline _first_static() = throw(ArgumentError("No StaticArray found in argument list"))
 
 """
-Returns the common Size of the inputs (or else throws a DimensionMismatch)
+Returns the common `Size` of the inputs (or else throws a `DimensionMismatch`)
 """
 @inline function same_size(as...)
     s = Size(_first_static(as...))
