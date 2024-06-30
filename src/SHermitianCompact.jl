@@ -1,9 +1,11 @@
 """
     SHermitianCompact{N, T, L} <: StaticMatrix{N, N, T}
 
-A [`StaticArray`](@ref) subtype that represents a Hermitian matrix. Unlike
+A [`StaticArray`](@ref) subtype that can represent a Hermitian matrix. Unlike
 `LinearAlgebra.Hermitian`, `SHermitianCompact` stores only the lower triangle
-of the matrix (as an `SVector`). The lower triangle is stored in column-major order.
+of the matrix (as an `SVector`), and the diagonal may not be real. The lower
+triangle is stored in column-major order and the superdiagonal entries are 
+`adjoint` to the transposed subdiagonal entries. The diagonal is returned as-is.
 For example, for an `SHermitianCompact{3}`, the indices of the stored elements
 can be visualized as follows:
 
@@ -28,6 +30,13 @@ An `SHermitianCompact` may be constructed either:
 
 For the latter two cases, only the lower triangular elements are used; the upper triangular
 elements are ignored.
+
+When its element type is real, then a `SHermitianCompact` is both Hermitian and
+symmetric. Otherwise, to ensure that a `SHermitianCompact` matrix, `a`, is
+Hermitian according to `LinearAlgebra.ishermitian`, take an average with its
+adjoint, i.e. `(a+a')/2`, or take a Hermitian view of the data with
+`LinearAlgebra.Hermitian(a)`. However, the latter case is not specialized to use
+the compact storage.
 """
 struct SHermitianCompact{N, T, L} <: StaticMatrix{N, N, T}
     lowertriangle::SVector{L, T}
@@ -129,8 +138,10 @@ end
     end
 end
 
-LinearAlgebra.ishermitian(a::SHermitianCompact) = true
-LinearAlgebra.issymmetric(a::SHermitianCompact) = true
+LinearAlgebra.ishermitian(a::SHermitianCompact{<:Any,<:Real}) = true
+LinearAlgebra.ishermitian(a::SHermitianCompact) = a == a'
+LinearAlgebra.issymmetric(a::SHermitianCompact{<:Any,<:Real}) = true
+LinearAlgebra.issymmetric(a::SHermitianCompact) = a == transpose(a)
 
 # TODO: factorize?
 
@@ -151,11 +162,25 @@ LinearAlgebra.issymmetric(a::SHermitianCompact) = true
     end
 end
 
-@inline Base.:*(a::Number, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
-@inline Base.:*(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle * b)
+@inline Base.:*(a::Real, b::SHermitianCompact) = SHermitianCompact(a * b.lowertriangle)
+@inline Base.:*(a::SHermitianCompact, b::Real) = SHermitianCompact(a.lowertriangle * b)
+@inline Base.:*(a::Number, b::SHermitianCompact) = a * SMatrix(b)
+@inline Base.:*(a::SHermitianCompact, b::Number) = SMatrix(a) * b
 
-@inline Base.:/(a::SHermitianCompact, b::Number) = SHermitianCompact(a.lowertriangle / b)
-@inline Base.:\(a::Number, b::SHermitianCompact) = SHermitianCompact(a \ b.lowertriangle)
+@inline Base.:/(a::SHermitianCompact, b::Real) = SHermitianCompact(a.lowertriangle / b)
+@inline Base.:\(a::Real, b::SHermitianCompact) = SHermitianCompact(a \ b.lowertriangle)
+@inline Base.:/(a::SHermitianCompact, b::Number) = SMatrix(a) / b
+@inline Base.:\(a::Number, b::SHermitianCompact) = a \ SMatrix(b)
+
+@inline Base.muladd(scalar::Number, a::SHermitianCompact, b::StaticArray) = muladd(scalar, SMatrix(a), b)
+@inline Base.muladd(a::SHermitianCompact, scalar::Number, b::StaticArray) = muladd(SMatrix(a), scalar, b)
+@inline Base.muladd(scalar::Real, a::SHermitianCompact, b::StaticArray) = map((ai, bi) -> muladd(scalar, ai, bi), a, b)
+@inline Base.muladd(a::SHermitianCompact, scalar::Real, b::StaticArray) = map((ai, bi) -> muladd(ai, scalar, bi), a, b)
+
+@inline Base.FastMath.mul_fast(a::Number, b::SHermitianCompact) = Base.FastMath.mul_fast(a, SMatrix(b))
+@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Number) = Base.FastMath.mul_fast(SMatrix(a), b)
+@inline Base.FastMath.mul_fast(a::Real, b::SHermitianCompact) = map(c -> Base.FastMath.mul_fast(a, c), b)
+@inline Base.FastMath.mul_fast(a::SHermitianCompact, b::Real) = map(c -> Base.FastMath.mul_fast(c, b), a)
 
 @generated function _plus_uniform(::Size{S}, a::SHermitianCompact{N, T, L}, λ) where {S, N, T, L}
     @assert S[1] == N
