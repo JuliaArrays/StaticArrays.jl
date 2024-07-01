@@ -38,7 +38,7 @@ end
 
 Compute the QR factorization of `A`. The factors can be obtained by iteration:
 
-```julia
+```jldoctest qr
 julia> A = @SMatrix rand(3,4);
 
 julia> Q, R = qr(A);
@@ -49,7 +49,7 @@ true
 
 or by using `getfield`:
 
-```julia
+```jldoctest qr
 julia> F = qr(A);
 
 julia> F.Q * F.R ≈ A
