@@ -101,6 +101,8 @@ end
     A = rand(typ, sz, sz)
     SA = SMatrix{sz,sz,typ}(A)
     @test inv(lu(A)) ≈ inv(lu(SA))
+    @test_throws DimensionMismatch inv(lu(SMatrix{sz,sz+1,typ}(rand(typ, sz, sz+1))))
+    @test_throws DimensionMismatch inv(lu(SMatrix{sz+1,sz,typ}(rand(typ, sz+1, sz))))
 end
 
 #-------------------------------------------------------------------------------
