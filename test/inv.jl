@@ -97,6 +97,14 @@ end
     @test inv(A) ≈ inv(SA)
 end
 
+@testset "LU to inverse" for sz in (5, 8, 15), typ in (Float64, Complex{Float64})
+    A = rand(typ, sz, sz)
+    SA = SMatrix{sz,sz,typ}(A)
+    @test inv(lu(A)) ≈ inv(lu(SA))
+    @test_throws DimensionMismatch inv(lu(SMatrix{sz,sz+1,typ}(rand(typ, sz, sz+1))))
+    @test_throws DimensionMismatch inv(lu(SMatrix{sz+1,sz,typ}(rand(typ, sz+1, sz))))
+end
+
 #-------------------------------------------------------------------------------
 # More comprehensive but qualitative testing for inv() accuracy
 #=
