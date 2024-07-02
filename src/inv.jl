@@ -83,4 +83,10 @@ end
     end
 end
 
-inv(LUp::LU) = LUp.U \ (LUp.L \ typeof(LUp.L.data)(I)[LUp.p,:])
+function inv(LUp::LU)
+    if !(LUp.L isa LowerTriangular)
+        checksquare(LUp.L)
+        checksquare(LUp.U)
+    end
+    LUp.U \ (LUp.L \ typeof(parent(LUp.L))(I)[LUp.p,:])
+end
