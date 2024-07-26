@@ -140,7 +140,7 @@ additional loop unrolling and inlining, and consequentially (c) their mutating
 methods like `map!` are extremely fast. Benchmarking shows that operations such
 as addition and matrix multiplication are faster for `MMatrix` than `Matrix`,
 at least for sizes up to 14 × 14, though keep in mind that optimal speed will
-be obtained by using mutating functions (like `map!` or `A_mul_B!`) where
+be obtained by using mutating functions (like `map!` or `mul!`) where
 possible, rather than reallocating new memory.
 
 Mutable static arrays also happen to be very useful containers that can be
