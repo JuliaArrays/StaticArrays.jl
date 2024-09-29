@@ -26,7 +26,7 @@ using PrecompileTools
 # from StaticArraysCore to make transitioning definitions to StaticArraysCore easier.
 using StaticArraysCore: StaticArraysCore, StaticArray, StaticScalar, StaticVector,
                         StaticMatrix, StaticVecOrMat, tuple_length, tuple_prod,
-                        tuple_minimum, size_to_tuple, require_one_based_indexing
+                        tuple_minimum, size_to_tuple
 using StaticArraysCore: FieldArray, FieldMatrix, FieldVector
 using StaticArraysCore: StaticArrayStyle
 using StaticArraysCore: Dynamic, StaticDimension
