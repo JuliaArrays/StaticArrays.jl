@@ -57,9 +57,9 @@ end
     end
     Sreal = real(S)
 
-    @inbounds a11 = convert(Sreal, A.data[1])
-    @inbounds a22 = convert(Sreal, A.data[5])
-    @inbounds a33 = convert(Sreal, A.data[9])
+    @inbounds a11 = convert(Sreal, real(A.data[1]))
+    @inbounds a22 = convert(Sreal, real(A.data[5]))
+    @inbounds a33 = convert(Sreal, real(A.data[9]))
     if A.uplo == 'U'
         @inbounds a12 = convert(S, A.data[4])
         @inbounds a13 = convert(S, A.data[7])
