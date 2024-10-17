@@ -60,21 +60,29 @@ The adaption rules for official `StaticArray`s could be summarized as:
 
 # `SA <: Union{SArray, MArray, SHermitianCompact, SizedArray}`: `size`/`eltype` adaptable
 
-- SA(x::Tuple)
- If `SA` is fully static-sized, then we first try to fill `SA` with `x`'s elements.
- If failed and `length(SA) == 1`, then we try to fill `SA` with `x` itself.
+- `SA(x::Tuple)`
 
- If `SA` is not fully static-sized, then we always try to fill `SA` with `x`'s elements,
- and the constructor's `Size` is derived based on:
- 1. If `SA <: StaticVector`, then we use `length(x)` as the output `Length` 
- 2. If `SA <: StaticMatrix{M}`, then we use `(M, N)` (`N = length(x) ÷ M`) as the output `Size`
- 3. If `SA <: StaticMatrix{M,M} where M`, then we use `(N, N)` (`N = sqrt(length(x)`) as the output `Size`.
-- SA(x...)
- Similar to `Tuple`, but we never fill `SA` with `x` itself.
-- SA(x::StaticArray)
- We treat `x` as `Tuple` whenever possible. If failed, then try to inherit `x`'s `Size`.
-- SA(x::AbstractArray)
- `x` is used to provide eltype. Thus `SA` must be static sized.
+  If `SA` is fully static-sized, then we first try to fill `SA` with `x`'s elements.
+  If failed and `length(SA) == 1`, then we try to fill `SA` with `x` itself.
+
+  If `SA` is not fully static-sized, then we always try to fill `SA` with `x`'s elements,
+  and the constructor's `Size` is derived based on:
+  1. If `SA <: StaticVector`, then we use `length(x)` as the output `Length`
+  2. If `SA <: StaticMatrix{M}`, then we use `(M, N)` (`N = length(x) ÷ M`) as the output `Size`
+  3. If `SA <: StaticMatrix{M,M} where M`, then we use `(N, N)` (`N = sqrt(length(x)`) as the output `Size`.
+
+- `SA(x...)`
+
+  Similar to `Tuple`, but we never fill `SA` with `x` itself.
+
+- `SA(x::StaticArray)`
+
+  We treat `x` as `Tuple` whenever possible. If failed, then try to inherit `x`'s `Size`.
+
+- `SA(x::AbstractArray)`
+
+  `x` is used to provide eltype. Thus `SA` must be static sized.
+
 """
 function construct_type(::Type{SA}, x) where {SA<:StaticArray}
     x isa BadArgs || return SA

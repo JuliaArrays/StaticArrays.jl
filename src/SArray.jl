@@ -28,7 +28,7 @@ shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
     Expr(:block, stmts...)
 end
 """
-   sacollect(SA, gen)
+    sacollect(SA, gen)
 
 Construct a statically-sized vector of type `SA`.from a generator
 `gen`. `SA` needs to have a size parameter since the length of `vec`
@@ -36,10 +36,11 @@ is unknown to the compiler. `SA` can optionally specify the element
 type as well.
 
 Example:
-
-    sacollect(SVector{3, Int}, 2i+1 for i in 1:3)
-    sacollect(SMatrix{2, 3}, i+j for i in 1:2, j in 1:3)
-    sacollect(SArray{2, 3}, i+j for i in 1:2, j in 1:3)
+```julia
+sacollect(SVector{3, Int}, 2i+1 for i in 1:3)
+sacollect(SMatrix{2, 3}, i+j for i in 1:2, j in 1:3)
+sacollect(SArray{2, 3}, i+j for i in 1:2, j in 1:3)
+```
 
 This creates the same statically-sized vector as if the generator were
 collected in an array, but is more efficient since no array is
@@ -47,7 +48,9 @@ allocated.
 
 Equivalent:
 
-    SVector{3, Int}([2i+1 for i in 1:3])
+```julia
+SVector{3, Int}([2i+1 for i in 1:3])
+```
 """
 sacollect
 
@@ -304,19 +307,19 @@ end
 A convenience macro to construct `SArray` with arbitrary dimension.
 It supports:
 1. (typed) array literals.
-!!! note
-    Every argument inside the square brackets is treated as a scalar during expansion.
-    Thus `@SArray[a; b]` always forms a `SVector{2}` and `@SArray [a b; c]` always throws
-    an error.
+   !!! note
+       Every argument inside the square brackets is treated as a scalar during expansion.
+       Thus `@SArray[a; b]` always forms a `SVector{2}` and `@SArray [a b; c]` always throws
+       an error.
 
 2. comprehensions
-!!! note
-    The range of a comprehension is evaluated at global scope by the macro, and must be
-    made of combinations of literal values, functions, or global variables.
+   !!! note
+       The range of a comprehension is evaluated at global scope by the macro, and must be
+       made of combinations of literal values, functions, or global variables.
 
 3. initialization functions
-!!! note
-    Only support `zeros()`, `ones()`, `fill()`, `rand()`, `randn()`, and `randexp()`
+   !!! note
+       Only support `zeros()`, `ones()`, `fill()`, `rand()`, `randn()`, and `randexp()`
 """
 macro SArray(ex)
     static_array_gen(SArray, ex, __module__)

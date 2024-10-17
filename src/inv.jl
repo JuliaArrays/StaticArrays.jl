@@ -76,10 +76,17 @@ end
     if prod(S) ≤ 14*14
         quote
             @_inline_meta
-            LUp = lu(A)
-            LUp.U \ (LUp.L \ typeof(A)(I)[LUp.p,:])
+            inv(lu(A))
         end
     else
         :(@_inline_meta; similar_type(A)(inv(Matrix(A))))
     end
+end
+
+function inv(LUp::LU)
+    if !(LUp.L isa LowerTriangular)
+        checksquare(LUp.L)
+        checksquare(LUp.U)
+    end
+    LUp.U \ (LUp.L \ typeof(parent(LUp.L))(I)[LUp.p,:])
 end

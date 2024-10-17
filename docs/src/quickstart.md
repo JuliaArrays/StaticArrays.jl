@@ -1,6 +1,7 @@
 # Quick Start
 
 ```julia
+import Pkg
 Pkg.add("StaticArrays")  # or Pkg.clone("https://github.com/JuliaArrays/StaticArrays.jl")
 using StaticArrays
 using LinearAlgebra
