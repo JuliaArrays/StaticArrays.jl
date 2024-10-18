@@ -130,18 +130,22 @@ using Statistics: mean
         @test sum(sa, dims=Val(2)) === RSArray2(sum(a, dims=2))
         @test sum(abs2, sa; dims=2) === RSArray2(sum(abs2, a, dims=2))
         @test sum(abs2, sa; dims=Val(2)) === RSArray2(sum(abs2, a, dims=2))
+        @test sum(sa, init=2) == sum(a, init=2) ≈ sum(sa) + 2 # Float64 is non-associative
+        @test sum(sb, init=2) == sum(b, init=2) == sum(sb) + 2
 
         @test prod(sa) === prod(a)
         @test prod(abs2, sa) === prod(abs2, a)
         @test prod(sa, dims=Val(2)) === RSArray2(prod(a, dims=2))
         @test prod(abs2, sa, dims=Val(2)) === RSArray2(prod(abs2, a, dims=2))
+        @test prod(sa, init=2) == prod(a, init=2) ≈ 2*prod(sa) # Float64 is non-associative
+        @test prod(sb, init=2) == prod(b, init=2) == 2*prod(sb)
 
         @test count(sb) === count(b)
-        @test count(sb, init=3) == count(b, init=3) == count(sb) + 3
         @test count(x->x>0, sa) === count(x->x>0, a)
-        @test count(x->x>0, sa, init=-2) == count(x->x>0, a, init=-2) == count(x->x>0, sa) - 2
         @test count(sb, dims=Val(2)) === RSArray2(reshape([count(b[i,:,k]) for i = 1:I, k = 1:K], (I,1,K)))
         @test count(x->x>0, sa, dims=Val(2)) === RSArray2(reshape([count(x->x>0, a[i,:,k]) for i = 1:I, k = 1:K], (I,1,K)))
+        @test count(sb, init=3) == count(b, init=3) == count(sb) + 3
+        @test count(x->x>0, sa, init=-2) == count(x->x>0, a, init=-2) == count(x->x>0, sa) - 2
 
         @test all(sb) === all(b)
         @test all(x->x>0, sa) === all(x->x>0, a)
