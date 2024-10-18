@@ -137,7 +137,9 @@ using Statistics: mean
         @test prod(abs2, sa, dims=Val(2)) === RSArray2(prod(abs2, a, dims=2))
 
         @test count(sb) === count(b)
+        @test count(sb, init=3) == count(b, init=3) == count(sb) + 3
         @test count(x->x>0, sa) === count(x->x>0, a)
+        @test count(x->x>0, sa, init=-2) == count(x->x>0, a, init=-2) == count(x->x>0, sa) - 2
         @test count(sb, dims=Val(2)) === RSArray2(reshape([count(b[i,:,k]) for i = 1:I, k = 1:K], (I,1,K)))
         @test count(x->x>0, sa, dims=Val(2)) === RSArray2(reshape([count(x->x>0, a[i,:,k]) for i = 1:I, k = 1:K], (I,1,K)))
 
