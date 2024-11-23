@@ -15,6 +15,16 @@ _mean_denom(a, ::Val{D}) where {D} = size(a, D)
 @inline mean(a::StaticArray; dims=:) = _reduce(+, a, dims) / _mean_denom(a, dims)
 @inline mean(f::Function, a::StaticArray; dims=:) = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
 
+@inline function median(a::StaticArray; dims = :)
+    if dims == Colon()
+        median(vec(a))
+    else
+        # FIXME: Implement `mapslices` correctly on `StaticArray` to remove
+        # this fallback.
+        median(Array(a); dims)
+    end
+end
+
 @inline function median(a::StaticVector)
     (isimmutable(a) && length(a) <= _bitonic_sort_limit) ||
         return median!(Base.copymutable(a))
@@ -24,8 +34,9 @@ _mean_denom(a, ::Val{D}) where {D} = size(a, D)
         throw(ArgumentError("median of empty vector is undefined, $(repr(a))"))
     eltype(a) >: Missing && any(ismissing, a) &&
         return missing
-    any(x -> x isa Number && isnan(x), a) &&
-        return convert(eltype(a), NaN)
+    nanix = findfirst(x -> x isa Number && isnan(x), a)
+    isnothing(nanix) ||
+        return a[nanix]
 
     order = ord(isless, identity, nothing, Forward)
     sa = _sort(Tuple(a), BitonicSort, order)
