@@ -9,8 +9,9 @@ const BitonicSort = BitonicSortAlg()
 
 # BitonicSort has non-optimal asymptotic behaviour, so we define a cutoff
 # length. This also prevents compilation time to skyrocket for larger vectors.
+const _bitonic_sort_limit = 20
 defalg(a::StaticVector) =
-    isimmutable(a) && length(a) <= 20 ? BitonicSort : QuickSort
+    isimmutable(a) && length(a) <= _bitonic_sort_limit ? BitonicSort : QuickSort
 
 @inline function sort(a::StaticVector;
               alg::Algorithm = defalg(a),
