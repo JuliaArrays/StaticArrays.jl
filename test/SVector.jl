@@ -152,11 +152,13 @@
 
     @testset "Named field access - getproperty" begin
         v4 = SA[10,20,30,40]
+        @test propertynames(v4) == (:x, :y, :z, :w)
         @test v4.x == 10
         @test v4.y == 20
         @test v4.z == 30
         @test v4.w == 40
         v2 = SA[10,20]
+        @test propertynames(v2) == (:x, :y)
         @test v2.x == 10
         @test v2.y == 20
         @test_throws ErrorException v2.z
