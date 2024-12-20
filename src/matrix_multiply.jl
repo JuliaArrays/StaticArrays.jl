@@ -114,7 +114,7 @@ end
         b::Union{Transpose{Tb, <:StaticVector}, Adjoint{Tb, <:StaticVector}}) where {sa, sb, Ta, Tb}
     newsize = (sa[1], sb[2])
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
-    
+
     return quote
         @_inline_meta
         T = promote_op(*, Ta, Tb)
@@ -208,7 +208,7 @@ end
         while m < M
             mu = min(M, m + M_r)
             mrange = m+1:mu
-            
+
             atemps_init = [:($(atemps[k1]) = a[$k1]) for k1 = mrange]
             exprs_init = [:($(tmps[k1,k2])  = $(atemps[k1]) * b[$(1 + (k2-1) * sb[1])]) for k1 = mrange, k2 = nrange]
             atemps_loop_init = [:($(atemps[k1]) = a[$(k1-sa[1]) + $(sa[1])*j]) for k1 = mrange]
@@ -246,7 +246,7 @@ end
         T = promote_op(matprod, Ta, Tb)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
-        return (mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(invoke(*, Tuple{$(_unstatic_array(a)),$(_unstatic_array(b))}, a, b)))
+        return (mul_result_structure(wrapped_a, wrapped_b))(similar_type(a, T, $S)(invoke(*, Tuple{$_unstatic_array(a),$_unstatic_array(b)}, a, b)))
     end
 end
 
