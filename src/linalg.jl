@@ -301,7 +301,7 @@ end
         $(Expr(:meta, :inline))
         scale = maxabs_nested(a)
 
-        scale==0 && return _init_zero(a)
+        iszero(scale) && return _init_zero(a)
         p == 1 && return @inbounds scale * $expr_p1
         return @inbounds scale * ($expr)^(inv(p))
     end
@@ -328,7 +328,7 @@ end
         p == Inf && return mapreduce(norm, max, a)  # no need for scaling
 
         l = p==1 ? @inbounds($expr_p1) : @inbounds(($expr)^(inv(p)))
-        0<l<Inf && return l
+        zero(l) < l && isfinite(l) && return l
         return _norm_scaled(Size(a), a, p)  # p != 0, 2, Inf
     end
 end
