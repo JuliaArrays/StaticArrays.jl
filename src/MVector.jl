@@ -18,7 +18,7 @@ end
 let dimension_names = QuoteNode.([:x, :y, :z, :w])
     body = :(getfield(v, name))
     for (i,dim_name) in enumerate(dimension_names)
-        @eval @inline Base.propertynames(v::Union{SVector{$i},MVector{$i}}) = ($(first(dimension_names, i)...),)
+        @eval @inline Base.propertynames(v::Union{SVector{$i},MVector{$i}}, ::Bool = false) = ($(first(dimension_names, i)...),)
 
         body = :(name === $(dimension_names[i]) ? getfield(v, :data)[$i] : $body)
         @eval @inline function Base.getproperty(v::Union{SVector{$i},MVector{$i}},
