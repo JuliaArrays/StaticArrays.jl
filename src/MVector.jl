@@ -19,7 +19,7 @@ let dimension_names = QuoteNode.([:x, :y, :z, :w])
     body = :(getfield(v, name))
     for (i,dim_name) in enumerate(dimension_names)
         @eval @inline function Base.propertynames(v::Union{SVector{$i},MVector{$i}}, private::Bool = false)
-            named_dims = $(first(dimension_names, i)...)
+            named_dims = ($(first(dimension_names, i)...),)
             private ? (named_dims..., :data) : named_dims
         end
 
