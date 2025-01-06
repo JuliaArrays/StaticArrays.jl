@@ -18,7 +18,8 @@ end
 let dimension_names = QuoteNode.([:x, :y, :z, :w])
     body = :(getfield(v, name))
     for (i,dim_name) in enumerate(dimension_names)
-        @eval @inline Base.propertynames(v::Union{SVector{$i},MVector{$i}}, ::Bool = false) = ($(first(dimension_names, i)...),)
+        @eval @inline Base.propertynames(v::Union{SVector{$i},MVector{$i}}, private::Bool = false) =
+            private ? ($(first(dimension_names, i)...), :data) : ($(first(dimension_names, i)...),)
 
         body = :(name === $(dimension_names[i]) ? getfield(v, :data)[$i] : $body)
         @eval @inline function Base.getproperty(v::Union{SVector{$i},MVector{$i}},
@@ -35,3 +36,6 @@ let dimension_names = QuoteNode.([:x, :y, :z, :w])
         end
     end
 end
+
+# for longer S/MVectors and other S/MArrays, the only property is data, and it's private
+Base.propertynames(::Union{SArray,MArray}, private::Bool = false) = private ? (:data,) : ()
