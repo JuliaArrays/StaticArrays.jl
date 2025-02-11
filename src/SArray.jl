@@ -65,7 +65,7 @@ sacollect
     getfield(v,:data)[i]
 end
 
-@inline Tuple(v::SArray) = getfield(v,:data)
+@inline Base.Tuple(v::SArray) = getfield(v,:data)
 
 Base.dataids(::SArray) = ()
 
