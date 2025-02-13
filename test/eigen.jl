@@ -323,4 +323,10 @@ using StaticArrays, Test, LinearAlgebra
             @test vecs[:,1] ≈ conj.(vecs[:,2])
         end
     end
+
+    @testset "non-float matrix" begin
+        A = SMatrix{3,3}(1:9)
+        λ, V = eigen(A)
+        @test A * V ≈ V * Diagonal(λ)
+    end
 end
