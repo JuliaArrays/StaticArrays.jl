@@ -325,7 +325,7 @@ using StaticArrays, Test, LinearAlgebra
     end
 
     @testset "non-float matrix" begin
-        A = SMatrix{3,3}(1:9)
+        A = Symmetric(SMatrix{3,3}(1:9))
         λ, V = eigen(A)
         @test A * V ≈ V * Diagonal(λ)
     end
