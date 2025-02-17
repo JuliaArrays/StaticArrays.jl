@@ -400,7 +400,8 @@ end
 @inline eigen(A::Symmetric{<:Complex,<:StaticMatrix}; kwargs...) = _eigen(A; kwargs...)
 
 @inline function _eigen(A::LinearAlgebra.HermOrSym; permute::Bool=true, scale::Bool=true)
-    _eig(Size(A), A, permute, scale)
+    B = convert(AbstractArray{float(eltype(A))}, A)
+    _eig(Size(A), B, permute, scale)
 end
 
 # NOTE: The following Boost Software License applies to parts of the method:
