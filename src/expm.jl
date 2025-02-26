@@ -44,13 +44,13 @@ end
         δ = sqrt(v) / 2
         e₊ = exp(m + δ)
         e₋ = exp(m - δ)
-        e₁ = e₊ + e₋
-        e₂ = e₊ - e₋
+        e₁ = (e₊ + e₋) / 2
+        e₂ = (e₊ - e₋) / 2
         c₂ = (a - d) / 2δ
-        m11 = (e₁ + c₂ * e₂) / 2
-        m12 = (b / δ) * e₂ / 2
-        m21 = (c / δ) * e₂ / 2
-        m22 = (e₁ - c₂ * e₂) / 2
+        m11 = (e₁ + c₂ * e₂)
+        m12 = (b / δ) * e₂
+        m21 = (c / δ) * e₂
+        m22 = (e₁ - c₂ * e₂)
     elseif v < 0
         z = sqrt(-v)
         r = exp(m)
