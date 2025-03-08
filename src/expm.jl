@@ -14,6 +14,7 @@ end
     (newtype)((exp(A[1]), ))
 end
 
+# Bernstein, D. S. & So, W. 1993. "Some Explicit Formulas for the Matrix Exponential"
 @inline function _exp(::Size{(2,2)}, A::StaticMatrix{<:Any,<:Any,<:Real})
     T = typeof(exp(zero(eltype(A))))
     newtype = similar_type(A,T)
@@ -25,24 +26,49 @@ end
 
     v = (a-d)^2 + 4*b*c
 
+    m = (a + d) / 2
+
     if v > 0
-        z = sqrt(v)
-        z1 = cosh(z / 2)
-        z2 = sinh(z / 2) / z
+        # In this case the formulas in the entries of the matrix
+        # are a function of cosh and sinh, and could (in theory)
+        # follow the same code pattern of the other branches (v ≤ 0).
+        # However, cosh and sinh explode with large arguments and
+        # we use the following identity to avoid numerical issues:
+        #
+        # exp(m) * [c₁ * cohs(δ) + c₂ * sinh(δ)] =
+        #   c₁ * (e₊ + e₋) / 2 + c₂ * (e₊ - e₋) / 2
+        #
+        # where e₊ = exp(m + δ) and e₋ = exp(m - δ).
+        #
+        # See https://github.com/JuliaArrays/StaticArrays.jl/issues/1295
+        δ = sqrt(v) / 2
+        e₊ = exp(m + δ)
+        e₋ = exp(m - δ)
+        e₁ = (e₊ + e₋) / 2
+        e₂ = (e₊ - e₋) / 2
+        c₂ = (a - d) / 2δ
+        m11 = (e₁ + c₂ * e₂)
+        m12 = (b / δ) * e₂
+        m21 = (c / δ) * e₂
+        m22 = (e₁ - c₂ * e₂)
     elseif v < 0
         z = sqrt(-v)
+        r = exp(m)
         z1 = cos(z / 2)
         z2 = sin(z / 2) / z
+        m11 = r * (z1 + (a - d) * z2)
+        m12 = r * 2b * z2
+        m21 = r * 2c * z2
+        m22 = r * (z1 - (a - d) * z2)
     else # if v == 0
+        r = exp(m)
         z1 = T(1.0)
         z2 = T(0.5)
+        m11 = r * (z1 + (a - d) * z2)
+        m12 = r * 2b * z2
+        m21 = r * 2c * z2
+        m22 = r * (z1 - (a - d) * z2)
     end
-
-    r = exp((a + d) / 2)
-    m11 = r * (z1 + (a - d) * z2)
-    m12 = r * 2b * z2
-    m21 = r * 2c * z2
-    m22 = r * (z1 - (a - d) * z2)
 
     (newtype)((m11, m21, m12, m22))
 end

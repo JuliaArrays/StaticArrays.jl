@@ -151,12 +151,19 @@
     end
 
     @testset "Named field access - getproperty" begin
+        @test propertynames(SA[1,2,3,4,5]) == ()
+        @test propertynames(SA[1,2,3,4,5], true) == (:data,)
+        @test propertynames(SA[1 2; 3 4], true) == (:data,)
         v4 = SA[10,20,30,40]
+        @test propertynames(v4) == (:x, :y, :z, :w)
+        @test propertynames(v4, true) == (:x, :y, :z, :w, :data)
         @test v4.x == 10
         @test v4.y == 20
         @test v4.z == 30
         @test v4.w == 40
         v2 = SA[10,20]
+        @test propertynames(v2) == (:x, :y)
+        @test propertynames(v2, true) == (:x, :y, :data)
         @test v2.x == 10
         @test v2.y == 20
         @test_throws ErrorException v2.z

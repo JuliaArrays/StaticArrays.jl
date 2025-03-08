@@ -198,7 +198,7 @@ AbstractArray{T}(sa::StaticArray{S,U}) where {S,T,U} = similar_type(typeof(sa),T
 AbstractArray{T,N}(sa::StaticArray{S,U,N}) where {S,T,U,N} = similar_type(typeof(sa),T,Size(sa))(sa)
 
 # Constructing a Tuple from a StaticArray
-@inline Tuple(a::StaticArray) = unroll_tuple(a, Length(a))
+@inline Base.Tuple(a::StaticArray) = unroll_tuple(a, Length(a))
 
 @noinline function dimension_mismatch_fail(::Type{SA}, a::AbstractArray) where {SA <: StaticArray}
     throw(DimensionMismatch("expected input array of length $(length(SA)), got length $(length(a))"))

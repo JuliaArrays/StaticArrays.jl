@@ -13,6 +13,10 @@ using StaticArrays, Test, LinearAlgebra
     @test exp(@SMatrix zeros(Complex{Float64}, 2, 2))::SMatrix ≈ Complex{Float64}[1 0; 0 1]
     @test exp(@SMatrix [1 2 0; 2 1 0; 0 0 1]) ≈ exp([1 2 0; 2 1 0; 0 0 1])
 
+    # https://github.com/JuliaArrays/StaticArrays.jl/issues/1295
+    @test exp(@SMatrix [-800.0 800.0; 800.0 -800.0])::SMatrix ≈ [0.5 0.5; 0.5 0.5]
+    @test exp(@SMatrix [-800.0 800.0; 800.0 -800.0]) ≈ exp([-800.0 800.0; 800.0 -800.0])
+
     for sz in (3,4), typ in (Float64, Complex{Float64})
         A = rand(typ, sz, sz)
         nA = norm(A, 1)

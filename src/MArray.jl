@@ -42,7 +42,7 @@ end
     return v
 end
 
-@inline Tuple(v::MArray) = getfield(v,:data)
+@inline Base.Tuple(v::MArray) = getfield(v,:data)
 
 Base.dataids(ma::MArray) = (UInt(pointer(ma)),)
 
