@@ -17,7 +17,7 @@ out of any uniform Julia "struct".
 
 ## When Static Arrays may be useful
 
-When code uses many small ($\lesssim 100$ elements) fixed-sized arrays (whose size is known by the compiler, i.e. "statically," when the performance-critical code is compiler), then using Static Arrays can have several performance adavantages:
+When code uses many small ($\lesssim 100$ elements) fixed-sized arrays (whose size is known by the compiler, i.e. "statically," when the performance-critical code is compiler), then using Static Arrays can have several performance advantages:
 
 1. Completely unrolling to loop-free code.  e.g. `v3 = v1 + v2` is just implemented as 3 scalar additions, with no loop overhead at all, if these are all `SVector{3, Float64}`.  The unrolled loops can also sometimes trigger SIMD optimizations.
 2. Avoiding heap (or even stack) allocations of temporary arrays.  This is related to point (1) — working with static arrays as local variables is *as if* you had just written out all of the scalar operations by hand on all the components.
