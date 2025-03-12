@@ -27,6 +27,6 @@ When a program uses many small ($\lesssim 100$ elements) fixed-sized arrays (who
 
 You probably don't want to use Static Arrays if:
 
-1. The size of the array is not static.  For example, if it is changing too rapidly at runtime to make it worthwhile to recompile the code every time the size changes.  (Such as when you have a collection of vectors of many different lengths.)
+1. The size of the array is not static.  For example, if it is changing too rapidly at runtime to make it worthwhile to recompile (and/or dynamically dispatch) the code every time the size changes.  (Such as when you have a collection of vectors of many different lengths.)
 2. The size of the array is large ($\gg 100$ elements) You (1) don't want to unroll vector operations of long lengths because the code size explodes; (2) they need to be heap-allocated because you can't store them in registers or perhaps even on the stack; and (3) you can already get many of the benefits of "inline" storage in arrays by storing them as the columns of a `Matrix`, whereas you wouldn't want to store a large array inline in an arbitrary `struct`.
 3. Working with the array is not performance critical — static arrays are a little less convenient to work with than an ordinary `Array` (because the size of the former is a constant encoded in the type), and it may not be worth the inconvenience for cases where performance is not paramount.
