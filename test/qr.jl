@@ -80,7 +80,7 @@ end
 
 
 @testset "#1192 The following functions are available for the QR objects: inv, size, and \\." begin
-    @testset "pivot=$pivot" for pivot in [Val(true), Val(false)] #, ColumnNorm()]
+    function test_pivot(pivot)
         y = @SVector rand(5)
         Y = @SMatrix rand(5,5)
         A = @SMatrix rand(5,5)
@@ -106,17 +106,15 @@ end
         end
 
         @testset "solve linear system" begin
-            x = Matrix(A) \ Vector(y)
-            @test x ≈ A \ y ≈ F \ y ≈ F \ Vector(y)
+            gold_x = Matrix(A) \ Vector(y)
+            @test gold_x ≈ A \ y ≈ F \ y ≈ F \ Vector(y)
+            @test 0 == @allocated F \ y
 
-            x_under = Matrix(A_under) \ Vector(y)
-            @test x_under == A_under \ y
-            @test x_under ≈ F_under \ y
+            gold_x_under = Matrix(A_under) \ Vector(y)
+            @test gold_x_under == A_under \ y
+            @test gold_x_under ≈ F_under \ y
             @test F_under \ y == F_under \ Vector(y)
-
-            x_over = Matrix(A_over) \ Vector(y)
-            @test x_over ≈ A_over \ y
-            @test A_over * x_over ≈ y
+            @test 0 == @allocated F_under \ y
 
             @test_throws DimensionMismatch F_over \ y
             @test_throws DimensionMismatch qr(Matrix(A_over)) \ y
@@ -125,38 +123,46 @@ end
         @testset "solve several linear systems" begin
             @test F \ Y ≈ A \ Y
             @test F_under \ Y ≈ A_under \ Y
+            @test 0 == @allocated F \ Y
         end
 
         @testset "ldiv!" begin
             x = @MVector zeros(5)
-            ldiv!(x, F, y)
+            @test 0 == @allocated ldiv!(x, F, y)
             @test x ≈ A \ y
 
             X = @MMatrix zeros(5,5)
             Y = @SMatrix rand(5,5)
-            ldiv!(X, F, Y)
+            @test 0 == @allocated ldiv!(X, F, Y)
+            @test 0 == @allocated A \ Y
             @test X ≈ A \ Y
         end
         
         @testset "invperm" begin
-            x = @SVector [10,15,3,7]
+            v = @SVector [10,15,3,7]
             p = @SVector [4,2,1,3]
-            @test x == x[p][invperm(p)]
+            @test 0 == @allocated invperm(p)
+            @test v == v[p][invperm(p)]
             @test StaticArrays.is_identity_perm(p[invperm(p)])
-            @test_throws Union{BoundsError,ArgumentError} invperm(x)
+            @test_throws Union{BoundsError,ArgumentError} invperm(v)
         end
 
         @testset "10x faster" begin
-            time_to_test = @elapsed (function()
-                y2 = @SVector rand(50)
-                A2 = @SMatrix rand(50,5)
+            function speed_test(n, iter)
+                y2 = @SVector rand(n)
+                A2 = @SMatrix rand(n,5)
                 F2 = qr(A2, pivot)
 
-                min_time_to_solve = minimum(@elapsed(A2 \ y2) for _ in 1:1_000)
-                min_time_to_solve_qr = minimum(@elapsed(F2 \ y2) for _ in 1:1_000)
+                min_time_to_solve = minimum(@elapsed(A2 \ y2) for _ in 1:iter)
+                min_time_to_solve_qr = minimum(@elapsed(F2 \ y2) for _ in 1:iter)
                 @test 10min_time_to_solve_qr < min_time_to_solve
-            end)()
-            @test time_to_test < 10
+            end
+            speed_test(50, 1_000)
+            @test @elapsed(speed_test(50, 1_000)) < 1
         end
+    end
+
+    @testset "pivot=$pivot" for pivot in [Val(true), Val(false)] #, ColumnNorm()]
+        test_pivot(pivot)
     end
 end
