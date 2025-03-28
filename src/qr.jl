@@ -11,6 +11,8 @@ Base.iterate(S::QR, ::Val{:R}) = (S.R, Val(:p))
 Base.iterate(S::QR, ::Val{:p}) = (S.p, Val(:done))
 Base.iterate(S::QR, ::Val{:done}) = nothing
 
+size(F::QR) = (size(F.Q,1), size(F.R,2))
+
 pivot_options = if isdefined(LinearAlgebra, :PivotingStrategy) # introduced in Julia v1.7
     (:(Val{true}), :(Val{false}), :NoPivot, :ColumnNorm)
 else
@@ -61,6 +63,9 @@ qr(A::StaticMatrix) = qr(A, Val(false))
 function identity_perm(R::StaticMatrix{N,M,T}) where {N,M,T}
     return similar_type(R, Int, Size((M,)))(ntuple(x -> x, Val{M}()))
 end
+
+is_identity_perm(p::StaticVector{M}) where {M} = all(i->i==p[i], 1:M)
+
 
 _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
 
@@ -245,3 +250,44 @@ end
 #    end
 #end
 
+
+LinearAlgebra.ldiv!(x::AbstractVecOrMat, F::QR, y::AbstractVecOrMat) = (x .= F \ y)
+
+
+function \(F::QR, y::AbstractVecOrMat)
+    checksquare(F.R)
+    v = F.Q' * y
+
+    x = UpperTriangular(F.R) \ v
+
+    @inbounds invpivot(x, F.p)
+end
+
+
+@inline Base.@propagate_inbounds function invpivot(x::AbstractVecOrMat, p)
+    if is_identity_perm(p)
+        x
+    else
+        extra = ntuple(_ -> Colon(), ndims(x) - 1)
+        x[invperm(p), extra...]
+    end
+end
+
+
+function inv(F::QR)
+    checksquare(F.R)
+    R⁻¹ = inv(UpperTriangular(F.R))
+    A⁻¹ = R⁻¹ * F.Q'
+    A⁻¹ = @inbounds invpivot(A⁻¹, F.p)
+
+    n = size(F.R, 1)
+    m = size(F.Q, 1)
+    if n < m
+        # Add zeros to enable inv(F)*A ≈ I(m)[:,1:n] like LinearAlgebra.inv(qr(::Matrix))
+        #
+        # This is different from LinearAlgebra which instead completes the Householder reflections
+        return [A⁻¹; zeros(SMatrix{m-n,m,eltype(A⁻¹)})]
+    end
+
+    A⁻¹
+end
