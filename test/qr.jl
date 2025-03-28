@@ -69,10 +69,94 @@ Random.seed!(42)
     end
 end
 
+
 @testset "QR method ambiguity" begin
     # Issue #931; just test that methods do not throw an ambiguity error when called
     A = @SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]
     @test isa(qr(A),              StaticArrays.QR)
     @test isa(qr(A, Val(true)),   StaticArrays.QR)
     @test isa(qr(A, Val(false)),  StaticArrays.QR)
+end
+
+
+@testset "#1192 The following functions are available for the QR objects: inv, size, and \\." begin
+    @testset "pivot=$pivot" for pivot in [Val(true), Val(false)] #, ColumnNorm()]
+        y = @SVector rand(5)
+        Y = @SMatrix rand(5,5)
+        A = @SMatrix rand(5,5)
+        A_over = @SMatrix rand(5,6)
+        A_under = @SMatrix rand(5,4)
+
+        F = qr(A, pivot)
+        F_over = qr(A_over, pivot)
+        F_under = qr(A_under, pivot)
+
+        @testset "size" begin
+            @test size(A) == (5,5)
+            @test size(A_over) == (5,6)
+            @test size(A_under) == (5,4)
+        end
+
+        @testset "square inversion" begin
+            A_inv = inv(F)
+            @test inv(F) * A ≈ I(5)
+            @test inv(F) ≈ inv(qr(Matrix(A)))
+            @test_throws DimensionMismatch inv(F_under)
+            @test_throws DimensionMismatch inv(F_over)
+        end
+
+        @testset "solve linear system" begin
+            x = Matrix(A) \ Vector(y)
+            @test x ≈ A \ y ≈ F \ y ≈ F \ Vector(y)
+
+            x_under = Matrix(A_under) \ Vector(y)
+            @test x_under == A_under \ y
+            @test x_under ≈ F_under \ y
+            @test F_under \ y == F_under \ Vector(y)
+
+            x_over = Matrix(A_over) \ Vector(y)
+            @test x_over ≈ A_over \ y
+            @test A_over * x_over ≈ y
+
+            @test_throws DimensionMismatch F_over \ y
+            @test_throws DimensionMismatch qr(Matrix(A_over)) \ y
+        end
+        
+        @testset "solve several linear systems" begin
+            @test F \ Y ≈ A \ Y
+            @test F_under \ Y ≈ A_under \ Y
+        end
+
+        @testset "ldiv!" begin
+            x = @MVector zeros(5)
+            ldiv!(x, F, y)
+            @test x ≈ A \ y
+
+            X = @MMatrix zeros(5,5)
+            Y = @SMatrix rand(5,5)
+            ldiv!(X, F, Y)
+            @test X ≈ A \ Y
+        end
+        
+        @testset "invperm" begin
+            x = @SVector [10,15,3,7]
+            p = @SVector [4,2,1,3]
+            @test x == x[p][invperm(p)]
+            @test StaticArrays.is_identity_perm(p[invperm(p)])
+            @test_throws Union{BoundsError,ArgumentError} invperm(x)
+        end
+
+        @testset "10x faster" begin
+            time_to_test = @elapsed (function()
+                y2 = @SVector rand(50)
+                A2 = @SMatrix rand(50,5)
+                F2 = qr(A2, pivot)
+
+                min_time_to_solve = minimum(@elapsed(A2 \ y2) for _ in 1:1_000)
+                min_time_to_solve_qr = minimum(@elapsed(F2 \ y2) for _ in 1:1_000)
+                @test 10min_time_to_solve_qr < min_time_to_solve
+            end)()
+            @test time_to_test < 10
+        end
+    end
 end

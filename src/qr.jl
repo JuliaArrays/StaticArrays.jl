@@ -1,3 +1,6 @@
+import Base: \, size, inv
+import LinearAlgebra: ldiv!, checksquare
+
 # define our own struct since LinearAlgebra.QR are restricted to Matrix
 struct QR{Q,R,P}
     Q::Q
@@ -245,3 +248,83 @@ end
 #    end
 #end
 
+
+size(F::QR) = size(F.Q)
+
+is_identity_perm(p::AbstractVector{T}) where {T<:Integer} = all(i->i==p[i], first(axes(p)))
+
+ldiv!(x::StaticArray, F::QR, y::AbstractVecOrMat) = (x .= F \ y) # Compatibility. Note that \ already allocates 0 bytes.
+
+
+function \(F::QR, y::AbstractVecOrMat)
+    checksquare(F.R)
+    v = F.Q' * y
+
+    x = backsub(F.R, v)
+
+    invpivot(x, F.p)
+end
+
+
+@inline function invpivot(x::AbstractVecOrMat, p)
+    if is_identity_perm(p)
+        x
+    else
+        extra = ntuple(_ -> Colon(), ndims(x) - 1)
+        getindex(x, invperm(p), extra...)
+    end
+end
+
+
+# Simple back substitution for an upper–triangular system R*x = y.
+function backsub(R::StaticMatrix{r,c,T}, y::AbstractVector{T}) where {r,c,T}
+    x = MVector{c,T}(undef)
+    backsub!(x, R, y)
+    SVector(x)
+end
+
+function backsub(R::StaticMatrix{r,c,T}, y::AbstractMatrix{T}) where {r,c,T}
+    x = MMatrix{c,size(y,2),T}(undef)
+    for i in 1:size(y,2)
+        @views backsub!(x[:,i], R, y[:,i])
+    end
+    SMatrix(x)
+end
+
+@inline function backsub!(x::StaticVector{c}, R::StaticMatrix{r,c,T}, y::AbstractVector{T}) where {r,c,T}
+    Base.@boundscheck Base.checkbounds(x, Base.OneTo(r))
+    Base.@boundscheck Base.checkbounds(y, Base.OneTo(r))
+
+    @inbounds for i in r:-1:1
+        s = zero(T)
+        for j in i+1:c
+            s += R[i, j] * x[j]
+        end
+        x[i] = (y[i] - s) / R[i, i]
+    end
+    if r < c
+        @inbounds for i in r+1:c
+            x[i] = 0
+        end
+    end
+    x
+end
+
+
+function inv(F::QR)
+    checksquare(F.Q)
+    n = checksquare(F.R)
+
+    T = eltype(F.R)
+    
+    # Compute inverse of R via back substitution on each column of the identity.
+    R_inv_cols = ntuple(j -> begin
+        # Build the j-th unit vector.
+        e_j = SVector{n, T}(ntuple(i -> i == j ? one(T) : zero(T), n))
+        backsub(F.R, e_j)
+    end, n)
+
+    R⁻¹ = hcat(R_inv_cols...)
+    A⁻¹ = R⁻¹ * F.Q'
+    invpivot(A⁻¹, F.p)
+end
