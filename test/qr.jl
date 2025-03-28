@@ -13,7 +13,7 @@ broadenrandn(::Type{Complex{T}}) where T = Complex{T}(broadenrandn(T), broadenra
 broadenrandn(::Type{T}) where T = randn(T)
 
 Random.seed!(42)
-false && @testset "QR decomposition" begin
+@testset "QR decomposition" begin
     function test_qr(arr)
 
         T = eltype(arr)
