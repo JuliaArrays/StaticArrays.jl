@@ -8,6 +8,22 @@ setindex!(a::StaticArray, value, i::Int) = error("setindex!(::$(typeof(a)), valu
 
 # Note: all indexing behavior defaults to dense, linear indexing
 
+Base.summary(io::IO, T::Type{<:StaticVector}) =
+    print(io, length(T), "-element ", T)
+
+Base.summary(io::IO, T::Type{<:StaticArray}) =
+    print(io, join(size(T), "x"), " ", T)
+
+"""
+Only store the type upon failed bounds checking of a StaticArray to prevent
+boxing and the corresponding allocation. Boxing is otherwise needed when
+bounds checking is active to make it possible to potentially put the
+StaticArray in BoundsError.a::Any.
+"""
+Base.throw_boundserror(T::Type{<:StaticArray},I) = (@noinline;throw(BoundsError(T,I)))
+
+Base.throw_boundserror(A::StaticArray,I) = (@inline;Base.throw_boundserror(typeof(A),I))
+
 @propagate_inbounds function getindex(a::StaticArray, inds::Int...)
     @boundscheck checkbounds(a, inds...)
     _getindex_scalar(Size(a), a, inds...)

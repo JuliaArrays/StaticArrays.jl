@@ -104,6 +104,103 @@ macro test_was_once_broken(good_version, ex)
     end)
 end
 
+
+r"""
+    @allocated_barrier f(b, g(c))
+
+Is effectively translated to:
+
+    (function(b, c)
+        @allocated f(b, g(c))
+    end)(b, c)
+
+The function barrier improves type stability which helps the compiler
+avoid unccessary heap allocations.
+
+Functions/functors are not captured as local variables by default but
+they can be wrapped by prepending each function call with a $ sign.
+Values can also be interpolated with a $:
+
+    @allocated_barrier $f(b, $(g(c)))
+
+Which effectively translates to:
+
+    (function(f, b, gc)
+        @allocated f(b, gc)
+    end)(f, b, g(c))
+
+This is useful if `f` is a local variable or if `g(..)` causes allocations
+that should be excluded.
+
+Another approach to is to wrap each call to `@allocated` with `@eval`:
+
+    @eval @allocated f($a,g($b,$c))
+    @eval @allocated $a .= $f.($b, $c)
+
+The number of allocated bytes reported is similar to this macro.
+"""
+macro allocated_barrier(ex)
+    captured = Dict{Any,Symbol}()
+
+    function capture(s::Symbol)
+        if Base.isidentifier(s)
+            get!(captured, s) do
+                gensym(s)
+            end
+        else
+            s
+        end
+    end
+
+    function capture(expr::Expr)
+        if expr.head == :$
+            get!(captured, expr.args[1]) do
+                gensym(string(expr.args[1]))
+            end
+        elseif expr.head == :. && last(expr.args) isa QuoteNode
+            get!(captured, expr) do
+                gensym(join(expr.args, "."))
+            end
+        else
+            # Expr(expr.head, capture.(expr.args)...)
+            arg1 = popfirst!(expr.args)
+            Expr(expr.head,
+                expr.head == :call && !(arg1 isa Expr && arg1.head==:$) ? arg1 : capture(arg1),
+                capture.(expr.args)...)
+        end
+    end
+
+    capture(x) = x
+
+    inner_ex = capture(ex)
+
+    quote
+        (function($(values(captured)...))
+
+            f() = $inner_ex
+            Base.precompile(f, ())
+            @allocated f()
+
+        end)($(esc.(keys(captured))...))
+    end
+end
+
+
+macro test_noalloc(ex)
+    a = :(
+        @allocated_barrier($ex)
+    )
+    a.args[2] = () # tidy output
+
+    q = :(
+        @test 0 == $a
+    )
+    q.args[2] = LineNumberNode(__source__.line, __source__.file)
+
+    esc(q)
+end
+
+
 @testset "test utils" begin
     @testset "@testinf" begin
         @testinf [1,2] == [1,2]
@@ -120,5 +217,23 @@ end
             @test_inlined should_not_be_inlined(1)
         end
         @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
+    end
+
+    a = rand(3)
+    z = ones(3)
+
+    @testset "@allocated_barrier" begin
+        @test @allocated_barrier(z .=        a .+ z)  == 0
+        @test z ≈ a .+ 1
+        @test @allocated_barrier(z .=        a + z)   > 0
+        @test @allocated_barrier(z .=      $(a + z))  == 0
+
+        @test @allocated_barrier(z .=   abs.(a + z))  > 0
+        @test @allocated_barrier(z .= $(abs.(a + z))) == 0
+        @test @allocated_barrier(z .=   abs.(a .+ z)) == 0
+    end
+
+    @testset "@test_noalloc" begin
+        @test_noalloc z .= abs.(a .+ z)
     end
 end
