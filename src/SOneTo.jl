@@ -4,7 +4,14 @@
 Return a statically-sized `AbstractUnitRange` starting at `1`, functioning as the `axes` of
 a `StaticArray`.
 """
-struct SOneTo{n} <: AbstractUnitRange{Int}
+SOneTo
+
+if isdefined(Base, :AbstractOneTo)
+    struct SOneTo{n} <: Base.AbstractOneTo{Int}
+    end
+else
+    struct SOneTo{n} <: AbstractUnitRange{Int}
+    end
 end
 
 SOneTo(n::Int) = SOneTo{n}()
