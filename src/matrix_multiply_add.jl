@@ -249,22 +249,34 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
 end
 
 @static if Base.VERSION < v"1.11"
+    let
+       function mulfix!(dest, A, B)
+            axdest, axA, axB = axes(dest), axes(A), axes(B)
+            axA[2] == axB[1] || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB"))
+            axdest == (axA[1], axB[2]) || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB and assign to array with axes $axdest"))
+            fill!(dest, zero(eltype(dest)))
+            # This is not maximally efficient, but it produces the right answer on older Julia versions.
+            for ij in CartesianIndices(dest)
+                for k in axA[2]
+                    dest[ij] += A[ij[1], k] * B[k, ij[2]]
+                end
+            end
+            return dest
+       end
+    end
+    function LinearAlgebra.mul!(
+        dest::AbstractMatrix{<:StaticMatrix},
+        A::LinearAlgebra.AbstractTriangular{<:StaticVector},
+        B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
+    ) where V<:StaticVector
+        mulfix!(dest, A, B)
+    end
     function LinearAlgebra.mul!(
         dest::AbstractMatrix{<:StaticMatrix},
         A::AbstractMatrix{<:StaticVector},
         B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
     ) where V<:StaticVector
-        axdest, axA, axB = axes(dest), axes(A), axes(B)
-        axA[2] == axB[1] || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB"))
-        axdest == (axA[1], axB[2]) || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB and assign to array with axes $axdest"))
-        fill!(dest, zero(eltype(dest)))
-        # This is not maximally efficient, but it produces the right answer on older Julia versions.
-        for ij in CartesianIndices(dest)
-            for k in axA[2]
-                dest[ij] += A[ij[1], k] * B[k, ij[2]]
-            end
-        end
-        return dest
+        mulfix!(dest, A, B)
     end
 end
 
