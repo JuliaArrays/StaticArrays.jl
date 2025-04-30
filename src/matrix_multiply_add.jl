@@ -248,6 +248,26 @@ const StaticVecOrMatLikeForFiveArgMulDest{T} = Union{
     return _mul!(TSize(dest), mul_parent(dest), Size(A), Size(B), A, B, NoMulAdd{TMul, TDest}())
 end
 
+@static if Base.VERSION < v"1.11"
+    function LinearAlgebra.mul!(
+        dest::AbstractMatrix{<:StaticMatrix},
+        A::AbstractMatrix{<:StaticVector},
+        B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
+    ) where V<:StaticVector
+        axdest, axA, axB = axes(dest), axes(A), axes(B)
+        axA[2] == axB[1] || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB"))
+        axdest == (axA[1], axB[2]) || throw(DimensionMismatch("Tried to multiply arrays with axes $axA and $axB and assign to array with axes $axdest"))
+        fill!(dest, zero(eltype(dest)))
+        # This is not maximally efficient, but it produces the right answer on older Julia versions.
+        for ij in CartesianIndices(dest)
+            for k in axA[2]
+                dest[ij] += A[ij[1], k] * B[k, ij[2]]
+            end
+        end
+        return dest
+    end
+end
+
 """
     multiplied_dimension(A, B)
 
