@@ -263,20 +263,20 @@ end
             end
             return dest
        end
-    end
-    function LinearAlgebra.mul!(
-        dest::AbstractMatrix{<:StaticMatrix},
-        A::LinearAlgebra.AbstractTriangular{<:StaticVector},
-        B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
-    ) where V<:StaticVector
-        mulfix!(dest, A, B)
-    end
-    function LinearAlgebra.mul!(
-        dest::AbstractMatrix{<:StaticMatrix},
-        A::AbstractMatrix{<:StaticVector},
-        B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
-    ) where V<:StaticVector
-        mulfix!(dest, A, B)
+        function LinearAlgebra.mul!(
+            dest::AbstractMatrix{<:StaticMatrix},
+            A::LinearAlgebra.AbstractTriangular{<:StaticVector},
+            B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
+        ) where V<:StaticVector
+            mulfix!(dest, A, B)
+        end
+        function LinearAlgebra.mul!(
+            dest::AbstractMatrix{<:StaticMatrix},
+            A::AbstractMatrix{<:StaticVector},
+            B::Adjoint{Adjoint{Float64, V}, <:AbstractMatrix{V}}
+        ) where V<:StaticVector
+            mulfix!(dest, A, B)
+        end
     end
 end
 
