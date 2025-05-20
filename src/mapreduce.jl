@@ -110,6 +110,12 @@ enumerate_static(a::StaticArray) = StaticEnumerate(a)
     end
 end
 
+if VERSION >= v"1.12.0-beta3"
+    @inline function map!(f, dest::StaticArray)
+        _map!(f, dest, Size(dest), dest)
+    end
+end
+
 @inline function map!(f, dest::StaticArray, a::StaticArray...)
     _map!(f, dest, same_size(dest, a...), a...)
 end

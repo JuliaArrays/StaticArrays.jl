@@ -31,6 +31,14 @@ using Statistics: mean
         map!(+, mv3, v1, v2, v3)
         @test mv3 == @MVector [7, 9, 11, 13]
 
+        if VERSION >= v"1.12.0-beta3"
+            @testset "map!(function, array)" begin
+                local mv = MVector(1,2,3)
+                map!(x->x^2, mv)
+                @test mv == SA[1,4,9]
+            end
+        end
+
         # Output eltype for empty cases #528
         @test @inferred(map(/, SVector{0,Int}(), SVector{0,Int}())) === SVector{0,Float64}()
         @test @inferred(map(+, SVector{0,Int}(), SVector{0,Float32}())) === SVector{0,Float32}()
