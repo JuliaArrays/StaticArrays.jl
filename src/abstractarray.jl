@@ -142,8 +142,13 @@ const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
 const HeterogeneousShape = Union{HeterogeneousBaseShape, SOneTo}
 const HeterogeneousShapeTuple = Tuple{Vararg{HeterogeneousShape}}
 
-similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
-similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+if isdefined(Base, :AbstractOneTo)
+    similar(A::AbstractArray, ::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {T} = similar(A, T, homogenize_shape(shape))
+    similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+else
+    similar(A::AbstractArray, ::Type{T}, shape::HeterogeneousShapeTuple) where {T} = similar(A, T, homogenize_shape(shape))
+    similar(::Type{A}, shape::HeterogeneousShapeTuple) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
+end
 # Use an Array for StaticArrays if we don't have a statically-known size
 similar(::Type{A}, shape::Tuple{Int, Vararg{Int}}) where {A<:StaticArray} = Array{eltype(A)}(undef, shape)
 
