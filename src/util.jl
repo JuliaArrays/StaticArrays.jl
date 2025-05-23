@@ -74,10 +74,12 @@ TrivialView(a::AbstractArray{T,N}) where {T,N} = TrivialView{typeof(a),T,N}(a)
 @inline drop_sdims(a::StaticArrayLike) = TrivialView(a)
 @inline drop_sdims(a) = a
 
-Base.@propagate_inbounds function invperm(p::StaticVector)
-    # in difference to base, this does not check if p is a permutation (every value unique)
-     ip = similar(p)
-     ip[p] = 1:length(p)
-     similar_type(p)(ip)
+@inline function invperm(p::StaticVector{N,T}) where {N,T<:Integer}
+    ip = zeros(MVector{N,T})
+    @inbounds for i in SOneTo(N)
+        j = p[i]
+        1 <= j <= N && iszero(ip[j]) || throw(ArgumentError("argument is not a permutation"))
+        ip[j] = i
+    end
+    SVector(ip)
 end
-
