@@ -14,8 +14,10 @@ SDiagonal(x...) = Diagonal(SVector(x...))
 SDiagonal(a::SVector) = Diagonal(a)
 SDiagonal(a::StaticMatrix{N,N,T}) where {N,T} = Diagonal(diag(a))
 
-size(::Type{<:SDiagonal{N}}) where {N} = (N,N)
-size(::Type{<:SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
+size(::Type{SDiagonal{N}}) where {N} = (N,N)
+size(::Type{SDiagonal{N,T}}) where {N,T} = (N,N)
+size(::Type{SDiagonal{N}}, d::Int) where {N} = d > 2 ? 1 : N
+size(::Type{SDiagonal{N,T}}, d::Int) where {N,T} = d > 2 ? 1 : N
 
 # define specific methods to avoid allocating mutable arrays
 \(D::SDiagonal, b::AbstractVector) = D.diag .\ b
