@@ -285,11 +285,11 @@ end
 # SArrays may avoid the SubArray wrapper and consequently an additional level of indirection
 # The output may use the broadcasting machinery defined for StaticArrays (see issue #892)
 # wrap elements in Scalar to be consistent with 0D views
-_maybewrapscalar(S::SArray{<:Any,T}, r::T) where {T} = Scalar{T}(r)
-_maybewrapscalar(S, r) = r
+_maybewrapscalar(::Tuple{}, r::T) where {T} = Scalar{T}(r)
+_maybewrapscalar(_, r) = r
 function Base.view(S::SArray, I::Union{Colon, Integer, SOneTo, StaticArray{<:Tuple, Int}, CartesianIndex}...)
     V = getindex(S, I...)
-    _maybewrapscalar(S, V)
+    _maybewrapscalar(Base.index_dimsum(I...), V)
 end
 
 # zeros, ones and fill may return SArrays if all the axes are statically sized

@@ -253,4 +253,16 @@ using StaticArrays, Test
         @test lastindex(ind[3]) === 2
         @test size(ind[3]) === (2,)
     end
+
+    @testset "Array view into `Any` eltype `SArray`" begin
+        A = SVector{4, Any}(1,2,3,4)
+        v = @inferred view(A, SA[3, 1])
+        @test v == SVector{2, Any}(3, 1)
+        A = SMatrix{2, 2, Any}(1, 2, 3, 4)
+        v = @inferred view(A, @SArray(fill(1, 1, 1)))
+        @test v == SMatrix{1, 1, Any}(1)
+        A = SArray{Tuple{2, 2, 2}, Any}(1, 2, 3, 4, 5, 6, 7, 8)
+        v = @inferred view(A, @SArray(fill(1, 1, 1, 1)))
+        @test v == SArray{Tuple{1, 1, 1}, Any}(1)
+    end
 end
