@@ -62,7 +62,8 @@ sacollect
 ####################
 
 @propagate_inbounds function getindex(v::SArray, i::Int)
-    getfield(v,:data)[i]
+    @boundscheck checkbounds(v, i)
+    @inbounds getfield(v,:data)[i]
 end
 
 @inline Base.Tuple(v::SArray) = getfield(v,:data)
