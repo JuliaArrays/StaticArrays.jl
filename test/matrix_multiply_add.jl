@@ -1,6 +1,7 @@
 using StaticArrays
 using LinearAlgebra
 using BenchmarkTools
+using Random
 using Test
 
 macro test_noalloc(ex)
@@ -226,7 +227,7 @@ function test_wrappers_for_size(N, test_block)
         A_block = rand(SMatrix{N,N,SMatrix{2,2,Int,4}})
         B_block = rand(SMatrix{N,N,SMatrix{2,2,Int,4}})
         bv_block = rand(SVector{N,SMatrix{2,2,Int,4}})
-        
+
         # matrix-vector
         for wrapper in mul_add_wrappers
             # LinearAlgebra can't handle these
@@ -251,4 +252,13 @@ end
     test_wrappers_for_size(2, true)
     test_wrappers_for_size(8, false)
     test_wrappers_for_size(16, false)
+end
+
+@testset "Adjoints and covariances" begin
+    X = [randn(SVector{3,Float64}) for _ in CartesianIndices((1:2, 1:3))]
+    μ = sum(X; dims=2)/size(X, 2)
+    ΔX = X .- μ
+    @test (ΔX*ΔX')[1, 1] ≈ sum(dx * dx' for dx in ΔX[1, :])
+    B = [randn(SVector{3,Float64}) for _ in CartesianIndices((1:2, 1:2))]
+    @test_throws DimensionMismatch ΔX * B'
 end
