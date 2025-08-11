@@ -21,10 +21,16 @@ using StaticArrays, Test, LinearAlgebra
     # So try all of these
     @testset "Mixed static/dynamic" begin
         v = @SVector([0.2,0.3])
+        # Square matrices
         for m in (@SMatrix([1.0 0; 0 1.0]), @SMatrix([1.0 0; 1.0 1.0]),
                   @SMatrix([1.0 1.0; 0 1.0]), @SMatrix([1.0 0.5; 0.25 1.0]))
-            # TODO: include @SMatrix([1.0 0.0 0.0; 1.0 2.0 0.5]), need qr methods
             @test m \ v ≈ Array(m) \ v ≈ m \ Array(v) ≈ Array(m) \ Array(v)
+        end
+        # Rectangular matrices
+        for m in (@SMatrix([1.0 0.0 0.0; 1.0 2.0 0.5]), @SMatrix([1.0 2.0 0.5; 0.0 0.0 1.0]),
+                  @SMatrix([0.0 0.0 1.0; 1.0 2.0 0.5]), @SMatrix([1.0 2.0 0.5; 1.0 0.0 0.0]))
+            @test m \ v ≈ Array(m) \ v ≈ Array(m) \ Array(v)
+            @test_throws MethodError m \ Array(v) # TODO: requires adjoint(::QR) method
         end
     end
 end

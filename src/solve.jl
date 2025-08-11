@@ -1,4 +1,5 @@
 @inline (\)(a::StaticMatrix, b::StaticVecOrMat) = _solve(Size(a), Size(b), a, b)
+@inline (\)(Q::QR, b::StaticVecOrMat) = Q.R \ (Q.Q' * b)
 
 @inline function _solve(::Size{(1,1)}, ::Size{(1,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
     @inbounds return similar_type(b, typeof(a[1] \ b[1]))(a[1] \ b[1])
@@ -55,15 +56,30 @@ end
             throw(DimensionMismatch("Left and right hand side first dimensions do not match in backdivide (got sizes $Sa and $Sb)"))
         end
     end
-    if prod(Sa) ≤ 14*14 && Sa[1] == Sa[2]
+    if prod(Sa) ≤ 14*14
         # TODO: Consider triangular special cases as in Base?
-        quote
-            @_inline_meta
-            LUp = lu(a)
-            LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
+        if Sa[1] == Sa[2]
+            quote
+                @_inline_meta
+                LUp = lu(a)
+                LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
+            end
+        else
+
+            quote
+                @_inline_meta
+                q = qr(a)
+                y = q.Q' * b
+                if Sa[1] > Sa[2]
+                    R₁ = SMatrix{Sa[2], Sa[2]}(q.R[SOneTo(Sa[2]), SOneTo(Sa[2])])
+                    # return inv(R₁) * y
+                    return R₁ \ y
+                else
+                    return q.R' * ((q.R * q.R') \ y)
+                    # return pinv(q.R) * y
+                end
+            end
         end
-        # TODO: Could also use static QR here if `a` is nonsquare.
-        # Requires that we implement \(::StaticArrays.QR,::StaticVecOrMat)
     else
         # Fall back to LinearAlgebra, but carry across the statically known size.
         outsize = length(Sb) == 1 ? Size(Sa[2]) : Size(Sa[2],Sb[end])
