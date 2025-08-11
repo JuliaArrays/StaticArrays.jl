@@ -65,7 +65,6 @@ end
                 LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
             end
         else
-
             quote
                 @_inline_meta
                 q = qr(a)
