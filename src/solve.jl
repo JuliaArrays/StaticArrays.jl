@@ -72,11 +72,9 @@ end
                 y = q.Q' * b
                 if Sa[1] > Sa[2]
                     R₁ = SMatrix{Sa[2], Sa[2]}(q.R[SOneTo(Sa[2]), SOneTo(Sa[2])])
-                    # return inv(R₁) * y
-                    return R₁ \ y
+                    R₁ \ y
                 else
-                    return q.R' * ((q.R * q.R') \ y)
-                    # return pinv(q.R) * y
+                    q.R' * ((q.R * q.R') \ y)
                 end
             end
         end
