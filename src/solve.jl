@@ -4,10 +4,10 @@
     Sa = (Sq[1], Sr[2]) # Size of the original matrix: Q * R
     Q, R = q.Q, q.R
     if Sa[1] == Sa[2]
-        return R \ (Q' * b)
+        return UpperTriangular(R) \ (Q' * b)
     elseif Sa[1] > Sa[2]
         y = Q' * b
-        R₁ = @view R[SOneTo(Sa[2]), SOneTo(Sa[2])]
+        R₁ = UpperTriangular(@view R[SOneTo(Sa[2]), SOneTo(Sa[2])])
         return R₁ \ y
     else
         y = Q' * b
