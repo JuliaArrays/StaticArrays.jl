@@ -1,5 +1,19 @@
 @inline (\)(a::StaticMatrix, b::StaticVecOrMat) = _solve(Size(a), Size(b), a, b)
-@inline (\)(Q::QR, b::StaticVecOrMat) = Q.R \ (Q.Q' * b)
+@inline (\)(q::QR, b::StaticVecOrMat) = _solve(Size(q.Q), Size(q.R), q, b)
+@inline function _solve(::Size{Sq}, ::Size{Sr}, q::QR, b::StaticVecOrMat) where {Sq, Sr}
+    Sa = (Sq[1], Sr[2]) # Size of the original matrix: Q * R
+    Q, R = q.Q, q.R
+    if Sa[1] == Sa[2]
+        return R \ (Q' * b)
+    elseif Sa[1] > Sa[2]
+        y = Q' * b
+        R₁ = @view R[SOneTo(Sa[2]), SOneTo(Sa[2])]
+        return R₁ \ y
+    else
+        y = Q' * b
+        return R' * ((R * R') \ y)
+    end
+end
 
 @inline function _solve(::Size{(1,1)}, ::Size{(1,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
     @inbounds return similar_type(b, typeof(a[1] \ b[1]))(a[1] \ b[1])
@@ -68,13 +82,7 @@ end
             quote
                 @_inline_meta
                 q = qr(a)
-                y = q.Q' * b
-                if Sa[1] > Sa[2]
-                    R₁ = SMatrix{Sa[2], Sa[2]}(q.R[SOneTo(Sa[2]), SOneTo(Sa[2])])
-                    R₁ \ y
-                else
-                    q.R' * ((q.R * q.R') \ y)
-                end
+                q \ b
             end
         end
     else
