@@ -3,14 +3,13 @@
 @inline function _solve(::Size{Sq}, ::Size{Sr}, q::QR, b::StaticVecOrMat) where {Sq, Sr}
     Sa = (Sq[1], Sr[2]) # Size of the original matrix: Q * R
     Q, R = q.Q, q.R
+    y = Q' * b
     if Sa[1] == Sa[2]
-        return UpperTriangular(R) \ (Q' * b)
+        return UpperTriangular(R) \ y
     elseif Sa[1] > Sa[2]
-        y = Q' * b
         R₁ = UpperTriangular(@view R[SOneTo(Sa[2]), SOneTo(Sa[2])])
         return R₁ \ y
     else
-        y = Q' * b
         return R' * ((R * R') \ y)
     end
 end
