@@ -10,8 +10,64 @@
         R₁ = UpperTriangular(@view R[SOneTo(Sa[2]), SOneTo(Sa[2])])
         return R₁ \ y
     else
-        return R' * ((R * R') \ y)
+        return _wide_qr_solve(q, b)
     end
+end
+
+# based on https://github.com/JuliaLang/LinearAlgebra.jl/blob/16f64e78769d788376df0f36447affdb7b1b3df6/src/qr.jl#L652C1-L697C4
+function _wide_qr_solve(A::QR{T}, B::StaticMatrix{mB,nB,T}) where {mB,nB,T}
+    m, n = size(A)
+    minmn = min(m, n)
+    Bbuffer = similar(B)
+    copyto!(Bbuffer, B)
+    lmul!(adjoint(A.Q), view(Bbuffer, 1:m, :))
+    Rbuffer = similar(A.R)
+    copyto!(Rbuffer, A.R)
+
+    @inbounds begin
+        if n > m # minimum norm solution
+            τ = zeros(T,m)
+            for k = m:-1:1 # Trapezoid to triangular by elementary operation
+                x = view(Rbuffer, k, [k; m + 1:n])
+                τk = LinearAlgebra.reflector!(x)
+                τ[k] = conj(τk)
+                for i = 1:k - 1
+                    vRi = Rbuffer[i,k]
+                    for j = m + 1:n
+                        vRi += Rbuffer[i,j]*x[j - m + 1]'
+                    end
+                    vRi *= τk
+                    Rbuffer[i,k] -= vRi
+                    for j = m + 1:n
+                        Rbuffer[i,j] -= vRi*x[j - m + 1]
+                    end
+                end
+            end
+        end
+        ldiv!(UpperTriangular(view(Rbuffer, :, SOneTo(minmn))), view(Bbuffer, SOneTo(minmn), :))
+        if n > m # Apply elementary transformation to solution
+            Bbuffer[m + 1:mB,1:nB] .= zero(T)
+            for j = 1:nB
+                for k = 1:m
+                    vBj = Bbuffer[k,j]'
+                    for i = m + 1:n
+                        vBj += Bbuffer[i,j]'*Rbuffer[k,i]'
+                    end
+                    vBj *= τ[k]
+                    Bbuffer[k,j] -= vBj'
+                    for i = m + 1:n
+                        Bbuffer[i,j] -= Rbuffer[k,i]'*vBj'
+                    end
+                end
+            end
+        end
+    end
+    return similar_type(B)(Bbuffer)
+end
+function _wide_qr_solve(q::QR, b::StaticVecOrMat)
+    Q, R = q.Q, q.R
+    y = Q' * b
+    return R' * ((R * R') \ y)
 end
 
 @inline function _solve(::Size{(1,1)}, ::Size{(1,)}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticVector{<:Any, Tb}) where {Ta, Tb}
@@ -80,7 +136,7 @@ end
         else
             quote
                 @_inline_meta
-                q = qr(a)
+                q = qr(a, ColumnNorm())
                 q \ b
             end
         end
