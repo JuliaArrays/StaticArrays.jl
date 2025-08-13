@@ -12,8 +12,13 @@
     else
         _wide_qr_solve(q, b)
     end
-    invp = invperm(p)
-    return @view Z[invp, :]
+    # Apply pivot permutation if necessary
+    return if p != SOneTo(length(p))
+        invp = invperm(p)
+        @view Z[invp, :]
+    else
+        Z
+    end
 end
 
 # based on https://github.com/JuliaLang/LinearAlgebra.jl/blob/16f64e78769d788376df0f36447affdb7b1b3df6/src/qr.jl#L652C1-L697C4
