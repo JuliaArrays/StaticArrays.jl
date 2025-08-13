@@ -2,16 +2,18 @@
 @inline (\)(q::QR, b::StaticVecOrMat) = _solve(Size(q.Q), Size(q.R), q, b)
 @inline function _solve(::Size{Sq}, ::Size{Sr}, q::QR, b::StaticVecOrMat) where {Sq, Sr}
     Sa = (Sq[1], Sr[2]) # Size of the original matrix: Q * R
-    Q, R = q.Q, q.R
+    Q, R, p = q.Q, q.R, q.p
     y = Q' * b
-    if Sa[1] == Sa[2]
-        return UpperTriangular(R) \ y
+    Z = if Sa[1] == Sa[2]
+        UpperTriangular(R) \ y
     elseif Sa[1] > Sa[2]
         R₁ = UpperTriangular(@view R[SOneTo(Sa[2]), SOneTo(Sa[2])])
-        return R₁ \ y
+        R₁ \ y
     else
-        return _wide_qr_solve(q, b)
+        _wide_qr_solve(q, b)
     end
+    invp = invperm(p)
+    return @view Z[invp, :]
 end
 
 # based on https://github.com/JuliaLang/LinearAlgebra.jl/blob/16f64e78769d788376df0f36447affdb7b1b3df6/src/qr.jl#L652C1-L697C4
