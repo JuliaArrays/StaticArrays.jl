@@ -57,6 +57,11 @@ using LinearAlgebra: PosDefException
             c = cholesky(m)
             @test (@inferred inv(c)) isa SMatrix{3,3,elty}
             @test inv(c) ≈ SMatrix{3,3}(inv(m_a))
+            # Check special case of 2 × 2 inverse that used to trigger an
+            # error
+            c2 = cholesky(@SMatrix elty[π 3.1; 3.1 12.0])
+            d2 = inv(c2)
+            @test d2[1,2] == d2[2,1]
         end
 
         @testset "Division" begin
