@@ -6,12 +6,8 @@ a `StaticArray`.
 """
 SOneTo
 
-if isdefined(Base, :AbstractOneTo)
-    struct SOneTo{n} <: Base.AbstractOneTo{Int}
-    end
-else
-    struct SOneTo{n} <: AbstractUnitRange{Int}
-    end
+const SOneToSupertype = isdefined(Base, :AbstractOneTo) ?  Base.AbstractOneTo : AbstractUnitRange
+struct SOneTo{n} <: SOneToSupertype{Int}
 end
 
 SOneTo(n::Int) = SOneTo{n}()
