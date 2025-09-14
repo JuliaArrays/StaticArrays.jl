@@ -12,10 +12,10 @@ _mean_denom(a, ::Colon) = length(a)
 _mean_denom(a, dims::Int) = size(a, dims)
 _mean_denom(a, ::Val{D}) where {D} = size(a, D)
 
-@inline mean(a::StaticArray; dims=:) = _reduce(+, a, dims) / _mean_denom(a, dims)
-@inline mean(f::Function, a::StaticArray; dims=:) = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
+@inline mean(a::StaticArray; dims::D=:) where {D} = _reduce(+, a, dims) / _mean_denom(a, dims)
+@inline mean(f::Function, a::StaticArray; dims::D=:) where {D} = _mapreduce(f, +, dims, _InitialValue(), Size(a), a) / _mean_denom(a, dims)
 
-@inline function median(a::StaticArray; dims = :)
+@inline function median(a::StaticArray; dims::D = :) where {D}
     if dims == Colon()
         median(vec(a))
     else
