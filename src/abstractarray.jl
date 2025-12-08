@@ -142,7 +142,7 @@ const HeterogeneousBaseShape = Union{Integer, Base.OneTo}
 const HeterogeneousShape = Union{HeterogeneousBaseShape, SOneTo}
 const HeterogeneousShapeTuple = Tuple{Vararg{HeterogeneousShape}}
 
-if isdefined(Base, :AbstractOneTo)
+@static if isdefined(Base, :AbstractOneTo)
     similar(A::AbstractArray, ::Type{T}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {T} = similar(A, T, homogenize_shape(shape))
     similar(::Type{A}, shape::Tuple{SOneTo, Vararg{SOneTo}}) where {A<:AbstractArray} = similar(A, homogenize_shape(shape))
 else
