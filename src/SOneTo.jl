@@ -1,12 +1,11 @@
+const SOneToSupertype = isdefined(Base, :AbstractOneTo) ?  Base.AbstractOneTo : AbstractUnitRange
+
 """
     SOneTo(n)
 
 Return a statically-sized `AbstractUnitRange` starting at `1`, functioning as the `axes` of
 a `StaticArray`.
 """
-SOneTo
-
-const SOneToSupertype = isdefined(Base, :AbstractOneTo) ?  Base.AbstractOneTo : AbstractUnitRange
 struct SOneTo{n} <: SOneToSupertype{Int}
 end
 
