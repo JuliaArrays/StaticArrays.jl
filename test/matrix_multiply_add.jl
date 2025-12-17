@@ -97,8 +97,8 @@ function test_multiply_add(N1,N2,ArrayType=MArray)
     if !(ArrayType <: SizedArray)
         @test_noalloc mul!(c,A,b)
     else
-        mul!(c,A,b)
-        @test_broken(@allocated(mul!(c,A,b)) == 0)
+        mul!(c,A,b) # Precompilation?
+        @test_noalloc mul!(c,A,b)
     end
     expected_transpose_allocs = 0
     bmark = @benchmark mul!($c,$A,$b,$α,$β) samples=10 evals=10
