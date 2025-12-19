@@ -28,7 +28,8 @@ end
 end
 
 @propagate_inbounds function setindex!(v::MArray, val, i::Int)
-    @boundscheck checkbounds(v,i)
+    @inline
+    @boundscheck checkbounds((v),i)
     T = eltype(v)
 
     if isbitstype(T)

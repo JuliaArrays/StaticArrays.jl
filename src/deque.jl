@@ -75,7 +75,7 @@ julia> insert(@SVector[6, 5, 4, 2, 1], 4, 3)
     return quote
         @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $newlen)
-            throw(BoundsError(vec, index))
+            Base.throw_boundserror(vec, index)
         end
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
@@ -150,7 +150,7 @@ julia> deleteat(@SVector[6, 5, 4, 3, 2, 1], 2)
     return quote
         @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $(s[1]))
-            throw(BoundsError(vec, index))
+            Base.throw_boundserror(vec, index)
         end
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
@@ -188,7 +188,7 @@ julia> setindex(@SMatrix[2 4; 6 8], 1, 2)
     return quote
         @_propagate_inbounds_meta
         @boundscheck if (index < 1 || index > $(L))
-            throw(BoundsError(a, index))
+            Base.throw_boundserror(a, index)
         end
         @inbounds return typeof(a)(tuple($(exprs...)))
     end
