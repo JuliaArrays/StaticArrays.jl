@@ -32,7 +32,7 @@ jobs:
             os: ubuntu-latest
             group: 'group-A'
           - arch: x86
-            version: 'nightly'
+            version: 'pre'
             os: ubuntu-latest
             group: 'group-A'
           - arch: x86
@@ -44,7 +44,7 @@ jobs:
             os: windows-latest
             group: 'group-A'
           - arch: x86
-            version: 'nightly'
+            version: 'pre'
             os: windows-latest
             group: 'group-A'
           - arch: x86
@@ -56,7 +56,7 @@ jobs:
             os: ubuntu-latest
             group: 'group-B'
           - arch: x86
-            version: 'nightly'
+            version: 'pre'
             os: ubuntu-latest
             group: 'group-B'
           - arch: x86
@@ -68,7 +68,7 @@ jobs:
             os: windows-latest
             group: 'group-B'
           - arch: x86
-            version: 'nightly'
+            version: 'pre'
             os: windows-latest
             group: 'group-B'
         exclude:
