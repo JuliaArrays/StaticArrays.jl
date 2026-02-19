@@ -40,6 +40,50 @@ import Base: +, -, *, /, \
     end
 end
 
+@inline _plus_uniform_parent(A, λ) = _plus_uniform(Size(A), parent(A), λ)
+@inline _minus_uniform_parent(A, λ) = _plus_uniform(Size(A), -parent(A), λ)
+@inline _sym_uplo(A) = A.uplo == 'U' ? :U : :L
+
+# Self-adjoint wrappers over StaticMatrix with UniformScaling
+@inline +(A::Symmetric{T,<:StaticMatrix{N,M,T}}, J::UniformScaling) where {N,M,T} =
+    Symmetric(_plus_uniform_parent(A, J.λ), _sym_uplo(A))
+@inline -(J::UniformScaling, A::Symmetric{T,<:StaticMatrix{N,M,T}}) where {N,M,T} =
+    Symmetric(_minus_uniform_parent(A, J.λ), _sym_uplo(A))
+
+@inline +(A::Hermitian{T,<:StaticMatrix{N,M,T}}, J::UniformScaling) where {N,M,T} =
+    Hermitian(_plus_uniform_parent(A, J.λ), _sym_uplo(A))
+@inline -(J::UniformScaling, A::Hermitian{T,<:StaticMatrix{N,M,T}}) where {N,M,T} =
+    Hermitian(_minus_uniform_parent(A, J.λ), _sym_uplo(A))
+
+# Lose Hermitian wrapper when adding complex UniformScaling, in-line with Base behavior
+@inline function +(A::Hermitian{T,<:StaticMatrix{N,M,T}}, J::UniformScaling{<:Complex}) where {N,M,T}
+    TS = Base.promote_op(+, eltype(A), typeof(J))
+    _plus_uniform(Size(A), similar_type(A, TS)(A), J.λ)
+end
+@inline function -(J::UniformScaling{<:Complex}, A::Hermitian{T,<:StaticMatrix{N,M,T}}) where {N,M,T}
+    TS = Base.promote_op(+, eltype(A), typeof(J))
+    _plus_uniform(Size(A), -similar_type(A, TS)(A), J.λ)
+end
+
+# Triangular wrappers over StaticMatrix with UniformScaling
+for TWR in (:UpperTriangular, :LowerTriangular)
+    @eval begin
+        @inline +(A::$TWR{T,<:StaticMatrix{N,M,T}}, J::UniformScaling) where {N,M,T} = $TWR(_plus_uniform_parent(A, J.λ))
+        @inline -(J::UniformScaling, A::$TWR{T,<:StaticMatrix{N,M,T}}) where {N,M,T} = $TWR(_minus_uniform_parent(A, J.λ))
+    end
+end
+
+# Unit triangular wrappers over StaticMatrix with UniformScaling
+@inline _plus_uniform_materialized(A, λ) = _plus_uniform(Size(A), similar_type(A, promote_type(eltype(A), typeof(λ)))(A), λ)
+@inline _minus_uniform_materialized(A, λ) = _plus_uniform(Size(A), -similar_type(A, promote_type(eltype(A), typeof(λ)))(A), λ)
+
+for (TWR1, TWR2) in ((:UnitUpperTriangular, :UpperTriangular), (:UnitLowerTriangular, :LowerTriangular))
+    @eval begin
+        @inline +(A::$TWR1{T,<:StaticMatrix{N,M,T}}, J::UniformScaling) where {N,M,T} = $TWR2(_plus_uniform_materialized(A, J.λ))
+        @inline -(J::UniformScaling, A::$TWR1{T,<:StaticMatrix{N,M,T}}) where {N,M,T} = $TWR2(_minus_uniform_materialized(A, J.λ))
+    end
+end
+
 @inline *(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ * b
 @inline *(a::StaticMatrix, b::UniformScaling) = a * b.λ
 @inline \(a::UniformScaling, b::Union{StaticMatrix,StaticVector}) = a.λ \ b

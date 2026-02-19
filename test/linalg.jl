@@ -107,6 +107,55 @@ end
         @test @inferred(I * @SMatrix([0 1; 2 3])) === @SMatrix [0 1; 2 3]
         @test @inferred(@SMatrix([0 1; 2 3]) / I) === @SMatrix [0.0 1.0; 2.0 3.0]
         @test @inferred(I \ @SMatrix([0 1; 2 3])) === @SMatrix [0.0 1.0; 2.0 3.0]
+
+        A = @SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0; 7.0 8.0 9.0]
+        A_dynamic = Matrix(A)
+
+        for WR in (Symmetric, Hermitian)
+            B = WR(A, :L)
+            B_dynamic = WR(A_dynamic, :L)
+
+            @test @inferred(B + I) isa WR{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(I + B) isa WR{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(B - I) isa WR{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(I - B) isa WR{Float64,SMatrix{3,3,Float64,9}}
+            @test (B + I).uplo == 'L'
+            @test (I - B).uplo == 'L'
+
+            @test B + I == B_dynamic + I
+            @test I + B == I + B_dynamic
+            @test B - I == B_dynamic - I
+            @test I - B == I - B_dynamic
+        end
+
+        B = Hermitian(complex.(A), :U)
+        B_dynamic = Hermitian(complex.(A_dynamic), :U)
+
+        # Hermitian wrapper should be dropped iff the UniformScaling is complex, in-line with Base behavior
+        @test @inferred(B + I) isa Hermitian{ComplexF64,SMatrix{3,3,ComplexF64,9}}
+        @test @inferred(I - B) isa Hermitian{ComplexF64,SMatrix{3,3,ComplexF64,9}}
+        @test @inferred(B + (1 + 2im)I) isa SMatrix{3,3,ComplexF64,9}
+        @test @inferred((1 + 2im)I - B) isa SMatrix{3,3,ComplexF64,9}
+        @test B + (1 + 2im)I == B_dynamic + (1 + 2im)I
+        @test (1 + 2im)I - B == (1 + 2im)I - B_dynamic
+
+        for (WR1, WR2) in ((UpperTriangular, UpperTriangular),
+            (LowerTriangular, LowerTriangular),
+            (UnitUpperTriangular, UpperTriangular),
+            (UnitLowerTriangular, LowerTriangular))
+            B = WR1(A)
+            B_dynamic = WR1(A_dynamic)
+
+            @test @inferred(B + I) isa WR2{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(I + B) isa WR2{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(B - I) isa WR2{Float64,SMatrix{3,3,Float64,9}}
+            @test @inferred(I - B) isa WR2{Float64,SMatrix{3,3,Float64,9}}
+
+            @test B + I == B_dynamic + I
+            @test I + B == I + B_dynamic
+            @test B - I == B_dynamic - I
+            @test I - B == I - B_dynamic
+        end
     end
 
     @testset "Constructors from UniformScaling" begin
