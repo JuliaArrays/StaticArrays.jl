@@ -301,11 +301,17 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 @inline count(a::StaticArray{<:Tuple,Bool}; dims::D=:, init=0) where {D} = _reduce(+, a, dims, init)
 @inline count(f, a::StaticArray; dims::D=:, init=0) where {D} = _mapreduce(x->f(x)::Bool, +, dims, init, Size(a), a)
 
+# Hook into Base's internal _all/_any dispatch to avoid invalidating
+# the Base.all(::Function, ::AbstractArray) and Base.any(::Function, ::AbstractArray) methods.
+# Base calls _all(f, A, dims) and _any(f, A, dims) internally, so overriding
+# those avoids method table invalidation while still catching all calls.
+@inline Base._all(f, a::StaticArray, ::Colon) = _mapreduce(x->f(x)::Bool, &, :, true, Size(a), a)
+@inline Base._all(f, a::StaticArray, dims) = _mapreduce(x->f(x)::Bool, &, dims, true, Size(a), a)
 @inline all(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(&, a, dims, true)  # non-branching versions
-@inline all(f::Function, a::StaticArray; dims::D=:) where {D} = _mapreduce(x->f(x)::Bool, &, dims, true, Size(a), a)
 
+@inline Base._any(f, a::StaticArray, ::Colon) = _mapreduce(x->f(x)::Bool, |, :, false, Size(a), a)
+@inline Base._any(f, a::StaticArray, dims) = _mapreduce(x->f(x)::Bool, |, dims, false, Size(a), a)
 @inline any(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(|, a, dims, false) # (benchmarking needed)
-@inline any(f::Function, a::StaticArray; dims::D=:) where {D} = _mapreduce(x->f(x)::Bool, |, dims, false, Size(a), a) # (benchmarking needed)
 
 @inline Base.in(x, a::StaticArray) = _mapreduce(==(x), |, :, false, Size(a), a)
 
