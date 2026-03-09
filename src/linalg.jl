@@ -275,7 +275,8 @@ _inner_eltype(x::Number) = typeof(x)
 @inline _init_zero(v::AbstractArray) = float(norm(zero(_inner_eltype(v))))
 
 @inline function LinearAlgebra.norm_sqr(v::StaticArray)
-    return mapreduce(LinearAlgebra.norm_sqr, +, v; init=_init_zero(v))
+    init = float(LinearAlgebra.norm_sqr(zero(_inner_eltype(v))))
+    return mapreduce(LinearAlgebra.norm_sqr, +, v; init=init)
 end
 
 @inline maxabs_nested(a::Number) = abs(a)
