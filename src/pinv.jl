@@ -7,6 +7,8 @@
     return _pinv(A_S, atol, rtol)
 end
 
+@inline pinv(A::LinearAlgebra.HermOrSym{T,<:StaticMatrix}; kwargs...) where T = pinv(similar_type(A)(A); kwargs...)
+
 @inline function _pinv(A::StaticMatrix{m,n,T}, atol::Real, rtol::Real) where T where m where n
     if m == 0 || n == 0
         return similar_type(A, Size(n,m))()
