@@ -148,6 +148,15 @@ end
 @inline Base.zero(a::SA) where {SA <: StaticArray} = zeros(SA)
 @inline Base.zero(a::Type{SA}) where {SA <: StaticArray} = zeros(SA)
 
+# Wrappers over StaticArray (see StaticMatrixLike definition)
+for WR in (:Symmetric, :Hermitian)
+    @eval @inline Base.zero(a::$WR{<:Any,<:StaticMatrix}) = $WR(zero(parent(a)), _sym_uplo(a))
+end
+for WR in (:UpperTriangular, :LowerTriangular, :UnitUpperTriangular, :UnitLowerTriangular, :Transpose, :Adjoint)
+    @eval @inline Base.zero(a::$WR{<:Any,<:StaticArray}) = $WR(zero(parent(a)))
+end
+@inline Base.zero(a::Diagonal{<:Any,<:StaticVector}) = Diagonal(zero(parent(a)))
+
 @inline _construct_sametype(a::Type, elements) = a(elements)
 @inline _construct_sametype(a, elements) = typeof(a)(elements)
 
