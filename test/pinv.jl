@@ -75,4 +75,11 @@ tol = 1e-13
     @test norm(N10*M10*N10 - N10) < tol
     @test N10 isa StaticMatrix
     @test N10 ≈ pinv(Matrix(M10))
+
+    for wrapper in (Symmetric, Hermitian)
+        M_w = wrapper(@SMatrix [1.0 0.5; 0.5 2.0])
+        N_w = pinv(M_w)
+        @test N_w ≈ pinv(Matrix(M_w))
+        @test N_w isa SMatrix{2,2,Float64}
+    end
 end
