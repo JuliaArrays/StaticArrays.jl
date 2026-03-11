@@ -231,6 +231,15 @@ end
         @test one(RotMat2) == SA[1 0; 0 1]
         # TODO: See comment in _one.
         @test_broken one(RotMat2) isa SMatrix{2,2,Float64}
+
+        # zero preserves wrapper types over StaticArrays
+        let S = SMatrix{2,2}(1.0, 0.5, 0.5, 2.0), v = SVector(1.0, 2.0)
+            for WR in (Symmetric, Hermitian, UpperTriangular, LowerTriangular,
+                       UnitUpperTriangular, UnitLowerTriangular, Transpose, Adjoint)
+                @test @inferred(zero(WR(S))) === WR(zero(S))
+            end
+            @test @inferred(zero(Diagonal(v))) === Diagonal(zero(v))
+        end
     end
 
     @testset "cross()" begin
