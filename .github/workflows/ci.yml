@@ -71,6 +71,10 @@ jobs:
             version: 'nightly'
             os: windows-latest
             group: 'group-B'
+          - arch: x86
+            version: '1'
+            os: ubuntu-latest
+            group: 'group-M'
         exclude:
           # Remove some configurations from the build matrix to reduce CI time.
           # See https://github.com/marketplace/actions/setup-julia-environment
