@@ -1,0 +1,11 @@
+[deps]
+AllocCheck = "9b6a8646-10ed-4001-bbdc-1d2f46dfbb1a"
+JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
+Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+StableRNGs = "860ef19b-820b-49d6-a774-d7a799459cd3"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Mooncake = ">=0.5.27"
+StaticArrays = "1"
