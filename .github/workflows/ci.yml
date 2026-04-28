@@ -99,11 +99,9 @@ jobs:
           - '1'
         package:
           - 'Mooncake'
-        include:
-          - package: 'Mooncake'
-            env: 'old'
-          - package: 'Mooncake'
-            env: 'new'
+        env:
+          - 'old'
+          - 'new'
     env:
       STATICARRAYS_DOWNSTREAM_TEST_PACKAGE: ${{ matrix.package }}
       STATICARRAYS_DOWNSTREAM_TEST_ENV: ${{ matrix.env }}
