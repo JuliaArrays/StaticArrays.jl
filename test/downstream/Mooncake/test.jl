@@ -1,6 +1,3 @@
-using Pkg
-Pkg.add("Mooncake")
-
 using StaticArrays
 using Mooncake
 using Test

@@ -1,0 +1,10 @@
+[deps]
+Mooncake = "da2b9cff-9c12-43a0-ae48-6db2b0edb7d6"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+StaticArrays = {path = "../../../.."}
+
+[compat]
+Mooncake = "<0.5.25"

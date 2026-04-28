@@ -96,8 +96,3 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
         addtests("chainrules.jl")
     end
 end
-
-if TEST_GROUP ∈ ["", "all", "group-M"] && VERSION >= v"1.10-"
-    # warning: changes the test environment by adding Mooncake
-    addtests("mooncake.jl")
-end

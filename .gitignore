@@ -7,3 +7,4 @@
 /benchmark/*.json
 /benchmark/Manifest.toml
 /docs/Manifest.toml
+/test/downstream/**/Manifest.toml
