@@ -90,7 +90,7 @@ jobs:
   #       env:
   #         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   test-downstream:
-    name: Julia ${{ matrix.version }} - ${{ matrix.package }} - ${{ matrix.env }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.package }} [${{ matrix.env }}]
     runs-on: ubuntu-latest
     strategy:
       matrix:
