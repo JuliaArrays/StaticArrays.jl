@@ -23,7 +23,12 @@ using StaticArrays, Test, LinearAlgebra
         for nB in (0.005, 0.1, 0.5, 3.0, 20.0)
             B = A*nB/nA
             SB = SMatrix{sz,sz,typ}(B)
-            @test exp(B) ≈ exp(SB)
+            if Sys.ARCH in (:x86_64, :i686) && VERSION >= v"1.12" && VERSION < v"1.13" && typ === ComplexF64
+                # Julia 1.12 has a bug that makes this test fail on some systems,
+                # see https://github.com/JuliaLang/julia/issues/62368
+            else
+                @test exp(B) ≈ exp(SB)
+            end
         end
     end
 end
