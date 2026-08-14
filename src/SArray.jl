@@ -1,13 +1,13 @@
 
 @noinline function generator_too_short_error(inds::CartesianIndices, i::CartesianIndex)
-    error("Generator produced too few elements: Expected exactly $(shape_string(inds)) elements, but generator stopped at $(shape_string(i))")
+    n = LinearIndices(inds)[i] - 1
+    error("Generator produced too few elements: Expected exactly $(shape_string(inds)) elements, but got $(n)")
 end
 @noinline function generator_too_long_error(inds::CartesianIndices)
     error("Generator produced too many elements: Expected exactly $(shape_string(inds)) elements, but generator yields more")
 end
 
 shape_string(inds::CartesianIndices) = join(length.(inds.indices), '×')
-shape_string(inds::CartesianIndex) = join(Tuple(inds), '×')
 
 @inline throw_if_nothing(x, inds, i) =
     (x === nothing && generator_too_short_error(inds, i); x)

@@ -43,6 +43,39 @@
         @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:1, j in 1:3)
         @test_throws Exception SArray{Tuple{2,3}}(10i+j for i in 1:3, j in 1:3)
 
+        # too-short error reports the count produced, not the failing coordinate (#1207)
+        # (@test_throws "msg" needs Julia 1.8+; package supports 1.6)
+        let err = try
+                SVector{5}(i for i in 1:5 if i != 2)
+            catch e
+                e
+            end
+            @test err isa Exception
+            msg = sprint(showerror, err)
+            @test occursin("Expected exactly 5 elements", msg)
+            @test occursin("got 4", msg)
+            @test !occursin("stopped at", msg)
+        end
+        let err = try
+                SMatrix{2,3}(i for i in 1:6 if i != 4)
+            catch e
+                e
+            end
+            @test err isa Exception
+            msg = sprint(showerror, err)
+            @test occursin("Expected exactly 2×3 elements", msg)
+            @test occursin("got 5", msg)
+        end
+        let err = try
+                SVector{3}(i for i in 1:0)
+            catch e
+                e
+            end
+            @test err isa Exception
+            @test occursin("got 0", sprint(showerror, err))
+        end
+        @test SVector{5}(i for i in 1:5) == SVector{5}(1, 2, 3, 4, 5)
+
         @test StaticArrays.sacollect(SVector{6}, Iterators.product(1:2, 1:3)) ==
             SVector{6}(collect(Iterators.product(1:2, 1:3)))
         @test StaticArrays.sacollect(SVector{2}, Iterators.zip(1:2, 2:3)) ==
