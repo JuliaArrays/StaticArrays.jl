@@ -6,7 +6,7 @@ import Base: getindex, setindex!, size, similar, vec, show, length, convert, pro
              promote_rule, map, map!, reduce, mapreduce, foldl, mapfoldl, broadcast,
              broadcast!, conj, hcat, vcat, ones, zeros, one, reshape, fill, fill!, inv,
              iszero, sum, prod, count, any, all, minimum, maximum, extrema,
-             copy, read, read!, write, reverse
+             copy, read, read!, write, reverse, invperm
 
 using Random
 import Random: rand, randn, randexp, rand!, randn!, randexp!
