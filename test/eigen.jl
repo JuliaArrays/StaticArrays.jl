@@ -329,4 +329,21 @@ using StaticArrays, Test, LinearAlgebra
         λ, V = eigen(A)
         @test A * V ≈ V * Diagonal(λ)
     end
+
+    @testset "3×3 BigFloat" begin
+        # The iteration bound used to overflow `Int64` for `BigFloat`, so the QR sweep
+        # never ran and `eigen` returned its un-iterated intermediate (#1349).
+        m = BigFloat[4 1 2; 1 5 3; 2 3 6]
+        A = Symmetric(SMatrix{3,3}(m))
+        λ, V = eigen(A)
+        @test A * V ≈ V * Diagonal(λ)
+        @test λ ≈ eigvals(A)
+        @test λ ≈ eigvals(Symmetric(Float64.(m)))
+        # the overflow happened at every precision, so check a small one too
+        setprecision(BigFloat, 24) do
+            B = Symmetric(SMatrix{3,3}(BigFloat[4 1 2; 1 5 3; 2 3 6]))
+            μ, W = eigen(B)
+            @test B * W ≈ W * Diagonal(μ)
+        end
+    end
 end
