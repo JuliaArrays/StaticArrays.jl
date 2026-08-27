@@ -20,7 +20,7 @@ StaticArraysStatisticsExt = "Statistics"
 [compat]
 Aqua = "0.8"
 BenchmarkTools = "1"
-ChainRulesCore = "1"
+ChainRulesCore = "1, 2"
 ChainRulesTestUtils = "1"
 InteractiveUtils = "1"
 JLArrays = "0.1"
