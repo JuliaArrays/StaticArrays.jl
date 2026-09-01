@@ -286,7 +286,13 @@ end
     b22 = a22
 
     # Givens reflections, B' = G^T * B * G, preserve tridiagonal matrices
-    max_iteration = 2 * (1 + precision(T) - exponent(floatmin(T)))
+    #
+    # `emin` is clamped because it can overflow for extended-range numbers.  This limit
+    # compiles away for standard fixed-precision types, and does not change `max_iteration`
+    # for them.  It corrects the behavior for `BigFloat`; see
+    # https://github.com/JuliaArrays/StaticArrays.jl/issues/1349
+    emin = max(exponent(floatmin(T)), -100_000)
+    max_iteration = 2 * (1 + precision(T) - emin)
 
     if abs(b12) <= abs(b01)
         saveB00, saveB01, saveB11 = b00, b01, b11
