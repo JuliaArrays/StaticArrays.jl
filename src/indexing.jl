@@ -215,7 +215,7 @@ struct StaticIndexing{I}
 end
 unwrap(i::StaticIndexing) = i.ind
 
-function Base.to_indices(A, I::Tuple{Vararg{Union{Integer, CartesianIndex, StaticArray{<:Tuple,Int}}}})
+function Base.to_indices(A, I::Tuple{Vararg{Union{Integer, CartesianIndex, StaticArray{<:Tuple,<:Integer}}}})
     inds = to_indices(A, axes(A), I)
     return map(StaticIndexing, inds)
 end
