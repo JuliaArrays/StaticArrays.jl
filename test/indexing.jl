@@ -269,5 +269,6 @@ using StaticArrays, Test
     @testset "Logical indexing" begin
         v = SVector(1,2,3,4)
         @test v[v .== 1] == [1]
+        @test Base.to_indices(v, (v .== 1,)) == ([1],)
     end
 end
