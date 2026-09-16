@@ -44,9 +44,15 @@ Test.record(ts::ErrorCounterTestSet, ::Test.Fail)  = (ts.failcount += 1)
 @static if VERSION >= v"1.13"
     function _test_inlined_llvm(arginfo::InteractiveUtils.ArgInfo)
         params = Base.CodegenParams(safepoint_on_entry=false)
-        d = InteractiveUtils._dump_function(
-            arginfo, false, false, true, false, :att, true, :none, false, params,
-        )
+        @static if VERSION >= v"1.14.0-DEV.0"
+            d = InteractiveUtils._dump_function(
+                arginfo, false, false, true, false, :att, true, :none, false, "", params,
+            )
+        else
+            d = InteractiveUtils._dump_function(
+                arginfo, false, false, true, false, :att, true, :none, false, params,
+            )
+        end
         return sprint(print, d)
     end
 
