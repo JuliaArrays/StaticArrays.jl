@@ -219,6 +219,12 @@ function Base.to_indices(A, I::Tuple{Vararg{Union{Integer, CartesianIndex, Stati
     inds = to_indices(A, axes(A), I)
     return map(StaticIndexing, inds)
 end
+function Base.to_indices(A, I::Tuple{StaticArray{<:Tuple,Bool}})
+    # special case for logical indexing, which is not supported by StaticIndexing
+    # but should be handled by the default `to_indices` method
+    # note that Bool <: Integer, so the previous method would be called for logical indexing
+    return invoke(Base.to_indices, Tuple{Any, Tuple{AbstractArray{Bool}}}, A, I)
+end
 
 # Overloading getindex, size, iterate, lastindex and to_index is necessary to support
 # external operations that want to use to_indices on a StaticArray (see issue #878)
