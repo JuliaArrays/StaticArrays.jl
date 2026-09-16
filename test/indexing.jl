@@ -265,4 +265,9 @@ using StaticArrays, Test
         v = @inferred view(A, @SArray(fill(1, 1, 1, 1)))
         @test v == SArray{Tuple{1, 1, 1}, Any}(1)
     end
+
+    @testset "Logical indexing" begin
+        v = SVector(1,2,3,4)
+        @test v[v .== 1] == [1]
+    end
 end
