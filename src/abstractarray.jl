@@ -282,7 +282,8 @@ end
 
 # FIXME: This always assumes one-based linear indexing and that subtypes of StaticArray
 # don't overload iterate
-@inline function Base.rest(a::StaticArray{S}, (_, i) = (nothing, 0)) where {S}
+@inline function Base.rest(a::StaticArray{S}, state = (nothing, 0)) where {S}
+    i = state isa Integer ? state - 1 : state[2]
     newlen = tuple_prod(S) - i
     return similar_type(typeof(a), Size(newlen))(Base.rest(Tuple(a), i + 1))
 end

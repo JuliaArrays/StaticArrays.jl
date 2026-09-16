@@ -41,6 +41,25 @@ Test.record(ts::ErrorCounterTestSet, ::Test.Pass)  = (ts.passcount += 1)
 Test.record(ts::ErrorCounterTestSet, ::Test.Error) = (ts.errorcount += 1)
 Test.record(ts::ErrorCounterTestSet, ::Test.Fail)  = (ts.failcount += 1)
 
+@static if VERSION >= v"1.13"
+    function _test_inlined_llvm(arginfo::InteractiveUtils.ArgInfo)
+        params = Base.CodegenParams(safepoint_on_entry=false)
+        @static if VERSION >= v"1.14.0-DEV.0"
+            d = InteractiveUtils._dump_function(
+                arginfo, false, false, true, false, :att, true, :none, false, "", params,
+            )
+        else
+            d = InteractiveUtils._dump_function(
+                arginfo, false, false, true, false, :att, true, :none, false, params,
+            )
+        end
+        return sprint(print, d)
+    end
+
+    _test_inlined_llvm(tt::Type{<:Tuple}) = _test_inlined_llvm(InteractiveUtils.ArgInfo(tt))
+    _test_inlined_llvm(f, t) = _test_inlined_llvm(InteractiveUtils.ArgInfo(f, t))
+end
+
 """
     @test_inlined f(x,y, ...)
 
@@ -52,16 +71,29 @@ make it into the native code, so this can be overly eager in declaring a
 a lack of complete inlining.
 """
 macro test_inlined(ex, should_inline=true)
-    ex_orig = ex
-    ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
-    expr = quote
-        @static if hasfield(Base.CodegenParams, :safepoint_on_entry)
-            code_str = let params = Base.CodegenParams(safepoint_on_entry=false),
+    @static if VERSION >= v"1.13"
+        code_str = InteractiveUtils.gen_call_with_extracted_types(
+            __module__,
+            GlobalRef(@__MODULE__, :_test_inlined_llvm),
+            ex,
+            Expr[];
+            is_source_reflection=false,
+            use_signature_tuple=true,
+        )
+    else
+        ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
+        code_str = quote
+            let params = Base.CodegenParams(safepoint_on_entry=false),
                 f = $(esc(ex.args[2])),
                 t = $(esc(ex.args[3]))
                 d = InteractiveUtils._dump_function(f, t, false, false, true, false, :att, true, :none, false, params)
                 sprint(print, d)
             end
+        end
+    end
+    expr = quote
+        @static if hasfield(Base.CodegenParams, :safepoint_on_entry)
+            code_str = $code_str
         else
             code_str = sprint() do io
                 code_llvm(io, $(map(esc, ex.args[2:end])...))
