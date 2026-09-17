@@ -299,13 +299,10 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 @inline prod(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, *, dims, init, Size(a), a)
 
 @inline count(a::StaticArray{<:Tuple,Bool}; dims::D=:, init=0) where {D} = _reduce(+, a, dims, init)
-@inline count(f, a::StaticArray; dims::D=:, init=0) where {D} = _mapreduce(x->f(x)::Bool, +, dims, init, Size(a), a)
 
-@inline all(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(&, a, dims, true)  # non-branching versions
-@inline all(f::Function, a::StaticArray; dims::D=:) where {D} = _mapreduce(x->f(x)::Bool, &, dims, true, Size(a), a)
+@inline all(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(&, a, dims, true)
 
-@inline any(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(|, a, dims, false) # (benchmarking needed)
-@inline any(f::Function, a::StaticArray; dims::D=:) where {D} = _mapreduce(x->f(x)::Bool, |, dims, false, Size(a), a) # (benchmarking needed)
+@inline any(a::StaticArray{<:Tuple,Bool}; dims::D=:) where {D} = _reduce(|, a, dims, false)
 
 @inline Base.in(x, a::StaticArray) = _mapreduce(==(x), |, :, false, Size(a), a)
 
