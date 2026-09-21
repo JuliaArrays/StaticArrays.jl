@@ -155,7 +155,7 @@ end
     return Tuple{prod_size}
 end
 
-function Base.view(
+@propagate_inbounds function Base.view(
     a::SizedArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
