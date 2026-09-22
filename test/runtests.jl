@@ -15,6 +15,10 @@ include("testutil.jl")
 #
 #   Pkg.test("StaticArrays", test_args=["MVector", "SVector"])
 #
+# To tests with normal bounds checking use:
+#
+#   Pkg.test("StaticArrays", julia_args=["--check-bounds=auto"], test_args=["..."])
+#
 enabled_tests = lowercase.(ARGS)
 function addtests(fname)
     key = lowercase(splitext(fname)[1])
