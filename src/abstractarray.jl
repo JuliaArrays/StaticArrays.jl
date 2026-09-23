@@ -24,6 +24,15 @@ function Base.summary(io::IO, a, inds::Tuple{SOneTo, Vararg{SOneTo}})
     Base.showarg(io, a, true)
 end
 
+function Base.show(io::IO, ::MIME"text/plain", x::StaticVector)
+    if isempty(x)
+        summary(io, x)
+        return
+    end
+    invoke(show, Tuple{IO, MIME{Symbol("text/plain")}, AbstractArray},
+           io, MIME"text/plain"(), x)
+end
+
 Base.IndexStyle(::Type{T}) where {T<:StaticArray} = IndexLinear()
 
 # Default type search for similar_type
