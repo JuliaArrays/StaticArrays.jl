@@ -14,6 +14,18 @@ mul_wrappers = [
     m -> Transpose(m),
     m -> Diagonal(m)]
 
+# A minimal `StaticMatrix` whose `*` records the multiplication tree.  It lets us
+# observe the parenthesization that the compile-time cost model picks.
+struct CostSpy{N,M,T} <: StaticMatrix{N,M,T}
+    tree::Any
+end
+StaticArrays.Size(::Type{CostSpy{N,M,T}}) where {N,M,T} = Size{N,M}()
+Base.size(::CostSpy{N,M}) where {N,M} = (N, M)
+Base.getindex(::CostSpy, ::Int) = 0.0
+Base.:*(a::CostSpy{N,M}, b::CostSpy{M,K}) where {N,M,K} =
+    CostSpy{N,K,Float64}((:mul, a.tree, b.tree))
+spy(N, M, id) = CostSpy{N,M,Float64}(id)
+
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
         m = @SMatrix [1 2; 3 4]
@@ -438,5 +450,51 @@ mul_wrappers = [
         @test outvec2f ≈ [10.0, 22.0]
 
         @test mul!(@MArray([0.0]), Diagonal([1]), @MArray([2.0])) == @MArray([2.0])
+    end
+
+    @testset "Chained multiplication cost model" begin
+        # Three factors: `(10×2)(2×10)(10×2)` is cheapest as `a*(b*c)` ...
+        a, b, c = spy(10,2,:a), spy(2,10,:b), spy(10,2,:c)
+        @test (a*b*c).tree === (:mul, :a, (:mul, :b, :c))
+        # ... while `(2×10)(10×2)(2×10)` is cheapest as `(a*b)*c`.
+        a, b, c = spy(2,10,:a), spy(10,2,:b), spy(2,10,:c)
+        @test (a*b*c).tree === (:mul, (:mul, :a, :b), :c)
+
+        # Four factors, one shape for each branch of the cost model.
+        a, b, c, d = spy(1,3,:a), spy(3,1,:b), spy(1,3,:c), spy(3,1,:d)
+        @test (a*b*c*d).tree === (:mul, (:mul, :a, :b), (:mul, :c, :d))
+        a, b, c, d = spy(1,2,:a), spy(2,3,:b), spy(3,2,:c), spy(2,4,:d)
+        @test (a*b*c*d).tree === (:mul, (:mul, (:mul, :a, :b), :c), :d)
+        a, b, c, d = spy(1,2,:a), spy(2,3,:b), spy(3,4,:c), spy(4,1,:d)
+        @test (a*b*c*d).tree === (:mul, :a, (:mul, :b, (:mul, :c, :d)))
+        a, b, c, d = spy(4,3,:a), spy(3,5,:b), spy(5,2,:c), spy(2,6,:d)
+        @test (a*b*c*d).tree === (:mul, (:mul, :a, (:mul, :b, :c)), :d)
+        a, b, c, d = spy(2,1,:a), spy(1,3,:b), spy(3,2,:c), spy(2,4,:d)
+        @test (a*b*c*d).tree === (:mul, :a, (:mul, (:mul, :b, :c), :d))
+        # All costs equal: the static tie-break prefers the left association
+        # (Base would pick `(a*b)*(c*d)` and keep two intermediates alive).
+        a, b, c, d = spy(4,4,:a), spy(4,4,:b), spy(4,4,:c), spy(4,4,:d)
+        @test (a*b*c*d).tree === (:mul, (:mul, (:mul, :a, :b), :c), :d)
+
+        # Numerical agreement and inference for representative shapes.
+        A = rand(SMatrix{10,2,Float64}); B = rand(SMatrix{2,10,Float64})
+        C = rand(SMatrix{10,2,Float64})
+        @test A*B*C ≈ (A*B)*C ≈ A*(B*C)
+        @test (@inferred A*B*C) isa SMatrix{10,2,Float64}
+
+        A = rand(SMatrix{4,3,Float64}); B = rand(SMatrix{3,5,Float64})
+        C = rand(SMatrix{5,2,Float64}); D = rand(SMatrix{2,6,Float64})
+        @test A*B*C*D ≈ (A*B)*(C*D) ≈ ((A*B)*C)*D
+        @test (@inferred A*B*C*D) isa SMatrix{4,6,Float64}
+
+        # Wrappers and mutable static arrays take the same path.
+        m2 = @SMatrix [1.0 2.0; 3.0 4.0]
+        for wa in mul_wrappers, wb in mul_wrappers, wc in mul_wrappers
+            x, y, z = wa(m2), wb(m2), wc(m2)
+            @test x*y*z ≈ (x*y)*z ≈ x*(y*z)
+            @test x*y*z*wc(m2) ≈ (x*y)*(z*wc(m2))
+        end
+        ma = @MMatrix rand(3,2); mb = @MMatrix rand(2,3); mc = @MMatrix rand(3,2)
+        @test ma*mb*mc ≈ (ma*mb)*mc
     end
 end
