@@ -433,3 +433,19 @@ end
         end
     end
 end
+
+@testset "empty StaticVector text/plain show" begin
+    plain = MIME("text/plain")
+    for Vec in (SVector, MVector, SizedVector)
+        empty_v = Vec{0, Float32}()
+        @test sprint(show, plain, empty_v) == sprint(summary, empty_v)
+        @test occursin("SVector", sprint(show, plain, empty_v)) ||
+              occursin("MVector", sprint(show, plain, empty_v)) ||
+              occursin("SizedVector", sprint(show, plain, empty_v))
+        @test sprint(show, plain, empty_v) != sprint(show, plain, Float32[])
+    end
+    nonempty = SVector{2, Float32}(1.0, 2.0)
+    @test occursin("1.0", sprint(show, plain, nonempty))
+    @test occursin("2.0", sprint(show, plain, nonempty))
+    @test occursin('\n', sprint(show, plain, nonempty))
+end
