@@ -499,7 +499,7 @@ end
     mult_dim = multiplied_dimension(a,b)
     a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 2 : 1
     b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 2 : 1
-    ab_tri_mul = (a == 2 && b == 2) ? 2 : 1
+    ab_tri_mul = (a_tri_mul == 2 && b_tri_mul == 2) ? 2 : 1
     if mult_dim < 4*4*4*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
             @_inline_meta
