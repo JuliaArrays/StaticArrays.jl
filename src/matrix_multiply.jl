@@ -131,7 +131,7 @@ end
     # Heuristic choice for amount of codegen
     a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 4 : 1
     b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 4 : 1
-    ab_tri_mul = (a == 4 && b == 4) ? 2 : 1
+    ab_tri_mul = (a_tri_mul == 4 && b_tri_mul == 4) ? 2 : 1
     if a <: StaticMatrix && b <: StaticMatrix
         # Julia unrolls these loops pretty well
         return quote
