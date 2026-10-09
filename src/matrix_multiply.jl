@@ -128,6 +128,13 @@ for TWR in [Adjoint, Transpose, Symmetric, Hermitian, LowerTriangular, UpperTria
 end
 
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+    if mul_tileable(a) && mul_tileable(b)
+        return quote
+            @_inline_meta
+            return mul_tiled(Sa, Sb, a, b)
+        end
+    end
+
     # Heuristic choice for amount of codegen
     a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 4 : 1
     b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 4 : 1
@@ -231,6 +238,193 @@ end
         T = promote_op(matprod,Ta,Tb)
         $q
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
+    end
+end
+
+"""
+    MUL_TILE_BUDGET
+
+Maximum size in bytes of the block of accumulators that `mul_tiled!` unrolls, where the size
+of an accumulator is approximated by the size of the elements of the factors.
+
+Loops over blocks and over the inner dimension are not unrolled. Hence the amount of
+generated arithmetic code, and thereby the compilation time, is bounded independently of
+the size of the matrices and of the size of their elements (e.g., `ForwardDiff.Dual`
+numbers, see #513). The value corresponds to the 8×6 block of `Float64` values of `mul_loop`.
+"""
+const MUL_TILE_BUDGET = 384
+
+"""
+    mul_tile(M, N, s, budget)
+
+Size `(mr, nr)` of the block of accumulators of `mul_tiled!` for a product of size `M`×`N`
+with elements of `s >= 1` bytes.
+
+The block has at most 8 rows and satisfies `mr * nr * s <= budget`, unless a single
+element exceeds the budget (then `mr = nr = 1`).
+
+Elements of at least 32 bytes (the size of AVX2 registers) are not vectorized across rows,
+so for them the rows are distributed evenly among the blocks: Otherwise the block at the
+bottom edge might consist of only a few rows, i.e., few independent accumulators.
+"""
+function mul_tile(M::Int, N::Int, s::Int, budget::Int)
+    mr = min(M, 8, max(1, budget ÷ s))
+    nr = min(N, max(1, budget ÷ (s * mr)))
+    if s >= 32
+        mr = cld(M, cld(M, mr))
+    end
+    return mr, nr
+end
+
+# Names of the accumulators of an `mr`×`nr` block (see `mul_tile_expr`)
+mul_tile_accs(mr::Int, nr::Int) = [Symbol(:acc_, r, :_, c) for r in 1:mr, c in 1:nr]
+
+# Compute the `mr`×`nr` block of `a * b` with offsets `i0` and `j0`, where `a` has `M` rows
+# and `b` has `K` rows, and store its entries with the expressions `store(i, j, acc)`.
+# All indices are within bounds since `i0 + mr <= M`, `j0 + nr <= N`, and `1 <= k <= K`.
+# Linear indices are used since, in contrast to `getindex` with two indices, `getindex` of an
+# `SMatrix` with a linear index does not involve `checkbounds` (which, even though it is
+# removed by `@inbounds`, increases the amount of code to be inferred and inlined).
+function mul_tile_expr(store, M::Int, K::Int, mr::Int, nr::Int, @nospecialize(i0), @nospecialize(j0))
+    avals = [Symbol(:a_, r) for r in 1:mr]
+    bvals = [Symbol(:b_, c) for c in 1:nr]
+    accs = mul_tile_accs(mr, nr)
+    load_a(k) = [:($(avals[r]) = @inbounds a[$i0 + $r + ($k - 1) * $M]) for r in 1:mr]
+    load_b(k) = [:($(bvals[c]) = @inbounds b[$k + ($j0 + $(c - 1)) * $K]) for c in 1:nr]
+    return quote
+        $(load_a(1)...)
+        $(load_b(1)...)
+        $([:($(accs[r, c]) = $(avals[r]) * $(bvals[c])) for r in 1:mr, c in 1:nr]...)
+        for k in 2:$K
+            $(load_a(:k)...)
+            $(load_b(:k)...)
+            $([:($(accs[r, c]) = muladd($(avals[r]), $(bvals[c]), $(accs[r, c]))) for r in 1:mr, c in 1:nr]...)
+        end
+        $([store(:($i0 + $r), :($j0 + $c), accs[r, c]) for r in 1:mr, c in 1:nr]...)
+    end
+end
+
+# Compute columns `j0 + 1`, ..., `j0 + nc` of `a * b` in blocks with at most `mr` rows
+function mul_tile_cols_expr(store, M::Int, K::Int, mr::Int, nc::Int, @nospecialize(j0))
+    Mf = M - M % mr
+    # No loop over a single block: Inference iterates over loops until convergence
+    ex = if Mf == mr
+        mul_tile_expr(store, M, K, mr, nc, 0, j0)
+    else
+        :(for i0 in 0:$mr:$(Mf - mr)
+            $(mul_tile_expr(store, M, K, mr, nc, :i0, j0))
+        end)
+    end
+    return Mf < M ? Expr(:block, ex, mul_tile_expr(store, M, K, M - Mf, nc, Mf, j0)) : ex
+end
+
+# Compute the `M`×`N` product `a * b` with inner dimension `K >= 1` in blocks of size
+# `mul_tile(M, N, s, MUL_TILE_BUDGET)`, where `s` is the size of the elements in bytes, and
+# store its entries with the expressions `store(i, j, acc)`.
+# Only the computation of a single block is unrolled, so the generated code consists of at
+# most four variants of the block (including the blocks at the bottom and right edges).
+# The products are accumulated in the same order as in `mul_loop`.
+function mul_tiled_expr(store, M::Int, K::Int, N::Int, s::Int)
+    mr, nr = mul_tile(M, N, s, MUL_TILE_BUDGET)
+    Nf = N - N % nr
+    # No loop over a single column of blocks (see `mul_tile_cols_expr`)
+    ex = if Nf == nr
+        mul_tile_cols_expr(store, M, K, mr, nr, 0)
+    else
+        :(for j0 in 0:$nr:$(Nf - nr)
+            $(mul_tile_cols_expr(store, M, K, mr, nr, :j0))
+        end)
+    end
+    return Nf < N ? Expr(:block, ex, mul_tile_cols_expr(store, M, K, mr, N - Nf, Nf)) : ex
+end
+
+# Compute `a * b` in blocks with `mul_tiled!`
+# For `isbitstype` elements, the temporary `MMatrix` is not allocated since it does not escape.
+# If the product consists of a single block, its accumulators are returned directly instead.
+# The function is inlined since its code is bounded and small products benefit from inlining.
+@generated function mul_tiled(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
+    if sb[1] != sa[2]
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb"))
+    end
+
+    M, K = sa
+    N = sb[2]
+    if M > 0 && N > 0 && K > 0 && mul_tile(M, N, max(sizeof(Ta), sizeof(Tb), 1), MUL_TILE_BUDGET) == (M, N)
+        return quote
+            @_inline_meta
+            T = promote_op(matprod, Ta, Tb)
+            TC = similar_type(a, T, Size($M, $N))
+            # `getindex` of an `MArray` preserves it for every element, unlike an `SMatrix`
+            a = SMatrix{$M, $K, Ta}(Tuple(a))
+            b = SMatrix{$K, $N, Tb}(Tuple(b))
+            $(mul_tile_expr((i, j, acc) -> nothing, M, K, M, N, 0, 0))
+            return TC(tuple($(mul_tile_accs(M, N)...)))
+        end
+    end
+
+    return quote
+        @_inline_meta
+        T = promote_op(matprod, Ta, Tb)
+        C = similar(SMatrix{$M, $N, T})
+        mul_tiled!(TSize(C), C, Sa, Sb, a, b, NoMulAdd{T, T}())
+        return similar_type(a, T, Size($M, $N))(Tuple(C))
+    end
+end
+
+# Compute `c = a * b` or `c = c * β + α * (a * b)` (see `_muladd_expr`) in place
+# `a` and `b` are copied to an `SMatrix` first, which ensures correct results if `c` aliases
+# them. The function is inlined for the same reasons as `mul_tiled`.
+# Elements of an `MArray` with `isbitstype` elements are accessed with a pointer within a
+# single `GC.@preserve` block: `getindex` and `setindex!` preserve `c` for every element,
+# which prevents LLVM from vectorizing the computation of the blocks (the preserved regions
+# are only removed after vectorization since `c` is not allocated in the function).
+@generated function mul_tiled!(::TSize{sc, :any}, c::StaticMatrix, ::Size{sa}, ::Size{sb}, a::StaticMatrix{<:Any, <:Any, Ta}, b::StaticMatrix{<:Any, <:Any, Tb}, _add::MulAddMul) where {sc, sa, sb, Ta, Tb}
+    if !check_dims(Size(sc), Size(sa), Size(sb))
+        throw(DimensionMismatch("Tried to multiply arrays of size $sa and $sb and assign to array of size $sc"))
+    end
+
+    M, K = sa
+    N = sb[2]
+
+    # The closure only captures `Int` and `Bool` values (no types), so its type does not
+    # depend on the arguments and `mul_tiled_expr` is compiled only once
+    use_pointer = c <: MArray && isbitstype(eltype(c))
+    is_muladd = _add <: AlphaBeta
+    function store(i, j, acc)
+        # Linear index of entry `(i, j)` of `c` (all indices are within bounds, see `mul_tile_expr`)
+        ind = :($i + ($j - 1) * $M)
+        if use_pointer
+            rhs = is_muladd ? :(unsafe_load(p, $ind) * β + α * $acc) : acc
+            return :(unsafe_store!(p, $rhs, $ind))
+        else
+            rhs = is_muladd ? :(c[$ind] * β + α * $acc) : acc
+            return :(@inbounds c[$ind] = $rhs)
+        end
+    end
+
+    if M == 0 || N == 0
+        ex = nothing
+    elseif K == 0
+        ex = :(for j in 1:$N, i in 1:$M
+            $(store(:i, :j, :(zero(eltype(c)))))
+        end)
+    else
+        ex = mul_tiled_expr(store, M, K, N, max(sizeof(Ta), sizeof(Tb), 1))
+    end
+    if use_pointer
+        ex = :(GC.@preserve c begin
+            p = pointer(c)
+            $ex
+        end)
+    end
+    return quote
+        @_inline_meta
+        α = alpha(_add)
+        β = beta(_add)
+        a = SMatrix{$M, $K, Ta}(Tuple(a))
+        b = SMatrix{$K, $N, Tb}(Tuple(b))
+        $ex
+        return c
     end
 end
 

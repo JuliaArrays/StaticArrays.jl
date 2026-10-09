@@ -257,6 +257,17 @@ Calculate the product of the dimensions being multiplied. Useful as a heuristic 
     prod(size(A)) * size(B,2)
 
 """
+    mul_tileable(A::Type)
+
+Whether `mul_tiled` is used for matrices of type `A`.
+
+This requires a matrix that is not wrapped (e.g., by `Transpose` or `Symmetric`) with
+`isbitstype` numbers as elements, whose size approximates the cost of arithmetic operations.
+"""
+mul_tileable(A::Type) =
+    A <: StaticMatrix && eltype(A) <: Number && isbitstype(eltype(A))
+
+"""
     check_dims(sc, sa, sb)
 
 Validate the dimensions of a matrix multiplication, including matrix-vector products
@@ -497,6 +508,14 @@ end
     can_blas = Tc == Ta && Tc == Tb && Tc <: BlasFloat && a <: Union{StaticMatrix,Transpose} && b <: Union{StaticMatrix,Transpose}
 
     mult_dim = multiplied_dimension(a,b)
+    if mul_tileable(a) && mul_tileable(b) && Sc <: TSize{<:Any, :any} && c <: StaticMatrix &&
+            !(can_blas && mult_dim >= 14*14*14)
+        return quote
+            @_inline_meta
+            return mul_tiled!(Sc, c, Sa, Sb, a, b, _add)
+        end
+    end
+
     a_tri_mul = a <: LinearAlgebra.AbstractTriangular ? 2 : 1
     b_tri_mul = b <: LinearAlgebra.AbstractTriangular ? 2 : 1
     ab_tri_mul = (a_tri_mul == 2 && b_tri_mul == 2) ? 2 : 1
