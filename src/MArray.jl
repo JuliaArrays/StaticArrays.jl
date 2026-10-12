@@ -22,7 +22,11 @@ end
     T = eltype(v)
 
     if isbitstype(T)
-        return GC.@preserve v unsafe_load(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), i)
+        # `unsafe_load` assumes an alignment of 1, but the elements of an `MArray` are
+        # naturally aligned. Some targets (e.g. NVPTX) split under-aligned accesses into
+        # byte-wise loads.
+        ptr = Base.unsafe_convert(Ptr{T}, pointer_from_objref(v))
+        return GC.@preserve v Core.Intrinsics.pointerref(ptr, i, Base.datatype_alignment(T))
     end
     getfield(v,:data)[i]
 end
@@ -32,7 +36,8 @@ end
     T = eltype(v)
 
     if isbitstype(T)
-        GC.@preserve v unsafe_store!(Base.unsafe_convert(Ptr{T}, pointer_from_objref(v)), convert(T, val), i)
+        ptr = Base.unsafe_convert(Ptr{T}, pointer_from_objref(v))
+        GC.@preserve v Core.Intrinsics.pointerset(ptr, convert(T, val), i, Base.datatype_alignment(T))
     else
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
