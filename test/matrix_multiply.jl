@@ -1,4 +1,4 @@
-using StaticArrays, Test, LinearAlgebra
+using StaticArrays, Test, LinearAlgebra, InteractiveUtils
 
 mul_wrappers = [
     m -> m,
@@ -507,6 +507,16 @@ Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
             @test mul!(A, A, A) == A0 * A0
             A = MMatrix{5,5}(A0)
             @test mul!(A, A, A, 2, 3) == 2 * A0 * A0 + 3 * A0
+        end
+
+        @testset "alignment of pointer access" begin
+            # Elements of an `MMatrix` are accessed with their natural alignment (see #1361)
+            A = SMatrix{8,8}(rmat(Float64, 8, 8))
+            C = MMatrix{8,8,Float64}(undef)
+            for args in ((C, A, A), (C, A, A, 2.0, 3.0))
+                ir = sprint(code_llvm, mul!, typeof(args))
+                @test !occursin(r"(load|store) .* align 1\b", ir)
+            end
         end
 
         @testset "small elements" begin

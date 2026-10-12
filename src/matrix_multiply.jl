@@ -394,8 +394,8 @@ end
         # Linear index of entry `(i, j)` of `c` (all indices are within bounds, see `mul_tile_expr`)
         ind = :($i + ($j - 1) * $M)
         if use_pointer
-            rhs = is_muladd ? :(unsafe_load(p, $ind) * β + α * $acc) : acc
-            return :(unsafe_store!(p, $rhs, $ind))
+            rhs = is_muladd ? :(_unsafe_load_aligned(p, $ind) * β + α * $acc) : acc
+            return :(_unsafe_store_aligned!(p, $rhs, $ind))
         else
             rhs = is_muladd ? :(c[$ind] * β + α * $acc) : acc
             return :(@inbounds c[$ind] = $rhs)
