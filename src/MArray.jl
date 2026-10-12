@@ -76,7 +76,7 @@ end
     return any(index -> index <: StaticVector{<:Any,Bool}, indices.parameters)
 end
 
-function Base.view(
+@propagate_inbounds function Base.view(
     a::MArray{S},
     indices::Union{Integer, Colon, StaticVector, Base.Slice, SOneTo}...,
 ) where {S}
