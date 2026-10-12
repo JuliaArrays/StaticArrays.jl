@@ -260,15 +260,19 @@ const MUL_TILE_BUDGET = 384
 Size `(mr, nr)` of the block of accumulators of `mul_tiled!` for a product of size `M`×`N`
 with elements of `s >= 1` bytes.
 
-The block has at most 8 rows and satisfies `mr * nr * s <= budget`, unless a single
-element exceeds the budget (then `mr = nr = 1`).
+The block satisfies `mr * nr * s <= budget`, unless a single element exceeds the budget
+(then `mr = nr = 1`). If the whole product fits into the budget, it is a single block.
+Otherwise the block has at most 8 rows.
 
-Elements of at least 32 bytes (the size of AVX2 registers) are not vectorized across rows,
-so for them the rows are distributed evenly among the blocks: Otherwise the block at the
-bottom edge might consist of only a few rows, i.e., few independent accumulators.
+Elements of at least 32 bytes (the size of AVX2 registers) are not vectorized across rows.
+For them the block is approximately square, which minimizes the number of loads of elements
+of the factors per update of an accumulator (`mr + nr` loads for `mr * nr` updates), and
+the rows are distributed evenly among the blocks: Otherwise the block at the bottom edge
+might consist of only a few rows, i.e., few independent accumulators.
 """
 function mul_tile(M::Int, N::Int, s::Int, budget::Int)
-    mr = min(M, 8, max(1, budget ÷ s))
+    M * N * s <= budget && return M, N
+    mr = min(M, 8, max(1, s >= 32 ? isqrt(budget ÷ s) : budget ÷ s))
     nr = min(N, max(1, budget ÷ (s * mr)))
     if s >= 32
         mr = cld(M, cld(M, mr))

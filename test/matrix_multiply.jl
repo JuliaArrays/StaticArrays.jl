@@ -455,25 +455,35 @@ Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
             @test StaticArrays.mul_tile(8, 8, 8, budget) == (8, 6)
             @test StaticArrays.mul_tile(8, 8, 1000, budget) == (1, 1)
             @test StaticArrays.mul_tile(9, 9, 8, budget) == (8, 6)
-            @test StaticArrays.mul_tile(6, 6, 72, budget) == (3, 1)
-            for M in 1:10, N in 1:10, s in (1, 4, 8, 16, 32, 72, 200, 1000)
+            @test StaticArrays.mul_tile(6, 6, 72, budget) == (2, 2)
+            @test StaticArrays.mul_tile(7, 8, 32, budget) == (3, 4)
+            @test StaticArrays.mul_tile(16, 3, 8, budget) == (16, 3)
+            @test StaticArrays.mul_tile(16, 4, 8, budget) == (8, 4)
+            for M in (1:10..., 16, 17), N in 1:10, s in (1, 4, 8, 16, 32, 72, 200, 1000)
                 mr, nr = StaticArrays.mul_tile(M, N, s, budget)
-                @test 1 <= mr <= min(M, 8) && 1 <= nr <= N
-                @test mr * nr * s <= budget || mr == nr == 1
-                if s >= 32
-                    # Rows are distributed evenly among the blocks
-                    @test cld(M, mr) == cld(M, min(M, 8, max(1, budget ÷ s)))
+                if M * N * s <= budget
+                    # Single block
+                    @test (mr, nr) == (M, N)
+                else
+                    @test 1 <= mr <= min(M, 8) && 1 <= nr <= N
+                    @test mr * nr * s <= budget || mr == nr == 1
+                    if s >= 32
+                        # Approximately square blocks, whose rows are distributed evenly
+                        @test cld(M, mr) == cld(M, min(M, max(1, isqrt(budget ÷ s))))
+                    end
                 end
             end
         end
 
         # Exact arithmetic; `Complex{Int128}` (32 bytes) and `Int` (8 bytes) lead to
-        # different blocks, and the sizes lead to blocks at the bottom and right edges
+        # different blocks, and the sizes lead to a single block (with more than 8 rows for
+        # `Int` and `(16, 3, 2)`) or to several blocks, including blocks at the bottom and
+        # right edges
         rmat(T, M, N) = T.(rand(-9:9, M, N))
         mul_alloc(A, B) = @allocated A * B
         mul!_alloc(C, A, B, α, β) = @allocated mul!(C, A, B, α, β)
         @testset "$T, ($M, $K, $N)" for T in (Int, Complex{Int128}),
-                (M, K, N) in ((1, 1, 1), (3, 3, 3), (7, 5, 9), (9, 7, 13), (16, 3, 2), (17, 3, 2))
+                (M, K, N) in ((1, 1, 1), (3, 3, 3), (7, 5, 9), (9, 7, 13), (16, 3, 2), (17, 3, 2), (17, 3, 13))
             A = SMatrix{M,K}(rmat(T, M, K))
             B = SMatrix{K,N}(rmat(T, K, N))
             AB = Matrix(A) * Matrix(B)
