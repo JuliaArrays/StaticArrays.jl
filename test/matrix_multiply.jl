@@ -460,6 +460,10 @@ Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
                 mr, nr = StaticArrays.mul_tile(M, N, s, budget)
                 @test 1 <= mr <= min(M, 8) && 1 <= nr <= N
                 @test mr * nr * s <= budget || mr == nr == 1
+                if s >= 32
+                    # Rows are distributed evenly among the blocks
+                    @test cld(M, mr) == cld(M, min(M, 8, max(1, budget ÷ s)))
+                end
             end
         end
 
@@ -469,7 +473,7 @@ Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
         mul_alloc(A, B) = @allocated A * B
         mul!_alloc(C, A, B, α, β) = @allocated mul!(C, A, B, α, β)
         @testset "$T, ($M, $K, $N)" for T in (Int, Complex{Int128}),
-                (M, K, N) in ((1, 1, 1), (3, 3, 3), (7, 5, 9), (9, 7, 13), (16, 3, 2))
+                (M, K, N) in ((1, 1, 1), (3, 3, 3), (7, 5, 9), (9, 7, 13), (16, 3, 2), (17, 3, 2))
             A = SMatrix{M,K}(rmat(T, M, K))
             B = SMatrix{K,N}(rmat(T, K, N))
             AB = Matrix(A) * Matrix(B)
@@ -503,6 +507,17 @@ Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
             @test mul!(A, A, A) == A0 * A0
             A = MMatrix{5,5}(A0)
             @test mul!(A, A, A, 2, 3) == 2 * A0 * A0 + 3 * A0
+        end
+
+        @testset "small elements" begin
+            # A single block of 8×20 elements; the accumulators of `Bool` elements are
+            # promoted to `Int` by `muladd`
+            for (A, B) in ((SMatrix{8,3}(rand(Bool, 8, 3)), SMatrix{3,20}(rand(Bool, 3, 20))),
+                           (SMatrix{8,3}(Int8.(rand(-3:3, 8, 3))), SMatrix{3,20}(Int8.(rand(-3:3, 3, 20)))))
+                AB = Matrix(A) * Matrix(B)
+                @test (A * B)::SMatrix{8,20,eltype(AB)} == AB
+                @test mul!(MMatrix{8,20,eltype(AB)}(undef), A, B) == AB
+            end
         end
 
         @testset "elements exceeding the budget" begin
