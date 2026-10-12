@@ -1,4 +1,4 @@
-using StaticArrays, Test, LinearAlgebra
+using StaticArrays, Test, LinearAlgebra, InteractiveUtils
 
 mul_wrappers = [
     m -> m,
@@ -13,6 +13,15 @@ mul_wrappers = [
     m -> Adjoint(m),
     m -> Transpose(m),
     m -> Diagonal(m)]
+
+# Number whose size exceeds `StaticArrays.MUL_TILE_BUDGET`
+struct WideInt <: Number
+    x::Int
+    padding::NTuple{63,Int}
+end
+WideInt(x::Int) = WideInt(x, ntuple(_ -> 0, Val(63)))
+Base.:+(a::WideInt, b::WideInt) = WideInt(a.x + b.x)
+Base.:*(a::WideInt, b::WideInt) = WideInt(a.x * b.x)
 
 @testset "Matrix multiplication" begin
     @testset "Matrix-vector" begin
@@ -438,5 +447,110 @@ mul_wrappers = [
         @test outvec2f ≈ [10.0, 22.0]
 
         @test mul!(@MArray([0.0]), Diagonal([1]), @MArray([2.0])) == @MArray([2.0])
+    end
+
+    @testset "Tiled multiplication" begin
+        @testset "mul_tile" begin
+            budget = StaticArrays.MUL_TILE_BUDGET
+            @test StaticArrays.mul_tile(8, 8, 8, budget) == (8, 6)
+            @test StaticArrays.mul_tile(8, 8, 1000, budget) == (1, 1)
+            @test StaticArrays.mul_tile(9, 9, 8, budget) == (8, 6)
+            @test StaticArrays.mul_tile(6, 6, 72, budget) == (2, 2)
+            @test StaticArrays.mul_tile(7, 8, 32, budget) == (3, 4)
+            @test StaticArrays.mul_tile(16, 3, 8, budget) == (16, 3)
+            @test StaticArrays.mul_tile(16, 4, 8, budget) == (8, 4)
+            for M in (1:10..., 16, 17), N in 1:10, s in (1, 4, 8, 16, 32, 72, 200, 1000)
+                mr, nr = StaticArrays.mul_tile(M, N, s, budget)
+                if M * N * s <= budget
+                    # Single block
+                    @test (mr, nr) == (M, N)
+                else
+                    @test 1 <= mr <= min(M, 8) && 1 <= nr <= N
+                    @test mr * nr * s <= budget || mr == nr == 1
+                    if s >= 32
+                        # Approximately square blocks, whose rows are distributed evenly
+                        @test cld(M, mr) == cld(M, min(M, max(1, isqrt(budget ÷ s))))
+                    end
+                end
+            end
+        end
+
+        # Exact arithmetic; `Complex{Int128}` (32 bytes) and `Int` (8 bytes) lead to
+        # different blocks, and the sizes lead to a single block (with more than 8 rows for
+        # `Int` and `(16, 3, 2)`) or to several blocks, including blocks at the bottom and
+        # right edges
+        rmat(T, M, N) = T.(rand(-9:9, M, N))
+        mul_alloc(A, B) = @allocated A * B
+        mul!_alloc(C, A, B, α, β) = @allocated mul!(C, A, B, α, β)
+        @testset "$T, ($M, $K, $N)" for T in (Int, Complex{Int128}),
+                (M, K, N) in ((1, 1, 1), (3, 3, 3), (7, 5, 9), (9, 7, 13), (16, 3, 2), (17, 3, 2), (17, 3, 13))
+            A = SMatrix{M,K}(rmat(T, M, K))
+            B = SMatrix{K,N}(rmat(T, K, N))
+            AB = Matrix(A) * Matrix(B)
+            @test (A * B)::SMatrix{M,N,T} == AB
+            @test (MMatrix(A) * MMatrix(B))::MMatrix{M,N,T} == AB
+            @test (SizedMatrix{M,K}(A) * SizedMatrix{K,N}(B))::SizedMatrix{M,N,T} == AB
+
+            # Destinations with (`MMatrix`) and without (`SizedMatrix`) pointer access
+            for C in (MMatrix{M,N}(rmat(T, M, N)), SizedMatrix{M,N}(rmat(T, M, N)))
+                C0 = copy(C)
+                @test mul!(C, A, B, T(2), T(3)) === C
+                @test C == 2 * AB + 3 * C0
+                @test mul!(C, A, B) == AB
+            end
+
+            C = MMatrix{M,N,T}(undef)
+            mul_alloc(A, B); mul!_alloc(C, A, B, T(2), T(3))
+            @test mul_alloc(A, B) == 0
+            @test mul!_alloc(C, A, B, T(2), T(3)) == 0
+        end
+
+        @testset "conversion" begin
+            A = SMatrix{3,3}(rmat(Int, 3, 3))
+            @test mul!(MMatrix{3,3,Float64}(undef), A, A)::MMatrix{3,3,Float64} == Matrix(A) * Matrix(A)
+            @test_throws InexactError mul!(MMatrix{1,1,Int}(undef), SMatrix{1,1}(0.5), SMatrix{1,1}(1.0))
+        end
+
+        @testset "aliasing" begin
+            A0 = rmat(Int, 5, 5)
+            A = MMatrix{5,5}(A0)
+            @test mul!(A, A, A) == A0 * A0
+            A = MMatrix{5,5}(A0)
+            @test mul!(A, A, A, 2, 3) == 2 * A0 * A0 + 3 * A0
+        end
+
+        @testset "alignment of pointer access" begin
+            # Elements of an `MMatrix` are accessed with their natural alignment (see #1361)
+            A = SMatrix{8,8}(rmat(Float64, 8, 8))
+            C = MMatrix{8,8,Float64}(undef)
+            for args in ((C, A, A), (C, A, A, 2.0, 3.0))
+                ir = sprint(code_llvm, mul!, typeof(args))
+                @test !occursin(r"(load|store) .* align 1\b", ir)
+            end
+        end
+
+        @testset "small elements" begin
+            # A single block of 8×20 elements; the accumulators of `Bool` elements are
+            # promoted to `Int` by `muladd`
+            for (A, B) in ((SMatrix{8,3}(rand(Bool, 8, 3)), SMatrix{3,20}(rand(Bool, 3, 20))),
+                           (SMatrix{8,3}(Int8.(rand(-3:3, 8, 3))), SMatrix{3,20}(Int8.(rand(-3:3, 3, 20)))))
+                AB = Matrix(A) * Matrix(B)
+                @test (A * B)::SMatrix{8,20,eltype(AB)} == AB
+                @test mul!(MMatrix{8,20,eltype(AB)}(undef), A, B) == AB
+            end
+        end
+
+        @testset "elements exceeding the budget" begin
+            A = SMatrix{3,2}(rmat(Int, 3, 2))
+            B = SMatrix{2,4}(rmat(Int, 2, 4))
+            @test map(x -> x.x, WideInt.(A) * WideInt.(B)) == Matrix(A) * Matrix(B)
+        end
+
+        @testset "empty and zero inner dimension" begin
+            @test zeros(SMatrix{0,3,Int}) * SMatrix{3,2,Int}(1:6) === zeros(SMatrix{0,2,Int})
+            @test zeros(SMatrix{2,0,Int}) * zeros(SMatrix{0,2,Int}) === zeros(SMatrix{2,2,Int})
+            C = MMatrix{2,2}(1:4)
+            @test mul!(C, zeros(SMatrix{2,0,Int}), zeros(SMatrix{0,2,Int}), 2, 3) == 3 * SMatrix{2,2}(1:4)
+        end
     end
 end
