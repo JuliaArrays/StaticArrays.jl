@@ -290,13 +290,13 @@ reduce(::typeof(hcat), A::StaticArray{<:Tuple,<:StaticVecOrMatLike}) =
 # TODO: change to use Base.reduce_empty/Base.reduce_first
 @inline iszero(a::StaticArray{<:Tuple,T}) where {T} = reduce((x,y) -> x && iszero(y), a, init=true)
 
-@inline sum(a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _reduce(+, a, dims, init)
-@inline sum(f, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, +, dims, init, Size(a), a)
-@inline sum(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, +, dims, init, Size(a), a) # avoid ambiguity
+@inline sum(a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _reduce(Base.add_sum, a, dims, init)
+@inline sum(f, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, Base.add_sum, dims, init, Size(a), a)
+@inline sum(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, Base.add_sum, dims, init, Size(a), a) # avoid ambiguity
 
-@inline prod(a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _reduce(*, a, dims, init)
-@inline prod(f, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, *, dims, init, Size(a), a)
-@inline prod(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, *, dims, init, Size(a), a)
+@inline prod(a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _reduce(Base.mul_prod, a, dims, init)
+@inline prod(f, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, Base.mul_prod, dims, init, Size(a), a)
+@inline prod(f::Union{Function, Type}, a::StaticArray{<:Tuple,T}; dims::D=:, init=_InitialValue()) where {D, T} = _mapreduce(f, Base.mul_prod, dims, init, Size(a), a)
 
 @inline count(a::StaticArray{<:Tuple,Bool}; dims::D=:, init=0) where {D} = _reduce(+, a, dims, init)
 @inline count(f, a::StaticArray; dims::D=:, init=0) where {D} = _mapreduce(x->f(x)::Bool, +, dims, init, Size(a), a)
