@@ -75,11 +75,11 @@ end
     LinearAlgebra.checksquare(A)
     if prod(S) ≤ 14*14
         quote
-            @_inline_meta
+            @inline
             inv(lu(A))
         end
     else
-        :(@_inline_meta; similar_type(A)(inv(Matrix(A))))
+        :(@inline; similar_type(A)(inv(Matrix(A))))
     end
 end
 

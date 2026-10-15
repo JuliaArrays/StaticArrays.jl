@@ -1,4 +1,4 @@
-using StaticArrays, Test
+using StaticArrays, Test, Random
 import StaticArrays.arithmetic_closure
 
 struct TestDie

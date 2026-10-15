@@ -1,3 +1,5 @@
+using Random
+
 @testset "MVector" begin
     @testset "Inner Constructors" begin
         @test MVector{1,Int}((1,)).data === (1,)
@@ -78,13 +80,13 @@
                 @test (@MVector randn(T, 4)) isa MVector{4, T}
                 @test (@MVector randexp(T, 4)) isa MVector{4, T}
                 @test (@MVector rand(_rng(), T, n)) isa MVector{n, T}
-                VERSION≥v"1.7" && @test (@MVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                @test (@MVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
                 @test (@MVector randn(_rng(), T, n)) isa MVector{n, T}
                 @test (@MVector randn(_rng(), T, n)) == randn(_rng(), T, n)
                 @test (@MVector randexp(_rng(), T, n)) isa MVector{n, T}
                 @test (@MVector randexp(_rng(), T, n)) == randexp(_rng(), T, n)
                 @test (@MVector rand(_rng(), T, 4)) isa MVector{4, T}
-                VERSION≥v"1.7" && @test (@MVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                @test (@MVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
                 @test (@MVector randn(_rng(), T, 4)) isa MVector{4, T}
                 @test (@MVector randn(_rng(), T, 4)) == randn(_rng(), T, 4)
                 @test (@MVector randexp(_rng(), T, 4)) isa MVector{4, T}
@@ -104,10 +106,8 @@
             test_expand_error(:(@MVector [[1 2];[3 4]]))
         end
 
-        if VERSION >= v"1.7.0"
-            @test ((@MVector Float64[1;2;3;;;])::MVector{3}).data === (1.0, 2.0, 3.0)
-            @test ((@MVector [1;2;3;;;])::MVector{3}).data === (1, 2, 3)
-        end
+        @test ((@MVector Float64[1;2;3;;;])::MVector{3}).data === (1.0, 2.0, 3.0)
+        @test ((@MVector [1;2;3;;;])::MVector{3}).data === (1, 2, 3)
     end
 
     @testset "Methods" begin

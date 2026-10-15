@@ -76,7 +76,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         if length(b) != sa[2]
             throw(DimensionMismatch("Tried to multiply arrays of size $sa and $(size(b))"))
         end
@@ -102,7 +102,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod,Ta,Tb)
         a = mul_parent(wrapped_a)
         $retexpr
@@ -116,7 +116,7 @@ end
     exprs = [:(a[$i]*b[$j]) for i = 1:sa[1], j = 1:sb[2]]
 
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(*, Ta, Tb)
         @inbounds return similar_type(b, T, Size($newsize))(tuple($(exprs...)))
     end
@@ -135,24 +135,24 @@ end
     if a <: StaticMatrix && b <: StaticMatrix
         # Julia unrolls these loops pretty well
         return quote
-            @_inline_meta
+            @inline
             return mul_loop(Sa, Sb, a, b)
         end
     elseif sa[1]*sa[2]*sb[2] <= 4*8*8*8*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
-            @_inline_meta
+            @inline
             return mul_unrolled(Sa, Sb, a, b)
         end
     elseif (sa[1] <= 14 && sa[2] <= 14 && sb[2] <= 14) || !(a <: StaticMatrix) || !(b <: StaticMatrix)
         return quote
-            @_inline_meta
+            @inline
             return mul_unrolled_chunks(Sa, Sb, a, b)
         end
     else
         # we don't have any special code for handling this case so let's fall back to
         # the generic implementation of matrix multiplication
         return quote
-            @_inline_meta
+            @inline
             return mul_generic(Sa, Sb, a, b)
         end
     end
@@ -177,7 +177,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod,Ta,Tb)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
@@ -227,7 +227,7 @@ end
         n = nu
     end
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod,Ta,Tb)
         $q
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))
@@ -242,7 +242,7 @@ end
     S = Size(sa[1], sb[2])
 
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod, Ta, Tb)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
@@ -277,7 +277,7 @@ end
         end
     end
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod, Ta, Tb)
         a = mul_parent(wrapped_a)
         b = mul_parent(wrapped_b)
@@ -326,7 +326,7 @@ end
         n = nu
     end
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod,Ta,Tb)
         $q
         @inbounds return similar_type(a, T, $S)(tuple($(tmps...)))

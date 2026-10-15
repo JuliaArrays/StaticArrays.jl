@@ -1,3 +1,5 @@
+using LinearAlgebra
+
 @testset "Core definitions and constructors" begin
     @testset "Inner Constructors" begin
         # SVector

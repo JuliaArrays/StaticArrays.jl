@@ -1,3 +1,5 @@
+using Random
+
 @testset "MArray" begin
     @testset "Inner Constructors" begin
         @test MArray{Tuple{1},Int,1,1}((1,)).data === (1,)
@@ -133,13 +135,13 @@
                     @test (@MArray randn(T, 4)) isa MVector{4, T}
                     @test (@MArray randexp(T, 4)) isa MVector{4, T}
                     @test (@MArray rand(_rng(), T, n)) isa MVector{n, T}
-                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                    @test (@MArray rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
                     @test (@MArray randn(_rng(), T, n)) isa MVector{n, T}
                     @test (@MArray randn(_rng(), T, n)) == randn(_rng(), T, n)
                     @test (@MArray randexp(_rng(), T, n)) isa MVector{n, T}
                     @test (@MArray randexp(_rng(), T, n)) == randexp(_rng(), T, n)
                     @test (@MArray rand(_rng(), T, 4)) isa MVector{4, T}
-                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                    @test (@MArray rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
                     @test (@MArray randn(_rng(), T, 4)) isa MVector{4, T}
                     @test (@MArray randn(_rng(), T, 4)) == randn(_rng(), T, 4)
                     @test (@MArray randexp(_rng(), T, 4)) isa MVector{4, T}
@@ -188,13 +190,13 @@
                     @test (@MArray randn(T, 4, 4)) isa MMatrix{4, 4, T}
                     @test (@MArray randexp(T, 4, 4)) isa MMatrix{4, 4, T}
                     @test (@MArray rand(_rng(), T, n, n)) isa MMatrix{n, n, T}
-                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                    @test (@MArray rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
                     @test (@MArray randn(_rng(), T, n, n)) isa MMatrix{n, n, T}
                     @test (@MArray randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
                     @test (@MArray randexp(_rng(), T, n, n)) isa MMatrix{n, n, T}
                     @test (@MArray randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
                     @test (@MArray rand(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
-                    VERSION≥v"1.7" && @test (@MArray rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                    @test (@MArray rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
                     @test (@MArray randn(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
                     @test (@MArray randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
                     @test (@MArray randexp(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
@@ -247,26 +249,24 @@
 
         @test (@MArray [[[1,2],1]; 2; 3]) == [[[1,2],1]; 2; 3]
 
-        if VERSION >= v"1.7.0"
-            function test_ex(ex)
-                a = eval(:(@MArray $ex))
-                b = eval(ex)
-                @test a isa MArray
-                @test eltype(a) === eltype(b)
-                @test a == b
-            end
-            test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
-            test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
-            test_ex(:([1 2 ;;; 3 4]))
-            test_ex(:(Float32[1 2 ;;; 3 4]))
-            test_ex(:([ 1 2
-                        3 4
-                        ;;;
-                        5 6
-                        7 8 ]))
-            test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
-            test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
+        function test_ex(ex)
+            a = eval(:(@MArray $ex))
+            b = eval(ex)
+            @test a isa MArray
+            @test eltype(a) === eltype(b)
+            @test a == b
         end
+        test_ex(:([1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+        test_ex(:(Float64[1 2 ; 3 4 ;;; 5 6 ; 7 8]))
+        test_ex(:([1 2 ;;; 3 4]))
+        test_ex(:(Float32[1 2 ;;; 3 4]))
+        test_ex(:([ 1 2
+                    3 4
+                    ;;;
+                    5 6
+                    7 8 ]))
+        test_ex(:([1 ; 2 ;; 3 ; 4 ;;; 5 ; 6 ;; 7 ; 8]))
+        test_ex(:([[[1 ; 2] ;; [3 ; 4]] ;;; [[5 ; 6] ;; [7 ; 8]]]))
     end
 
     @testset "Methods" begin

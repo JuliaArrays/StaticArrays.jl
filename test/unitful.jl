@@ -1,4 +1,4 @@
-using Unitful
+using Unitful, LinearAlgebra
 
 @testset "Unitful" begin
     # issue #1124

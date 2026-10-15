@@ -49,7 +49,7 @@ const StaticULT{TA} = Union{UpperTriangular{TA,<:StaticMatrix},LowerTriangular{T
     end
 
     return quote
-        @_inline_meta
+        @inline
         b = mul_parent(B)
         Tb = TB
         @inbounds $init
