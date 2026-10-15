@@ -13,8 +13,7 @@ import StaticArrays: drop_sdims
     # than add an extra wrapper.  Currently unwrapping doesn't work due to
     # reshaping issues.
     @test drop_sdims(SizedMatrix{2,2}([1 2; 3 4])) == [1 2; 3 4]
-    @test drop_sdims(SizedMatrix{2,3}([1 4;
-                                       2 5;
-                                       3 6])) == [1 3 5;
-                                                  2 4 6]
+    @test drop_sdims(SizedMatrix{2,3}([1 3 5;
+                                       2 4 6])) == [1 3 5;
+                                                    2 4 6]
 end

@@ -1,3 +1,5 @@
+import InteractiveUtils, Random
+
 """
     x ≊ y
 
@@ -5,6 +7,9 @@ Inexact equality comparison. Like `≈` this calls `isapprox`, but with a
 tighter tolerance of `rtol=10*eps()`.  Input with "\\approxeq".
 """
 ≊(x,y) = isapprox(x, y, rtol=10*eps())
+
+# Useful function to regenerate rng
+_rng() = Random.MersenneTwister(42)
 
 """
     @testinf a op b
@@ -81,7 +86,7 @@ macro test_inlined(ex, should_inline=true)
             use_signature_tuple=true,
         )
     else
-        ex = macroexpand(@__MODULE__, :(@code_llvm $ex))
+        ex = macroexpand(@__MODULE__, :(InteractiveUtils.@code_llvm $ex))
         code_str = quote
             let params = Base.CodegenParams(safepoint_on_entry=false),
                 f = $(esc(ex.args[2])),
@@ -96,7 +101,7 @@ macro test_inlined(ex, should_inline=true)
             code_str = $code_str
         else
             code_str = sprint() do io
-                code_llvm(io, $(map(esc, ex.args[2:end])...))
+                InteractiveUtils.code_llvm(io, $(map(esc, ex.args[2:end])...))
             end
         end
         # Crude detection of call instructions remaining within what should be
@@ -118,22 +123,3 @@ end
 should_be_inlined(x) = x*x
 @noinline _should_not_be_inlined(x) = x*x
 should_not_be_inlined(x) = _should_not_be_inlined(x)
-
-@testset "test utils" begin
-    @testset "@testinf" begin
-        @testinf [1,2] == [1,2]
-        x = [1,2]
-        @testinf x == [1,2]
-        @testinf (@SVector [1,2]) == (@SVector [1,2])
-    end
-
-    @testset "@test_inlined" begin
-        @test_inlined should_be_inlined(1)
-        @test_inlined should_not_be_inlined(1) false
-        ts = @testset ErrorCounterTestSet "" begin
-            @test_inlined should_be_inlined(1) false
-            @test_inlined should_not_be_inlined(1)
-        end
-        @test ts.errorcount == 0 && ts.failcount == 2 && ts.passcount == 0
-    end
-end

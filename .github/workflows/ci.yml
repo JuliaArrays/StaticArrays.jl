@@ -5,9 +5,13 @@ on:
       - master
     tags: '*'
   pull_request:
+concurrency:
+  # Cancel superseded runs on PRs, but not on master or tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ matrix.group }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.version == 'nightly' }}
     strategy:
@@ -26,51 +30,21 @@ jobs:
           - arch: x86
             version: 'lts'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
             version: '1'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
             version: 'nightly'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
             version: 'lts'
             os: windows-latest
-            group: 'group-A'
           - arch: x86
             version: '1'
             os: windows-latest
-            group: 'group-A'
           - arch: x86
             version: 'nightly'
             os: windows-latest
-            group: 'group-A'
-          - arch: x86
-            version: 'lts'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: '1'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: 'nightly'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: 'lts'
-            os: windows-latest
-            group: 'group-B'
-          - arch: x86
-            version: '1'
-            os: windows-latest
-            group: 'group-B'
-          - arch: x86
-            version: 'nightly'
-            os: windows-latest
-            group: 'group-B'
         exclude:
           # Remove some configurations from the build matrix to reduce CI time.
           # See https://github.com/marketplace/actions/setup-julia-environment
@@ -84,8 +58,6 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-        env:
-          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

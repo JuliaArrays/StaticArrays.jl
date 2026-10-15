@@ -1,4 +1,4 @@
-using StaticArrays, Test
+using StaticArrays, Test, LinearAlgebra
 using Statistics: mean
 
 @testset "Map, reduce, mapreduce, broadcast" begin

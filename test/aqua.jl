@@ -1,3 +1,5 @@
+using Aqua
+
 Aqua.test_all(StaticArrays, piracies=false)
 Aqua.test_piracies(StaticArrays, treat_as_own=[
         StaticArray

@@ -1,3 +1,5 @@
+using Random
+
 @testset "MMatrix" begin
     @testset "Inner Constructors" begin
         @test MMatrix{1,1,Int,1}((1,)).data === (1,)

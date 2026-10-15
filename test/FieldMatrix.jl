@@ -47,7 +47,7 @@
         @test [[Tensor3x3(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)]; [Tensor3x3(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0)]]::Vector{Tensor3x3} == [Tensor3x3(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0), Tensor3x3(2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0)]
 
         # Issue 342
-        @test_throws DimensionMismatch("No precise constructor for Tensor3x3 found. Length of input was 10.") Tensor3x3(1,2,3,4,5,6,7,8,9,10)
+        @test_throws DimensionMismatch("No precise constructor for $Tensor3x3 found. Length of input was 10.") Tensor3x3(1,2,3,4,5,6,7,8,9,10)
     end
 
     @testset "Mutable Tensor2x2" begin

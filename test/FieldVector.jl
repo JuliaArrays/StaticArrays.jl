@@ -42,7 +42,7 @@
         @test [[Point3D(1.0,2.0,3.0)]; [Point3D(4.0,5.0,6.0)]]::Vector{Point3D} == [Point3D(1.0,2.0,3.0), Point3D(4.0,5.0,6.0)]
 
         # Issue 342
-        @test_throws DimensionMismatch("No precise constructor for Point3D found. Length of input was 4.") Point3D(1,2,3,4)
+        @test_throws DimensionMismatch("No precise constructor for $Point3D found. Length of input was 4.") Point3D(1,2,3,4)
 
         eval(quote
             struct Point2DT{T} <: FieldVector{2, T}
@@ -138,7 +138,7 @@
             z::T
             Position1088(x::T, y::T, z::T) where {T} = new{T}(x, y, z)
         end
-        @test_throws ErrorException("The constructor for Position1088{Float64}(::Float64, ::Float64, ::Float64) is missing!") Position1088((1.,2.,3.))
+        @test_throws ErrorException("The constructor for $(Position1088{Float64})(::Float64, ::Float64, ::Float64) is missing!") Position1088((1.,2.,3.))
     end
 
     @testset "FieldVector to NamedTuple" begin

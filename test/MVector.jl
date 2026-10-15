@@ -1,3 +1,5 @@
+using Random
+
 @testset "MVector" begin
     @testset "Inner Constructors" begin
         @test MVector{1,Int}((1,)).data === (1,)

@@ -1,3 +1,5 @@
+using Random
+
 @testset "SArray" begin
     @testset "Inner Constructors" begin
         @test SArray{Tuple{1},Int,1,1}((1,)).data === (1,)
