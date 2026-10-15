@@ -1,6 +1,6 @@
 name = "StaticArrays"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.23"
+version = "1.10.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -32,7 +32,7 @@ StaticArraysCore = "~1.4.0"
 Statistics = "1.6"
 Test = "1.6"
 Unitful = "1"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
