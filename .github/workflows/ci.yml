@@ -58,6 +58,12 @@ jobs:
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
+        with:
+          # On the macOS runners, ParallelTestRunner's default (based on the reported
+          # available memory) is a single worker. Two workers (out of three CPU threads)
+          # roughly halve the test time while leaving some memory headroom. See
+          # https://juliatesting.github.io/ParallelTestRunner.jl/stable/advanced/#Choosing-the-Number-of-Jobs
+          test_args: ${{ runner.os == 'macOS' && '--jobs=2' || '' }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
