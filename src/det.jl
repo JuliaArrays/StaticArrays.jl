@@ -59,11 +59,11 @@ end
     checksquare(A)
     if prod(S) ≤ 14*14
         quote
-            @_inline_meta
+            @inline
             det(lu(A, Val(true); check = false))
         end
     else
-        :(@_inline_meta; det(Matrix(A)))
+        :(@inline; det(Matrix(A)))
     end
 end
 
@@ -73,11 +73,11 @@ end
     checksquare(A)
     if prod(S) ≤ 14*14
         quote
-            @_inline_meta
+            @inline
             logdet(lu(A, Val(true); check = false))
         end
     else
-        :(@_inline_meta; logdet(drop_sdims(A)))
+        :(@inline; logdet(drop_sdims(A)))
     end
 end
 
@@ -86,10 +86,10 @@ end
     checksquare(A)
     if prod(S) ≤ 14*14
         quote
-            @_inline_meta
+            @inline
             logabsdet(lu(A, Val(true); check = false))
         end
     else
-        :(@_inline_meta; logabsdet(drop_sdims(A)))
+        :(@inline; logabsdet(drop_sdims(A)))
     end
 end

@@ -260,7 +260,7 @@ Base.permutedims(A::SizedMatrix{M,N}) where {M,N} = SizedMatrix{N,M}(permutedims
     end
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end
@@ -284,7 +284,7 @@ end
     Snew = (Sa[1], Size(Sa)[2] + Size(Sb)[2])
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(a, promote_type(eltype(a), eltype(b)), Size($Snew))(tuple($(exprs...)))
     end
 end

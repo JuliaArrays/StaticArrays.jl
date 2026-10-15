@@ -59,7 +59,6 @@ end
 @inline Base.typed_hvcat(sa::Type{SA}, rows::Dims, xs::Number...)            = _SA_typed_hvcat(sa, rows, xs)
 @inline Base.typed_hvcat(sa::Type{SA{T}}, rows::Dims, xs::Number...) where T = _SA_typed_hvcat(sa, rows, xs)
 
-if VERSION >= v"1.7"
 @generated function reorder(x::NTuple{M,Any}, ::Val{N1}, ::Val{N2}) where {M,N1,N2}
     a = Base.PermutedDimsArray(reshape(1:M, N1, N2, :), (2, 1, 3))
     args = (:(x[$i]) for i in a)
@@ -82,4 +81,3 @@ end
 
 @inline Base.typed_hvncat(sa::Type{SA}, dim::Int, xs::Number...) = _SA_typed_hvncat(sa, Val(dim-1), xs)
 @inline Base.typed_hvncat(sa::Type{SA{T}}, dim::Int, xs::Number...) where T = _SA_typed_hvncat(sa, Val(dim-1), xs)
-end

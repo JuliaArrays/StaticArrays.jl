@@ -11,7 +11,7 @@
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -29,7 +29,7 @@ end
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -48,7 +48,7 @@ end
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -73,7 +73,7 @@ using Random: SamplerType
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -83,7 +83,7 @@ end
 @generated function _rand(rng::AbstractRNG, X, ::Size{s}, ::Type{SA}) where {s, SA <: StaticArray}
     v = [:(rand(rng, X)) for i = 1:prod(s)]
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -105,7 +105,7 @@ end
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -125,7 +125,7 @@ end
         SA = SizedArray{Tuple{s...}, T, length(s)}
     end
     return quote
-        @_inline_meta
+        @inline
         $SA(tuple($(v...)))
     end
 end
@@ -140,7 +140,7 @@ end
 @generated function _fill!(::Size{s}, a::SA, val) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = valT) for i = 1:prod(s)]
     return quote
-        @_inline_meta
+        @inline
         valT = convert(eltype(SA), val)
         @inbounds $(Expr(:block, exprs...))
         return a
@@ -151,7 +151,7 @@ end
 @generated function _rand!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = rand(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        @_inline_meta
+        @inline
         @inbounds $(Expr(:block, exprs...))
         return a
     end
@@ -163,7 +163,7 @@ end
 @generated function _randn!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = randn(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        @_inline_meta
+        @inline
         @inbounds $(Expr(:block, exprs...))
         return a
     end
@@ -173,7 +173,7 @@ end
 @generated function _randexp!(rng::AbstractRNG, ::Size{s}, a::SA) where {s, SA <: StaticArray}
     exprs = [:(a[$i] = randexp(rng, eltype(SA))) for i = 1:prod(s)]
     return quote
-        @_inline_meta
+        @inline
         @inbounds $(Expr(:block, exprs...))
         return a
     end

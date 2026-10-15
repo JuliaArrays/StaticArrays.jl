@@ -58,7 +58,7 @@ end
     if prod(Sa) ≤ 14*14 && Sa[1] == Sa[2]
         # TODO: Consider triangular special cases as in Base?
         quote
-            @_inline_meta
+            @inline
             LUp = lu(a)
             LUp.U \ (LUp.L \ $(length(Sb) > 1 ? :(b[LUp.p,:]) : :(b[LUp.p])))
         end
@@ -68,7 +68,7 @@ end
         # Fall back to LinearAlgebra, but carry across the statically known size.
         outsize = length(Sb) == 1 ? Size(Sa[2]) : Size(Sa[2],Sb[end])
         quote
-            @_inline_meta
+            @inline
             T = typeof((one(Ta)*zero(Tb) + one(Ta)*zero(Tb))/one(Ta))
             similar_type(b, T, $outsize)(Matrix(a) \ b)
         end

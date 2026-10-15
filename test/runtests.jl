@@ -44,9 +44,7 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("SizedArray.jl")
     addtests("SDiagonal.jl")
     addtests("SHermitianCompact.jl")
-    if VERSION >= v"1.8.0-beta1"
-        addtests("empty_array_syntax.jl")
-    end
+    addtests("empty_array_syntax.jl")
 
     addtests("aqua.jl")
     addtests("custom_types.jl")
@@ -90,9 +88,5 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("io.jl")
     addtests("svd.jl")
     addtests("unitful.jl")
-
-    # chain rules integration via pkg extensions is available only in Julia 1.9+
-    if VERSION ≥ v"1.9-"
-        addtests("chainrules.jl")
-    end
+    addtests("chainrules.jl")
 end

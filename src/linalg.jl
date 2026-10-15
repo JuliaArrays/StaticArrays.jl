@@ -404,7 +404,7 @@ end
     total = reduce((ex1, ex2) -> :($ex1 + $ex2), exprs)
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return $total
     end
 end
@@ -425,7 +425,7 @@ const _length_limit = Length(200)
     M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return  similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -440,7 +440,7 @@ end
     m = [ :(a[$ia] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[1]]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(m...)))
     end
 end
@@ -459,7 +459,7 @@ end
     m = [ :(a[$ia] * b[$ib]) for ib in 1:SB[2], ia in 1:SA[2]]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(m...)))
     end
 end
@@ -478,7 +478,7 @@ end
     M = [ :(a[$ia] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[2]]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -497,7 +497,7 @@ end
     M = [ :(a[$ia] * b[$ib]) for  ia in 1:SA[1], ib in 1:SB[2]]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -512,7 +512,7 @@ end
     M = [ :(a[$ia] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2]]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($b, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -527,7 +527,7 @@ end
     M = [ :(a[$ia,$ja] * b[$ib]) for ib in 1:SB[1], ia in 1:SA[1], ja in 1:SA[2] ]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -546,7 +546,7 @@ end
     M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return  similar_type($a, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end
@@ -565,7 +565,7 @@ end
     M = [ :(a[$ia,$ja] * b[$ib,$jb]) for ib in 1:SB[1], ia in 1:SA[1], jb in 1:SB[2], ja in 1:SA[2] ]
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds return  similar_type($b, promote_type(eltype(a),eltype(b)), Size($(outsize)))(tuple($(M...)))
     end
 end

@@ -74,13 +74,13 @@
                 @test (@SVector randn(T, 4)) isa SVector{4, T}
                 @test (@SVector randexp(T, 4)) isa SVector{4, T}
                 @test (@SVector rand(_rng(), T, n)) isa SVector{n, T}
-                VERSION≥v"1.7" && @test (@SVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
+                @test (@SVector rand(_rng(), T, n)) == rand(_rng(), T, n) broken=(T===Float32)
                 @test (@SVector randn(_rng(), T, n)) isa SVector{n, T}
                 @test (@SVector randn(_rng(), T, n)) == randn(_rng(), T, n)
                 @test (@SVector randexp(_rng(), T, n)) isa SVector{n, T}
                 @test (@SVector randexp(_rng(), T, n)) == randexp(_rng(), T, n)
                 @test (@SVector rand(_rng(), T, 4)) isa SVector{4, T}
-                VERSION≥v"1.7" && @test (@SVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
+                @test (@SVector rand(_rng(), T, 4)) == rand(_rng(), T, 4) broken=(T===Float32)
                 @test (@SVector randn(_rng(), T, 4)) isa SVector{4, T}
                 @test (@SVector randn(_rng(), T, 4)) == randn(_rng(), T, 4)
                 @test (@SVector randexp(_rng(), T, 4)) isa SVector{4, T}
@@ -100,10 +100,8 @@
             test_expand_error(:(@SVector [[1 2];[3 4]]))
         end
 
-        if VERSION >= v"1.7.0"
-            @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
-            @test ((@SVector [1;2;3;;;])::SVector{3}).data === (1, 2, 3)
-        end
+        @test ((@SVector Float64[1;2;3;;;])::SVector{3}).data === (1.0, 2.0, 3.0)
+        @test ((@SVector [1;2;3;;;])::SVector{3}).data === (1, 2, 3)
     end
 
     @testset "Methods" begin

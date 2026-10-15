@@ -18,7 +18,7 @@ julia> push(@SVector[1, 2, 3], 4)
     newlen = s[1] + 1
     exprs = vcat([:(vec[$i]) for i = 1:s[1]], :x)
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
@@ -44,7 +44,7 @@ julia> pushfirst(@SVector[1, 2, 3, 4], 5)
     newlen = s[1] + 1
     exprs = vcat(:x, [:(vec[$i]) for i = 1:s[1]])
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
@@ -99,7 +99,7 @@ julia> pop(@SVector[1,2,3])
     newlen = s[1] - 1
     exprs = [:(vec[$i]) for i = 1:s[1]-1]
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end
@@ -122,7 +122,7 @@ julia> popfirst(@SVector[1,2,3])
     newlen = s[1] - 1
     exprs = [:(vec[$i]) for i = 2:s[1]]
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(vec, Size($newlen))(tuple($(exprs...)))
     end
 end

@@ -452,7 +452,7 @@ end
     end
 
     return quote
-        # @_inline_meta
+        # @inline
         α = alpha(_add)
         β = beta(_add)
         a = mul_parent(wrapped_a)
@@ -480,7 +480,7 @@ end
     exprs = _muladd_expr(lhs, ab, _add)
 
     return quote
-        @_inline_meta
+        @inline
         α = alpha(_add)
         β = beta(_add)
         @inbounds $(Expr(:block, exprs...))
@@ -502,26 +502,26 @@ end
     ab_tri_mul = (a_tri_mul == 2 && b_tri_mul == 2) ? 2 : 1
     if mult_dim < 4*4*4*a_tri_mul*b_tri_mul*ab_tri_mul || a <: Diagonal || b <: Diagonal
         return quote
-            @_inline_meta
+            @inline
             muladd_unrolled_all!(Sc, c, Sa, Sb, a, b, _add)
             return c
         end
     elseif mult_dim < 14*14*14 # Something seems broken for this one with large matrices (becomes allocating)
         return quote
-            @_inline_meta
+            @inline
             muladd_unrolled_chunks!(Sc, c, Sa, Sb, a, b, _add)
             return c
         end
     else
         if can_blas
             return quote
-                @_inline_meta
+                @inline
                 mul_blas!(Sc, c, TSize(a), TSize(b), mul_parent(a), mul_parent(b), _add)
                 return c
             end
         else
             return quote
-                @_inline_meta
+                @inline
                 muladd_unrolled_chunks!(Sc, c, Sa, Sb, a, b, _add)
                 return c
             end
@@ -553,7 +553,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         # α = _add.alpha
         # β = _add.beta
         α = alpha(_add)
@@ -597,7 +597,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         α = alpha(_add)
         β = beta(_add)
         c = mul_parent(wrapped_c)

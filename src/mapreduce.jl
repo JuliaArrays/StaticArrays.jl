@@ -58,7 +58,7 @@ end
         # See https://github.com/JuliaArrays/StaticArrays.jl/issues/528
         eltys = [:(eltype(a[$i])) for i ∈ 1:length(a)]
         return quote
-            @_inline_meta
+            @inline
             S = same_size(a...)
             T = Core.Compiler.return_type(f, Tuple{$(eltys...)})
             @inbounds return similar_type(a[$first_staticarray], T, S)()
@@ -72,7 +72,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         S = same_size(a...)
         @inbounds elements = tuple($(exprs...))
         @inbounds return similar_type(typeof(a[$first_staticarray]), eltype(elements), S)(elements)
@@ -92,7 +92,7 @@ enumerate_static(a::StaticArray) = StaticEnumerate(a)
         # eltype, as is done in Base.collect and broadcast.
         # See https://github.com/JuliaArrays/StaticArrays.jl/issues/528
         return quote
-            @_inline_meta
+            @inline
             T = Core.Compiler.return_type(f, Tuple{Tuple{Int,$(eltype(a.parameters[1]))}})
             @inbounds return similar_type(a.itr, T, $S)()
         end
@@ -104,7 +104,7 @@ enumerate_static(a::StaticArray) = StaticEnumerate(a)
     end
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds elements = tuple($(exprs...))
         @inbounds return similar_type(typeof(a.itr), eltype(elements), $S)(elements)
     end
@@ -136,7 +136,7 @@ end
         exprs[i] = :(dest[$i] = f($(tmp...)))
     end
     return quote
-        @_inline_meta
+        @inline
         @inbounds $(Expr(:block, exprs...))
         return dest
     end
@@ -176,7 +176,7 @@ end
         expr = :(op($expr, f($(tmp...))))
     end
     return quote
-        @_inline_meta
+        @inline
         @inbounds return $expr
     end
 end
@@ -225,7 +225,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         @inbounds elements = tuple($(exprs...))
         @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end
@@ -336,7 +336,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         elements = tuple($(exprs...))
         @inbounds return similar_type(a, eltype(elements), Size($Snew))(elements)
     end

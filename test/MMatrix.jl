@@ -123,13 +123,13 @@
                 @test (@MMatrix randn(T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix randexp(T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix rand(_rng(), T, n, n)) isa MMatrix{n, n, T}
-                VERSION≥v"1.7" && @test (@MMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                @test (@MMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
                 @test (@MMatrix randn(_rng(), T, n, n)) isa MMatrix{n, n, T}
                 @test (@MMatrix randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
                 @test (@MMatrix randexp(_rng(), T, n, n)) isa MMatrix{n, n, T}
                 @test (@MMatrix randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
                 @test (@MMatrix rand(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
-                VERSION≥v"1.7" && @test (@MMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                @test (@MMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
                 @test (@MMatrix randn(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
                 @test (@MMatrix randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
                 @test (@MMatrix randexp(_rng(), T, 4, 4)) isa MMatrix{4, 4, T}
@@ -141,11 +141,9 @@
         @test MMatrix(SMatrix{1,1,Int,1}((1,))).data == (1,)
         @test_throws DimensionMismatch MMatrix{3}((1,2,3,4))
 
-        if VERSION >= v"1.7.0"
-            @test ((@MMatrix Float64[1;2;3;;;])::MMatrix{3,1}).data === (1.0, 2.0, 3.0)
-            @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
-            test_expand_error(:(@MMatrix [1;2;;;1;2]))
-        end
+        @test ((@MMatrix Float64[1;2;3;;;])::MMatrix{3,1}).data === (1.0, 2.0, 3.0)
+        @test ((@MMatrix [1;2;3;;;])::MMatrix{3,1}).data === (1, 2, 3)
+        test_expand_error(:(@MMatrix [1;2;;;1;2]))
     end
 
     @testset "Methods" begin

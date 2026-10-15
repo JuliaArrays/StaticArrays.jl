@@ -82,7 +82,7 @@ _sort(a::NTuple, alg, order) = sort!(collect(a); alg=alg, order=order)
     idx = 1:N
     symlist = (Symbol('a', i) for i in idx)
     return quote
-        @_inline_meta
+        @inline
         ($(symlist...),) = a
         ($(sort_exprs(idx)...);)
         return ($(symlist...),)
