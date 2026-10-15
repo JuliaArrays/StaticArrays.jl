@@ -19,4 +19,5 @@ delete!(testsuite, "testutil")
 # check_bounds_no.jl has to run in a Julia process with --check-bounds=no
 test_worker(name) = name == "check_bounds_no" ? addworker(; exeflags=["--check-bounds=no"]) : nothing
 
-runtests(StaticArrays, ARGS; testsuite, init_code, test_worker)
+# Workers stay below 1 GiB of memory, so allow more workers than the default
+runtests(StaticArrays, ARGS; testsuite, init_code, test_worker, memory_per_worker = 2^30)
