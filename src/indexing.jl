@@ -108,7 +108,7 @@ end
 @generated function _getindex(a::StaticArray, ::Length{L}, ::Colon) where {L}
     exprs = [:(a[$i]) for i = 1:L]
     return quote
-        @_inline_meta
+        @inline
         @inbounds return similar_type(a, Size(L))(tuple($(exprs...)))
     end
 end
@@ -133,7 +133,7 @@ end
 @generated function _setindex!(a::StaticArray, v, ::Length{L}, ::Colon) where {L}
     exprs = [:(a[$i] = v) for i = 1:L]
     return quote
-        @_inline_meta
+        @inline
         @inbounds $(Expr(:block, exprs...))
         return a
     end

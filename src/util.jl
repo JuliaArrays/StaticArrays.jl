@@ -1,9 +1,3 @@
-@static if VERSION < v"1.8.0-DEV.410"
-    using Base: @_inline_meta
-else
-    const var"@_inline_meta" = Base.var"@inline"
-end
-
 # Julia 1.9 removed the `@pure` annotation in favor of Concrete-Eval
 # This behaves unfavorable with `julia --check-bounds=no`
 Base.@pure function typeintersect(@nospecialize(a),@nospecialize(b))
@@ -27,7 +21,7 @@ promote_tuple_eltype(::Union{_TupleOf{T}, Type{<:_TupleOf{T}}}) where {T} = T
         t = :(promote_type($t, $tmp))
     end
     return quote
-        @_inline_meta
+        @inline
         $t
     end
 end

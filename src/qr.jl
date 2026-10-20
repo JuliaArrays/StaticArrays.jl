@@ -73,7 +73,7 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
     if pivot === Val{true} || (isdefined(LinearAlgebra, :PivotingStrategy) && pivot === ColumnNorm)
         _pivot = isdefined(LinearAlgebra, :PivotingStrategy) ? ColumnNorm() : Val(true)
         return quote
-            @_inline_meta
+            @inline
             Q0, R0, p0 = qr(Matrix(A), $(_pivot))
             T = _qreltype(TA)
             return similar_type(A, T, $(SizeQ))(Matrix(Q0)),
@@ -83,13 +83,13 @@ _qreltype(::Type{T}) where T = typeof(zero(T)/sqrt(abs2(one(T))))
     else
         if (sA[1]*sA[1] + sA[1]*sA[2])÷2 * diagsize(Size(A)) < 17*17*17
             return quote
-                @_inline_meta
+                @inline
                 return qr_unrolled(Size(A), A, Val(false))
             end
         else
             _pivot = isdefined(LinearAlgebra, :PivotingStrategy) ? NoPivot() : Val(false)
             return quote
-                @_inline_meta
+                @inline
                 Q0R0 = qr(Matrix(A), $(_pivot))
                 Q0, R0 = Matrix(Q0R0.Q), Q0R0.R
                 T = _qreltype(TA)
@@ -169,7 +169,7 @@ end
     mR, nR = min(m, n), n
 
     return quote
-        @_inline_meta
+        @inline
         T = _qreltype(TA)
         @inbounds $(Expr(:block, initQ...))
         @inbounds $(Expr(:block, initR...))

@@ -79,7 +79,7 @@ end
         expr[i += 1] = :(a[$index])
     end
     quote
-        @_inline_meta
+        @inline
         @inbounds return SHermitianCompact{N, T, L}(SVector{L, T}(tuple($(expr...))))
     end
 end
@@ -110,7 +110,7 @@ end
         end
     end
     quote
-        @_inline_meta
+        @inline
         return $(tuple(indexmat...))
     end
 end
@@ -133,7 +133,7 @@ end
 @generated function Base.Tuple(a::SHermitianCompact{N}) where N
     exprs = [:(a[$i]) for i = 1 : N^2]
     quote
-        @_inline_meta
+        @inline
         tuple($(exprs...))
     end
 end
@@ -156,7 +156,7 @@ LinearAlgebra.issymmetric(a::SHermitianCompact) = a == transpose(a)
         exprs[i] = :(f($(tmp...)))
     end
     return quote
-        @_inline_meta
+        @inline
         same_size(a...)
         @inbounds return SHermitianCompact(SVector(tuple($(exprs...))))
     end
@@ -192,7 +192,7 @@ end
         exprs[i] = row == col ? :(a.lowertriangle[$i] + λ) : :(a.lowertriangle[$i])
     end
     return quote
-        @_inline_meta
+        @inline
         R = promote_type(eltype(a), typeof(λ))
         SHermitianCompact{N, R, L}(SVector{L, R}(tuple($(exprs...))))
     end
@@ -212,7 +212,7 @@ end
         exprs[i] = row == col ? :(transpose(a.lowertriangle[$i])) : :(conj(a.lowertriangle[$i]))
     end
     return quote
-        @_inline_meta
+        @inline
         SHermitianCompact{N}(SVector{L}(tuple($(exprs...))))
     end
 end
@@ -233,7 +233,7 @@ end
         exprs[i] = row == col ? :(adjoint(a.lowertriangle[$i])) : :(a.lowertriangle[$i])
     end
     return quote
-        @_inline_meta
+        @inline
         SHermitianCompact{N}(SVector{L}(tuple($(exprs...))))
     end
 end
@@ -251,7 +251,7 @@ end
         exprs[i += 1] = row == col ? :(one($T)) : :(zero($T))
     end
     quote
-        @_inline_meta
+        @inline
         return SHermitianCompact(SVector(tuple($(exprs...))))
     end
 end
@@ -264,7 +264,7 @@ end
     L = triangularnumber(N)
     v = [:val for i = 1:L]
     return quote
-        @_inline_meta
+        @inline
         $SSC(SVector(tuple($(v...))))
     end
 end
@@ -277,7 +277,7 @@ end
     L = triangularnumber(N)
     v = [:(randfun(rng, $T)) for i = 1:L]
     return quote
-        @_inline_meta
+        @inline
         $SSC(SVector(tuple($(v...))))
     end
 end

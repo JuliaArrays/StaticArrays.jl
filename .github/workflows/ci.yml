@@ -5,15 +5,23 @@ on:
       - master
     tags: '*'
   pull_request:
+concurrency:
+  # Cancel superseded runs on PRs, but not on master or tags
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ matrix.group }}
+    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.version == 'nightly' }}
+    permissions:
+      # Needed by julia-actions/cache to delete old caches
+      actions: write
+      contents: read
     strategy:
       matrix:
         version:
-          - '1.6'
+          - 'lts'
           - '1'
           - 'nightly'
         os:
@@ -21,71 +29,41 @@ jobs:
           - macOS-latest
           - windows-latest
         arch:
-          - x64
+          - default
         include:
           - arch: x86
-            version: '1.6'
+            version: 'lts'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
             version: '1'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
             version: 'nightly'
             os: ubuntu-latest
-            group: 'group-A'
           - arch: x86
-            version: '1.6'
+            version: 'lts'
             os: windows-latest
-            group: 'group-A'
           - arch: x86
             version: '1'
             os: windows-latest
-            group: 'group-A'
           - arch: x86
             version: 'nightly'
             os: windows-latest
-            group: 'group-A'
-          - arch: x86
-            version: '1.6'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: '1'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: 'nightly'
-            os: ubuntu-latest
-            group: 'group-B'
-          - arch: x86
-            version: '1.6'
-            os: windows-latest
-            group: 'group-B'
-          - arch: x86
-            version: '1'
-            os: windows-latest
-            group: 'group-B'
-          - arch: x86
-            version: 'nightly'
-            os: windows-latest
-            group: 'group-B'
-        exclude:
-          # Remove some configurations from the build matrix to reduce CI time.
-          # See https://github.com/marketplace/actions/setup-julia-environment
-          # MacOS not available on x86
-          - {os: 'macOS-latest', arch: 'x86'}
     steps:
       - uses: actions/checkout@v7
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-        env:
-          STATICARRAYS_TEST_GROUP: ${{ matrix.group }}
+        with:
+          # On the macOS runners, ParallelTestRunner's default (based on the reported
+          # available memory) is a single worker. Two workers (out of three CPU threads)
+          # roughly halve the test time while leaving some memory headroom. See
+          # https://juliatesting.github.io/ParallelTestRunner.jl/stable/advanced/#Choosing-the-Number-of-Jobs
+          test_args: ${{ runner.os == 'macOS' && '--jobs=2' || '' }}
       - uses: julia-actions/julia-uploadcodecov@latest
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -94,9 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: julia-actions/setup-julia@latest
+      - uses: julia-actions/setup-julia@v3
         with:
-          version: '1.6'
+          version: 'lts'
       - run: julia --project=docs -e '
           using Pkg;
           Pkg.develop(PackageSpec(; path=pwd()));

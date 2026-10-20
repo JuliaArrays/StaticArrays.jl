@@ -38,7 +38,7 @@ end
         exprs[i,i] = :(ifelse(abs(A[$i,$i]) > tol, inv(A[$i,$i]), zero($T)))
     end
     return quote
-        Base.@_inline_meta
+        @inline
         @inbounds return similar_type(A, Size($n, $m))(tuple($(exprs...)))
     end
 end
@@ -49,7 +49,7 @@ end
         for i in 1:n
     ]
     return quote
-        Base.@_inline_meta
+        @inline
         @inbounds return similar_type(v, Size($n))(tuple($(exprs...)))
     end
 end
@@ -60,7 +60,7 @@ end
         for i in 1:n
     ]
     return quote
-        Base.@_inline_meta
+        @inline
         @inbounds return similar_type(v, Size($n))(tuple($(exprs...)))
     end
 end

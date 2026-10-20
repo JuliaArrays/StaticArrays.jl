@@ -131,7 +131,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         return tuple($(exprs...))
     end
 end
@@ -154,7 +154,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         $(Expr(:block, exprs_eval...))
         @inbounds $(Expr(:block, exprs_setindex...))
         return dest

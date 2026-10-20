@@ -1,3 +1,5 @@
+using Random
+
 @testset "SMatrix" begin
     @testset "Inner Constructors" begin
         @test SMatrix{1,1,Int,1}((1,)).data === (1,)
@@ -122,13 +124,13 @@
                 @test (@SMatrix randn(T, 4, 4)) isa SMatrix{4, 4, T}
                 @test (@SMatrix randexp(T, 4, 4)) isa SMatrix{4, 4, T}
                 @test (@SMatrix rand(_rng(), T, n, n)) isa SMatrix{n, n, T}
-                VERSION≥v"1.7" && @test (@SMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
+                @test (@SMatrix rand(_rng(), T, n, n)) == rand(_rng(), T, n, n) broken=(T===Float32)
                 @test (@SMatrix randn(_rng(), T, n, n)) isa SMatrix{n, n, T}
                 @test (@SMatrix randn(_rng(), T, n, n)) == randn(_rng(), T, n, n)
                 @test (@SMatrix randexp(_rng(), T, n, n)) isa SMatrix{n, n, T}
                 @test (@SMatrix randexp(_rng(), T, n, n)) == randexp(_rng(), T, n, n)
                 @test (@SMatrix rand(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
-                VERSION≥v"1.7" && @test (@SMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
+                @test (@SMatrix rand(_rng(), T, 4, 4)) == rand(_rng(), T, 4, 4) broken=(T===Float32)
                 @test (@SMatrix randn(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
                 @test (@SMatrix randn(_rng(), T, 4, 4)) == randn(_rng(), T, 4, 4)
                 @test (@SMatrix randexp(_rng(), T, 4, 4)) isa SMatrix{4, 4, T}
@@ -140,11 +142,9 @@
         @test SMatrix(MMatrix{1,1,Int,1}((1,))).data == (1,)
         @test_throws DimensionMismatch SMatrix{3}((1,2,3,4))
 
-        if VERSION >= v"1.7.0"
-            @test ((@SMatrix Float64[1;2;3;;;])::SMatrix{3,1}).data === (1.0, 2.0, 3.0)
-            @test ((@SMatrix [1;2;3;;;])::SMatrix{3,1}).data === (1, 2, 3)
-            test_expand_error(:(@SMatrix [1;2;;;1;2]))
-        end
+        @test ((@SMatrix Float64[1;2;3;;;])::SMatrix{3,1}).data === (1.0, 2.0, 3.0)
+        @test ((@SMatrix [1;2;3;;;])::SMatrix{3,1}).data === (1, 2, 3)
+        test_expand_error(:(@SMatrix [1;2;;;1;2]))
     end
 
     @testset "Methods" begin

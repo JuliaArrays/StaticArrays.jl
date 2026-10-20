@@ -1,4 +1,4 @@
-using StaticArrays, Test
+using StaticArrays, Test, LinearAlgebra
 struct ScalarTest end
 Base.:(+)(x::Number, y::ScalarTest) = x
 Broadcast.broadcastable(x::ScalarTest) = Ref(x)

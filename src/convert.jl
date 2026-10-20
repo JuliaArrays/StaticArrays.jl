@@ -12,9 +12,6 @@ const BadArgs = Args{<:Tuple{Tuple{<:Tuple}}}
 # Some help functions.
 @pure has_ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = @isdefined N
 has_ndims(::Type{<:StaticArray}) = false
-if VERSION < v"1.7"
-    Base.ndims(::Type{<:StaticArray{<:Tuple,<:Any,N}}) where {N} = N
-end
 @pure has_eltype(::Type{<:StaticArray{<:Tuple,T}}) where {T} = @isdefined T
 has_eltype(::Type{<:StaticArray}) = false
 @pure has_size(::Type{<:StaticArray{S}}) where {S<:Tuple} = @isdefined S
@@ -220,7 +217,7 @@ unroll_tuple(a::AbstractArray, ::Length{1}) = @inbounds (a[],)
 @generated function unroll_tuple(a::AbstractArray, ::Length{L}) where {L}
     exprs = (:(a[$j+Δj]) for j = 0:L-1)
     quote
-        @_inline_meta
+        @inline
         Δj = firstindex(a)
         @inbounds return $(Expr(:tuple, exprs...))
     end

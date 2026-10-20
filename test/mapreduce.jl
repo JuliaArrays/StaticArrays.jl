@@ -1,4 +1,4 @@
-using StaticArrays, Test
+using StaticArrays, Test, LinearAlgebra
 using Statistics: mean
 
 @testset "Map, reduce, mapreduce, broadcast" begin
@@ -107,17 +107,10 @@ using Statistics: mean
 
         # When the mapping and/or reducing functions are unsupported,
         # the error is thrown by `Base.mapreduce_empty`:
-        if Base.VERSION >= v"1.8.0-DEV.363"
-            @test_throws(
-                "reducing over an empty collection is not allowed",
-                mapreduce(nothing, nothing, SVector{0,Int}())
-            )
-        else
-            @test_throws(
-                ArgumentError("reducing over an empty collection is not allowed"),
-                mapreduce(nothing, nothing, SVector{0,Int}())
-            )
-        end
+        @test_throws(
+            "reducing over an empty collection is not allowed",
+            mapreduce(nothing, nothing, SVector{0,Int}())
+        )
     end
 
     @testset "implemented by [map]reduce and [map]reducedim" begin
