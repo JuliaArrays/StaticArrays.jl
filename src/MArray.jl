@@ -17,16 +17,20 @@ end
 ## MArray methods ##
 ####################
 
+# Like `unsafe_load` and `unsafe_store!`, but with the natural alignment of the elements
+# instead of 1 (some targets, e.g. NVPTX, split under-aligned accesses into byte-wise loads)
+@inline _unsafe_load_aligned(p::Ptr{T}, i::Int) where {T} =
+    Core.Intrinsics.pointerref(p, i, Base.datatype_alignment(T))
+@inline _unsafe_store_aligned!(p::Ptr{T}, x, i::Int) where {T} =
+    Core.Intrinsics.pointerset(p, convert(T, x), i, Base.datatype_alignment(T))
+
 @propagate_inbounds function getindex(v::MArray, i::Int)
     @boundscheck checkbounds(v,i)
     T = eltype(v)
 
     if isbitstype(T)
-        # `unsafe_load` assumes an alignment of 1, but the elements of an `MArray` are
-        # naturally aligned. Some targets (e.g. NVPTX) split under-aligned accesses into
-        # byte-wise loads.
         ptr = Base.unsafe_convert(Ptr{T}, pointer_from_objref(v))
-        return GC.@preserve v Core.Intrinsics.pointerref(ptr, i, Base.datatype_alignment(T))
+        return GC.@preserve v _unsafe_load_aligned(ptr, i)
     end
     getfield(v,:data)[i]
 end
@@ -37,7 +41,7 @@ end
 
     if isbitstype(T)
         ptr = Base.unsafe_convert(Ptr{T}, pointer_from_objref(v))
-        GC.@preserve v Core.Intrinsics.pointerset(ptr, convert(T, val), i, Base.datatype_alignment(T))
+        GC.@preserve v _unsafe_store_aligned!(ptr, val, i)
     else
         # This one is unsafe (#27)
         # unsafe_store!(Base.unsafe_convert(Ptr{Ptr{Nothing}}, pointer_from_objref(v.data)), pointer_from_objref(val), i)
