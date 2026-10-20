@@ -511,7 +511,7 @@ end
     if mul_tileable(a) && mul_tileable(b) && Sc <: TSize{<:Any, :any} && c <: StaticMatrix &&
             !(can_blas && mult_dim >= 14*14*14)
         return quote
-            @_inline_meta
+            @inline
             return mul_tiled!(Sc, c, Sa, Sb, a, b, _add)
         end
     end

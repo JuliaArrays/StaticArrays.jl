@@ -130,7 +130,7 @@ end
 @generated function _mul(Sa::Size{sa}, Sb::Size{sb}, a::StaticMatMulLike{<:Any, <:Any, Ta}, b::StaticMatMulLike{<:Any, <:Any, Tb}) where {sa, sb, Ta, Tb}
     if mul_tileable(a) && mul_tileable(b)
         return quote
-            @_inline_meta
+            @inline
             return mul_tiled(Sa, Sb, a, b)
         end
     end
@@ -355,7 +355,7 @@ end
     N = sb[2]
     if M > 0 && N > 0 && K > 0 && mul_tile(M, N, max(sizeof(Ta), sizeof(Tb), 1), MUL_TILE_BUDGET) == (M, N)
         return quote
-            @_inline_meta
+            @inline
             T = promote_op(matprod, Ta, Tb)
             TC = similar_type(a, T, Size($M, $N))
             # `getindex` of an `MArray` preserves it for every element, unlike an `SMatrix`
@@ -367,7 +367,7 @@ end
     end
 
     return quote
-        @_inline_meta
+        @inline
         T = promote_op(matprod, Ta, Tb)
         C = similar(SMatrix{$M, $N, T})
         mul_tiled!(TSize(C), C, Sa, Sb, a, b, NoMulAdd{T, T}())
@@ -422,7 +422,7 @@ end
         end)
     end
     return quote
-        @_inline_meta
+        @inline
         α = alpha(_add)
         β = beta(_add)
         a = SMatrix{$M, $K, Ta}(Tuple(a))
