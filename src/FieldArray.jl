@@ -16,9 +16,9 @@ end
 @propagate_inbounds getindex(a::FieldArray, i::Int) = getfield(a, i)
 @propagate_inbounds setindex!(a::FieldArray, x, i::Int) = (setfield!(a, i, x); a)
 
-Base.cconvert(::Type{<:Ptr}, a::FieldArray) = Base.RefValue(a)
-Base.unsafe_convert(::Type{Ptr{T}}, m::Base.RefValue{FA}) where {N,T,D,FA<:FieldArray{N,T,D}} =
-    Ptr{T}(Base.unsafe_convert(Ptr{FA}, m))
+Base.cconvert(::Type{Ptr{T}}, a::FieldArray) where {T} = ref_pointer(T, Base.RefValue(a))
+Base.cconvert(::Type{Ptr{T}}, r::Base.RefValue{<:FieldArray}) where {T} = ref_pointer(T, r)
+ref_pointer(::Type{T}, r::Base.RefValue{<:FieldArray{N,T,D}}) where {N,T,D} = RefElements(r)
 
 # We can automatically preserve FieldArrays in array operations which do not
 # change their eltype or Size. This should cover all non-parametric FieldArray,

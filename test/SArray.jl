@@ -378,3 +378,35 @@ end
     @test (@inferred(SMatrix{2}((1, 2)))::SMatrix{2,1,Int}).data === (1,2)
     @test (@inferred(SMatrix{2}(1, 2))::SMatrix{2,1,Int}).data === (1,2)
 end
+
+@testset "ccall" begin
+    # `memmove` reads the elements through the source pointer and writes them
+    # through the destination pointer.
+    load_elements(x) = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Float64}, Csize_t), y, x, 24); y)
+    load_void(x) = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Cvoid}, Csize_t), y, x, 24); y)
+    load_array(x::X) where {X} = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{X}, Csize_t), y, x, 24); y)
+    store_elements(r) = ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+    store_void(r) = ccall(:memmove, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+    store_array(r::Base.RefValue{X}) where {X} = ccall(:memmove, Ptr{Cvoid}, (Ptr{X}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+    load_ref_array(r::Base.RefValue{X}) where {X} = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{X}, Csize_t), y, r, 24); y)
+
+    v = SVector(1.0, 2.0, 3.0)
+    for f in (load_elements, load_void, load_array)
+        @test f(v) == [1.0, 2.0, 3.0]
+    end
+    for f in (load_elements, load_void)
+        @test f(Ref(v)) == [1.0, 2.0, 3.0]
+    end
+    for f in (store_elements, store_void, store_array)
+        r = Ref(v)
+        f(r)
+        @test r[] === SVector(4.0, 5.0, 6.0)
+    end
+    @test_throws MethodError ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Int}, Csize_t), zeros(3), v, 24)
+    # A `Ref` with an abstract element type holds a boxed array, which Base passes
+    # as the address of the box's elements.
+    for r in (Ref{SVector}(v), Ref{SVector{3}}(v), Ref{StaticVector{3, Float64}}(v))
+        @test load_void(r) == [1.0, 2.0, 3.0]
+        @test load_ref_array(r) == [1.0, 2.0, 3.0]
+    end
+end

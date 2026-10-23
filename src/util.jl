@@ -81,3 +81,21 @@ Base.@propagate_inbounds function invperm(p::StaticVector)
      similar_type(p)(ip)
 end
 
+# `ccall` passes a static array as a pointer from a `RefValue` holding it, which
+# Base converts to a `Ptr{Cvoid}` or to a pointer to its own type. A pointer to the
+# elements is taken through this wrapper. A method on `Base.RefValue` itself would tie
+# the element type `T` of `Ptr{T}` to the array in the `RefValue`, and type
+# intersection cannot tell such a method apart from Base's
+# `unsafe_convert(::Type{Ptr{T}}, ::RefValue{T})` for an abstract `T`: loading
+# StaticArrays would invalidate code compiled for Base's method.
+struct RefElements{A<:StaticArray}
+    ref::Base.RefValue{A}
+end
+Base.unsafe_convert(::Type{Ptr{T}}, r::RefElements{A}) where {T, A<:StaticArray{<:Tuple, T}} =
+    Ptr{T}(Base.unsafe_convert(Ptr{A}, r.ref))
+
+# The argument `ccall` converts to a `Ptr{T}` for `r`: the wrapper for a pointer to
+# the elements (see the methods next to each `cconvert`), else `r` for Base to convert.
+# `T` is not tied to the element type in the signature of `cconvert`, for the reason
+# above.
+ref_pointer(::Type, r::Base.RefValue) = r
