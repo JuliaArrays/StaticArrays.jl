@@ -276,6 +276,63 @@ end
     return ret
 end
 
+@inline dot(x::StaticVector, A::StaticMatrix, y::StaticVector) = _dot3(Size(x), Size(A), Size(y), x, A, y)
+
+# Maximum size in bytes of `A` for which `_dot3` is fully unrolled.
+const DOT3_UNROLL_BUDGET = 8192
+
+# Fully unrolled `dot(x, A*y)`: the accumulators `t_i` of `A*y` are updated column by
+# column with independent operations, a pattern that LLVM's SLP vectorizer turns into packed
+# loads and multiply-adds. Unlike the generic method, columns where `y[j]` is zero are not
+# skipped. Arrays of non-numbers use the generic method.
+#
+# The choice between `muladd` and `+`/`*` and of the final reduction was made empirically:
+# `muladd` of complex numbers with 64-bit parts prevents vectorization, and for non-real
+# numbers reducing with the `@simd` loop of the two-argument `dot` is faster.
+@generated function _dot3(::Size{sx}, ::Size{sA}, ::Size{sy}, x::StaticVector{<:Any, Tx}, A::StaticMatrix{<:Any, <:Any, TA}, y::StaticVector{<:Any, Ty}) where {sx, sA, sy, Tx, TA, Ty}
+    M, N = sA
+    if sx[1] != M || sy[1] != N
+        return :(throw(DimensionMismatch("dimensions of x $sx, A $sA and y $sy are incompatible")))
+    end
+    if M == 0 || N == 0
+        # outermost zero call to avoid spurious sign ambiguity (like 0.0 - 0.0im)
+        return :(zero(dot(zero(eltype(x)), zero(eltype(A)), zero(eltype(y)))))
+    end
+    if !(Tx <: Number && TA <: Number && Ty <: Number)
+        return :(invoke(dot, Tuple{AbstractVector, AbstractMatrix, AbstractVector}, x, A, y))
+    end
+    if M * N > 256 || !isbitstype(TA) || M * N * sizeof(TA) > DOT3_UNROLL_BUDGET
+        return :(dot(x, A * y))
+    end
+
+    is_real = Tx <: Real && TA <: Real && Ty <: Real
+    use_muladd = is_real || all(T -> T <: Union{Real, Complex} && sizeof(real(T)) <= 4, (TA, Ty))
+    t = [Symbol("t_", i) for i = 1:M]
+    exprs = [:($(t[i]) = A[$i] * y[1]) for i = 1:M]
+    for j = 2:N, i = 1:M
+        a = :(A[$(LinearIndices(sA)[i, j])])
+        rhs = use_muladd ? :(muladd($a, y[$j], $(t[i]))) : :($(t[i]) + $a * y[$j])
+        push!(exprs, :($(t[i]) = $rhs))
+    end
+    if is_real
+        s = :(dot(x[1], $(t[1])))
+        for i = 2:M
+            s = :($s + dot(x[$i], $(t[i])))
+        end
+    else
+        s = :(dot(x, SVector{$M}($(t...))))
+    end
+
+    return quote
+        @_inline_meta
+        @inbounds begin
+            $(exprs...)
+            return $s
+        end
+    end
+end
+
+
 #--------------------------------------------------
 # Norms
 _inner_eltype(v::AbstractArray) = isempty(v) ? eltype(v) : _inner_eltype(first(v))
