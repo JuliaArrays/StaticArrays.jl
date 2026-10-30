@@ -203,6 +203,23 @@ using Statistics: mean
         @test @inferred(diff(zeros(SVector{100,SVector{2,Int}}))) == fill(SA[0,0],99)
     end
 
+    @testset "sum and prod widen small integers" begin
+        for (op, values) in ((sum, (100, 28)), (prod, (16, 16))), T in (Int8, UInt8), n in 0:2
+            a = T[values[1:n]...]
+            sa = SVector{n}(a)
+            @test @inferred(op(sa)) === op(a)
+            @test @inferred(op(identity, sa)) === op(identity, a)
+            if n > 0
+                @test @inferred(op(T, sa)) === op(T, a)
+                @test @inferred(op(Base.Fix1(convert, T), sa)) === op(Base.Fix1(convert, T), a)
+            end
+            for dims in (1, Val(1))
+                @test op(sa; dims=dims) === SVector{1}(op(a; dims=1))
+                @test op(identity, sa; dims=dims) === SVector{1}(op(identity, a; dims=1))
+            end
+        end
+    end
+
     @testset "broadcast and broadcast!" begin
         c = 2
         v1 = @SVector [2,4,6,8]
