@@ -287,8 +287,9 @@ const DOT3_UNROLL_BUDGET = 8192
 # skipped. Arrays of non-numbers use the generic method.
 #
 # The choice between `muladd` and `+`/`*` and of the final reduction was made empirically:
-# `muladd` of complex numbers with 64-bit parts prevents vectorization, and for non-real
-# numbers reducing with the `@simd` loop of the two-argument `dot` is faster.
+# on x86-64 `muladd` of complex numbers with 64-bit parts prevents vectorization, and for
+# non-real numbers reducing with the `@simd` loop of the two-argument `dot` is faster.
+# On other architectures (e.g. Apple M5) `+`/`*` is slower than the `muladd`s of `A * y`.
 @generated function _dot3(::Size{sx}, ::Size{sA}, ::Size{sy}, x::StaticVector{<:Any, Tx}, A::StaticMatrix{<:Any, <:Any, TA}, y::StaticVector{<:Any, Ty}) where {sx, sA, sy, Tx, TA, Ty}
     M, N = sA
     if sx[1] != M || sy[1] != N
@@ -307,6 +308,9 @@ const DOT3_UNROLL_BUDGET = 8192
 
     is_real = Tx <: Real && TA <: Real && Ty <: Real
     use_muladd = is_real || all(T -> T <: Union{Real, Complex} && sizeof(real(T)) <= 4, (TA, Ty))
+    if !use_muladd && Sys.ARCH !== :x86_64
+        return :(dot(x, A * y))
+    end
     t = [Symbol("t_", i) for i = 1:M]
     exprs = [:($(t[i]) = A[$i] * y[1]) for i = 1:M]
     for j = 2:N, i = 1:M
