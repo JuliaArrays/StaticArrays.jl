@@ -11,4 +11,9 @@ using Unitful
 
     @test norm([SVector(1.0u"m", 2.0u"m")]) == norm([1.0u"m", 2.0u"m"])
     @test isapprox(SVector(1.0u"m", 2.0u"m"), SVector(1.1u"m", 2.1u"m"); atol=0.2u"m")
+
+    x = SVector(1.0u"m", 2.0u"m")
+    A = SMatrix{2,2}(1.0u"s", 3.0u"s", 2.0u"s", 4.0u"s")
+    y = SVector(1.0u"kg", 2.0u"kg")
+    @test @inferred(dot(x, A, y)) == dot(Vector(x), Matrix(A), Vector(y)) == 27.0u"m*s*kg"
 end
