@@ -9,19 +9,26 @@ module BenchDot3
 
 import Random
 using BenchmarkTools
+using ForwardDiff: Dual
 using LinearAlgebra
 using Printf
 using StaticArrays
 
 const suite = BenchmarkGroup()
 
+# Besides square matrices, this includes the shapes next to the size limits of `_dot3`.
 const shapes = if haskey(ENV, "GITHUB_EVENT_PATH")
     [(2, 2), (3, 3), (4, 4), (8, 8), (15, 15)]
 else
-    [[(n, n) for n in 1:15]; [(3, 8), (8, 3), (4, 12), (15, 2), (2, 15)]]
+    [[(n, n) for n in 1:15]; [(3, 8), (8, 3), (4, 12), (15, 2), (2, 15)];
+     [(5, 5), (6, 5), (6, 6), (11, 10), (12, 9), (12, 10), (16, 11), (18, 11), (29, 2), (30, 2), (64, 2), (256, 1)]] |> unique
 end
 
-const eltypes = (Float64, Float32, ComplexF64, ComplexF32)
+const eltypes = (Float64, Float32, ComplexF64, ComplexF32,
+                 Dual{Nothing,Float64,1}, Dual{Nothing,Float64,3}, Dual{Nothing,Float64,7})
+
+rand_element(::Type{T}) where {T} = rand(T)
+rand_element(::Type{Dual{Nothing,V,K}}) where {V,K} = Dual{Nothing}(rand(V), ntuple(_ -> rand(V), K)...)
 
 generic_dot(x, A, y) = invoke(dot, Tuple{AbstractVector, AbstractMatrix, AbstractVector}, x, A, y)
 matvec_dot(x, A, y) = dot(x, A * y)
@@ -33,10 +40,10 @@ Random.seed!(1234)
 for T in eltypes
     s1 = suite[string(T)] = BenchmarkGroup()
     for (M, N) in shapes
-        x = @SVector rand(T, M)
-        A = @SMatrix rand(T, M, N)
-        y = @SVector rand(T, N)
-        s2 = s1[string(M, pad=2) * "x" * string(N, pad=2)] = BenchmarkGroup()
+        x = SVector{M,T}(ntuple(_ -> rand_element(T), M))
+        A = SMatrix{M,N,T}(ntuple(_ -> rand_element(T), M * N))
+        y = SVector{N,T}(ntuple(_ -> rand_element(T), N))
+        s2 =s1[string(M, pad=2) * "x" * string(N, pad=2)] = BenchmarkGroup()
         for (label, f) in implementations
             s2[label] = @benchmarkable $f($x, $A, $y)
         end

@@ -280,10 +280,12 @@ end
 
         # real and complex element types, including mixed ones, for which different
         # code paths are generated
-        for (M, N) in ((1, 1), (2, 2), (3, 3), (4, 7), (7, 4), (15, 15), (16, 16), (17, 17), (3, 40))
+        for (M, N) in ((1, 1), (2, 2), (3, 3), (4, 7), (7, 4), (11, 10), (12, 9), (12, 10), (15, 15),
+                       (16, 16), (17, 17), (3, 40), (29, 2), (30, 2))
             for (Tx, TA, Ty) in ((Float64, Float64, Float64), (Float32, Float32, Float32),
-                                 (ComplexF64, ComplexF64, ComplexF64), (Float64, ComplexF64, Float64),
-                                 (ComplexF32, Float32, ComplexF64), (Int, Int, Int))
+                                 (ComplexF64, ComplexF64, ComplexF64), (ComplexF32, ComplexF32, ComplexF32),
+                                 (Float32, ComplexF32, ComplexF32), (ComplexF32, ComplexF32, Float32),
+                                 (Float64, ComplexF64, Float64), (ComplexF32, Float32, ComplexF64), (Int, Int, Int))
                 x = @SVector rand(Tx, M)
                 A = @SMatrix rand(TA, M, N)
                 y = @SVector rand(Ty, N)
@@ -306,6 +308,12 @@ end
         A = SMatrix{2,2}(big.([1.0 2.0; 3.0 4.0]))
         y = SVector(big(1.0), big(2.0))
         @test @inferred(dot(x, A, y)) == generic_dot(x, A, y) == 27
+
+        # element types of `y` without a definite size or a bits representation
+        x = @SVector [1.0, 2.0]
+        A = @SMatrix [1.0 2.0; 3.0 4.0]
+        @test dot(x, A, SVector{2,Real}(1, 2.0)) == dot(Vector(x), Matrix(A), [1.0, 2.0])
+        @test dot(x, A, SVector(big(1.0), big(2.0))) == dot(Vector(x), Matrix(A), [1.0, 2.0])
 
         # recursive like the generic method
         x = @SVector [[1, 2], [3, 4]]

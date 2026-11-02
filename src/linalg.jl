@@ -290,6 +290,14 @@ const DOT3_UNROLL_BUDGET = 8192
 # on x86-64 `muladd` of complex numbers with 64-bit parts prevents vectorization, and for
 # non-real numbers reducing with the `@simd` loop of the two-argument `dot` is faster.
 # On other architectures (e.g. Apple M5) `+`/`*` is slower than the `muladd`s of `A * y`.
+#
+# The size limits were also found empirically. From 30 rows on, the kernel is several times
+# slower than `A * y` for real numbers, regardless of their size. The other limit uses the
+# geometric mean `s` of the element sizes of `A` and `y` in bytes, so that it covers types
+# such as `ForwardDiff.Dual`: the kernel tends to lose to `A * y`, by up to about 2 times,
+# once `M * s >= 96 && N * s >= 80`. It wins again for `s > 48`, and also for `ComplexF64`
+# (`s == 16` without `muladd`). The limit is tuned to ComplexF32 on AMD Zen 5 and gives up
+# some gains elsewhere, e.g. for ComplexF32 in code generated for Haswell or Skylake-AVX512.
 @generated function _dot3(::Size{sx}, ::Size{sA}, ::Size{sy}, x::StaticVector{<:Any, Tx}, A::StaticMatrix{<:Any, <:Any, TA}, y::StaticVector{<:Any, Ty}) where {sx, sA, sy, Tx, TA, Ty}
     M, N = sA
     if sx[1] != M || sy[1] != N
@@ -308,7 +316,9 @@ const DOT3_UNROLL_BUDGET = 8192
 
     is_real = Tx <: Real && TA <: Real && Ty <: Real
     use_muladd = is_real || all(T -> T <: Union{Real, Complex} && sizeof(real(T)) <= 4, (TA, Ty))
-    if !use_muladd && Sys.ARCH !== :x86_64
+    s = isbitstype(Ty) ? sqrt(sizeof(TA) * sizeof(Ty)) : Inf
+    if (!use_muladd && Sys.ARCH !== :x86_64) || (is_real && M >= 30) ||
+            ((use_muladd || s > 16) && s <= 48 && M * s >= 96 && N * s >= 80)
         return :(dot(x, A * y))
     end
     t = [Symbol("t_", i) for i = 1:M]
