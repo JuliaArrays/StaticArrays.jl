@@ -50,6 +50,19 @@ using LinearAlgebra: PosDefException
             @test cholesky(m).L ≈ cholesky(m_a).L
         end
 
+        @testset "Hermitian uplo" for n in (2, 3, 4, 25)
+            m_a = randn(elty, n, n)
+            m_a = m_a*m_a'
+            # Zero the unused triangle to ensure reading it would give different factors
+            m_upper = Hermitian(SMatrix{n,n}(triu(m_a)), :U)
+            m_lower = Hermitian(SMatrix{n,n}(tril(m_a)), :L)
+            # Use @inferred to ensure uplo handling doesn't introduce type instability
+            @test @inferred(cholesky(m_upper)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_upper)).U ≈ cholesky(m_a).U
+            @test @inferred(cholesky(m_lower)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_lower)).U ≈ cholesky(m_a).U
+        end
+
         @testset "Inverse" begin
             m_a = randn(elty, 3, 3)
             m_a = m_a*m_a'

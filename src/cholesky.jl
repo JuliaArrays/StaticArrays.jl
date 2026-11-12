@@ -6,9 +6,11 @@ non_hermitian_error() = throw(LinearAlgebra.PosDefException(-1))
 end
 
 @inline function LinearAlgebra.cholesky(A::LinearAlgebra.RealHermSymComplexHerm{<:Real, <:StaticMatrix}; check::Bool = true)
-    _cholesky(Size(A), A.data, check)
+    C = _cholesky(Size(A), (A.uplo == 'U') ? A.data : A.data', check)
+    (A.uplo == 'U') ? C : Cholesky(C.factors', A.uplo, C.info)
 end
 @inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{UpperTriangular}) = (cholesky(A).U, 0)
+@inline LinearAlgebra._chol!(A::StaticMatrix, ::Type{LowerTriangular}) = (cholesky(A).L, 0)
 
 @inline function _chol_failure(A, info, check)
     if check
