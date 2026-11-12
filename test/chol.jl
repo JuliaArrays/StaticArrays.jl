@@ -54,12 +54,13 @@ using LinearAlgebra: PosDefException
             m_a = randn(elty, n, n)
             m_a = m_a*m_a'
             # Zero the unused triangle to ensure reading it would give different factors
-            m_upper = SMatrix{n,n}(triu(m_a))
-            m_lower = SMatrix{n,n}(tril(m_a))
-            @test cholesky(Hermitian(m_upper, :U)).L ≈ cholesky(m_a).L
-            @test cholesky(Hermitian(m_upper, :U)).U ≈ cholesky(m_a).U
-            @test cholesky(Hermitian(m_lower, :L)).L ≈ cholesky(m_a).L
-            @test cholesky(Hermitian(m_lower, :L)).U ≈ cholesky(m_a).U
+            m_upper = Hermitian(SMatrix{n,n}(triu(m_a)), :U)
+            m_lower = Hermitian(SMatrix{n,n}(tril(m_a)), :L)
+            # Use @inferred to ensure uplo handling doesn't introduce type instability
+            @test @inferred(cholesky(m_upper)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_upper)).U ≈ cholesky(m_a).U
+            @test @inferred(cholesky(m_lower)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_lower)).U ≈ cholesky(m_a).U
         end
 
         @testset "Inverse" begin
