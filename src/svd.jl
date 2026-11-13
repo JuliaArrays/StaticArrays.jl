@@ -57,6 +57,8 @@ function _svd(A, full::Val{true})
 end
 
 function \(F::SVD, B::StaticVecOrMat)
+    m, mB = Size(F.U)[1], Size(B)[1]
+    m == mB || throw(DimensionMismatch("matrix has $m rows, but right-hand side has $mB rows"))
     sthresh = eps(F.S[1])
     Sinv = map(s->s < sthresh ? zero(1/sthresh) : 1/s, F.S)
     return transposemult(F.Vt, diagmult(Sinv, transposemult(F.U, B)))

@@ -90,6 +90,12 @@ using StaticArrays, Test, LinearAlgebra
         @testinf svd(m_sing2; full=Val(true)) \ m23' ≈ svd(Matrix(m_sing2); full=true) \ Matrix(m23')
         @testinf svd(m_sing2'; full=Val(true)) \ m23 ≈ svd(Matrix(m_sing2'); full=true) \ Matrix(m23)
 
+        # the right-hand side must have as many rows as the factorized matrix
+        @test_throws DimensionMismatch svd(m23') \ m23
+        @test_throws DimensionMismatch svd(m3) \ v2
+        @test_throws DimensionMismatch svd(m_sing2') \ v
+        @test_throws DimensionMismatch svd(m_sing2; full=Val(true)) \ v2
+
         # Test that svd of rectangular matrix is inferred.
         # Note the placement of @inferred brackets is important.
         #
