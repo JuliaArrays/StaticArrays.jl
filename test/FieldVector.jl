@@ -150,4 +150,53 @@
 
         @test NamedTuple(FieldVectorNT(1,2,3)) isa @NamedTuple{a::Int, b::Int, c::Int}
     end
+
+    @testset "ccall" begin
+        eval(quote
+            struct CPoint3D <: FieldVector{3, Float64}
+                x::Float64
+                y::Float64
+                z::Float64
+            end
+            mutable struct MCPoint3D <: FieldVector{3, Float64}
+                x::Float64
+                y::Float64
+                z::Float64
+            end
+        end)
+
+        # `memmove` reads the elements through the source pointer and writes
+        # them through the destination pointer.
+        load_elements(x) = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Float64}, Csize_t), y, x, 24); y)
+        load_void(x) = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Cvoid}, Csize_t), y, x, 24); y)
+        load_array(x::X) where {X} = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{X}, Csize_t), y, x, 24); y)
+        store_elements(r) = ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+        store_void(r) = ccall(:memmove, Ptr{Cvoid}, (Ptr{Cvoid}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+        store_array(r::Base.RefValue{X}) where {X} = ccall(:memmove, Ptr{Cvoid}, (Ptr{X}, Ptr{Float64}, Csize_t), r, [4.0, 5.0, 6.0], 24)
+        load_ref_array(r::Base.RefValue{X}) where {X} = (y = zeros(3); ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{X}, Csize_t), y, r, 24); y)
+
+        for P in (CPoint3D, MCPoint3D)
+            p = P(1.0, 2.0, 3.0)
+            for f in (load_elements, load_void, load_array)
+                @test f(p) == [1.0, 2.0, 3.0]
+            end
+            for f in (load_elements, load_void)
+                @test f(Ref(p)) == [1.0, 2.0, 3.0]
+            end
+            # A `Ref` with an abstract element type holds a boxed array, which Base
+            # passes as the address of the box's elements.
+            r = Ref{FieldVector{3, Float64}}(p)
+            @test load_void(r) == [1.0, 2.0, 3.0]
+            @test load_ref_array(r) == [1.0, 2.0, 3.0]
+            for f in (store_elements, store_void, store_array)
+                r = Ref(P(1.0, 2.0, 3.0))
+                f(r)
+                @test r[] == [4.0, 5.0, 6.0]
+            end
+        end
+        # A mutable FieldVector is passed in place.
+        m = MCPoint3D(1.0, 2.0, 3.0)
+        ccall(:memmove, Ptr{Cvoid}, (Ptr{Float64}, Ptr{Float64}, Csize_t), m, [4.0, 5.0, 6.0], 24)
+        @test m == [4.0, 5.0, 6.0]
+    end
 end
