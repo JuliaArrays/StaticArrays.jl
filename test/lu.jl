@@ -76,6 +76,49 @@ end
     @test !issuccess(lu(A; check = false))
 end
 
+@testset "LU rational zero pivots" for pivot in (true, false), constructor in (SMatrix, MMatrix)
+    # Cover both the single-column and recursive static implementations,
+    # including a zero reached only after an elimination step.
+    for values in (zeros(Rational{Int}, 3, 1), zeros(Rational{Int}, 3, 2),
+                   zeros(Rational{Int}, 2, 3), ones(Rational{Int}, 3, 3))
+        A = constructor{size(values, 1), size(values, 2)}(values)
+        F = @inferred lu(A, Val(pivot); check=false)
+        @test eltype(F.L) == Rational{Int}
+        @test eltype(F.U) == Rational{Int}
+        @test F.L * F.U == A[F.p, :]
+        @test !issuccess(F)
+        @test_throws SingularException lu(A, Val(pivot))
+    end
+    # Original determinant report: the zero fourth pivot is encountered by
+    # the recursive LU route for a 5x5 static matrix.
+    for n in 2:5
+        values = Matrix{Rational{Int}}(I, n, n)
+        values[n-1, n-1] = 0
+        A = constructor{n, n}(values)
+        @test @inferred(det(A)) == 0//1
+    end
+    A = constructor{3, 3}([1//1 2//1 0//1; 0//1 3//1 4//1; 5//1 0//1 6//1])
+    F = @inferred lu(A, Val(pivot))
+    @test F.L * F.U == A[F.p, :]
+    @test issuccess(F)
+    @test eltype(F.L) == Rational{Int}
+    @test det(A) == 58//1
+end
+
+@testset "LU nonfinite reciprocal multipliers" for T in (Float32, Float64, ComplexF64)
+    # Preserve the existing zero-multiplier fallback, including nonzero
+    # subnormal pivots whose reciprocal overflows and NaN pivots.
+    for pivot in (zero(T), T(NaN), T(Inf), T(nextfloat(zero(typeof(real(zero(T)))))))
+        for A in (SMatrix{3, 1}(pivot, one(T), one(T)),
+                  SMatrix{3, 2}(pivot, one(T), one(T), one(T), one(T), one(T)))
+            F = @inferred lu(A, Val(false); check=false)
+            @test eltype(F.L) == T
+            @test all(iszero, F.L[2:end, 1])
+            @test isequal(F.U[1, 1], pivot)
+        end
+    end
+end
+
 @testset "LU method ambiguity" begin
     # Issue #920; just test that methods do not throw an ambiguity error when called
     for A in ((@SMatrix [1.0 2.0; 3.0 4.0]), (@SMatrix [1.0 2.0 3.0; 4.0 5.0 6.0]))

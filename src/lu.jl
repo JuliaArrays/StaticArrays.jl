@@ -149,9 +149,11 @@ function __lu(A::StaticMatrix{M,1}, ::Val{Pivot}) where {M,Pivot}
         U = SMatrix{1,1}(A[kp,1])
         # Scale first column
         Akkinv = inv(A[kp,1])
-        Ls = A[ps,1] * Akkinv
-        if !isfinite(Akkinv)
-            Ls = zeros(typeof(Ls))
+        Ls = if isfinite(Akkinv)
+            A[ps,1] * Akkinv
+        else
+            # Preserve the product type without forming 0 * (1//0).
+            zero(A[ps,1]) * zero(Akkinv)
         end
         L = [SVector{1}(one(eltype(Ls))); Ls]
         p = [SVector{1,Int}(kp); ps]
@@ -179,9 +181,11 @@ function __lu(A::StaticLUMatrix{M,N,T}, ::Val{Pivot}) where {M,N,T,Pivot}
         Ufirst = SMatrix{1,N}(A[kp,:])
         # Scale first column
         Akkinv = inv(A[kp,1])
-        Ls = A[ps,1] * Akkinv
-        if !isfinite(Akkinv)
-            Ls = zeros(typeof(Ls))
+        Ls = if isfinite(Akkinv)
+            A[ps,1] * Akkinv
+        else
+            # Preserve the product type without forming 0 * (1//0).
+            zero(A[ps,1]) * zero(Akkinv)
         end
 
         # Update the rest
