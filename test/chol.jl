@@ -50,6 +50,19 @@ using LinearAlgebra: PosDefException
             @test cholesky(m).L ≈ cholesky(m_a).L
         end
 
+        @testset "Hermitian uplo" for n in (2, 3, 4, 25)
+            m_a = randn(elty, n, n)
+            m_a = m_a*m_a'
+            # Zero the unused triangle to ensure reading it would give different factors
+            m_upper = Hermitian(SMatrix{n,n}(triu(m_a)), :U)
+            m_lower = Hermitian(SMatrix{n,n}(tril(m_a)), :L)
+            # Use @inferred to ensure uplo handling doesn't introduce type instability
+            @test @inferred(cholesky(m_upper)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_upper)).U ≈ cholesky(m_a).U
+            @test @inferred(cholesky(m_lower)).L ≈ cholesky(m_a).L
+            @test @inferred(cholesky(m_lower)).U ≈ cholesky(m_a).U
+        end
+
         @testset "Inverse" begin
             m_a = randn(elty, 3, 3)
             m_a = m_a*m_a'
@@ -91,17 +104,37 @@ using LinearAlgebra: PosDefException
         end
 
         @testset "Check" begin
-            for i ∈ [1,3,7,25]
+            for i ∈ [1,2,3,7,25]
                 x = SVector(ntuple(elty, i))
-                nonpd = x * x'
-                if i > 1
-                    @test_throws PosDefException cholesky(nonpd)
-                    @test !issuccess(cholesky(nonpd,check=false))
-                    @test_throws PosDefException cholesky(Hermitian(nonpd))
-                    @test !issuccess(cholesky(Hermitian(nonpd),check=false))
-                else
-                    @test issuccess(cholesky(Hermitian(nonpd),check=false))
+                psd = x * x'
+                if i == 1
+                    # [1;;] isn't semidefinite, we need [0;;]
+                    psd = zero(psd)
                 end
+                @test_throws PosDefException cholesky(psd)
+                @test !issuccess(cholesky(psd,check=false))
+                @test_throws PosDefException cholesky(Hermitian(psd))
+                @test !issuccess(cholesky(Hermitian(psd),check=false))
+
+                # When creating an indefinite matrix, we only subtract 0.5I, such that all
+                # diagonal entries remain positive (except at i == 1) and indefiniteness
+                # must be discovered during the factorization.
+                nonpd = psd - elty(1//2)I
+                @test_throws PosDefException cholesky(nonpd)
+                @test !issuccess(cholesky(nonpd,check=false))
+                @test_throws PosDefException cholesky(Hermitian(nonpd))
+                @test !issuccess(cholesky(Hermitian(nonpd),check=false))
+            end
+        end
+
+        if elty <: Complex
+            @testset "Imaginary diagonal part" begin
+                # The diagonal of Hermitian(A) is real, so imaginary parts of
+                # A's diagonal must not affect the factorization
+                m = SMatrix{2,2}(elty[4+3im 1+2im; 1-2im 5+7im])
+                m_a = Hermitian(Matrix(m))
+                @test cholesky(Hermitian(m)).L ≈ cholesky(m_a).L
+                @test cholesky(Hermitian(m)).U ≈ cholesky(m_a).U
             end
         end
     end
