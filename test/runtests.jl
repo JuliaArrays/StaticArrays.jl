@@ -66,7 +66,6 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
     addtests("triangular.jl")
     addtests("det.jl")
     addtests("inv.jl")
-    addtests("pinv.jl")
 
     # special logic required since we need to start a new
     # Julia process for these tests
@@ -77,6 +76,7 @@ if TEST_GROUP ∈ ["", "all", "group-A"]
 end
 
 if TEST_GROUP ∈ ["", "all", "group-B"]
+    addtests("pinv.jl")
     addtests("solve.jl")
     addtests("eigen.jl")
     addtests("expm.jl")
