@@ -266,6 +266,74 @@ end
         @test @inferred(dot(m1, m2)) === dot(v1, v2)
     end
 
+    @testset "three-argument dot" begin
+        generic_dot(x, A, y) = invoke(dot, Tuple{AbstractVector, AbstractMatrix, AbstractVector}, x, A, y)
+
+        x = @SVector [1, 2, 3]
+        A = @SMatrix [1 2; 3 4; 5 6]
+        y = @SVector [7, 8]
+        @test @inferred(dot(x, A, y)) === generic_dot(x, A, y) === dot(Vector(x), Matrix(A), Vector(y))
+        @test @inferred(dot(MVector(x), MMatrix(A), MVector(y))) === generic_dot(x, A, y)
+        @test @inferred(dot(SizedVector{3}([1, 2, 3]), SizedMatrix{3,2}(Matrix(A)), y)) === generic_dot(x, A, y)
+        @test_throws DimensionMismatch dot(y, A, y)
+        @test_throws DimensionMismatch dot(x, A, x)
+
+        # real and complex element types, including mixed ones, for which different
+        # code paths are generated
+        for (M, N) in ((1, 1), (2, 2), (3, 3), (4, 7), (7, 4), (11, 10), (12, 9), (12, 10), (15, 15),
+                       (16, 16), (17, 17), (3, 40), (29, 2), (30, 2))
+            for (Tx, TA, Ty) in ((Float64, Float64, Float64), (Float32, Float32, Float32),
+                                 (ComplexF64, ComplexF64, ComplexF64), (ComplexF32, ComplexF32, ComplexF32),
+                                 (Float32, ComplexF32, ComplexF32), (ComplexF32, ComplexF32, Float32),
+                                 (Float64, ComplexF64, Float64), (ComplexF32, Float32, ComplexF64), (Int, Int, Int))
+                x = @SVector rand(Tx, M)
+                A = @SMatrix rand(TA, M, N)
+                y = @SVector rand(Ty, N)
+                r = generic_dot(x, A, y)
+                @test @inferred(dot(x, A, y)) isa typeof(r)
+                # the generic method accumulates `A'*x` instead of `A*y`, which matters for mixed precision
+                @test dot(x, A, y) ≈ r rtol=1e-5
+                @test dot(x, A, y) ≈ dot(x, A * y)
+            end
+        end
+
+        # complex conjugation of `x` only
+        x = @SVector [1.0im, 2.0]
+        A = @SMatrix [1.0 2.0im; 3.0 4.0]
+        y = @SVector [1.0im, 1.0]
+        @test dot(x, A, y) ≈ dot(Vector(x), Matrix(A), Vector(y))
+
+        # element type without a bits representation
+        x = SVector(big(1.0), big(2.0))
+        A = SMatrix{2,2}(big.([1.0 2.0; 3.0 4.0]))
+        y = SVector(big(1.0), big(2.0))
+        @test @inferred(dot(x, A, y)) == generic_dot(x, A, y) == 27
+
+        # element types of `y` without a definite size or a bits representation
+        x = @SVector [1.0, 2.0]
+        A = @SMatrix [1.0 2.0; 3.0 4.0]
+        @test dot(x, A, SVector{2,Real}(1, 2.0)) == dot(Vector(x), Matrix(A), [1.0, 2.0])
+        @test dot(x, A, SVector(big(1.0), big(2.0))) == dot(Vector(x), Matrix(A), [1.0, 2.0])
+
+        # recursive like the generic method
+        x = @SVector [[1, 2], [3, 4]]
+        A = SMatrix{2,2}(([1 2; 3 4], [9 10; 11 12], [5 6; 7 8], [13 14; 15 16]))
+        y = @SVector [[1, 0], [0, 1]]
+        @test @inferred(dot(x, A, y)) == dot(Vector(x), Matrix(A), Vector(y))
+
+        # empty arrays
+        @test @inferred(dot(SVector{0,Float64}(), SMatrix{0,2,Float64}(), SVector(1.0, 2.0))) === 0.0
+        @test @inferred(dot(SVector(1.0, 2.0), SMatrix{2,0,Float64}(), SVector{0,Float64}())) === 0.0
+        @test @inferred(dot(SVector{0,ComplexF64}(), SMatrix{0,0,ComplexF64}(), SVector{0,ComplexF64}())) === zero(ComplexF64)
+
+        alloc_dot(x, A, y) = @allocated dot(x, A, y)
+        x = @SVector rand(8)
+        A = @SMatrix rand(8, 8)
+        y = @SVector rand(8)
+        alloc_dot(x, A, y)
+        @test alloc_dot(x, A, y) == 0
+    end
+
     @testset "transpose() and conj()" begin
         @test @inferred(conj(SVector(1+im, 2+im))) === SVector(1-im, 2-im)
 
