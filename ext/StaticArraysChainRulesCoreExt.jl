@@ -1,6 +1,7 @@
 module StaticArraysChainRulesCoreExt
 
 using StaticArrays
+using LinearAlgebra: cross
 # ChainRulesCore imports
 import ChainRulesCore: NoTangent, ProjectTo, Tangent, project_type, rrule
 import ChainRulesCore as CRC
@@ -29,6 +30,20 @@ function rrule(::Type{T}, x::Tuple) where {T <: SArray}
     project_x = ProjectTo(x)
     ∇Array(∂y) = (NoTangent(), project_x(∂y))
     return T(x), ∇Array
+end
+
+# The cross product of two 2-vectors is a scalar, while the generic rule in
+# ChainRules.jl expects 3-vectors (#1357)
+function rrule(::typeof(cross), a::StaticVector{2}, b::StaticVector{2})
+    project_a = ProjectTo(a)
+    project_b = ProjectTo(b)
+    function cross_pullback(∂y)
+        Δ = CRC.unthunk(∂y)
+        ∂a = project_a(SVector(conj(b[2]), -conj(b[1])) * Δ)
+        ∂b = project_b(SVector(-conj(a[2]), conj(a[1])) * Δ)
+        return NoTangent(), ∂a, ∂b
+    end
+    return cross(a, b), cross_pullback
 end
 
 function rrule(::Type{T}, xs::Number...) where {T <: SVector}

@@ -27,6 +27,12 @@ using StaticArrays, ChainRulesCore, ChainRulesTestUtils, JLArrays, LinearAlgebra
         test_rrule(SVector{4}, 1.0, 1.0f0, 1.0, 1.0f0)
     end
 
+    @testset "cross of 2-vectors" begin
+        # the cross product of two 2-vectors is a scalar (#1357)
+        test_rrule(cross, SA[3.0, 4.0], SA[1.0, 2.0])
+        test_rrule(cross, SA[3.0 + 1.0im, 4.0 - 2.0im], SA[1.0 - 1.0im, 2.0 + 0.5im])
+    end
+
     @testset "Type Stability" begin
         x = ones(SMatrix{2, 2})
         y = ones(SVector{4})
