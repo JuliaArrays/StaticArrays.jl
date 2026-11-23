@@ -61,3 +61,39 @@ end
 function _first_zero_on_diagonal(A::StaticULT)
     _first_zero_on_diagonal(A.data)
 end
+
+
+inv(R::UpperTriangular{T, <:StaticMatrix}) where T =
+    (@inline; UpperTriangular(_inv_upper_triangular(R.data)))
+
+_inv_upper_triangular(R::StaticMatrix{n, m}) where {n, m} =
+    checksquare(R)
+
+@generated function _inv_upper_triangular(R::StaticMatrix{n, n, T}) where {n, T}
+    ex = quote
+        R_inv = MMatrix{n,n,T}(undef)
+    end
+    for i in n:-1:1
+        append!(ex.args, (quote
+            r = 1 / R[$i, $i]
+            for j in 1:$((i)-1)
+                R_inv[$i, j] = 0
+            end
+            R_inv[$i, $i] = r
+        end).args)
+
+        for j in (i+1):n
+            s = :(0r)
+            for k in (i+1):j
+                s = :( $s + R[$i, $k] * R_inv[$k, $j] )
+            end
+            push!(ex.args, :(
+                R_inv[$i, $j] = -r * $s
+            ))
+        end
+    end
+    push!(ex.args, :(
+        return SMatrix(R_inv)
+    ))
+    ex
+end
