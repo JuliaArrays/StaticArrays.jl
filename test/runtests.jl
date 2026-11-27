@@ -89,6 +89,7 @@ if TEST_GROUP ∈ ["", "all", "group-B"]
     addtests("flatten.jl")
     addtests("io.jl")
     addtests("svd.jl")
+    addtests("mutating_linalg.jl")
     addtests("unitful.jl")
 
     # chain rules integration via pkg extensions is available only in Julia 1.9+
