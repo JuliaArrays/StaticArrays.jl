@@ -133,6 +133,7 @@ include("deque.jl")
 include("flatten.jl")
 include("io.jl")
 include("pinv.jl")
+include("mutating_linalg.jl")
 
 @static if VERSION >= v"1.7"
     include("blas.jl")
